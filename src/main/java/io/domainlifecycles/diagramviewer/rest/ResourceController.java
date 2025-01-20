@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-@Controller("/resources")
+@Controller("/images")
 public class ResourceController {
 
     @Value("${diagrams.location}")
