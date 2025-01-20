@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.views;
+package io.domainlifecycles.diagramviewer.webapp.views;
 
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -7,7 +7,7 @@ import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.layout.MainView;
+import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;

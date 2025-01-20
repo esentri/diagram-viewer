@@ -1,14 +1,12 @@
-package io.domainlifecycles.diagramviewer.views;
+package io.domainlifecycles.diagramviewer.webapp.views;
 
 import com.flowingcode.vaadin.addons.zoomist.Zoomist;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import io.domainlifecycles.diagramviewer.layout.MainView;
+import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
 import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.util.Objects;

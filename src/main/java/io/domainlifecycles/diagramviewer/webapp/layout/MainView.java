@@ -1,26 +1,17 @@
-package io.domainlifecycles.diagramviewer.layout;
+package io.domainlifecycles.diagramviewer.webapp.layout;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.applayout.AppLayout;
-import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.Scroller;
-import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
 import com.vaadin.flow.component.tabs.TabsVariant;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.RouterLink;
-import com.vaadin.flow.theme.lumo.LumoUtility;
-import io.domainlifecycles.diagramviewer.views.DiagramViewerView;
-import io.domainlifecycles.diagramviewer.views.UploadView;
+import io.domainlifecycles.diagramviewer.webapp.views.DiagramViewerView;
+import io.domainlifecycles.diagramviewer.webapp.views.UploadView;
 
 public class MainView extends AppLayout {
 
