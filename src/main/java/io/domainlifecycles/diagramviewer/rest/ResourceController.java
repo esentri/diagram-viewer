@@ -38,7 +38,7 @@ public class ResourceController {
         InputStream inputStream = new FileInputStream(new File(filePath));
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
 
-        if(!inputStreamResource.isFile() || !inputStreamResource.exists()) {
+        if(!inputStreamResource.exists()) {
             throw DiagramViewerException.fail(
                 String.format("Could not find file %s in directory %s.", fileName, diagramFolderLocation));
         }
@@ -51,6 +51,6 @@ public class ResourceController {
 
     private String evaluateContentType(String fileName) {
         Optional<MediaType> mimeTypeOptional = MediaTypeFactory.getMediaType(fileName);
-        return mimeTypeOptional.map(MimeType::getType).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        return mimeTypeOptional.map(MediaType::toString).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE);
     }
 }
