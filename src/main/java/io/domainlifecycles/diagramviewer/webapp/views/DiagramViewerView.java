@@ -6,6 +6,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import io.domainlifecycles.diagramviewer.rest.ResourceController;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
 import jakarta.annotation.PostConstruct;
 import java.io.File;
@@ -20,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 public class DiagramViewerView extends VerticalLayout {
 
     @Value("${diagrams.location}")
-    private String diagramFolderLocation;
+    private String diagramDirectory;
     private final TabSheet tabSheet;
 
     public DiagramViewerView() {
@@ -34,10 +35,10 @@ public class DiagramViewerView extends VerticalLayout {
     // PostConstruct so property is evaluated
     @PostConstruct
     public void addTabs() {
-        Set<String> diagramFileNames = listFilesInDiagramDirectory();
+        Set<String> diagramFileNames = getFileNamesInDiagramDirectory();
 
         diagramFileNames.forEach(diagramFileName -> {
-            Zoomist zoomist = getZoomist(diagramFileName);
+            Zoomist zoomist = getZoomist(ResourceController.RESOURCES_API_PATH + "/" + diagramFileName);
 
             FlexLayout zoomistContainer = new FlexLayout();
             zoomistContainer.setFlexGrow(1, zoomist);
@@ -48,16 +49,16 @@ public class DiagramViewerView extends VerticalLayout {
         });
     }
 
-    private Zoomist getZoomist(String imageSrc) {
-        Zoomist zoomist = new Zoomist("images/" + imageSrc);
+    private Zoomist getZoomist(String fileName) {
+        Zoomist zoomist = new Zoomist(fileName);
         zoomist.setZoomer(true);
         zoomist.setBounds(false);
         zoomist.setDraggable(true);
         return zoomist;
     }
 
-    private Set<String> listFilesInDiagramDirectory() {
-        return Stream.of(Objects.requireNonNull(new File(diagramFolderLocation).listFiles()))
+    private Set<String> getFileNamesInDiagramDirectory() {
+        return Stream.of(Objects.requireNonNull(new File(diagramDirectory).listFiles()))
             .filter(file -> !file.isDirectory())
             .map(File::getName)
             .collect(Collectors.toSet());

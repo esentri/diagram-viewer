@@ -1,34 +1,50 @@
 package io.domainlifecycles.diagramviewer.rest;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller("/images")
+@RestController
+@RequestMapping(ResourceController.RESOURCES_API_PATH)
 public class ResourceController {
+
+    public static final String RESOURCES_API_PATH = "/api/resources";
 
     @Value("${diagrams.location}")
     private String diagramFolderLocation;
 
-    @GetMapping(
-        value = "/{fileName}",
-        produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
-    )
-    public @ResponseBody byte[] getFile(@PathVariable String fileName) throws IOException {
-        InputStream in = getClass().getResourceAsStream(diagramFolderLocation + "/" + fileName);
+    @GetMapping(value = "/{fileName}")
+    public ResponseEntity<InputStreamResource> getFile(@PathVariable("fileName") String fileName) throws IOException {
+        URI filePath = Path.of(diagramFolderLocation, fileName).toUri();
+        InputStream inputStream = new FileInputStream(new File(filePath));
+        InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
 
-        if(in == null) {
+        if(!inputStreamResource.isFile() || !inputStreamResource.exists()) {
             throw DiagramViewerException.fail(
                 String.format("Could not find file %s in directory %s.", fileName, diagramFolderLocation));
         }
 
-        return IOUtils.toByteArray(in);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type","image/svg+xml");
+        headers.setContentLength(Files.size(Paths.get(filePath)));
+        return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
     }
 }

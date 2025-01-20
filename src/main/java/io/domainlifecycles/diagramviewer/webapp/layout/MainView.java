@@ -27,7 +27,7 @@ public class MainView extends AppLayout {
         layout.setId("header");
         layout.setSizeFull();
 
-        Image dlcLogo = new Image("images/dlc-logo.png", "DLC Logo");
+        Image dlcLogo = new Image("frontend/dlc-logo.png", "DLC Logo");
         dlcLogo.setMaxHeight("60px");
         layout.add(dlcLogo, createMenu());
 
