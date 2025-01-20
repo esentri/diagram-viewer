@@ -14,9 +14,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Route(value = "/upload", layout = MainView.class)
 @PageTitle("DLC | Upload")
+@Service
 public class UploadView extends VerticalLayout {
 
     @Value("${diagrams.location}")
