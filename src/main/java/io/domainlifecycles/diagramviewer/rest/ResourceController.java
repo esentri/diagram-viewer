@@ -9,17 +9,18 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.apache.commons.io.IOUtils;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MimeType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -43,8 +44,13 @@ public class ResourceController {
         }
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type","image/svg+xml");
+        headers.add("Content-Type", evaluateContentType(fileName));
         headers.setContentLength(Files.size(Paths.get(filePath)));
         return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
+    }
+
+    private String evaluateContentType(String fileName) {
+        Optional<MediaType> mimeTypeOptional = MediaTypeFactory.getMediaType(fileName);
+        return mimeTypeOptional.map(MimeType::getType).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE);
     }
 }

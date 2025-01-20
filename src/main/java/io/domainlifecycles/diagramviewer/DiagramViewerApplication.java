@@ -1,11 +1,10 @@
 package io.domainlifecycles.diagramviewer;
 
+import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.page.Viewport;
 import com.vaadin.flow.server.AppShellSettings;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import com.vaadin.flow.theme.Theme;
-import com.vaadin.flow.component.page.AppShellConfigurator;
 
 @SpringBootApplication
 @Viewport("width=device-width, initial-scale=1")
