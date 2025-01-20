@@ -34,21 +34,21 @@ public class DiagramViewerView extends VerticalLayout {
     }
 
     // PostConstruct so property is evaluated
-   @PostConstruct
-   public void addTabs() {
-       Set<String> diagramFileNames = listFilesInDiagramDirectory();
+    @PostConstruct
+    public void addTabs() {
+        Set<String> diagramFileNames = listFilesInDiagramDirectory();
 
-       diagramFileNames.forEach(diagramFileName -> {
-           Zoomist zoomist = getZoomist(diagramFileName);
+        diagramFileNames.forEach(diagramFileName -> {
+            Zoomist zoomist = getZoomist(diagramFileName);
 
-           FlexLayout zoomistContainer = new FlexLayout();
-           zoomistContainer.setFlexGrow(1, zoomist);
-           zoomistContainer.add(zoomist);
-           zoomistContainer.setMinHeight("0%");
+            FlexLayout zoomistContainer = new FlexLayout();
+            zoomistContainer.setFlexGrow(1, zoomist);
+            zoomistContainer.add(zoomist);
+            zoomistContainer.setMinHeight("0%");
 
-           tabSheet.add(diagramFileName, zoomistContainer);
-       });
-   }
+            tabSheet.add(diagramFileName, zoomistContainer);
+        });
+    }
 
     private Zoomist getZoomist(String imageSrc) {
         Zoomist zoomist = new Zoomist("images/" + imageSrc);
