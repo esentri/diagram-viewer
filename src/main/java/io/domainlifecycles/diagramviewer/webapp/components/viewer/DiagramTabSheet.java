@@ -1,38 +1,23 @@
-package io.domainlifecycles.diagramviewer.webapp.views;
+package io.domainlifecycles.diagramviewer.webapp.components.viewer;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.rest.ResourceController;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramConfigurationButtonBarComponent;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramTabSheet;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramZoomComponent;
-import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
 import jakarta.annotation.PostConstruct;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 
-@Route(value = "/", layout = MainView.class)
-@PageTitle("DLC | Diagram Viewer")
-public class DiagramViewerView extends FlexLayout {
+public class DiagramTabSheet extends FlexLayout {
 
     @Value("${diagrams.location}")
     private String diagramDirectory;
-    private final TabSheet tabSheet;
 
-    public DiagramViewerView() {
+    private final TabSheet diagramTabSheet;
+
+    public DiagramTabSheet() {
         setSizeFull();
-        setClassName("diagram-viewer");
-
-        add(new DiagramConfigurationButtonBarComponent());
-
-        tabSheet = new TabSheet();
-        tabSheet.setSizeFull();
-        add(tabSheet);
+        diagramTabSheet = new TabSheet();
     }
 
     // PostConstruct so property is evaluated
@@ -45,7 +30,7 @@ public class DiagramViewerView extends FlexLayout {
                 new DiagramZoomComponent(ResourceController.RESOURCES_API_PATH + "/" + diagramFileName);
 
             FlexLayout zoomistContainer = generateZoomComponentContainer(zoomComponent);
-            tabSheet.add(diagramFileName, zoomistContainer);
+            diagramTabSheet.add(diagramFileName, zoomistContainer);
         });
     }
 

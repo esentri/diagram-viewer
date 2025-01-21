@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components;
+package io.domainlifecycles.diagramviewer.webapp.components.viewer;
 
 import com.flowingcode.vaadin.addons.zoomist.Zoomist;
 
