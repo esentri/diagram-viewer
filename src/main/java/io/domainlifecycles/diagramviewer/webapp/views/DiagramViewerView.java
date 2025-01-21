@@ -1,16 +1,11 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
-import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import io.domainlifecycles.diagramviewer.rest.ResourceController;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramConfigurationButtonBarComponent;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramTabSheet;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramZoomComponent;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramTabSheetComponent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
 import jakarta.annotation.PostConstruct;
 import java.util.Set;
@@ -22,7 +17,7 @@ public class DiagramViewerView extends FlexLayout {
 
     @Value("${diagrams.location}")
     private String diagramDirectory;
-    private final TabSheet tabSheet;
+    private final DiagramTabSheetComponent tabSheet;
 
     public DiagramViewerView() {
         setSizeFull();
@@ -30,8 +25,7 @@ public class DiagramViewerView extends FlexLayout {
 
         add(new DiagramConfigurationButtonBarComponent());
 
-        tabSheet = new TabSheet();
-        tabSheet.setSizeFull();
+        tabSheet = new DiagramTabSheetComponent();
         add(tabSheet);
     }
 
@@ -39,21 +33,6 @@ public class DiagramViewerView extends FlexLayout {
     @PostConstruct
     public void addTabs() {
         Set<String> diagramFileNames = FileIOUtils.getFileNamesInDiagramDirectory(diagramDirectory);
-
-        diagramFileNames.forEach(diagramFileName -> {
-            DiagramZoomComponent zoomComponent =
-                new DiagramZoomComponent(ResourceController.RESOURCES_API_PATH + "/" + diagramFileName);
-
-            FlexLayout zoomistContainer = generateZoomComponentContainer(zoomComponent);
-            tabSheet.add(diagramFileName, zoomistContainer);
-        });
-    }
-
-    private FlexLayout generateZoomComponentContainer(final DiagramZoomComponent zoomComponent) {
-        FlexLayout zoomistContainer = new FlexLayout();
-        zoomistContainer.setFlexGrow(1, zoomComponent);
-        zoomistContainer.add(zoomComponent);
-        zoomistContainer.setMinHeight("0%");
-        return zoomistContainer;
+        tabSheet.addTabs(diagramFileNames);
     }
 }

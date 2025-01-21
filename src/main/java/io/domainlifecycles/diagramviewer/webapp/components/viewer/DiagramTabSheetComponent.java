@@ -3,34 +3,21 @@ package io.domainlifecycles.diagramviewer.webapp.components.viewer;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
 import io.domainlifecycles.diagramviewer.rest.ResourceController;
-import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import jakarta.annotation.PostConstruct;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Value;
 
-public class DiagramTabSheet extends FlexLayout {
+public class DiagramTabSheetComponent extends TabSheet {
 
-    @Value("${diagrams.location}")
-    private String diagramDirectory;
-
-    private final TabSheet diagramTabSheet;
-
-    public DiagramTabSheet() {
+    public DiagramTabSheetComponent() {
         setSizeFull();
-        diagramTabSheet = new TabSheet();
     }
 
-    // PostConstruct so property is evaluated
-    @PostConstruct
-    public void addTabs() {
-        Set<String> diagramFileNames = FileIOUtils.getFileNamesInDiagramDirectory(diagramDirectory);
-
+    public void addTabs(Set<String> diagramFileNames) {
         diagramFileNames.forEach(diagramFileName -> {
             DiagramZoomComponent zoomComponent =
                 new DiagramZoomComponent(ResourceController.RESOURCES_API_PATH + "/" + diagramFileName);
 
             FlexLayout zoomistContainer = generateZoomComponentContainer(zoomComponent);
-            diagramTabSheet.add(diagramFileName, zoomistContainer);
+            add(diagramFileName, zoomistContainer);
         });
     }
 
