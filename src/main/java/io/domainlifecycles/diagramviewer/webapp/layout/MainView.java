@@ -3,6 +3,8 @@ package io.domainlifecycles.diagramviewer.webapp.layout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.dependency.CssImport.Container;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -13,6 +15,7 @@ import com.vaadin.flow.router.RouterLink;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramViewerView;
 import io.domainlifecycles.diagramviewer.webapp.views.UploadView;
 
+@CssImport("./styles/diagram-viewer-styles.css")
 public class MainView extends AppLayout {
 
     public MainView() {

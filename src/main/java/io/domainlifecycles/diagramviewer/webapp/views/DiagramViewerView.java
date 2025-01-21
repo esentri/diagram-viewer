@@ -3,6 +3,7 @@ package io.domainlifecycles.diagramviewer.webapp.views;
 import com.flowingcode.vaadin.addons.zoomist.Zoomist;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
@@ -31,14 +32,26 @@ public class DiagramViewerView extends FlexLayout {
 
     public DiagramViewerView() {
         this.setSizeFull();
+        this.setClassName("diagram-viewer");
 
-        FlexLayout buttonContainer = new FlexLayout(new Button("Test 1"), new Button("Test 2"));
-        buttonContainer.setFlexDirection(FlexDirection.COLUMN);
-        add(buttonContainer);
+        addCustomizationButtons();
 
         tabSheet = new TabSheet();
         tabSheet.setSizeFull();
         add(tabSheet);
+    }
+
+    private void addCustomizationButtons() {
+        Button colorButton = new Button(new Icon("vaadin:paintbrush"));
+        Button fontButton = new Button(new Icon("vaadin:font"));
+        Button showFieldsButton = new Button(new Icon("vaadin:input"));
+        Button showBuildingBlocks = new Button(new Icon("vaadin:connect-o"));
+
+        FlexLayout buttonContainer = new FlexLayout(colorButton, fontButton, showFieldsButton, showBuildingBlocks);
+        buttonContainer.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        buttonContainer.setFlexDirection(FlexDirection.COLUMN);
+        add(buttonContainer);
     }
 
     // PostConstruct so property is evaluated
