@@ -1,6 +1,8 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
 import com.flowingcode.vaadin.addons.zoomist.Zoomist;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
@@ -16,11 +18,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.atmosphere.interceptor.AtmosphereResourceStateRecovery.B;
 import org.springframework.beans.factory.annotation.Value;
 
 @Route(value = "/", layout = MainView.class)
 @PageTitle("DLC | Diagram Viewer")
-public class DiagramViewerView extends VerticalLayout {
+public class DiagramViewerView extends FlexLayout {
 
     @Value("${diagrams.location}")
     private String diagramDirectory;
@@ -28,6 +31,10 @@ public class DiagramViewerView extends VerticalLayout {
 
     public DiagramViewerView() {
         this.setSizeFull();
+
+        FlexLayout buttonContainer = new FlexLayout(new Button("Test 1"), new Button("Test 2"));
+        buttonContainer.setFlexDirection(FlexDirection.COLUMN);
+        add(buttonContainer);
 
         tabSheet = new TabSheet();
         tabSheet.setSizeFull();
