@@ -6,13 +6,9 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,10 +25,10 @@ public class UploadView extends VerticalLayout {
         this.setJustifyContentMode ( FlexComponent.JustifyContentMode.CENTER );
         this.setAlignItems(Alignment.CENTER);
 
-        add(getUpload());
+        add(getUploadComponent());
     }
 
-    private Upload getUpload() {
+    private Upload getUploadComponent() {
         MultiFileMemoryBuffer buffer = new MultiFileMemoryBuffer();
         Upload upload = new Upload(buffer);
 
@@ -40,20 +36,9 @@ public class UploadView extends VerticalLayout {
             String fileName = event.getFileName();
             InputStream inputStream = buffer.getInputStream(fileName);
 
-            saveFile(inputStream, fileName);
+            FileIOUtils.saveFile(diagramFolderLocation, inputStream, fileName);
         });
 
         return upload;
-    }
-
-    private void saveFile(InputStream inputStream, String fileName) {
-        final Path filePath = Path.of(diagramFolderLocation, fileName);
-
-        try {
-            Files.createDirectories(filePath.getParent());
-            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw DiagramViewerException.fail(String.format("Error occurred while trying to save file to %s.", filePath), e);
-        }
     }
 }

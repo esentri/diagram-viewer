@@ -7,6 +7,8 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.rest.ResourceController;
+import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.DiagramZoomComponent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
 import jakarta.annotation.PostConstruct;
 import java.io.File;
@@ -35,32 +37,22 @@ public class DiagramViewerView extends VerticalLayout {
     // PostConstruct so property is evaluated
     @PostConstruct
     public void addTabs() {
-        Set<String> diagramFileNames = getFileNamesInDiagramDirectory();
+        Set<String> diagramFileNames = FileIOUtils.getFileNamesInDiagramDirectory(diagramDirectory);
 
         diagramFileNames.forEach(diagramFileName -> {
-            Zoomist zoomist = getZoomist(ResourceController.RESOURCES_API_PATH + "/" + diagramFileName);
+            DiagramZoomComponent zoomComponent =
+                new DiagramZoomComponent(ResourceController.RESOURCES_API_PATH + "/" + diagramFileName);
 
-            FlexLayout zoomistContainer = new FlexLayout();
-            zoomistContainer.setFlexGrow(1, zoomist);
-            zoomistContainer.add(zoomist);
-            zoomistContainer.setMinHeight("0%");
-
+            FlexLayout zoomistContainer = generateZoomComponentContainer(zoomComponent);
             tabSheet.add(diagramFileName, zoomistContainer);
         });
     }
 
-    private Zoomist getZoomist(String fileName) {
-        Zoomist zoomist = new Zoomist(fileName);
-        zoomist.setZoomer(true);
-        zoomist.setBounds(false);
-        zoomist.setDraggable(true);
-        return zoomist;
-    }
-
-    private Set<String> getFileNamesInDiagramDirectory() {
-        return Stream.of(Objects.requireNonNull(new File(diagramDirectory).listFiles()))
-            .filter(file -> !file.isDirectory())
-            .map(File::getName)
-            .collect(Collectors.toSet());
+    private FlexLayout generateZoomComponentContainer(final DiagramZoomComponent zoomComponent) {
+        FlexLayout zoomistContainer = new FlexLayout();
+        zoomistContainer.setFlexGrow(1, zoomComponent);
+        zoomistContainer.add(zoomComponent);
+        zoomistContainer.setMinHeight("0%");
+        return zoomistContainer;
     }
 }
