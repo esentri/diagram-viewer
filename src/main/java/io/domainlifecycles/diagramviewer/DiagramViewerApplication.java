@@ -5,6 +5,7 @@ import com.vaadin.flow.component.page.Viewport;
 import com.vaadin.flow.server.AppShellSettings;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 public class DiagramViewerApplication implements AppShellConfigurator {

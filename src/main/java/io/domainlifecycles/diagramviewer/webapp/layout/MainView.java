@@ -4,7 +4,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.dependency.CssImport.Container;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -18,43 +17,43 @@ import io.domainlifecycles.diagramviewer.webapp.views.UploadView;
 @CssImport("./styles/diagram-viewer-styles.css")
 public class MainView extends AppLayout {
 
+    private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
+
     public MainView() {
         setPrimarySection(Section.NAVBAR);
-        addToNavbar(createHeaderContent());
+        addToNavbar(createNavbarContent());
     }
 
-    private Component createHeaderContent() {
+    private Component createNavbarContent() {
         HorizontalLayout layout = new HorizontalLayout();
 
         // Configure styling for the header
-        layout.setId("header");
         layout.setSizeFull();
 
-        Image dlcLogo = new Image("frontend/dlc-logo.png", "DLC Logo");
+        Image dlcLogo = new Image(DLC_LOGO_LOCATION, "DLC Logo");
         dlcLogo.setMaxHeight("60px");
-        layout.add(dlcLogo, createMenu());
+        layout.add(dlcLogo, createTabsWithLinks());
 
         return layout;
     }
 
-    private Tabs createMenu() {
+    private Tabs createTabsWithLinks() {
         final Tabs tabs = new Tabs();
         tabs.setOrientation(Orientation.HORIZONTAL);
         tabs.addThemeVariants(TabsVariant.LUMO_MINIMAL);
         tabs.setId("tabs");
-        tabs.add(createMenuItems());
+        tabs.add(createTabLinkItems());
         return tabs;
     }
 
-    private Component[] createMenuItems() {
+    private Component[] createTabLinkItems() {
         return new Tab[] {
-            createTab("Diagram Viewer", DiagramViewerView.class),
-            createTab("Upload", UploadView.class)
+            createTabLink("Diagram Viewer", DiagramViewerView.class),
+            createTabLink("Upload", UploadView.class)
         };
     }
 
-    private static Tab createTab(String text,
-                                 Class<? extends Component> navigationTarget) {
+    private Tab createTabLink(String text, Class<? extends Component> navigationTarget) {
         final Tab tab = new Tab();
         tab.add(new RouterLink(text, navigationTarget));
         ComponentUtil.setData(tab, Class.class, navigationTarget);
