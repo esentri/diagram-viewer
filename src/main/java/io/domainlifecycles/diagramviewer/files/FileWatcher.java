@@ -1,5 +1,6 @@
 package io.domainlifecycles.diagramviewer.files;
 
+import com.sun.nio.file.SensitivityWatchEventModifier;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -12,13 +13,8 @@ import org.slf4j.LoggerFactory;
 
 public class FileWatcher {
 
-    private static final Logger log = LoggerFactory.getLogger(FileWatcher.class);
     private Thread thread;
     private WatchService watchService;
-
-    public interface Callback {
-        void run() throws Exception;
-    }
 
     /**
      * Starts watching a file and the given path and calls the callback when it is changed.
@@ -31,40 +27,24 @@ public class FileWatcher {
         Runtime.getRuntime().addShutdownHook(new Thread(fileWatcher::stop));
     }
 
-    public void start(Path file, Callback callback) throws IOException {
+    private void start(Path file, Callback callback) throws IOException {
         watchService = FileSystems.getDefault().newWatchService();
-        file.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE);
+        file.register(
+            watchService,
+            new WatchEvent.Kind[]{
+                StandardWatchEventKinds.ENTRY_MODIFY,
+                StandardWatchEventKinds.ENTRY_CREATE,
+                StandardWatchEventKinds.ENTRY_DELETE},
+            SensitivityWatchEventModifier.HIGH
+        );
 
-        thread = new Thread(() -> {
-            while (true) {
-                WatchKey wk = null;
-                try {
-                    wk = watchService.take();
-                    Thread.sleep(500); // give a chance for duplicate events to pile up
-                    for (WatchEvent<?> ignored : wk.pollEvents()) {
-                        callback.run();
-                        break;
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                } catch (Exception e) {
-                } finally {
-                    if (wk != null) {
-                        wk.reset();
-                    }
-                }
-            }
-        });
+        thread = new FileWatchingThread(callback, watchService);
         thread.start();
     }
 
     public void stop() {
         thread.interrupt();
-        try {
-            watchService.close();
-        } catch (IOException e) {
-        }
+        try {watchService.close();}
+        catch (IOException ignored) {}
     }
-
 }

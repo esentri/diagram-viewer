@@ -28,7 +28,6 @@ public class DiagramViewerView extends FlexLayout {
 
     @Autowired
     public DiagramViewerView() {
-
         setSizeFull();
         setClassName("diagram-viewer");
 
@@ -41,7 +40,8 @@ public class DiagramViewerView extends FlexLayout {
     // PostConstruct so property is evaluated
     @PostConstruct
     public void initWatcherService() throws IOException {
-        FileWatcher.onFileChange(Path.of(diagramDirectory), () -> this.getUI().ifPresent(ui -> ui.access(this::refreshTabs)));
+        FileWatcher.onFileChange(Path.of(diagramDirectory),
+            () -> this.getUI().ifPresent(ui -> ui.access(this::refreshTabs)));
     }
 
     // PostConstruct so property is evaluated
