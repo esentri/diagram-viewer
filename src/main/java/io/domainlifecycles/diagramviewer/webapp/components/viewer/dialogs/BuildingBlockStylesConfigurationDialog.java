@@ -34,11 +34,26 @@ public class BuildingBlockStylesConfigurationDialog extends Dialog {
         accordion.setSizeFull();
 
         TextField color = new TextField("Color");
+        TextField frame = new TextField("Frame fill");
+
         color.setWidthFull();
-        accordion.add("Aggregate Root", new VerticalLayout(color, new Checkbox("Bold")));
+        accordion.add("Aggregate Root", new VerticalLayout(color, frame, new Checkbox("Bold")));
         accordion.add("Entity", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
         accordion.add("Value Object", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
         accordion.add("Enum", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Identity", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Domain Event", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Domain Command", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Application Service", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Domain Service", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Repository", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Read Model", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Query Handler", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Outbound Service", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+        accordion.add("Unspecified Service Kinds", new VerticalLayout(new TextField("Color"), new Checkbox("Bold")));
+
+
+
 
         dialogLayout.add(accordion);
         return dialogLayout;

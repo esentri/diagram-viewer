@@ -22,8 +22,11 @@ public class VariousConfigurationDialog extends Dialog {
     private VerticalLayout createDialogLayout() {
         VerticalLayout dialogLayout = new VerticalLayout();
 
-        dialogLayout.add(new TextField("Aggregate Root Style"));
-        dialogLayout.add(new TextField("Color 2"));
+        dialogLayout.add(new TextField("Font"));
+        dialogLayout.add(new TextField("Direction"));
+        dialogLayout.add(new TextField("Ranker"));
+        dialogLayout.add(new TextField("Acycler"));
+
 
         return dialogLayout;
     }

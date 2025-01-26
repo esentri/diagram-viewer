@@ -6,9 +6,8 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.BuildingBlockStylesConfigurationDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.ShowBuildingBlocksConfigurationDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.ShowFieldsConfigurationDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.VariousConfigurationDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.VisibilityConfigurationDialog;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,37 +22,30 @@ public class DiagramConfigurationButtonBarComponent extends FlexLayout {
     }
 
     private List<Component> getConfigurationButtonsAndDialogs() {
-        List<Component> buildingBlockStylesButtonAndDialogButtonAndDialog = getBuildingBlockStylesButtonAndDialog();
-        List<Component> showBuildingBlocksButtonAndDialog = getShowBuildingBlocksButtonAndDialog();
-        List<Component> showFieldsButtonAndDialog = getShowFieldsButtonAndDialog();
-        List<Component> variousConfigurationDialog = getVariousConfigurationDialog();
+        List<Component> buildingBlockStylesButtonAndDialogButtonAndDialog = getBuildingBlockStylesConfigurationButtonAndDialog();
+        List<Component> showBuildingBlocksButtonAndDialog = getVariousConfigurationButtonAndDialog();
+        List<Component> showFieldsButtonAndDialog = getVisibilityConfigurationButtonAndDialog();
 
         return Stream.of(
                 buildingBlockStylesButtonAndDialogButtonAndDialog,
                 showBuildingBlocksButtonAndDialog,
-                showFieldsButtonAndDialog,
-                variousConfigurationDialog)
+                showFieldsButtonAndDialog)
             .flatMap(List::stream)
             .collect(Collectors.toList());
     }
 
-    private List<Component> getBuildingBlockStylesButtonAndDialog() {
-        Dialog colorConfigurationDialog = new BuildingBlockStylesConfigurationDialog();
-        return List.of(new Button(new Icon("vaadin:paintbrush"), e -> colorConfigurationDialog.open()), colorConfigurationDialog);
+    private List<Component> getBuildingBlockStylesConfigurationButtonAndDialog() {
+        Dialog buildingBlockStylesConfigurationDialog = new BuildingBlockStylesConfigurationDialog();
+        return List.of(new Button(new Icon("vaadin:paintbrush"), e -> buildingBlockStylesConfigurationDialog.open()), buildingBlockStylesConfigurationDialog);
     }
 
-    private List<Component> getShowBuildingBlocksButtonAndDialog() {
-        Dialog showBuildingBlocksConfigurationDialog = new ShowBuildingBlocksConfigurationDialog();
-        return List.of(new Button(new Icon("vaadin:connect"), e -> showBuildingBlocksConfigurationDialog.open()), showBuildingBlocksConfigurationDialog);
+    private List<Component> getVariousConfigurationButtonAndDialog() {
+        Dialog variousConfigurationDialog = new VariousConfigurationDialog();
+        return List.of(new Button(new Icon("vaadin:connect"), e -> variousConfigurationDialog.open()), variousConfigurationDialog);
     }
 
-    private List<Component> getShowFieldsButtonAndDialog() {
-        Dialog showFieldsConfigurationDialog = new ShowFieldsConfigurationDialog();
-        return List.of(new Button(new Icon("vaadin:input"), e -> showFieldsConfigurationDialog.open()), showFieldsConfigurationDialog);
-    }
-
-    private List<Component> getVariousConfigurationDialog() {
-        VariousConfigurationDialog variousConfigurationDialog = new VariousConfigurationDialog();
-        return List.of(new Button(new Icon("vaadin:font"), e -> variousConfigurationDialog.open()), variousConfigurationDialog);
+    private List<Component> getVisibilityConfigurationButtonAndDialog() {
+        Dialog visibilityConfigurationDialog = new VisibilityConfigurationDialog();
+        return List.of(new Button(new Icon("vaadin:input"), e -> visibilityConfigurationDialog.open()), visibilityConfigurationDialog);
     }
 }

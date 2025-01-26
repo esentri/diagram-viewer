@@ -1,4 +1,9 @@
 .diagram-viewer {
     box-sizing: border-box;
+    overflow: hidden;
     padding: 1rem
+}
+
+.zoomist-container {
+    overflow: hidden;
 }

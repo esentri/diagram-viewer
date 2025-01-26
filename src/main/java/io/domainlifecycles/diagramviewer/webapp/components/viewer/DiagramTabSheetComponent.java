@@ -23,9 +23,10 @@ public class DiagramTabSheetComponent extends TabSheet {
 
     private FlexLayout generateZoomComponentContainer(final DiagramZoomComponent zoomComponent) {
         FlexLayout zoomistContainer = new FlexLayout();
+        zoomistContainer.setClassName("zoomist-container");
         zoomistContainer.setFlexGrow(1, zoomComponent);
         zoomistContainer.add(zoomComponent);
-        zoomistContainer.setMinHeight("0%");
+        zoomistContainer.setMaxHeight("100%");
         return zoomistContainer;
     }
 }
