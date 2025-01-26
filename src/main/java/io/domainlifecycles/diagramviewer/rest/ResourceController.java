@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,6 +22,7 @@ import org.springframework.util.MimeType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -29,11 +31,16 @@ public class ResourceController {
 
     public static final String RESOURCES_API_PATH = "/api/resources";
 
+    public static final String TIMESTAMP_REQUEST_PARAMETER_NAME = "timestamp";
+
     @Value("${diagrams.location}")
     private String diagramFolderLocation;
 
     @GetMapping(value = "/{fileName}")
-    public ResponseEntity<InputStreamResource> getFile(@PathVariable("fileName") String fileName) throws IOException {
+    public ResponseEntity<InputStreamResource> getFile(
+            @PathVariable("fileName") String fileName,
+            @RequestParam(TIMESTAMP_REQUEST_PARAMETER_NAME) String ignored) throws IOException {
+
         URI filePath = Path.of(diagramFolderLocation, fileName).toUri();
         InputStream inputStream = new FileInputStream(new File(filePath));
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
