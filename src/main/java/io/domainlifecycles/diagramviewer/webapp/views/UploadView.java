@@ -18,23 +18,25 @@ public class UploadView extends VerticalLayout {
 
     @Value("${diagrams.location}")
     private String diagramFolderLocation;
+    private MultiFileMemoryBuffer uploadBuffer;
+    private Upload upload;
 
     public UploadView() {
         this.setSizeFull();
         this.setJustifyContentMode ( FlexComponent.JustifyContentMode.CENTER );
         this.setAlignItems(Alignment.CENTER);
+
+        uploadBuffer = new MultiFileMemoryBuffer();
+        upload = new Upload(uploadBuffer);
+        add(upload);
     }
 
     @PostConstruct
     private void addUploadComponent() {
-        MultiFileMemoryBuffer buffer = new MultiFileMemoryBuffer();
-        Upload uploadComponent = new Upload(buffer);
-
-        uploadComponent.addSucceededListener(event -> {
+        upload.addSucceededListener(event -> {
             String fileName = event.getFileName();
-            InputStream inputStream = buffer.getInputStream(fileName);
+            InputStream inputStream = uploadBuffer.getInputStream(fileName);
             FileIOUtils.saveFile(diagramFolderLocation, inputStream, fileName);
         });
-        add(uploadComponent);
     }
 }
