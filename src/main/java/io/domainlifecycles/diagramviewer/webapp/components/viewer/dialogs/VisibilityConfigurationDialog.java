@@ -1,8 +1,11 @@
 package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs;
 
+import com.vaadin.flow.component.accordion.Accordion;
+import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Input;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 
@@ -13,29 +16,40 @@ public class VisibilityConfigurationDialog extends Dialog {
 
 
     public VisibilityConfigurationDialog() {
-        generateCheckboxes();
-
         setHeaderTitle("Configuration | Visibility");
 
-        VerticalLayout dialogLayout = createDialogLayout();
-        add(dialogLayout);
+        createAndAddDialogLayout();
+        generateAndAddFooter();
+    }
 
+    private void generateAndAddFooter() {
         Button saveButton = new Button("Save", e -> close());
         Button cancelButton = new Button("Cancel", e -> close());
         getFooter().add(cancelButton);
         getFooter().add(saveButton);
     }
 
-    private void generateCheckboxes() {
+    private VerticalLayout createCheckboxes() {
+        VerticalLayout checkboxLayout = new VerticalLayout();
+
         showAllFieldsCheckbox = new Checkbox();
+
+        checkboxLayout.add(showAllFieldsCheckbox);
+        return checkboxLayout;
     }
 
-    private VerticalLayout createDialogLayout() {
+    private void createAndAddDialogLayout() {
         VerticalLayout dialogLayout = new VerticalLayout();
+        dialogLayout.add(createCheckboxes());
 
-        dialogLayout.add(new Checkbox("Show Fields"));
-        dialogLayout.add(new TextField("Color 2"));
+        Accordion accordion = new Accordion();
 
-        return dialogLayout;
+        AccordionPanel aggregateRootAccordionPanel = new AccordionPanel("Aggregate Root");
+        Input colorPicker = new Input();
+        colorPicker.setType("color");
+        aggregateRootAccordionPanel.add(colorPicker);
+        accordion.add(aggregateRootAccordionPanel);
+
+        add(dialogLayout);
     }
 }
