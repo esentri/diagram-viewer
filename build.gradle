@@ -16,6 +16,7 @@ java {
 
 repositories {
 	mavenCentral()
+	mavenLocal()
 	maven {
 		url = uri("https://maven.vaadin.com/vaadin-addons")
 	}
@@ -30,7 +31,11 @@ dependencies {
 	implementation 'com.vaadin:vaadin-spring-boot-starter'
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
 	implementation 'org.springframework.boot:spring-boot-devtools'
+	implementation 'io.domainlifecycles:mirror:2.0.4'
+	implementation 'io.domainlifecycles:domain-diagrammer:2.0.4'
+	implementation 'ch.qos.logback:logback-classic:1.5.3'
 	compileOnly 'org.projectlombok:lombok'
+	compileOnly "org.slf4j:slf4j-api:2.0.16"
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

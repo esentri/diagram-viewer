@@ -22,18 +22,19 @@ public class MainView extends AppLayout {
     public MainView() {
         setPrimarySection(Section.NAVBAR);
         addToNavbar(createNavbarContent());
+
     }
 
     private Component createNavbarContent() {
         HorizontalLayout layout = new HorizontalLayout();
-
+        layout.getStyle().set("backgroundColor", "#0d1f2d");
         // Configure styling for the header
         layout.setSizeFull();
 
         Image dlcLogo = new Image(DLC_LOGO_LOCATION, "DLC Logo");
         dlcLogo.setMaxHeight("60px");
-        layout.add(dlcLogo, createTabsWithLinks());
 
+        layout.add(dlcLogo, createTabsWithLinks());
         return layout;
     }
 
@@ -55,7 +56,8 @@ public class MainView extends AppLayout {
 
     private Tab createTabLink(String text, Class<? extends Component> navigationTarget) {
         final Tab tab = new Tab();
-        tab.add(new RouterLink(text, navigationTarget));
+        var link = new RouterLink(text, navigationTarget);
+        tab.add(link);
         ComponentUtil.setData(tab, Class.class, navigationTarget);
         return tab;
     }
