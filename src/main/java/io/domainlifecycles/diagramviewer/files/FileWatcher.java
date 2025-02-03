@@ -19,10 +19,11 @@ public class FileWatcher {
      * A shutdown hook is registered to stop watching. To control this yourself, create an
      * instance and use the start/stop methods.
      */
-    public static void onFileChange(Path file, Callback callback) throws IOException {
+    public static FileWatcher onFileChange(Path file, Callback callback) throws IOException {
         FileWatcher fileWatcher = new FileWatcher();
         fileWatcher.start(file, callback);
         Runtime.getRuntime().addShutdownHook(new Thread(fileWatcher::stop));
+        return fileWatcher;
     }
 
     private void start(Path file, Callback callback) throws IOException {

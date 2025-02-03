@@ -1,0 +1,160 @@
+package io.domainlifecycles.diagramviewer.session;
+
+import com.vaadin.flow.spring.annotation.SpringComponent;
+import com.vaadin.flow.spring.annotation.VaadinSessionScope;
+import io.domainlifecycles.diagramviewer.files.FileWatcher;
+import io.domainlifecycles.diagramviewer.jar.JarToDomainModelService;
+import io.domainlifecycles.diagramviewer.kroki.KrokiClient;
+import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
+import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.mirror.api.DomainModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
+
+@SpringComponent
+@VaadinSessionScope
+public class AnalyzedDomainModel {
+
+    private static final Logger log = LoggerFactory.getLogger(AnalyzedDomainModel.class);
+
+
+    private String diagramDirectory;
+    private String initialTargetsDirectory;
+
+    private final KrokiClient krokiClient;
+    private final JarToDomainModelService jarToDomainModelService;
+
+    //TODO über DomainModelDialog steuern
+    private String targetsDirectory;
+    //Jar File per Komponente wählen bzw. komplettes Verzeichnis wählen per https://github.com/vaadin-component-factory/directory-upload
+    private Path domainModelJarPath;
+    private DomainModel domainModel;
+    private String domainModelNomNoml;
+    private byte[] domainModelSvg;
+
+    //TODO über DomainModelDialog steuern
+    private String shownContextPackage = "com.esentri";
+    //TODO über DomainModelDialog steuern
+    private List<String> seedClassNames;
+    //TODO über DomainModelDialog steuern
+    private List<String> analyzedDomainModelPackages = List.of("com.esentri");
+    private FileWatcher jarFileWatcher;
+
+    public AnalyzedDomainModel(
+            @Value("${diagrams.location}")String diagramDirectory,
+            @Value("${targets.location}")String initialTargetsDirectory,
+            KrokiClient krokiClient,
+            JarToDomainModelService jarToDomainModelService) {
+        this.diagramDirectory = diagramDirectory;
+        this.initialTargetsDirectory = initialTargetsDirectory;
+        this.krokiClient = krokiClient;
+        this.jarToDomainModelService = jarToDomainModelService;
+        setTargetsDirectory(this.initialTargetsDirectory);
+    }
+
+    public void setAnalyzedDomainModelPackages(List<String> analyzedDomainModelPackages) {
+        this.analyzedDomainModelPackages = analyzedDomainModelPackages;
+        if(analyzedDomainModelPackages != null){
+            setDomainModelJarPath(this.domainModelJarPath);
+        }
+    }
+
+    public void setDomainModelJarPath(Path domainModelJarPath) {
+        this.domainModelJarPath = domainModelJarPath;
+        if(domainModelJarPath != null){
+            setDomainModel(
+                    jarToDomainModelService.createDomainModelFromJar(
+                            domainModelJarPath,
+                            analyzedDomainModelPackages.toArray(String[]::new)
+                    )
+            );
+        }
+    }
+
+    public void setDomainModel(DomainModel domainModel) {
+        this.domainModel = domainModel;
+        if(domainModel != null){
+            generateNomnomlAndSvg();
+        }
+    }
+
+    public void setShownContextPackage(String shownContextPackage) {
+        this.shownContextPackage = Objects.requireNonNull(shownContextPackage);
+        generateNomnomlAndSvg();
+    }
+
+    public void setSeedClassNames(List<String> seedClassNames) {
+        this.seedClassNames = seedClassNames;
+        generateNomnomlAndSvg();
+    }
+
+    private void generateNomnomlAndSvg(){
+        this.domainModelNomNoml = DiagrammerUtils.generateNomnoml(domainModel, shownContextPackage, seedClassNames);
+        this.domainModelSvg = krokiClient.convertNomnomlToSVG(domainModelNomNoml);
+        FileIOUtils.saveFile(diagramDirectory, new ByteArrayInputStream(domainModelSvg), "currentJar.svg");
+    }
+
+    public DomainModel getDomainModel() {
+        return domainModel;
+    }
+
+    public String getDomainModelNomNoml() {
+        return domainModelNomNoml;
+    }
+
+    public byte[] getDomainModelSvg() {
+        return domainModelSvg;
+    }
+
+    public String getShownContextPackage() {
+        return shownContextPackage;
+    }
+
+    public List<String> getSeedClassNames() {
+        return seedClassNames;
+    }
+
+    public String getTargetsDirectory() {
+        return targetsDirectory;
+    }
+
+    public void setTargetsDirectory(String targetsDirectory) {
+        this.targetsDirectory = targetsDirectory;
+        if(jarFileWatcher != null){
+            jarFileWatcher.stop();
+        }
+        initTargets();
+        if(targetsDirectory != null){
+            try{
+                jarFileWatcher = FileWatcher.onFileChange(Path.of(targetsDirectory),
+                        (evt) -> setDomainModelJarPath(Path.of(targetsDirectory,evt.context().toString())));
+            }catch (IOException ioException){
+                log.error(ioException.getMessage(), ioException);
+            }
+        }
+    }
+
+    private void initTargets(){
+        if(targetsDirectory != null){
+            File dir = new File(targetsDirectory);
+            if(dir.exists()){
+                var files = dir.listFiles();
+                if(files.length > 0){
+                    setDomainModelJarPath(files[0].toPath());
+                }
+                if(files.length > 1){
+                    log.warn("Only first target initialized currently!");
+                }
+            }
+        }
+
+    }
+}
