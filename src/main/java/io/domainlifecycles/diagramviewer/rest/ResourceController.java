@@ -3,22 +3,23 @@ package io.domainlifecycles.diagramviewer.rest;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.MimeType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +34,7 @@ public class ResourceController {
 
     public static final String TIMESTAMP_REQUEST_PARAMETER_NAME = "timestamp";
 
-    @Value("${diagrams.location}")
+    @Value("${diagram.location}")
     private String diagramFolderLocation;
 
     @GetMapping(value = "/{fileName}")
@@ -41,8 +42,23 @@ public class ResourceController {
             @PathVariable("fileName") String fileName,
             @RequestParam(TIMESTAMP_REQUEST_PARAMETER_NAME) String ignored) throws IOException {
 
-        URI filePath = Path.of(diagramFolderLocation, fileName).toUri();
-        InputStream inputStream = new FileInputStream(new File(filePath));
+        URI filePath;
+        try {
+            filePath = Path.of(diagramFolderLocation, fileName).toUri();
+        } catch (InvalidPathException | IOError e) {
+            throw DiagramViewerException.fail(
+                String.format("Location of requested file '%s/%s' is not a valid path.", diagramFolderLocation, fileName));
+        }
+
+        InputStream inputStream;
+        try {
+            inputStream = new FileInputStream(new File(filePath));
+        } catch(NullPointerException e) {
+            throw DiagramViewerException.fail("No path specified for requested file.", e);
+        } catch (FileNotFoundException e) {
+            throw DiagramViewerException.fail(String.format("No file found at '%s'.", filePath.getPath()), e);
+        }
+
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
 
         if(!inputStreamResource.exists()) {

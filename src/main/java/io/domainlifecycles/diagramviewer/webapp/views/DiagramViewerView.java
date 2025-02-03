@@ -1,8 +1,5 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -15,6 +12,8 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -22,11 +21,12 @@ import org.springframework.beans.factory.annotation.Value;
 @PageTitle("DLC | Diagram Viewer")
 public class DiagramViewerView extends FlexLayout {
 
-    @Value("${diagrams.location}")
+    private final static Logger log = LoggerFactory.getLogger(DiagramViewerView.class);
+
+    @Value("${diagram.location}")
     private String diagramDirectory;
     private final DiagramTabSheetComponent tabSheet;
 
-    @Autowired
     public DiagramViewerView() {
         setSizeFull();
         setClassName("diagram-viewer");
@@ -41,7 +41,11 @@ public class DiagramViewerView extends FlexLayout {
     @PostConstruct
     public void initWatcherService() throws IOException {
         FileWatcher.onFileChange(Path.of(diagramDirectory),
-            () -> this.getUI().ifPresent(ui -> ui.access(this::refreshTabs)));
+            () -> {
+                log.debug("Noticed change in watched directory. Refreshing tabs.");
+                this.getUI().ifPresent(ui -> ui.access(this::refreshTabs));
+            }
+        );
     }
 
     // PostConstruct so property is evaluated

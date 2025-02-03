@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.files;
 
 import com.sun.nio.file.SensitivityWatchEventModifier;
+import io.domainlifecycles.diagramviewer.webapp.views.UploadView;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -13,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 public class FileWatcher {
 
+    private final static Logger log = LoggerFactory.getLogger(FileWatcher.class);
+
     private Thread thread;
     private WatchService watchService;
 
@@ -24,6 +27,8 @@ public class FileWatcher {
     public static void onFileChange(Path file, Callback callback) throws IOException {
         FileWatcher fileWatcher = new FileWatcher();
         fileWatcher.start(file, callback);
+
+        log.info(String.format("FileWatcher successfully started and watching directory '%s'", file));
         Runtime.getRuntime().addShutdownHook(new Thread(fileWatcher::stop));
     }
 

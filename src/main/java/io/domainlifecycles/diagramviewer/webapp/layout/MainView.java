@@ -27,7 +27,6 @@ public class MainView extends AppLayout {
     private Component createNavbarContent() {
         HorizontalLayout layout = new HorizontalLayout();
 
-        // Configure styling for the header
         layout.setSizeFull();
 
         Image dlcLogo = new Image(DLC_LOGO_LOCATION, "DLC Logo");

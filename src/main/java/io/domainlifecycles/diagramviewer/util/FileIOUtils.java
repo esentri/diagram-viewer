@@ -4,7 +4,9 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
@@ -21,14 +23,9 @@ public class FileIOUtils {
             .collect(Collectors.toSet());
     }
 
-    public static void saveFile(String diagramFolderLocation, InputStream inputStream, String fileName) {
+    public static void saveFile(String diagramFolderLocation, InputStream inputStream, String fileName) throws InvalidPathException, IOException {
         final Path filePath = Path.of(diagramFolderLocation, fileName);
-
-        try {
-            Files.createDirectories(filePath.getParent());
-            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw DiagramViewerException.fail(String.format("Error occurred while trying to save file to %s.", filePath), e);
-        }
+        Files.createDirectories(filePath.getParent());
+        Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
     }
 }
