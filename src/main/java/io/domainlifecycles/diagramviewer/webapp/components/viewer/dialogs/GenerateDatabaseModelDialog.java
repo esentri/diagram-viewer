@@ -24,7 +24,8 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private Checkbox auditModelCheckbox;
     private Select<String> sqlDialectSelect;
     private TextArea output;
-    TextField bcPackageInput;
+    private TextField bcPackageInput;
+    private TextField bcSchemaInput;
 
     private SQLDDLGeneratorService sqlDDLGeneratorService;
     private AnalyzedDomainModel analyzedDomainModel;
@@ -61,12 +62,16 @@ public class GenerateDatabaseModelDialog extends Dialog {
         sqlDialectSelect.setValue(SQL_DIALECT_SELECT_VALUES[0]);
         bcPackageInput = new TextField();
         bcPackageInput.setRequiredIndicatorVisible(true);
-        bcPackageInput.setRequired(true);
-        bcPackageInput.setErrorMessage("Please enter the package name");
+        bcPackageInput.setErrorMessage("Please enter the Java package name");
+        bcSchemaInput = new TextField();
+        bcSchemaInput.setRequiredIndicatorVisible(true);
+        bcSchemaInput.setRequired(true);
+        bcSchemaInput.setErrorMessage("Please enter the schema name");
         output = new TextArea();
         output.setSizeFull();
-        output.setEnabled(false);
+        output.setReadOnly(true);
         formLayout.addFormItem(bcPackageInput, "Bounded context package");
+        formLayout.addFormItem(bcSchemaInput, "Bounded context DB schema");
         formLayout.addFormItem(sqlDialectSelect,"SQL Dialect");
         formLayout.addFormItem(auditModelCheckbox, "Audit Model");
         formLayout.addFormItem(output, "Output");
@@ -74,7 +79,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
     }
 
     private InputStream getStream() {
-        var ddl = sqlDDLGeneratorService.generateSQL(analyzedDomainModel.getDomainModel(), bcPackageInput.getValue(), sqlDialectSelect.getValue());
+        var ddl = sqlDDLGeneratorService.generateSQL(analyzedDomainModel.getDomainModel(), bcPackageInput.getValue(), bcSchemaInput.getValue(), sqlDialectSelect.getValue(), auditModelCheckbox.getValue());
         output.setValue(ddl);
         return new ByteArrayInputStream(ddl.getBytes(StandardCharsets.UTF_8));
     }

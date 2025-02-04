@@ -24,21 +24,27 @@ public class SQLDDLGeneratorService {
     }
 
 
-    public String generateSQL(DomainModel domainModel, String bcPackageName, String sqlDialect) {
+    public String generateSQL(DomainModel domainModel, String bcPackageName, String bcSchemaName, String sqlDialect, boolean audit) {
         log.info("Generating ddl for {}", bcPackageName);
         SQLPrinter printer = null;
-        var boundedContextName = bcPackageName.replaceAll("\\.", "\\_");
-        var packageDescripton = new BoundedContextPackage(bcPackageName, boundedContextName);
+        var packageDescripton = new BoundedContextPackage(bcPackageName, bcSchemaName);
         var dm = MirrorMapper.mapDomain(domainModel, packageDescripton);
         TargetConfig.TargetType targetType;
+        String auditSchema = null;
+        if (audit) {
+            auditSchema = bcSchemaName;
+        }
         switch (sqlDialect) {
             case "Oracle": {
                 targetType = TargetConfig.TargetType.SQL_ORACLE;
                 var target = SQLTargetConfig.builder()
                         .targetType(targetType)
                         .destinationPath("dummy")
+                        .auditSchema(auditSchema)
+                        .generateAuditTables(audit)
                         .build();
                 printer = new OracleSQLPrinter(target, dm);
+                break;
             }
 
             default:{
@@ -46,17 +52,19 @@ public class SQLDDLGeneratorService {
                 var target = SQLTargetConfig.builder()
                         .targetType(targetType)
                         .destinationPath("dummy")
+                        .auditSchema(auditSchema)
+                        .generateAuditTables(audit)
                         .build();
                 printer = new PostgresSQLPrinter(target, dm);
             }
 
         };
 
-        var bcDef = dm.findBoundedContextByName(boundedContextName);
+        var bcDef = dm.findBoundedContextByName(bcSchemaName);
         var source = printer.sourceCodeFile(bcDef);
 
         log.debug("Generated DDL:\n {}", source.content());
-        log.info("Generated DDL for {} succesfully!", bcPackageName);
+        log.info("Generated DDL for {} successfully!", bcPackageName);
         return source.content();
     }
 

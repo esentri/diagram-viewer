@@ -8,6 +8,7 @@ import io.domainlifecycles.diagramviewer.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
+import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,6 +83,9 @@ public class AnalyzedDomainModel {
     public void setDomainModel(DomainModel domainModel) {
         this.domainModel = domainModel;
         if(domainModel != null){
+            var ser = new JacksonDomainSerializer(true);
+            var val = ser.serialize(domainModel);
+            log.debug("DomainModel:\\n"+ val);
             generateNomnomlAndSvg();
         }
     }
