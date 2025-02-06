@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,7 @@ public class DiagramViewerView extends FlexLayout implements VaadinServiceInitLi
 
     private final static Logger log = LoggerFactory.getLogger(DiagramViewerView.class);
 
-    @Value("${diagrams.location}")
+    @Value("${diagram.location}")
     private String diagramDirectory;
 
     private final DiagramTabSheetComponent tabSheet;
@@ -60,7 +59,11 @@ public class DiagramViewerView extends FlexLayout implements VaadinServiceInitLi
     @PostConstruct
     public void initWatcherService() throws IOException {
         FileWatcher.onFileChange(Path.of(diagramDirectory),
-            (evt) -> this.getUI().ifPresent(ui -> ui.access(this::refreshTabs)));
+            (evt) -> {
+                log.debug("Noticed change in watched directory. Refreshing tabs.");
+                this.getUI().ifPresent(ui -> ui.access(this::refreshTabs));
+            }
+        );
     }
 
     // PostConstruct so property is evaluated
