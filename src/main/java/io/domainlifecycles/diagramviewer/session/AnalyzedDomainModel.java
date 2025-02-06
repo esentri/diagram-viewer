@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.session;
 
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
+import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.FileWatcher;
 import io.domainlifecycles.diagramviewer.jar.JarToDomainModelService;
 import io.domainlifecycles.diagramviewer.kroki.KrokiClient;
@@ -25,7 +26,6 @@ import java.util.Objects;
 public class AnalyzedDomainModel {
 
     private static final Logger log = LoggerFactory.getLogger(AnalyzedDomainModel.class);
-
 
     private String diagramDirectory;
     private String initialTargetsDirectory;
@@ -103,7 +103,11 @@ public class AnalyzedDomainModel {
     private void generateNomnomlAndSvg(){
         this.domainModelNomNoml = DiagrammerUtils.generateNomnoml(domainModel, shownContextPackage, seedClassNames);
         this.domainModelSvg = krokiClient.convertNomnomlToSVG(domainModelNomNoml);
-        FileIOUtils.saveFile(diagramDirectory, new ByteArrayInputStream(domainModelSvg), "currentJar.svg");
+        try {
+            FileIOUtils.saveFile(diagramDirectory, new ByteArrayInputStream(domainModelSvg), "currentJar.svg");
+        } catch (IOException e) {
+            throw DiagramViewerException.fail(String.format("Could not save diagram to '%s'.", diagramDirectory), e);
+        }
     }
 
     public DomainModel getDomainModel() {

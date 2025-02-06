@@ -18,17 +18,11 @@ public class SQLDDLGeneratorService {
 
     private static final Logger log = LoggerFactory.getLogger(SQLDDLGeneratorService.class);
 
-
-    public SQLDDLGeneratorService() {
-
-    }
-
-
     public String generateSQL(DomainModel domainModel, String bcPackageName, String bcSchemaName, String sqlDialect, boolean audit) {
-        log.info("Generating ddl for {}", bcPackageName);
-        SQLPrinter printer = null;
-        var packageDescripton = new BoundedContextPackage(bcPackageName, bcSchemaName);
-        var dm = MirrorMapper.mapDomain(domainModel, packageDescripton);
+        log.info("Generating DDL for '{}'", bcPackageName);
+        SQLPrinter printer;
+        var packageDescription = new BoundedContextPackage(bcPackageName, bcSchemaName);
+        var dm = MirrorMapper.mapDomain(domainModel, packageDescription);
         TargetConfig.TargetType targetType;
         String auditSchema = null;
         if (audit) {
@@ -57,15 +51,13 @@ public class SQLDDLGeneratorService {
                         .build();
                 printer = new PostgresSQLPrinter(target, dm);
             }
-
-        };
+        }
 
         var bcDef = dm.findBoundedContextByName(bcSchemaName);
         var source = printer.sourceCodeFile(bcDef);
 
-        log.debug("Generated DDL:\n {}", source.content());
-        log.info("Generated DDL for {} successfully!", bcPackageName);
+        log.debug("Generated DDL:\n '{}'", source.content());
+        log.info("Generated DDL for '{}' successfully!", bcPackageName);
         return source.content();
     }
-
 }
