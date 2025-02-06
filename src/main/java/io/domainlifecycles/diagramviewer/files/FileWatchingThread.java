@@ -1,5 +1,7 @@
 package io.domainlifecycles.diagramviewer.files;
 
+import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -21,8 +23,12 @@ public class FileWatchingThread extends Thread {
             try {
                 wk = watchService.take();
                 Thread.sleep(100); // give a chance for duplicate events to pile up
-                for (WatchEvent<?> ignored : wk.pollEvents()) {
-                    callback.run();
+                for (WatchEvent<?> event : wk.pollEvents()) {
+                    if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
+                        continue;
+                    }
+                    WatchEvent<Path> pathEvent = (WatchEvent<Path>)event;
+                    callback.run(pathEvent);
                     break;
                 }
             } catch (InterruptedException e) {
