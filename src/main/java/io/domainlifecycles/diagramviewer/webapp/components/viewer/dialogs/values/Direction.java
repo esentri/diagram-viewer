@@ -1,16 +1,13 @@
 package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values;
 
-public enum StylingOptions {
-    BOLD("bold", "Bold"),
-    CENTER("center", "Center"),
-    ITALIC("italic", "Italic"),
-    LEFT("left", "Left"),
-    UNDERLINE("underline", "Underline");
+public enum Direction {
+    UP("up", "Up"),
+    DOWN("down", "Down");
 
     private final String nomnomlValue;
     private final String displayValue;
 
-    StylingOptions(String nomnomlValue, String displayValue) {
+    Direction(String nomnomlValue, String displayValue) {
         this.nomnomlValue = nomnomlValue;
         this.displayValue = displayValue;
     }

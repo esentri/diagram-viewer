@@ -7,8 +7,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.components.ColorPickerComponent;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.StylingOptions;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Styling;
 
 /**
  * Dialog allowing configuration for each DDD building block (i.e. AggregateRoot, Repository, etc.).
@@ -17,53 +18,56 @@ import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values
  */
 public class StylingConfigurationDialog extends Dialog {
 
+    private final AnalyzedDomainModel analyzedDomainModel;
+
     private Button cancelButton;
     private Button saveButton;
 
     private ColorPickerComponent aggregateRootColorInput;
-    private MultiSelectComboBox<StylingOptions> aggregateRootStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> aggregateRootStylingOptionsSelect;
 
     private ColorPickerComponent entityColorInput;
-    private MultiSelectComboBox<StylingOptions> entityStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> entityStylingOptionsSelect;
 
     private ColorPickerComponent valueObjectColorInput;
-    private MultiSelectComboBox<StylingOptions> valueObjectStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> valueObjectStylingOptionsSelect;
 
     private ColorPickerComponent enumColorInput;
-    private MultiSelectComboBox<StylingOptions> enumStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> enumStylingOptionsSelect;
 
     private ColorPickerComponent identityColorInput;
-    private MultiSelectComboBox<StylingOptions> identityStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> identityStylingOptionsSelect;
 
     private ColorPickerComponent domainEventColorInput;
-    private MultiSelectComboBox<StylingOptions> domainEventStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> domainEventStylingOptionsSelect;
 
     private ColorPickerComponent domainCommandColorInput;
-    private MultiSelectComboBox<StylingOptions> domainCommandStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> domainCommandStylingOptionsSelect;
 
     private ColorPickerComponent applicationServiceColorInput;
-    private MultiSelectComboBox<StylingOptions> applicationServiceStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> applicationServiceStylingOptionsSelect;
 
     private ColorPickerComponent domainServiceColorInput;
-    private MultiSelectComboBox<StylingOptions> domainServiceStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> domainServiceStylingOptionsSelect;
 
     private ColorPickerComponent repositoryColorInput;
-    private MultiSelectComboBox<StylingOptions> repositoryStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> repositoryStylingOptionsSelect;
 
     private ColorPickerComponent readModelColorInput;
-    private MultiSelectComboBox<StylingOptions> readModelStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> readModelStylingOptionsSelect;
 
     private ColorPickerComponent queryHandlerColorInput;
-    private MultiSelectComboBox<StylingOptions> queryHandlerStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> queryHandlerStylingOptionsSelect;
 
     private ColorPickerComponent outboundServiceColorInput;
-    private MultiSelectComboBox<StylingOptions> outboundServiceStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> outboundServiceStylingOptionsSelect;
 
     private ColorPickerComponent unspecifiedServiceKindColorInput;
-    private MultiSelectComboBox<StylingOptions> unspecifiedServiceKindStylingOptionsSelect;
+    private MultiSelectComboBox<Styling> unspecifiedServiceKindStylingOptionsSelect;
 
 
-    public StylingConfigurationDialog() {
+    public StylingConfigurationDialog(AnalyzedDomainModel analyzedDomainModel) {
+        this.analyzedDomainModel = analyzedDomainModel;
         setHeaderTitle("Configuration | Styling");
 
         add(createDialogLayout());
@@ -76,7 +80,7 @@ public class StylingConfigurationDialog extends Dialog {
         saveButton = new Button("Save");
 
         saveButton.addClickListener(e -> {
-            // execute DLC logic
+            //diagramConfigurationBinder.writeBeanIfValid(analyzedDomainModel.getDiagramConfiguration());
             close();
         });
 
@@ -121,9 +125,9 @@ public class StylingConfigurationDialog extends Dialog {
         aggregateRootDialogFormLayout.addFormItem(aggregateRootColorInput, "Color");
 
         aggregateRootStylingOptionsSelect = new MultiSelectComboBox<>();
-        aggregateRootStylingOptionsSelect.setItems(StylingOptions.values());
-        aggregateRootStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        aggregateRootStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        aggregateRootStylingOptionsSelect.setItems(Styling.values());
+        aggregateRootStylingOptionsSelect.setValue(Styling.BOLD);
+        aggregateRootStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         aggregateRootDialogFormLayout.addFormItem(aggregateRootStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(aggregateRootDialogFormLayout);
@@ -140,9 +144,9 @@ public class StylingConfigurationDialog extends Dialog {
         entityDialogFormLayout.addFormItem(entityColorInput, "Color");
 
         entityStylingOptionsSelect = new MultiSelectComboBox<>();
-        entityStylingOptionsSelect.setItems(StylingOptions.values());
-        entityStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        entityStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        entityStylingOptionsSelect.setItems(Styling.values());
+        entityStylingOptionsSelect.setValue(Styling.BOLD);
+        entityStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         entityDialogFormLayout.addFormItem(entityStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(entityDialogFormLayout);
@@ -159,9 +163,9 @@ public class StylingConfigurationDialog extends Dialog {
         valueObjectDialogFormLayout.addFormItem(valueObjectColorInput, "Color");
 
         valueObjectStylingOptionsSelect = new MultiSelectComboBox<>();
-        valueObjectStylingOptionsSelect.setItems(StylingOptions.values());
-        valueObjectStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        valueObjectStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        valueObjectStylingOptionsSelect.setItems(Styling.values());
+        valueObjectStylingOptionsSelect.setValue(Styling.BOLD);
+        valueObjectStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         valueObjectDialogFormLayout.addFormItem(valueObjectStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(valueObjectDialogFormLayout);
@@ -178,9 +182,9 @@ public class StylingConfigurationDialog extends Dialog {
         enumDialogFormLayout.addFormItem(enumColorInput, "Color");
 
         enumStylingOptionsSelect = new MultiSelectComboBox<>();
-        enumStylingOptionsSelect.setItems(StylingOptions.values());
-        enumStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        enumStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        enumStylingOptionsSelect.setItems(Styling.values());
+        enumStylingOptionsSelect.setValue(Styling.BOLD);
+        enumStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         enumDialogFormLayout.addFormItem(enumStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(enumDialogFormLayout);
@@ -197,9 +201,9 @@ public class StylingConfigurationDialog extends Dialog {
         identityDialogFormLayout.addFormItem(identityColorInput, "Color");
 
         identityStylingOptionsSelect = new MultiSelectComboBox<>();
-        identityStylingOptionsSelect.setItems(StylingOptions.values());
-        identityStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        identityStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        identityStylingOptionsSelect.setItems(Styling.values());
+        identityStylingOptionsSelect.setValue(Styling.BOLD);
+        identityStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         identityDialogFormLayout.addFormItem(identityStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(identityDialogFormLayout);
@@ -216,9 +220,9 @@ public class StylingConfigurationDialog extends Dialog {
         domainEventDialogFormLayout.addFormItem(domainEventColorInput, "Color");
 
         domainEventStylingOptionsSelect = new MultiSelectComboBox<>();
-        domainEventStylingOptionsSelect.setItems(StylingOptions.values());
-        domainEventStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        domainEventStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        domainEventStylingOptionsSelect.setItems(Styling.values());
+        domainEventStylingOptionsSelect.setValue(Styling.BOLD);
+        domainEventStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         domainEventDialogFormLayout.addFormItem(domainEventStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(domainEventDialogFormLayout);
@@ -235,9 +239,9 @@ public class StylingConfigurationDialog extends Dialog {
         domainCommandDialogFormLayout.addFormItem(domainCommandColorInput, "Color");
 
         domainCommandStylingOptionsSelect = new MultiSelectComboBox<>();
-        domainCommandStylingOptionsSelect.setItems(StylingOptions.values());
-        domainCommandStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        domainCommandStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        domainCommandStylingOptionsSelect.setItems(Styling.values());
+        domainCommandStylingOptionsSelect.setValue(Styling.BOLD);
+        domainCommandStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         domainCommandDialogFormLayout.addFormItem(domainCommandStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(domainCommandDialogFormLayout);
@@ -254,9 +258,9 @@ public class StylingConfigurationDialog extends Dialog {
         applicationServiceDialogFormLayout.addFormItem(applicationServiceColorInput, "Color");
 
         applicationServiceStylingOptionsSelect = new MultiSelectComboBox<>();
-        applicationServiceStylingOptionsSelect.setItems(StylingOptions.values());
-        applicationServiceStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        applicationServiceStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        applicationServiceStylingOptionsSelect.setItems(Styling.values());
+        applicationServiceStylingOptionsSelect.setValue(Styling.BOLD);
+        applicationServiceStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         applicationServiceDialogFormLayout.addFormItem(applicationServiceStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(applicationServiceDialogFormLayout);
@@ -273,9 +277,9 @@ public class StylingConfigurationDialog extends Dialog {
         domainServiceDialogFormLayout.addFormItem(domainServiceColorInput, "Color");
 
         domainServiceStylingOptionsSelect = new MultiSelectComboBox<>();
-        domainServiceStylingOptionsSelect.setItems(StylingOptions.values());
-        domainServiceStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        domainServiceStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        domainServiceStylingOptionsSelect.setItems(Styling.values());
+        domainServiceStylingOptionsSelect.setValue(Styling.BOLD);
+        domainServiceStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         domainServiceDialogFormLayout.addFormItem(domainServiceStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(domainServiceDialogFormLayout);
@@ -292,9 +296,9 @@ public class StylingConfigurationDialog extends Dialog {
         repositoryDialogFormLayout.addFormItem(repositoryColorInput, "Color");
 
         repositoryStylingOptionsSelect = new MultiSelectComboBox<>();
-        repositoryStylingOptionsSelect.setItems(StylingOptions.values());
-        repositoryStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        repositoryStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        repositoryStylingOptionsSelect.setItems(Styling.values());
+        repositoryStylingOptionsSelect.setValue(Styling.BOLD);
+        repositoryStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         repositoryDialogFormLayout.addFormItem(repositoryStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(repositoryDialogFormLayout);
@@ -311,9 +315,9 @@ public class StylingConfigurationDialog extends Dialog {
         readModelDialogFormLayout.addFormItem(readModelColorInput, "Color");
 
         readModelStylingOptionsSelect = new MultiSelectComboBox<>();
-        readModelStylingOptionsSelect.setItems(StylingOptions.values());
-        readModelStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        readModelStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        readModelStylingOptionsSelect.setItems(Styling.values());
+        readModelStylingOptionsSelect.setValue(Styling.BOLD);
+        readModelStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         readModelDialogFormLayout.addFormItem(readModelStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(readModelDialogFormLayout);
@@ -329,9 +333,9 @@ public class StylingConfigurationDialog extends Dialog {
         queryHandlerDialogFormLayout.addFormItem(queryHandlerColorInput, "Color");
 
         queryHandlerStylingOptionsSelect = new MultiSelectComboBox<>();
-        queryHandlerStylingOptionsSelect.setItems(StylingOptions.values());
-        queryHandlerStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        queryHandlerStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        queryHandlerStylingOptionsSelect.setItems(Styling.values());
+        queryHandlerStylingOptionsSelect.setValue(Styling.BOLD);
+        queryHandlerStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         queryHandlerDialogFormLayout.addFormItem(queryHandlerStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(queryHandlerDialogFormLayout);
@@ -347,9 +351,9 @@ public class StylingConfigurationDialog extends Dialog {
         outboundServiceDialogFormLayout.addFormItem(outboundServiceColorInput, "Color");
 
         outboundServiceStylingOptionsSelect = new MultiSelectComboBox<>();
-        outboundServiceStylingOptionsSelect.setItems(StylingOptions.values());
-        outboundServiceStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        outboundServiceStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        outboundServiceStylingOptionsSelect.setItems(Styling.values());
+        outboundServiceStylingOptionsSelect.setValue(Styling.BOLD);
+        outboundServiceStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         outboundServiceDialogFormLayout.addFormItem(outboundServiceStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(outboundServiceDialogFormLayout);
@@ -366,9 +370,9 @@ public class StylingConfigurationDialog extends Dialog {
         unspecifiedServiceKindDialogFormLayout.addFormItem(unspecifiedServiceKindColorInput, "Color");
 
         unspecifiedServiceKindStylingOptionsSelect = new MultiSelectComboBox<>();
-        unspecifiedServiceKindStylingOptionsSelect.setItems(StylingOptions.values());
-        unspecifiedServiceKindStylingOptionsSelect.setValue(StylingOptions.BOLD);
-        unspecifiedServiceKindStylingOptionsSelect.setItemLabelGenerator(StylingOptions::getDisplayValue);
+        unspecifiedServiceKindStylingOptionsSelect.setItems(Styling.values());
+        unspecifiedServiceKindStylingOptionsSelect.setValue(Styling.BOLD);
+        unspecifiedServiceKindStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
         unspecifiedServiceKindDialogFormLayout.addFormItem(unspecifiedServiceKindStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(unspecifiedServiceKindDialogFormLayout);

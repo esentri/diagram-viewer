@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 public class FileIOUtils {
 
-    public static Set<String> getFileNamesInDiagramDirectory(String directory) {
+    public static Set<String> getFileNamesInDirectory(String directory) {
         return Stream.of(Objects.requireNonNull(new File(directory).listFiles()))
             .filter(file -> !file.isDirectory())
             .map(File::getName)

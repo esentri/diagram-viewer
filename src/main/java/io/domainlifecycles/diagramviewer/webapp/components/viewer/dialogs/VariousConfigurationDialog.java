@@ -5,25 +5,34 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.data.binder.Binder;
+import io.domainlifecycles.diagramviewer.model.DiagramConfiguration;
+import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Acycler;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Direction;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Font;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Ranker;
 
 public class VariousConfigurationDialog extends Dialog {
 
-    private static final String[] FONT_SELECT_VALUES = {"Helvetica", "Arial"};
-    private static final String[] DIRECTION_SELECT_VALUES = {"Up", "Down"};
-    private static final String[] RANKER_SELECT_VALUES = {"longest-path", "network-simplex", "tight-tree"};
-    private static final String[] ACYCLER_SELECT_VALUES = {"greedy"};
+    private final AnalyzedDomainModel analyzedDomainModel;
+    private final Binder<DiagramConfiguration> diagramConfigurationBinder;
 
     private Button cancelButton;
     private Button saveButton;
-    private Select<String> fontSelect;
-    private Select<String> directionSelect;
-    private Select<String> rankerSelect;
-    private Select<String> acyclerSelect;
+    private Select<Font> fontSelect;
+    private Select<Direction> directionSelect;
+    private Select<Ranker> rankerSelect;
+    private Select<Acycler> acyclerSelect;
 
-    public VariousConfigurationDialog() {
+    public VariousConfigurationDialog(AnalyzedDomainModel analyzedDomainModel) {
+        this.diagramConfigurationBinder = new Binder<>(DiagramConfiguration.class);
+        this.analyzedDomainModel = analyzedDomainModel;
+
         setHeaderTitle("Configuration | Various");
 
         add(createDialogLayout());
+        diagramConfigurationBinder.readBean(analyzedDomainModel.getDiagramConfiguration());
 
         getFooter().add(createSaveButton());
         getFooter().add(createCancelButton());
@@ -33,7 +42,7 @@ public class VariousConfigurationDialog extends Dialog {
         saveButton = new Button("Save");
 
         saveButton.addClickListener(e -> {
-            // execute DLC logic
+            diagramConfigurationBinder.writeBeanIfValid(analyzedDomainModel.getDiagramConfiguration());
             close();
         });
 
@@ -42,7 +51,10 @@ public class VariousConfigurationDialog extends Dialog {
     }
 
     private Button createCancelButton() {
-        cancelButton = new Button("Cancel", e -> close());
+        cancelButton = new Button("Cancel", e -> {
+            diagramConfigurationBinder.readBean(analyzedDomainModel.getDiagramConfiguration());
+            close();
+        });
         return cancelButton;
     }
 
@@ -50,24 +62,28 @@ public class VariousConfigurationDialog extends Dialog {
         FormLayout formLayout = new FormLayout();
 
         fontSelect = new Select<>();
-        fontSelect.setItems(FONT_SELECT_VALUES);
-        fontSelect.setValue(FONT_SELECT_VALUES[0]);
+        fontSelect.setItems(Font.values());
+        fontSelect.setItemLabelGenerator(Font::getDisplayValue);
         formLayout.addFormItem(fontSelect,"Font");
+        diagramConfigurationBinder.forField(fontSelect).bind(DiagramConfiguration::getFont, DiagramConfiguration::setFont);
 
         directionSelect = new Select<>();
-        directionSelect.setItems(DIRECTION_SELECT_VALUES);
-        directionSelect.setValue(DIRECTION_SELECT_VALUES[0]);
+        directionSelect.setItems(Direction.values());
+        directionSelect.setItemLabelGenerator(Direction::getDisplayValue);
         formLayout.addFormItem(directionSelect,"Direction");
+        diagramConfigurationBinder.forField(directionSelect).bind(DiagramConfiguration::getDirection, DiagramConfiguration::setDirection);
 
         rankerSelect = new Select<>();
-        rankerSelect.setItems(RANKER_SELECT_VALUES);
-        rankerSelect.setValue(RANKER_SELECT_VALUES[0]);
+        rankerSelect.setItems(Ranker.values());
+        rankerSelect.setItemLabelGenerator(Ranker::getDisplayValue);
         formLayout.addFormItem(rankerSelect,"Ranker");
+        diagramConfigurationBinder.forField(rankerSelect).bind(DiagramConfiguration::getRanker, DiagramConfiguration::setRanker);
 
         acyclerSelect = new Select<>();
-        acyclerSelect.setItems(ACYCLER_SELECT_VALUES);
-        acyclerSelect.setValue(ACYCLER_SELECT_VALUES[0]);
+        acyclerSelect.setItems(Acycler.values());
+        acyclerSelect.setItemLabelGenerator(Acycler::getDisplayValue);
         formLayout.addFormItem(acyclerSelect,"Acycler");
+        diagramConfigurationBinder.forField(acyclerSelect).bind(DiagramConfiguration::getAcycler, DiagramConfiguration::setAcycler);
 
         return formLayout;
     }

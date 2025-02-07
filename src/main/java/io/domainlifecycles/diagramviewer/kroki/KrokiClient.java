@@ -27,7 +27,7 @@ public class KrokiClient {
     private static final Integer WAIT_TIMEOUT_MS = 500;
 
     public byte[] convertNomnomlToSVG(String rawInputDiagramContent) {
-        log.info("Converting Nomnoml diagram to specified format via Kroki.");
+        log.info("Converting Nomnoml diagram to .svg via Kroki.");
 
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(krokiUrl + KROKI_NOMNOML_SVG_PATH))

@@ -5,6 +5,7 @@ import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.kroki.KrokiClient;
+import io.domainlifecycles.diagramviewer.model.DiagramConfiguration;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
@@ -20,16 +21,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * Represents one project/diagram context.
+ */
 @SpringComponent
 @VaadinSessionScope
 public class AnalyzedDomainModel {
 
     private static final Logger log = LoggerFactory.getLogger(AnalyzedDomainModel.class);
 
+    private final KrokiClient krokiClient;
+
+    private DiagramConfiguration diagramConfiguration;
+
     private String diagramDirectory;
     private String initialTargetsDirectory;
 
-    private final KrokiClient krokiClient;
 
     //TODO über DomainModelDialog steuern
     private String targetsDirectory;
@@ -54,6 +61,7 @@ public class AnalyzedDomainModel {
         this.diagramDirectory = diagramDirectory;
         this.initialTargetsDirectory = initialTargetsDirectory;
         this.krokiClient = krokiClient;
+        this.diagramConfiguration = new DiagramConfiguration();
         setTargetsDirectory(this.initialTargetsDirectory);
     }
 
@@ -152,5 +160,9 @@ public class AnalyzedDomainModel {
 
     public String getTargetsDirectory() {
         return targetsDirectory;
+    }
+
+    public DiagramConfiguration getDiagramConfiguration() {
+        return diagramConfiguration;
     }
 }

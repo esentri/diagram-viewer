@@ -5,7 +5,9 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.generate.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.model.DiagramConfiguration;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.DomainModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.GenerateDatabaseModelDialog;
@@ -24,17 +26,17 @@ public class DiagramConfigurationButtonBarComponent extends FlexLayout {
     ) {
         setJustifyContentMode(JustifyContentMode.CENTER);
         setFlexDirection(FlexDirection.COLUMN);
-        add(getConfigurationButtonsAndDialogs(sqlddlGeneratorService, analyzedDomainModel));
+        add(createAndGetConfigurationButtonsAndDialogs(sqlddlGeneratorService, analyzedDomainModel));
     }
 
-    private List<Component> getConfigurationButtonsAndDialogs(
+    private List<Component> createAndGetConfigurationButtonsAndDialogs(
             SQLDDLGeneratorService sqlddlGeneratorService,
             AnalyzedDomainModel analyzedDomainModel
     ) {
         List<Component> domainModelButtonAndDialog = getDomainModelButtonAndDialog(analyzedDomainModel);
-        List<Component> stylingConfigurationButtonAndDialog = getStylingConfigurationButtonAndDialog();
-        List<Component> visibilityConfigurationButtonAndDialog = getVisibilityConfigurationButtonAndDialog();
-        List<Component> variousConfigurationButtonAndDialog = getVariousConfigurationButtonAndDialog();
+        List<Component> stylingConfigurationButtonAndDialog = getStylingConfigurationButtonAndDialog(analyzedDomainModel);
+        List<Component> visibilityConfigurationButtonAndDialog = getVisibilityConfigurationButtonAndDialog(analyzedDomainModel);
+        List<Component> variousConfigurationButtonAndDialog = getVariousConfigurationButtonAndDialog(analyzedDomainModel);
         List<Component> generateDataBaseModelButtonAndDialog = getGenerateDataBaseModelButtonAndDialog(sqlddlGeneratorService, analyzedDomainModel);
         return Stream.of(
                 domainModelButtonAndDialog,
@@ -53,18 +55,18 @@ public class DiagramConfigurationButtonBarComponent extends FlexLayout {
         return List.of(new Button(new Icon("vaadin:file-tree-small"), e -> domainModelDialog.open()), domainModelDialog);
     }
 
-    private List<Component> getStylingConfigurationButtonAndDialog() {
-        Dialog stylingConfigurationDialog = new StylingConfigurationDialog();
+    private List<Component> getStylingConfigurationButtonAndDialog(AnalyzedDomainModel analyzedDomainModel) {
+        Dialog stylingConfigurationDialog = new StylingConfigurationDialog(analyzedDomainModel);
         return List.of(new Button(new Icon("vaadin:paintbrush"), e -> stylingConfigurationDialog.open()), stylingConfigurationDialog);
     }
 
-    private List<Component> getVisibilityConfigurationButtonAndDialog() {
-        Dialog visibilityConfigurationDialog = new VisibilityConfigurationDialog();
+    private List<Component> getVisibilityConfigurationButtonAndDialog(AnalyzedDomainModel analyzedDomainModel) {
+        Dialog visibilityConfigurationDialog = new VisibilityConfigurationDialog(analyzedDomainModel);
         return List.of(new Button(new Icon("vaadin:eye"), e -> visibilityConfigurationDialog.open()), visibilityConfigurationDialog);
     }
 
-    private List<Component> getVariousConfigurationButtonAndDialog() {
-        Dialog variousConfigurationDialog = new VariousConfigurationDialog();
+    private List<Component> getVariousConfigurationButtonAndDialog(AnalyzedDomainModel analyzedDomainModel) {
+        Dialog variousConfigurationDialog = new VariousConfigurationDialog(analyzedDomainModel);
         return List.of(new Button(new Icon("vaadin:cogs"), e -> variousConfigurationDialog.open()), variousConfigurationDialog);
     }
 
