@@ -1,15 +1,14 @@
 package io.domainlifecycles.diagramviewer.files;
 
 import com.sun.nio.file.SensitivityWatchEventModifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import io.domainlifecycles.diagramviewer.webapp.views.UploadView;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class FileWatcher {

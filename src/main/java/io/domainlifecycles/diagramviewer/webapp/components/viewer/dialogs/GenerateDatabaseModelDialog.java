@@ -11,7 +11,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.server.StreamResource;
 import io.domainlifecycles.diagramviewer.generate.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

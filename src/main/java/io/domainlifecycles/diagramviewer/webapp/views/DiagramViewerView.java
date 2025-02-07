@@ -7,21 +7,17 @@ import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.VaadinServiceInitListener;
 import io.domainlifecycles.diagramviewer.files.FileWatcher;
 import io.domainlifecycles.diagramviewer.generate.SQLDDLGeneratorService;
-import io.domainlifecycles.diagramviewer.jar.JarToDomainModelService;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramTabSheetComponent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
 import jakarta.annotation.PostConstruct;
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 @Route(value = "/", layout = MainView.class)

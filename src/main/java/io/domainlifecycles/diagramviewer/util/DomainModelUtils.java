@@ -4,15 +4,14 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.mirror.api.DomainModel;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainModelFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DomainModelUtils {
 
@@ -49,5 +48,4 @@ public class DomainModelUtils {
             return Optional.empty();
         }
     }
-
 }

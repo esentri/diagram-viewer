@@ -5,11 +5,8 @@ import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
-import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.components.ColorPickerComponent;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.StylingOptions;
 
 public class VisibilityConfigurationDialog extends Dialog {
 

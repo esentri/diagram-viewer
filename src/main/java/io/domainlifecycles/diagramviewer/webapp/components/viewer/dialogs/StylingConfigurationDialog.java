@@ -2,11 +2,11 @@ package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs;
 
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.button.Button;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.components.ColorPickerComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.StylingOptions;
 

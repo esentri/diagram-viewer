@@ -3,7 +3,6 @@ package io.domainlifecycles.diagramviewer.util;
 import io.domainlifecycles.diagram.domain.DomainDiagramGenerator;
 import io.domainlifecycles.diagram.domain.config.DomainDiagramConfig;
 import io.domainlifecycles.mirror.api.DomainModel;
-
 import java.util.List;
 
 public class DiagrammerUtils {

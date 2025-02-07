@@ -2,10 +2,10 @@ package io.domainlifecycles.diagramviewer.jar;
 
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
+import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import java.nio.file.Path;
 
 @Service
 public class JarToDomainModelService {
