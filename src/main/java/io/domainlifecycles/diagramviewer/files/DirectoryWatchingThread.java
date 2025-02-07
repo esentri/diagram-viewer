@@ -6,12 +6,12 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
-public class FileWatchingThread extends Thread {
+public class DirectoryWatchingThread extends Thread {
 
     private final Callback callback;
     private final WatchService watchService;
 
-    public FileWatchingThread(Callback callback, WatchService watchService) {
+    public DirectoryWatchingThread(Callback callback, WatchService watchService) {
         this.callback = callback;
         this.watchService = watchService;
     }

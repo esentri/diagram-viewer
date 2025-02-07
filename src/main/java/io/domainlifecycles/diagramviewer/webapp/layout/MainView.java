@@ -22,13 +22,11 @@ public class MainView extends AppLayout {
     public MainView() {
         setPrimarySection(Section.NAVBAR);
         addToNavbar(createNavbarContent());
-
     }
 
     private Component createNavbarContent() {
         HorizontalLayout layout = new HorizontalLayout();
         layout.getStyle().set("backgroundColor", "#0d1f2d");
-        // Configure styling for the header
         layout.setSizeFull();
 
         Image dlcLogo = new Image(DLC_LOGO_LOCATION, "DLC Logo");

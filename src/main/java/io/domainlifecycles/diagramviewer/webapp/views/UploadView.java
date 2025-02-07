@@ -22,21 +22,21 @@ public class UploadView extends VerticalLayout {
 
     private final static Logger log = LoggerFactory.getLogger(UploadView.class);
 
-    @Value("${upload.location}")
-    private String uploadLocation;
+    private final String targetsLocation;
     private final MultiFileMemoryBuffer uploadBuffer;
     private final Upload upload;
 
-    public UploadView() {
+    public UploadView(@Value("${targets.location}") String targetsLocation) {
         this.setSizeFull();
         this.setJustifyContentMode ( FlexComponent.JustifyContentMode.CENTER );
         this.setAlignItems(Alignment.CENTER);
 
+        this.targetsLocation = targetsLocation;
         uploadBuffer = new MultiFileMemoryBuffer();
         upload = new Upload(uploadBuffer);
 
-        upload.setMaxFileSize(5000000);
-        upload.setAcceptedFileTypes("image/svg+xml", "image/jpeg", "image/jpg", "image/png", ".nomnoml");
+        upload.setMaxFileSize(50000000); // 50MB
+        upload.setAcceptedFileTypes("jar");
         add(upload);
     }
 
@@ -46,19 +46,20 @@ public class UploadView extends VerticalLayout {
             String fileName = event.getFileName();
             log.debug(String.format("Trying to upload file '%s'...", fileName));
 
-            if(uploadLocation == null || uploadLocation.isBlank()) {
-                throw DiagramViewerException.fail("No upload location for diagrams specified.");
+            if(targetsLocation == null || targetsLocation.isBlank()) {
+                throw DiagramViewerException.fail("No upload location for targets specified.");
             }
 
             InputStream inputStream = uploadBuffer.getInputStream(fileName);
 
             try {
-                FileIOUtils.saveFile(uploadLocation, inputStream, fileName);
+                FileIOUtils.saveFile(targetsLocation, inputStream, fileName);
             } catch (IOException e) {
-                throw DiagramViewerException.fail(String.format("Couldn't upload file '%s' to '%s'.", fileName, uploadLocation), e);
+                throw DiagramViewerException.fail(String.format("Couldn't upload file '%s' to '%s'.", fileName,
+                    targetsLocation), e);
             }
 
-            log.info(String.format("Successfully uploaded file '%s' to '%s'.", fileName, uploadLocation));
+            log.info(String.format("Successfully uploaded file '%s' to '%s'.", fileName, targetsLocation));
         });
     }
 }

@@ -3,10 +3,10 @@ package io.domainlifecycles.diagramviewer.session;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.files.FileWatcher;
-import io.domainlifecycles.diagramviewer.jar.JarToDomainModelService;
+import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
+import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
 import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
@@ -30,7 +30,6 @@ public class AnalyzedDomainModel {
     private String initialTargetsDirectory;
 
     private final KrokiClient krokiClient;
-    private final JarToDomainModelService jarToDomainModelService;
 
     //TODO über DomainModelDialog steuern
     private String targetsDirectory;
@@ -46,18 +45,41 @@ public class AnalyzedDomainModel {
     private List<String> seedClassNames;
     //TODO über DomainModelDialog steuern
     private List<String> analyzedDomainModelPackages = List.of("com.esentri");
-    private FileWatcher jarFileWatcher;
+    private DirectoryWatcher jarDirectoryWatcher;
 
     public AnalyzedDomainModel(
             @Value("${diagrams.location}")String diagramDirectory,
             @Value("${targets.location}")String initialTargetsDirectory,
-            KrokiClient krokiClient,
-            JarToDomainModelService jarToDomainModelService) {
+            KrokiClient krokiClient) {
         this.diagramDirectory = diagramDirectory;
         this.initialTargetsDirectory = initialTargetsDirectory;
         this.krokiClient = krokiClient;
-        this.jarToDomainModelService = jarToDomainModelService;
         setTargetsDirectory(this.initialTargetsDirectory);
+    }
+
+    private void setTargetsDirectory(String targetsDirectory) {
+        this.targetsDirectory = targetsDirectory;
+        if(jarDirectoryWatcher != null){
+            jarDirectoryWatcher.stop();
+        }
+        initTargets();
+        jarDirectoryWatcher = DirectoryWatcher.onDirectoryChange(Path.of(targetsDirectory),
+            (evt) -> setDomainModelJarPath(Path.of(targetsDirectory,evt.context().toString())));
+    }
+
+    private void initTargets(){
+        if(targetsDirectory != null){
+            File dir = new File(targetsDirectory);
+            if(dir.exists()){
+                var files = dir.listFiles();
+                if(files.length > 0){
+                    setDomainModelJarPath(files[0].toPath());
+                }
+                if(files.length > 1){
+                    log.warn("Only first target initialized currently!");
+                }
+            }
+        }
     }
 
     public void setAnalyzedDomainModelPackages(List<String> analyzedDomainModelPackages) {
@@ -67,19 +89,17 @@ public class AnalyzedDomainModel {
         }
     }
 
-    public void setDomainModelJarPath(Path domainModelJarPath) {
+    private void setDomainModelJarPath(Path domainModelJarPath) {
         this.domainModelJarPath = domainModelJarPath;
         if(domainModelJarPath != null){
             setDomainModel(
-                    jarToDomainModelService.createDomainModelFromJar(
-                            domainModelJarPath,
-                            analyzedDomainModelPackages.toArray(String[]::new)
-                    )
+                DomainModelUtils.initializeDomainModelFromJar(
+                    domainModelJarPath, analyzedDomainModelPackages.toArray(String[]::new))
             );
         }
     }
 
-    public void setDomainModel(DomainModel domainModel) {
+    private void setDomainModel(DomainModel domainModel) {
         this.domainModel = domainModel;
         if(domainModel != null){
             var ser = new JacksonDomainSerializer(true);
@@ -109,6 +129,7 @@ public class AnalyzedDomainModel {
         }
     }
 
+    // Getters
     public DomainModel getDomainModel() {
         return domainModel;
     }
@@ -131,37 +152,5 @@ public class AnalyzedDomainModel {
 
     public String getTargetsDirectory() {
         return targetsDirectory;
-    }
-
-    public void setTargetsDirectory(String targetsDirectory) {
-        this.targetsDirectory = targetsDirectory;
-        if(jarFileWatcher != null){
-            jarFileWatcher.stop();
-        }
-        initTargets();
-        if(targetsDirectory != null){
-            try{
-                jarFileWatcher = FileWatcher.onFileChange(Path.of(targetsDirectory),
-                        (evt) -> setDomainModelJarPath(Path.of(targetsDirectory,evt.context().toString())));
-            }catch (IOException ioException){
-                log.error(ioException.getMessage(), ioException);
-            }
-        }
-    }
-
-    private void initTargets(){
-        if(targetsDirectory != null){
-            File dir = new File(targetsDirectory);
-            if(dir.exists()){
-                var files = dir.listFiles();
-                if(files.length > 0){
-                    setDomainModelJarPath(files[0].toPath());
-                }
-                if(files.length > 1){
-                    log.warn("Only first target initialized currently!");
-                }
-            }
-        }
-
     }
 }

@@ -31,11 +31,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ResourceController {
 
     public static final String RESOURCES_API_PATH = "/api/resources";
-
     public static final String TIMESTAMP_REQUEST_PARAMETER_NAME = "timestamp";
 
-    @Value("${diagram.location}")
-    private String diagramFolderLocation;
+    private final String diagramFolderLocation;
+
+    public ResourceController(@Value("${diagrams.location}") String diagramFolderLocation) {
+        this.diagramFolderLocation = diagramFolderLocation;
+    }
 
     @GetMapping(value = "/{fileName}")
     public ResponseEntity<InputStreamResource> getFile(
