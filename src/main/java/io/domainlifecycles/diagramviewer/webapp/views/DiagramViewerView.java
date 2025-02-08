@@ -1,6 +1,8 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
@@ -21,40 +23,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
-@Route(value = "/diagrams", layout = MainView.class)
+@Route(value = "/:targetName", layout = MainView.class)
 @PageTitle("DLC | Diagram Viewer")
-public class DiagramViewerView extends FlexLayout {
+public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver {
 
     private final static Logger log = LoggerFactory.getLogger(DiagramViewerView.class);
 
-    private String projectFileName;
-    private final String targetsDirectory;
+    private String projectName;
+    private final String diagramsDirectory;
     private final DiagramTabSheetComponent tabSheet;
 
-    public DiagramViewerView(@Value("${targets.location}") String targetsDirectory,
+    public DiagramViewerView(@Value("${diagrams.location}") String diagramsDirectory,
                              AnalyzedDomainModel analyzedDomainModel,
                              SQLDDLGeneratorService sqlddlGeneratorService) {
 
-        this.targetsDirectory = targetsDirectory;
+        this.diagramsDirectory = diagramsDirectory;
         setSizeFull();
         setClassName("diagram-viewer");
 
         add(new DiagramConfigurationButtonBarComponent(sqlddlGeneratorService, analyzedDomainModel));
         tabSheet = new DiagramTabSheetComponent();
         add(tabSheet);
-
-        initWatcherService();
-        refreshTabs();
     }
 
     public void initWatcherService() {
         Path directoryToWatch;
 
         try {
-            directoryToWatch = Path.of(targetsDirectory);
+            directoryToWatch = Path.of(diagramsDirectory, projectName);
         } catch (InvalidPathException e) {
             throw DiagramViewerException.fail(
-                String.format("Specified path '%s' is not a directory.", targetsDirectory), e);
+                String.format("Specified path '%s' is not a directory.", diagramsDirectory), e);
         }
 
         DirectoryWatcher.onDirectoryChange(directoryToWatch,
@@ -67,7 +66,7 @@ public class DiagramViewerView extends FlexLayout {
 
     public void refreshTabs() {
         removeAllTabsFromTabSheet();
-        Set<String> diagramFileNames = FileIOUtils.getFileNamesInDirectory(targetsDirectory);
+        Set<String> diagramFileNames = FileIOUtils.getFileNamesInDirectory(diagramsDirectory);
         tabSheet.addTabs(diagramFileNames);
     }
 
@@ -76,5 +75,13 @@ public class DiagramViewerView extends FlexLayout {
         for(int i = 0; i < tabCount; i++) {
             tabSheet.remove(0);
         }
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        projectName = event.getRouteParameters().get("targetName").get();
+
+        initWatcherService();
+        refreshTabs();
     }
 }

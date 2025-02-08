@@ -51,7 +51,7 @@ public class MainView extends AppLayout {
     private SideNavItem[] createSideNavItems() {
         return FileIOUtils.getFileNamesInDirectory(targetsLocation)
             .stream()
-            .map(targetFileName -> new SideNavItem(targetFileName, DiagramViewerView.class, new RouteParameters("project", targetFileName.split("\\.")[0])))
+            .map(targetFileName -> new SideNavItem(targetFileName, DiagramViewerView.class, new RouteParameters("targetName", targetFileName)))
             .toArray(SideNavItem[]::new);
     }
 

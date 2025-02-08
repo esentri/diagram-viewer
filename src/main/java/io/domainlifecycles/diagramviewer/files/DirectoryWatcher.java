@@ -46,8 +46,7 @@ public class DirectoryWatcher {
                 SensitivityWatchEventModifier.HIGH
             );
         } catch(NoSuchFileException | NotDirectoryException e) {
-            throw DiagramViewerException.fail(
-                String.format("Specified path '%s' is either not a directory or does not exist on the filesystem.", directory), e);
+            return;
         } catch(IOException e) {
             throw DiagramViewerException.fail(
                 String.format("Could not start watching directory '%s'.", directory), e);
