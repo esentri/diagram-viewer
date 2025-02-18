@@ -15,16 +15,15 @@ import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
-import io.domainlifecycles.diagramviewer.generate.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.GenerateDatabaseModelDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.UploadDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramViewerView;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
-import org.atmosphere.interceptor.AtmosphereResourceStateRecovery.B;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,13 +53,6 @@ public class MainView extends AppLayout {
 
         addToNavbar(new DrawerToggle(), getDlcLogo(), getDatabaseButton());
         buildDrawerContent();
-    }
-
-    private Button getDatabaseButton() {
-        Button databaseButton = new Button(new Icon("vaadin:database"));
-        databaseButton.setId("databaseButton");
-        databaseButton.addClickListener(e -> databaseModelDialog.open());
-        return databaseButton;
     }
 
     private void buildDrawerContent() {
@@ -99,7 +91,7 @@ public class MainView extends AppLayout {
             .toArray(SideNavItem[]::new);
     }
 
-    public void initWatcherService(final String projectName, final String diagramsDirectory) {
+    private void initWatcherService(final String projectName, final String diagramsDirectory) {
         Path directoryToWatch;
 
         try {
@@ -115,6 +107,13 @@ public class MainView extends AppLayout {
                 this.getUI().ifPresent(ui -> ui.access(this::buildDrawerContent));
             }
         );
+    }
+
+    private Button getDatabaseButton() {
+        Button databaseButton = new Button(new Icon("vaadin:database"));
+        databaseButton.setId("databaseButton");
+        databaseButton.addClickListener(e -> databaseModelDialog.open());
+        return databaseButton;
     }
 
     private Component getDlcLogo() {

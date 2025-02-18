@@ -33,13 +33,10 @@ public class AnalyzedDomainModel {
 
     private final KrokiClient krokiClient;
 
-    private DiagramConfiguration diagramConfiguration;
-
     private String diagramDirectory;
     private String initialTargetsDirectory;
 
-
-    //TODO über DomainModelDialog steuern
+    private DiagramConfiguration diagramConfiguration;
     private String targetsDirectory;
     //Jar File per Komponente wählen bzw. komplettes Verzeichnis wählen per https://github.com/vaadin-component-factory/directory-upload
     private Path domainModelJarPath;

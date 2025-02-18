@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs;
+package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
@@ -8,8 +8,8 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.components.ColorPickerComponent;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Styling;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.ColorPickerComponent;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Styling;
 
 /**
  * Dialog allowing configuration for each DDD building block (i.e. AggregateRoot, Repository, etc.).

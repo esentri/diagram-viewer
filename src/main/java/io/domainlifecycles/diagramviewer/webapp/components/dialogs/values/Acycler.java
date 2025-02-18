@@ -1,13 +1,12 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values;
+package io.domainlifecycles.diagramviewer.webapp.components.dialogs.values;
 
-public enum Direction {
-    UP("up", "Up"),
-    DOWN("down", "Down");
+public enum Acycler {
+    GREEDY("greedy", "Greedy");
 
     private final String nomnomlValue;
     private final String displayValue;
 
-    Direction(String nomnomlValue, String displayValue) {
+    Acycler(String nomnomlValue, String displayValue) {
         this.nomnomlValue = nomnomlValue;
         this.displayValue = displayValue;
     }

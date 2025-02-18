@@ -1,19 +1,15 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer;
+package io.domainlifecycles.diagramviewer.webapp.components.various;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
-import com.vaadin.flow.data.binder.Binder;
-import io.domainlifecycles.diagramviewer.generate.SQLDDLGeneratorService;
-import io.domainlifecycles.diagramviewer.model.DiagramConfiguration;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.DomainModelDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.GenerateDatabaseModelDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.StylingConfigurationDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.VariousConfigurationDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.VisibilityConfigurationDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.StylingConfigurationDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.VariousConfigurationDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.VisibilityConfigurationDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.DomainModelDialog;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

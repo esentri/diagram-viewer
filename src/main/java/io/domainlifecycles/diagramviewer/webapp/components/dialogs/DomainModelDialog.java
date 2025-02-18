@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs;
+package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;

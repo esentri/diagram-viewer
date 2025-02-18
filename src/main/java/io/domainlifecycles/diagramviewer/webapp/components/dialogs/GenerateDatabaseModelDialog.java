@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs;
+package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -9,7 +9,7 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.server.StreamResource;
-import io.domainlifecycles.diagramviewer.generate.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
