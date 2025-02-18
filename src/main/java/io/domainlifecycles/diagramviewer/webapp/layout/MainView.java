@@ -1,34 +1,30 @@
 package io.domainlifecycles.diagramviewer.webapp.layout;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.component.tabs.Tabs.Orientation;
-import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouteParameters;
-import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
+import io.domainlifecycles.diagramviewer.generate.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.GenerateDatabaseModelDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramViewerView;
-import io.domainlifecycles.diagramviewer.webapp.views.UploadView;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import org.atmosphere.interceptor.AtmosphereResourceStateRecovery.B;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,31 +38,47 @@ public class MainView extends AppLayout {
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
     private final String targetsLocation;
     private final String diagramsDirectory;
+    private final UploadDialog uploadDialog;
+    private final GenerateDatabaseModelDialog databaseModelDialog;
 
     public MainView(
         @Value("${targets.location}") String targetsLocation,
-        @Value("${diagrams.location}") String diagramsDirectory) {
+        @Value("${diagrams.location}") String diagramsDirectory,
+        SQLDDLGeneratorService sqlddlGeneratorService,
+        AnalyzedDomainModel analyzedDomainModel) {
 
         this.targetsLocation = targetsLocation;
         this.diagramsDirectory = diagramsDirectory;
+        this.uploadDialog = new UploadDialog();
+        this.databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, analyzedDomainModel);
 
-        addToNavbar(new DrawerToggle(), getDlcLogo());
+        addToNavbar(new DrawerToggle(), getDlcLogo(), getDatabaseButton());
         buildDrawerContent();
+    }
+
+    private Button getDatabaseButton() {
+        Button databaseButton = new Button(new Icon("vaadin:database"));
+        databaseButton.setId("databaseButton");
+        databaseButton.addClickListener(e -> databaseModelDialog.open());
+        return databaseButton;
     }
 
     private void buildDrawerContent() {
         Scroller scroller = new Scroller(getSideNav());
         scroller.setClassName(LumoUtility.Padding.SMALL);
-        addToDrawer(scroller);
+
+        Button uploadButton = new Button("Upload", new Icon("vaadin:cloud-upload-o"));
+        uploadButton.addClickListener(e -> uploadDialog.open());
+        addToDrawer(scroller, uploadButton);
     }
 
     private SideNav getSideNav() {
         SideNav sideNav = new SideNav();
-        sideNav.addItem(createSideNavItems());
+        sideNav.addItem(createSideNavLinks());
         return sideNav;
     }
 
-    private SideNavItem[] createSideNavItems() {
+    private SideNavItem[] createSideNavLinks() {
         return FileIOUtils.getFileNamesInDirectory(targetsLocation)
             .stream()
             .map(projectName -> {

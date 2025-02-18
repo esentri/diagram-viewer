@@ -20,30 +20,22 @@ import java.util.stream.Stream;
 
 public class DiagramConfigurationButtonBarComponent extends FlexLayout {
 
-    public DiagramConfigurationButtonBarComponent(
-            SQLDDLGeneratorService sqlddlGeneratorService,
-            AnalyzedDomainModel analyzedDomainModel
-    ) {
+    public DiagramConfigurationButtonBarComponent(AnalyzedDomainModel analyzedDomainModel) {
         setJustifyContentMode(JustifyContentMode.CENTER);
         setFlexDirection(FlexDirection.COLUMN);
-        add(createAndGetConfigurationButtonsAndDialogs(sqlddlGeneratorService, analyzedDomainModel));
+        add(createAndGetConfigurationButtonsAndDialogs(analyzedDomainModel));
     }
 
-    private List<Component> createAndGetConfigurationButtonsAndDialogs(
-            SQLDDLGeneratorService sqlddlGeneratorService,
-            AnalyzedDomainModel analyzedDomainModel
-    ) {
+    private List<Component> createAndGetConfigurationButtonsAndDialogs(AnalyzedDomainModel analyzedDomainModel) {
         List<Component> domainModelButtonAndDialog = getDomainModelButtonAndDialog(analyzedDomainModel);
         List<Component> stylingConfigurationButtonAndDialog = getStylingConfigurationButtonAndDialog(analyzedDomainModel);
         List<Component> visibilityConfigurationButtonAndDialog = getVisibilityConfigurationButtonAndDialog(analyzedDomainModel);
         List<Component> variousConfigurationButtonAndDialog = getVariousConfigurationButtonAndDialog(analyzedDomainModel);
-        List<Component> generateDataBaseModelButtonAndDialog = getGenerateDataBaseModelButtonAndDialog(sqlddlGeneratorService, analyzedDomainModel);
         return Stream.of(
                 domainModelButtonAndDialog,
                 stylingConfigurationButtonAndDialog,
                 visibilityConfigurationButtonAndDialog,
-                variousConfigurationButtonAndDialog,
-                generateDataBaseModelButtonAndDialog)
+                variousConfigurationButtonAndDialog)
             .flatMap(List::stream)
             .collect(Collectors.toList());
     }
@@ -68,10 +60,5 @@ public class DiagramConfigurationButtonBarComponent extends FlexLayout {
     private List<Component> getVariousConfigurationButtonAndDialog(AnalyzedDomainModel analyzedDomainModel) {
         Dialog variousConfigurationDialog = new VariousConfigurationDialog(analyzedDomainModel);
         return List.of(new Button(new Icon("vaadin:cogs"), e -> variousConfigurationDialog.open()), variousConfigurationDialog);
-    }
-
-    private List<Component> getGenerateDataBaseModelButtonAndDialog(SQLDDLGeneratorService sqlddlGeneratorService, AnalyzedDomainModel analyzedDomainModel) {
-        Dialog generateDatabaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, analyzedDomainModel);
-        return List.of(new Button(new Icon("vaadin:database"), e -> generateDatabaseModelDialog.open()), generateDatabaseModelDialog);
     }
 }

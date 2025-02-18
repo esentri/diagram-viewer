@@ -1,14 +1,13 @@
-package io.domainlifecycles.diagramviewer.webapp.views;
+package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs;
 
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,22 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
-@Route(value = "/upload", layout = MainView.class)
-@PageTitle("DLC | Upload")
-public class UploadView extends VerticalLayout {
+public class UploadDialog extends Dialog {
 
-    private final static Logger log = LoggerFactory.getLogger(UploadView.class);
+    private final static Logger log = LoggerFactory.getLogger(UploadDialog.class);
 
-    private final String targetsLocation;
     private final MultiFileMemoryBuffer uploadBuffer;
     private final Upload upload;
 
-    public UploadView(@Value("${targets.location}") String targetsLocation) {
-        this.setSizeFull();
-        this.setJustifyContentMode ( FlexComponent.JustifyContentMode.CENTER );
-        this.setAlignItems(Alignment.CENTER);
+    @Value("${targets.location}")
+    private String targetsLocation;
 
-        this.targetsLocation = targetsLocation;
+    public UploadDialog() {
         uploadBuffer = new MultiFileMemoryBuffer();
         upload = new Upload(uploadBuffer);
 

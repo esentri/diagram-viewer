@@ -35,12 +35,11 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     private String diagramName;
     private FlexLayout zoomComponentContainer;
 
-    public DiagramViewerView(AnalyzedDomainModel analyzedDomainModel,
-                             SQLDDLGeneratorService sqlddlGeneratorService) {
+    public DiagramViewerView(AnalyzedDomainModel analyzedDomainModel) {
         setSizeFull();
         setClassName("diagram-viewer");
 
-        add(new DiagramConfigurationButtonBarComponent(sqlddlGeneratorService, analyzedDomainModel));
+        add(new DiagramConfigurationButtonBarComponent(analyzedDomainModel));
     }
 
     @Override
