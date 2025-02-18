@@ -39,17 +39,19 @@ public class ResourceController {
         this.diagramFolderLocation = diagramFolderLocation;
     }
 
-    @GetMapping(value = "/{fileName}")
+    @GetMapping(value = "/{directoryName}/{fileName}")
     public ResponseEntity<InputStreamResource> getFile(
+            @PathVariable("directoryName") String directoryName,
             @PathVariable("fileName") String fileName,
             @RequestParam(TIMESTAMP_REQUEST_PARAMETER_NAME) String ignored) throws IOException {
 
         URI filePath;
         try {
-            filePath = Path.of(diagramFolderLocation, fileName).toUri();
+            filePath = Path.of(diagramFolderLocation, directoryName, fileName).toUri();
         } catch (InvalidPathException | IOError e) {
             throw DiagramViewerException.fail(
-                String.format("Location of requested file '%s/%s' is not a valid path.", diagramFolderLocation, fileName));
+                String.format("Location of requested file '%s/%s/%s' is not a valid path.",
+                    diagramFolderLocation, directoryName, fileName));
         }
 
         InputStream inputStream;
@@ -65,7 +67,7 @@ public class ResourceController {
 
         if(!inputStreamResource.exists()) {
             throw DiagramViewerException.fail(
-                String.format("Could not find file %s in directory %s.", fileName, diagramFolderLocation));
+                String.format("Could not find file %s in directory %s/%s.", fileName, diagramFolderLocation, directoryName));
         }
 
         HttpHeaders headers = new HttpHeaders();

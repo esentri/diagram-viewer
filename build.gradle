@@ -24,6 +24,7 @@ repositories {
 
 ext {
 	set('vaadinVersion', "24.6.2")
+	javaDockerVersion = "3.4.0"
 }
 
 dependencies {
@@ -37,6 +38,8 @@ dependencies {
 		exclude group: "org.slf4j"
 		exclude group: "ch.qos.logback"
 	}
+	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"
+	implementation "com.github.docker-java:docker-java-transport-httpclient5:${javaDockerVersion}"
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
 	implementation 'io.domainlifecycles:mirror:2.0.4'
 	implementation 'io.domainlifecycles:domain-diagrammer:2.0.4'

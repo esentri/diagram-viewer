@@ -11,6 +11,7 @@ import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.generate.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.rest.ResourceController;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramConfigurationButtonBarComponent;
@@ -24,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
-@Route(value = "/diagrams", layout = MainView.class)
+@Route(value = "/:projectName/:diagramName", layout = MainView.class)
 @PageTitle("DLC | Diagram Viewer")
 public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver {
 
@@ -32,23 +33,35 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
 
     private String projectName;
     private String diagramName;
-    private final String diagramsDirectory;
+    private FlexLayout zoomComponentContainer;
 
-    public DiagramViewerView(@Value("${diagrams.location}") String diagramsDirectory,
-                             AnalyzedDomainModel analyzedDomainModel,
+    public DiagramViewerView(AnalyzedDomainModel analyzedDomainModel,
                              SQLDDLGeneratorService sqlddlGeneratorService) {
-
-        this.diagramsDirectory = diagramsDirectory;
         setSizeFull();
         setClassName("diagram-viewer");
 
         add(new DiagramConfigurationButtonBarComponent(sqlddlGeneratorService, analyzedDomainModel));
-        add(new DiagramZoomComponent(Path.of(diagramsDirectory, diagramName).toString()));
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         projectName = event.getRouteParameters().get("projectName").get();
         diagramName = event.getRouteParameters().get("diagramName").get();
+
+        addDiagramZoomComponent();
+    }
+
+    private void addDiagramZoomComponent() {
+        if(zoomComponentContainer != null) remove(zoomComponentContainer);
+
+        DiagramZoomComponent diagramZoomComponent = new DiagramZoomComponent(ResourceController.RESOURCES_API_PATH + "/" + projectName + "/" + diagramName);
+
+        zoomComponentContainer = new FlexLayout();
+        zoomComponentContainer.setClassName("zoomist-container");
+        zoomComponentContainer.setFlexGrow(1, diagramZoomComponent);
+        zoomComponentContainer.add(diagramZoomComponent);
+        zoomComponentContainer.setMaxHeight("100%");
+        zoomComponentContainer.setSizeFull();
+        add(zoomComponentContainer);
     }
 }

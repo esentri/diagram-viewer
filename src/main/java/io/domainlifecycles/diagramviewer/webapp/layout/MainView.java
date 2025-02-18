@@ -71,14 +71,15 @@ public class MainView extends AppLayout {
             .stream()
             .map(projectName -> {
                 SideNavItem parentSideNavItem = new SideNavItem(projectName);
+                String projectNameClean = projectName.split("\\.jar")[0];
 
-                FileIOUtils.getFileNamesInDirectory(Path.of(diagramsDirectory, projectName).toString())
+                FileIOUtils.getFileNamesInDirectory(Path.of(diagramsDirectory, projectNameClean).toString())
                     .forEach(diagramName -> {
                         parentSideNavItem.addItem(
                             new SideNavItem(diagramName, DiagramViewerView.class,
-                                new RouteParameters(Map.of("projectName", projectName, "diagramName", diagramName))));
+                                new RouteParameters(Map.of("projectName", projectNameClean, "diagramName", diagramName))));
 
-                        initWatcherService(projectName, diagramsDirectory);
+                        initWatcherService(projectNameClean, diagramsDirectory);
                     });
 
                 return parentSideNavItem;
