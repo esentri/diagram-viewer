@@ -54,6 +54,7 @@ class KrokiDockerAdapter {
     private String createOrGetKrokiDockerContainerId() {
         final List<Container> foundKrokiContainers = dockerClient
             .listContainersCmd()
+            .withShowAll(true)
             .withAncestorFilter(List.of(KROKI_CONTAINER_IMAGE_NAME))
             .exec();
 
