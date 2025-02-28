@@ -38,9 +38,9 @@ dependencies {
 		exclude group: "ch.qos.logback"
 	}
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
-	implementation 'io.domainlifecycles:mirror:2.0.4'
-	implementation 'io.domainlifecycles:domain-diagrammer:2.0.4'
-	implementation("io.domainlifecycles:kickstart-generator:1.0.2"){
+	implementation 'io.domainlifecycles:mirror:2.1.0'
+	implementation 'io.domainlifecycles:domain-diagrammer:2.1.0'
+	implementation("io.domainlifecycles:kickstart-generator:1.0.3"){
 		exclude group: "commons-logging"
 		exclude group: "ch.qos.logback"
 		exclude group: "org.slf4j"

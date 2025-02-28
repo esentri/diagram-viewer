@@ -15,6 +15,7 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
 import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.Layout;
+import com.vaadin.flow.router.RouteParam;
 import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -51,7 +52,12 @@ public class MainView extends AppLayout {
     private SideNavItem[] createSideNavItems() {
         return FileIOUtils.getFileNamesInDirectory(targetsLocation)
             .stream()
-            .map(targetFileName -> new SideNavItem(targetFileName, DiagramViewerView.class, new RouteParameters("targetName", targetFileName)))
+            .map(targetFileName -> new SideNavItem(
+                targetFileName,
+                DiagramViewerView.class,
+                new RouteParameters(
+                    new RouteParam( "targetName", targetFileName)
+                )))
             .toArray(SideNavItem[]::new);
     }
 

@@ -48,8 +48,7 @@ public class AnalyzedDomainModel {
 
     //TODO über DomainModelDialog steuern
     private String shownContextPackage = "com.esentri";
-    //TODO über DomainModelDialog steuern
-    private List<String> seedClassNames;
+    private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null);
     //TODO über DomainModelDialog steuern
     private List<String> analyzedDomainModelPackages = List.of("com.esentri");
     private DirectoryWatcher jarDirectoryWatcher;
@@ -122,13 +121,13 @@ public class AnalyzedDomainModel {
         generateNomnomlAndSvg();
     }
 
-    public void setSeedClassNames(List<String> seedClassNames) {
-        this.seedClassNames = seedClassNames;
+    public void setDomainModelVisibility(DomainModelVisibility domainModelVisibility) {
+        this.domainModelVisibility = domainModelVisibility;
         generateNomnomlAndSvg();
     }
 
     private void generateNomnomlAndSvg(){
-        this.domainModelNomNoml = DiagrammerUtils.generateNomnoml(domainModel, shownContextPackage, seedClassNames);
+        this.domainModelNomNoml = DiagrammerUtils.generateNomnoml(domainModel, shownContextPackage, domainModelVisibility);
         this.domainModelSvg = krokiClient.convertNomnomlToSVG(domainModelNomNoml);
         try {
             FileIOUtils.saveFile(diagramDirectory, new ByteArrayInputStream(domainModelSvg), "currentJar.svg");
@@ -142,24 +141,8 @@ public class AnalyzedDomainModel {
         return domainModel;
     }
 
-    public String getDomainModelNomNoml() {
-        return domainModelNomNoml;
-    }
-
-    public byte[] getDomainModelSvg() {
-        return domainModelSvg;
-    }
-
-    public String getShownContextPackage() {
-        return shownContextPackage;
-    }
-
-    public List<String> getSeedClassNames() {
-        return seedClassNames;
-    }
-
-    public String getTargetsDirectory() {
-        return targetsDirectory;
+    public DomainModelVisibility getDomainModelVisibility() {
+        return domainModelVisibility;
     }
 
     public DiagramConfiguration getDiagramConfiguration() {

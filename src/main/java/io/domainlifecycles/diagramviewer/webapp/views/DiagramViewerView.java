@@ -3,9 +3,6 @@ package io.domainlifecycles.diagramviewer.webapp.views;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.BeforeEvent;
-import com.vaadin.flow.router.HasUrlParameter;
-import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
@@ -16,14 +13,16 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.viewer.DiagramTabSheetComponent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
-@Route(value = "/:targetName", layout = MainView.class)
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.util.List;
+
+
+@Route(value = "viewer/:targetName", layout = MainView.class)
 @PageTitle("DLC | Diagram Viewer")
 public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver {
 
@@ -32,17 +31,18 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     private String projectName;
     private final String diagramsDirectory;
     private final DiagramTabSheetComponent tabSheet;
+    private final AnalyzedDomainModel analyzedDomainModel;
 
     public DiagramViewerView(@Value("${diagrams.location}") String diagramsDirectory,
                              AnalyzedDomainModel analyzedDomainModel,
                              SQLDDLGeneratorService sqlddlGeneratorService) {
-
+        this.analyzedDomainModel = analyzedDomainModel;
         this.diagramsDirectory = diagramsDirectory;
         setSizeFull();
         setClassName("diagram-viewer");
 
         add(new DiagramConfigurationButtonBarComponent(sqlddlGeneratorService, analyzedDomainModel));
-        tabSheet = new DiagramTabSheetComponent();
+        tabSheet = new DiagramTabSheetComponent(analyzedDomainModel);
         add(tabSheet);
     }
 
@@ -66,7 +66,7 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
 
     public void refreshTabs() {
         removeAllTabsFromTabSheet();
-        Set<String> diagramFileNames = FileIOUtils.getFileNamesInDirectory(diagramsDirectory);
+        List<String> diagramFileNames = FileIOUtils.getFileNamesInDirectory(diagramsDirectory).stream().toList();
         tabSheet.addTabs(diagramFileNames);
     }
 
@@ -80,7 +80,6 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         projectName = event.getRouteParameters().get("targetName").get();
-
         initWatcherService();
         refreshTabs();
     }
