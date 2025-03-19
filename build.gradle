@@ -43,7 +43,6 @@ dependencies {
 	implementation("io.domainlifecycles:kickstart-generator:1.0.3"){
 		exclude group: "commons-logging"
 		exclude group: "ch.qos.logback"
-		exclude group: "org.slf4j"
 	}
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
