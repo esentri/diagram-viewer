@@ -1,10 +1,10 @@
 package io.domainlifecycles.diagramviewer.model;
 
 import io.domainlifecycles.diagram.domain.mapper.TransitiveDomainTypeFilter;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Acycler;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Direction;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Font;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Ranker;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycler;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
 import java.util.Collections;
 import java.util.List;
 

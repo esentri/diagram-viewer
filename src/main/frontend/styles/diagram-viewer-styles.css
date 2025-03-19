@@ -4,3 +4,13 @@
     padding: 1rem
 }
 
+.zoomist-container {
+    margin-left: 1rem;
+    /*overflow: hidden;*/
+}
+
+#databaseButton {
+margin-right: 1rem;
+margin-left: auto;
+}
+

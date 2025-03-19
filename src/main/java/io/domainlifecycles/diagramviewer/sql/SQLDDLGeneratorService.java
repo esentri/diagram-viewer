@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.generate;
+package io.domainlifecycles.diagramviewer.sql;
 
 import io.domainlifecycles.kickstart.configuration.target.SQLTargetConfig;
 import io.domainlifecycles.kickstart.configuration.target.base.TargetConfig;

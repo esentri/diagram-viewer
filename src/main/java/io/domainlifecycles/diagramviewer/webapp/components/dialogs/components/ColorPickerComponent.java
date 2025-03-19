@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.components;
+package io.domainlifecycles.diagramviewer.webapp.components.dialogs.components;
 
 import com.vaadin.flow.component.html.Input;
 

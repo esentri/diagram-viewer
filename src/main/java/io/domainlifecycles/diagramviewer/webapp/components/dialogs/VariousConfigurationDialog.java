@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs;
+package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -8,10 +8,10 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.DiagramConfiguration;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Acycler;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Direction;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Font;
-import io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values.Ranker;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycler;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 
 public class VariousConfigurationDialog extends Dialog {
 

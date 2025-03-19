@@ -1,13 +1,16 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer.dialogs.values;
+package io.domainlifecycles.diagramviewer.webapp.components.dialogs.values;
 
-public enum Font {
-    HELVETICA("helvetica", "Helvetica"),
-    ARIAL("arial", "Arial");
+public enum Styling {
+    BOLD("bold", "Bold"),
+    CENTER("center", "Center"),
+    ITALIC("italic", "Italic"),
+    LEFT("left", "Left"),
+    UNDERLINE("underline", "Underline");
 
     private final String nomnomlValue;
     private final String displayValue;
 
-    Font(String nomnomlValue, String displayValue) {
+    Styling(String nomnomlValue, String displayValue) {
         this.nomnomlValue = nomnomlValue;
         this.displayValue = displayValue;
     }

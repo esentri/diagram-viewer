@@ -4,6 +4,7 @@ import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
+import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.model.DiagramConfiguration;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
@@ -32,13 +33,10 @@ public class AnalyzedDomainModel {
 
     private final KrokiClient krokiClient;
 
-    private DiagramConfiguration diagramConfiguration;
-
     private String diagramDirectory;
     private String initialTargetsDirectory;
 
-
-    //TODO über DomainModelDialog steuern
+    private DiagramConfiguration diagramConfiguration;
     private String targetsDirectory;
     //Jar File per Komponente wählen bzw. komplettes Verzeichnis wählen per https://github.com/vaadin-component-factory/directory-upload
     private Path domainModelJarPath;
@@ -128,7 +126,7 @@ public class AnalyzedDomainModel {
 
     private void generateNomnomlAndSvg(){
         this.domainModelNomNoml = DiagrammerUtils.generateNomnoml(domainModel, shownContextPackage, domainModelVisibility);
-        this.domainModelSvg = krokiClient.convertNomnomlToSVG(domainModelNomNoml);
+        this.domainModelSvg = krokiClient.convertTo(domainModelNomNoml, FileType.SVG);
         try {
             FileIOUtils.saveFile(diagramDirectory, new ByteArrayInputStream(domainModelSvg), "currentJar.svg");
         } catch (IOException e) {

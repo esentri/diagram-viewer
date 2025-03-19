@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,8 +15,14 @@ import java.util.stream.Stream;
 
 public class FileIOUtils {
 
-    public static Set<String> getFileNamesInDirectory(String directory) {
-        return Stream.of(Objects.requireNonNull(new File(directory).listFiles()))
+    public static Set<String> getFileNamesInDirectory(String directoryName) {
+        File directory = new File(directoryName);
+
+        if(!directory.isDirectory() ||  directory.listFiles() == null) {
+            return Collections.emptySet();
+        }
+
+        return Stream.of(Objects.requireNonNull(directory.listFiles()))
             .filter(file -> !file.isDirectory())
             .map(File::getName)
             .collect(Collectors.toSet());

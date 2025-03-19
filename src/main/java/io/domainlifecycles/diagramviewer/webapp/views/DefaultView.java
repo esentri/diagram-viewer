@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.webapp.views;
 
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -15,6 +16,7 @@ public class DefaultView extends FlexLayout {
     public DefaultView() {
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
-        add(new H1("Please select a project on the left!"));
+        setAlignItems(Alignment.CENTER);
+        add(new H3("No diagram selected..."));
     }
 }
