@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.session;
+package io.domainlifecycles.diagramviewer.model;
 
 import java.util.ArrayList;
 import java.util.List;

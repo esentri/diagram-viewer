@@ -1,12 +1,14 @@
-.diagram-viewer {
-    box-sizing: border-box;
-    overflow: hidden;
-    padding: 1rem
-}
-
 .zoomist-container {
     margin-left: 1rem;
-    /*overflow: hidden;*/
+    overflow: hidden;
+}
+
+.visibility-accordion {
+    margin: 0 1rem;
+}
+
+.diagram-viewer {
+    padding: 0.5rem;
 }
 
 #databaseButton {

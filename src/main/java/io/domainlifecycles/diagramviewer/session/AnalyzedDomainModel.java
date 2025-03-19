@@ -7,6 +7,7 @@ import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.model.DiagramConfiguration;
+import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;

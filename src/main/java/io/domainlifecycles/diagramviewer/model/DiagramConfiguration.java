@@ -289,7 +289,7 @@ public class DiagramConfiguration {
      * Enabling and initializing the seed for the {@link TransitiveDomainTypeFilter}.
      */
     private List<String> transitiveFilterSeedDomainServiceTypeNames = Collections.emptyList();
-
+    private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null);
 
     public String getContextPackageName() {
         return contextPackageName;
@@ -793,5 +793,9 @@ public class DiagramConfiguration {
 
     public void setTransitiveFilterSeedDomainServiceTypeNames(List<String> transitiveFilterSeedDomainServiceTypeNames) {
         this.transitiveFilterSeedDomainServiceTypeNames = transitiveFilterSeedDomainServiceTypeNames;
+    }
+
+    public DomainModelVisibility getDomainModelVisibility() {
+        return domainModelVisibility;
     }
 }

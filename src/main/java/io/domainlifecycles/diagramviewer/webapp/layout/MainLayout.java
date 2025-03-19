@@ -10,14 +10,8 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.component.tabs.Tabs.Orientation;
-import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.Layout;
-import com.vaadin.flow.router.RouteParam;
 import com.vaadin.flow.router.RouteParameters;
-import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
@@ -36,9 +30,9 @@ import org.springframework.beans.factory.annotation.Value;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")
-public class MainView extends AppLayout {
+public class MainLayout extends AppLayout {
 
-    private final static Logger log = LoggerFactory.getLogger(MainView.class);
+    private final static Logger log = LoggerFactory.getLogger(MainLayout.class);
 
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
     private final String targetsLocation;
@@ -46,7 +40,7 @@ public class MainView extends AppLayout {
     private final UploadDialog uploadDialog;
     private final GenerateDatabaseModelDialog databaseModelDialog;
 
-    public MainView(
+    public MainLayout(
         @Value("${targets.location}") String targetsLocation,
         @Value("${diagrams.location}") String diagramsDirectory,
         SQLDDLGeneratorService sqlddlGeneratorService,

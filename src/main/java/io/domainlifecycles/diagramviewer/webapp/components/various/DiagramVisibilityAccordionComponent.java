@@ -1,81 +1,42 @@
-package io.domainlifecycles.diagramviewer.webapp.components.viewer;
+package io.domainlifecycles.diagramviewer.webapp.components.various;
 
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.splitlayout.SplitLayout;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-
 import java.util.ArrayList;
 import java.util.List;
-
-
 import static java.util.stream.Collectors.groupingBy;
 
-public class DiagramTabSheetComponent extends FlexLayout {
+public class DiagramVisibilityAccordionComponent extends Accordion {
 
     private final AnalyzedDomainModel analyzedDomainModel;
-    private IFrame frame = null;
-    private String diagramFileName;
+    private final RefreshCallback callback;
 
-    public DiagramTabSheetComponent(AnalyzedDomainModel analyzedDomainModel) {
+    public DiagramVisibilityAccordionComponent(AnalyzedDomainModel analyzedDomainModel, RefreshCallback callback) {
+        this.setWidth("30%");
+        this.setClassName("visibility-accordion");
         this.analyzedDomainModel = analyzedDomainModel;
-        setSizeFull();
+        this.callback = callback;
+        createAccordion();
     }
 
-    public void addTabs(String diagramFileName) {
-        this.diagramFileName = diagramFileName;
-        createZoomComponent(diagramFileName);
-    }
-
-    private void createZoomComponent(String diagramName){
-        var zoomistContainer = generateZoomComponentContainer(diagramName);
-        add(zoomistContainer);
-    }
-
-    private SplitLayout generateZoomComponentContainer(String diagramName) {
-        var zoomFrame = newZoomFrame(diagramName);
-        var accordion = createAccordion();
-        var horizontalLayoutLeft = new HorizontalLayout();
-        var horizontalLayoutRight = new HorizontalLayout();
-        horizontalLayoutRight.setHeightFull();
-        horizontalLayoutRight.add(accordion);
-        horizontalLayoutLeft.add(zoomFrame);
-        horizontalLayoutLeft.setFlexGrow(1, zoomFrame);
-        SplitLayout zoomistContainer = new SplitLayout(horizontalLayoutLeft, horizontalLayoutRight);
-        zoomistContainer.setHeightFull();
-        zoomistContainer.setClassName("zoomist-container");
-        zoomistContainer.setSplitterPosition(80);
-
-        return zoomistContainer;
-    }
-
-    private IFrame newZoomFrame(String diagramName) {
-        var frame = new IFrame("/simple/"+diagramName);
-        frame.getStyle().clear();
-        this.frame = frame;
-        return frame;
-    }
-
-    private Accordion createAccordion() {
-        Accordion accordion = new Accordion();
+    private void createAccordion() {
         var groupedByDomainMirrorType = analyzedDomainModel.getDomainModel()
-                .allTypeMirrors()
-                .values()
-                .stream()
-                .collect(groupingBy(tm -> tm.getDomainType()));
+            .allTypeMirrors()
+            .values()
+            .stream()
+            .collect(groupingBy(DomainTypeMirror::getDomainType));
         for (DomainType type: domainTypeOrdered()) {
             var mirrors = filterConcreteMirrorsInterfaceAvailable(groupedByDomainMirrorType.get(type));
-            if (mirrors != null && !mirrors.isEmpty()) {
+            if (!mirrors.isEmpty()) {
                 AccordionPanel panel = new AccordionPanel(translateDomainType(type));
                 var layout = new VerticalLayout();
                 for (var mirror : mirrors) {
@@ -106,7 +67,7 @@ public class DiagramTabSheetComponent extends FlexLayout {
                                 visibleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                             }
                             analyzedDomainModel.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(blackListed));
-                            refreshDiagram();
+                            callback.run();
                         });
                         buttonLayout.add(visibleButton);
                         if (DomainType.APPLICATION_SERVICE.equals(type)) {
@@ -129,7 +90,7 @@ public class DiagramTabSheetComponent extends FlexLayout {
                                     seedButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                                 }
                                 analyzedDomainModel.setDomainModelVisibility(visibility.replaceSeedClassNames(seed));
-                                refreshDiagram();
+                                callback.run();
                             });
                         }
                     }
@@ -139,10 +100,9 @@ public class DiagramTabSheetComponent extends FlexLayout {
                     layout.add(typeLayout);
                 }
                 panel.add(layout);
-                accordion.add(panel);
+                add(panel);
             }
         }
-        return accordion;
     }
 
     private String shortClassName(String fullClassName) {
@@ -167,10 +127,6 @@ public class DiagramTabSheetComponent extends FlexLayout {
             case APPLICATION_SERVICE -> "ApplicationService";
             default -> "Object";
         };
-    }
-
-    private void refreshDiagram(){
-        frame.reload();
     }
 
     private List<DomainType> domainTypeOrdered(){
