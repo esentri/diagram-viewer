@@ -5,11 +5,17 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.rest.ResourceController;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
+import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainView;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +31,7 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     private final AnalyzedDomainModel analyzedDomainModel;
 
     public DiagramViewerView(AnalyzedDomainModel analyzedDomainModel) {
+        this.analyzedDomainModel = analyzedDomainModel;
         setSizeFull();
         setClassName("diagram-viewer");
 
@@ -47,19 +54,6 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
                 this.getUI().ifPresent(ui -> ui.access(this::refreshTabs));
             }
         );
-    }
-
-    public void refreshTabs() {
-        removeAllTabsFromTabSheet();
-        Set<String> diagramFileNames = FileIOUtils.getFileNamesInDirectory(diagramsDirectory);
-        tabSheet.addTabs(diagramFileNames);
-    }
-
-    private void removeAllTabsFromTabSheet() {
-        int tabCount = tabSheet.getTabCount();
-        for(int i = 0; i < tabCount; i++) {
-            tabSheet.remove(0);
-        }
     }
 
     @Override

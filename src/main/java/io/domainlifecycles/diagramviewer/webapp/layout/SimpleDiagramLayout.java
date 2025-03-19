@@ -6,9 +6,6 @@ import com.vaadin.flow.router.Layout;
 
 @Layout(value = "/simple")
 public class SimpleDiagramLayout extends AppLayout {
-
     public SimpleDiagramLayout() {
     }
-
-
 }

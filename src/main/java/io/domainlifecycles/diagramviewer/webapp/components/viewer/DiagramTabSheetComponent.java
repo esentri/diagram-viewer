@@ -7,10 +7,10 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
-import com.vaadin.flow.component.tabs.TabSheet;
 import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -21,25 +21,25 @@ import java.util.List;
 
 import static java.util.stream.Collectors.groupingBy;
 
-public class DiagramTabSheetComponent extends TabSheet {
+public class DiagramTabSheetComponent extends FlexLayout {
 
     private final AnalyzedDomainModel analyzedDomainModel;
-    private final List<IFrame> frames = new ArrayList<>();
-    private List<String> diagramFileNames;
+    private IFrame frame = null;
+    private String diagramFileName;
 
     public DiagramTabSheetComponent(AnalyzedDomainModel analyzedDomainModel) {
         this.analyzedDomainModel = analyzedDomainModel;
         setSizeFull();
     }
 
-    public void addTabs(List<String> diagramFileNames) {
-        this.diagramFileNames = diagramFileNames;
-        diagramFileNames.forEach(this::createZoomComponent);
+    public void addTabs(String diagramFileName) {
+        this.diagramFileName = diagramFileName;
+        createZoomComponent(diagramFileName);
     }
 
     private void createZoomComponent(String diagramName){
         var zoomistContainer = generateZoomComponentContainer(diagramName);
-        add(diagramName, zoomistContainer);
+        add(zoomistContainer);
     }
 
     private SplitLayout generateZoomComponentContainer(String diagramName) {
@@ -62,7 +62,7 @@ public class DiagramTabSheetComponent extends TabSheet {
     private IFrame newZoomFrame(String diagramName) {
         var frame = new IFrame("/simple/"+diagramName);
         frame.getStyle().clear();
-        frames.add(frame);
+        this.frame = frame;
         return frame;
     }
 
@@ -170,7 +170,7 @@ public class DiagramTabSheetComponent extends TabSheet {
     }
 
     private void refreshDiagram(){
-        frames.forEach(IFrame::reload);
+        frame.reload();
     }
 
     private List<DomainType> domainTypeOrdered(){
