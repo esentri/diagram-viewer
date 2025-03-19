@@ -22,12 +22,44 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     private String projectName;
     private String diagramName;
     private FlexLayout zoomComponentContainer;
+    private final AnalyzedDomainModel analyzedDomainModel;
 
     public DiagramViewerView(AnalyzedDomainModel analyzedDomainModel) {
         setSizeFull();
         setClassName("diagram-viewer");
 
         add(new DiagramConfigurationButtonBarComponent(analyzedDomainModel));
+    }
+
+    public void initWatcherService() {
+        Path directoryToWatch;
+
+        try {
+            directoryToWatch = Path.of(diagramsDirectory, projectName);
+        } catch (InvalidPathException e) {
+            throw DiagramViewerException.fail(
+                String.format("Specified path '%s' is not a directory.", diagramsDirectory), e);
+        }
+
+        DirectoryWatcher.onDirectoryChange(directoryToWatch,
+            (evt) -> {
+                log.debug("Noticed change in watched directory. Refreshing tabs.");
+                this.getUI().ifPresent(ui -> ui.access(this::refreshTabs));
+            }
+        );
+    }
+
+    public void refreshTabs() {
+        removeAllTabsFromTabSheet();
+        Set<String> diagramFileNames = FileIOUtils.getFileNamesInDirectory(diagramsDirectory);
+        tabSheet.addTabs(diagramFileNames);
+    }
+
+    private void removeAllTabsFromTabSheet() {
+        int tabCount = tabSheet.getTabCount();
+        for(int i = 0; i < tabCount; i++) {
+            tabSheet.remove(0);
+        }
     }
 
     @Override
