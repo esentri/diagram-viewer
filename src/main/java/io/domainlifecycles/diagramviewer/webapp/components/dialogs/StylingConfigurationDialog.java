@@ -7,7 +7,8 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
+import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.ColorPickerComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Styling;
 
@@ -18,7 +19,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Stylin
  */
 public class StylingConfigurationDialog extends Dialog {
 
-    private final AnalyzedDomainModel analyzedDomainModel;
+    private final Diagram diagram;
 
     private Button cancelButton;
     private Button saveButton;
@@ -66,8 +67,8 @@ public class StylingConfigurationDialog extends Dialog {
     private MultiSelectComboBox<Styling> unspecifiedServiceKindStylingOptionsSelect;
 
 
-    public StylingConfigurationDialog(AnalyzedDomainModel analyzedDomainModel) {
-        this.analyzedDomainModel = analyzedDomainModel;
+    public StylingConfigurationDialog(Diagram diagram) {
+        this.diagram = diagram;
         setHeaderTitle("Configuration | Styling");
 
         add(createDialogLayout());

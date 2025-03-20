@@ -8,7 +8,9 @@ import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
+import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.ArrayList;
@@ -17,19 +19,23 @@ import static java.util.stream.Collectors.groupingBy;
 
 public class DiagramVisibilityAccordionComponent extends Accordion {
 
-    private final AnalyzedDomainModel analyzedDomainModel;
+    private final DomainModelSessionStorage sessionStorage;
+    private final Project project;
+    private final Diagram diagram;
     private final RefreshCallback callback;
 
-    public DiagramVisibilityAccordionComponent(AnalyzedDomainModel analyzedDomainModel, RefreshCallback callback) {
+    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DomainModelSessionStorage sessionStorage, RefreshCallback callback) {
         this.setWidth("30%");
         this.setClassName("visibility-accordion");
-        this.analyzedDomainModel = analyzedDomainModel;
+        this.sessionStorage = sessionStorage;
+        this.project = project;
+        this.diagram = diagram;
         this.callback = callback;
         createAccordion();
     }
 
     private void createAccordion() {
-        var groupedByDomainMirrorType = analyzedDomainModel.getDomainModel()
+        var groupedByDomainMirrorType = sessionStorage.get(project.getProjectId())
             .allTypeMirrors()
             .values()
             .stream()
@@ -51,14 +57,14 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                     if(!List.of(DomainType.AGGREGATE_ROOT, DomainType.ENTITY, DomainType.VALUE_OBJECT, DomainType.ENUM, DomainType.IDENTITY).contains(type)) {
                         var visibleButton = new Button(new Icon("vaadin:eye-slash"));
                         visibleButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-                        if (analyzedDomainModel.getDomainModelVisibility().blacklistedClassNames().contains(mirror.getTypeName())) {
+                        if (diagram.getDomainModelVisibility().getBlacklistedClassNames().contains(mirror.getTypeName())) {
                             visibleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                         }
                         visibleButton.addClickListener(e -> {
                             var typeName = mirror.getTypeName();
-                            var activated = analyzedDomainModel.getDomainModelVisibility().blacklistedClassNames().contains(typeName);
-                            var visibility = analyzedDomainModel.getDomainModelVisibility();
-                            var blackListed = new ArrayList<>(visibility.blacklistedClassNames());
+                            var activated = diagram.getDomainModelVisibility().getBlacklistedClassNames().contains(typeName);
+                            var visibility = diagram.getDomainModelVisibility();
+                            var blackListed = new ArrayList<>(visibility.getBlacklistedClassNames());
                             if (activated) {
                                 blackListed.remove(mirror.getTypeName());
                                 visibleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -66,21 +72,21 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                                 blackListed.add(mirror.getTypeName());
                                 visibleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                             }
-                            analyzedDomainModel.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(blackListed));
+                            diagram.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(blackListed));
                             callback.run();
                         });
                         buttonLayout.add(visibleButton);
                         if (DomainType.APPLICATION_SERVICE.equals(type)) {
                             var seedButton = new Button(new Icon("vaadin:filter"));
                             seedButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-                            if (analyzedDomainModel.getDomainModelVisibility().seedClassNames().contains(mirror.getTypeName())) {
+                            if (diagram.getDomainModelVisibility().getSeedClassNames().contains(mirror.getTypeName())) {
                                 seedButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                             }
                             buttonLayout.add(seedButton);
                             seedButton.addClickListener(e -> {
                                 var typeName = mirror.getTypeName();
-                                var visibility = analyzedDomainModel.getDomainModelVisibility();
-                                var seed = new ArrayList<>(visibility.seedClassNames());
+                                var visibility = diagram.getDomainModelVisibility();
+                                var seed = new ArrayList<>(visibility.getSeedClassNames());
                                 var activated = seed.contains(typeName);
                                 if (activated) {
                                     seed.remove(mirror.getTypeName());
@@ -89,7 +95,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                                     seed.add(mirror.getTypeName());
                                     seedButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                                 }
-                                analyzedDomainModel.setDomainModelVisibility(visibility.replaceSeedClassNames(seed));
+                                diagram.setDomainModelVisibility(visibility.replaceSeedClassNames(seed));
                                 callback.run();
                             });
                         }
@@ -152,7 +158,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     private List<? extends DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(List<? extends DomainTypeMirror> mirrors) {
         var list = new ArrayList<DomainTypeMirror>();
         if(mirrors != null && mirrors.size() > 0) {
-            var mirroredTypes = mirrors.stream().map(m -> m.getTypeName()).toList();
+            var mirroredTypes = mirrors.stream().map(DomainTypeMirror::getTypeName).toList();
             list.addAll(mirrors);
             for (var mirror : mirrors) {
                 for(var interfaceType : mirror.getAllInterfaceTypeNames()){

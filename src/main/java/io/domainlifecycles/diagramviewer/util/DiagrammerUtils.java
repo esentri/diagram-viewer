@@ -7,14 +7,15 @@ import io.domainlifecycles.mirror.api.DomainModel;
 
 public class DiagrammerUtils {
 
-    public static String generateNomnoml(DomainModel domainModel,
-                                         String packageName,
-                                         DomainModelVisibility domainModelVisibility
-                                         ){
+    public static String generateNomnoml(
+        DomainModel domainModel,
+        String packageName,
+        DomainModelVisibility domainModelVisibility) {
+
         DomainDiagramConfig diagramConfig = DomainDiagramConfig.builder()
                 .withContextPackageName(packageName)
-                .withTransitiveFilterSeedDomainServiceTypeNames(domainModelVisibility.seedClassNames())
-                .withClassesBlacklist(domainModelVisibility.blacklistedClassNames())
+                .withTransitiveFilterSeedDomainServiceTypeNames(domainModelVisibility.getSeedClassNames())
+                .withClassesBlacklist(domainModelVisibility.getBlacklistedClassNames())
                 .build();
         DomainDiagramGenerator generator = new DomainDiagramGenerator(diagramConfig, domainModel);
         return generator.generateDiagramText();

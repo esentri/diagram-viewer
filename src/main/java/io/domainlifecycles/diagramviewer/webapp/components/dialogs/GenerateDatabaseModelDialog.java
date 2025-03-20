@@ -9,8 +9,9 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.server.StreamResource;
+import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
-import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -26,13 +27,14 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private TextField bcPackageInput;
     private TextField bcSchemaInput;
 
-    private SQLDDLGeneratorService sqlDDLGeneratorService;
-    private AnalyzedDomainModel analyzedDomainModel;
+    private final SQLDDLGeneratorService sqlDDLGeneratorService;
+    private final DomainModelSessionStorage sessionStorage;
 
-    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, AnalyzedDomainModel analyzedDomainModel) {
+    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, DomainModelSessionStorage domainModelSessionStorage) {
         this.sqlDDLGeneratorService = sqlDDLGeneratorService;
-        this.analyzedDomainModel = analyzedDomainModel;
-        setHeaderTitle("Download SQL DDL Model");
+        this.sessionStorage = domainModelSessionStorage;
+
+        setHeaderTitle("Download SQL-DDL-Model");
         add(createDialogLayout());
         getFooter().add(createGenerateLink());
         getFooter().add(createCloseButton());
@@ -42,9 +44,6 @@ public class GenerateDatabaseModelDialog extends Dialog {
         StreamResource streamResource = new StreamResource("ddl.sql", this::getStream);
         generateLink = new Anchor(streamResource, "Download DDL SQL");
         generateLink.getElement().setAttribute("download", true);
-        if(analyzedDomainModel.getDomainModel()== null){
-            generateLink.setEnabled(false);
-        }
         return generateLink;
     }
 
@@ -78,7 +77,10 @@ public class GenerateDatabaseModelDialog extends Dialog {
     }
 
     private InputStream getStream() {
-        var ddl = sqlDDLGeneratorService.generateSQL(analyzedDomainModel.getDomainModel(), bcPackageInput.getValue(), bcSchemaInput.getValue(), sqlDialectSelect.getValue(), auditModelCheckbox.getValue());
+        final String ddl = sqlDDLGeneratorService.generateSQL(
+            sessionStorage.get(sessionStorage.getSelectedProject().getProjectId()),
+            bcPackageInput.getValue(), bcSchemaInput.getValue(), sqlDialectSelect.getValue(), auditModelCheckbox.getValue());
+
         output.setValue(ddl);
         return new ByteArrayInputStream(ddl.getBytes(StandardCharsets.UTF_8));
     }

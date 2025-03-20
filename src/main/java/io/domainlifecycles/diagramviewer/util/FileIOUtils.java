@@ -8,6 +8,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,8 +29,22 @@ public class FileIOUtils {
             .collect(Collectors.toSet());
     }
 
-    public static void saveFile(String diagramFolderLocation, InputStream inputStream, String fileName) throws InvalidPathException, IOException {
-        final Path filePath = Path.of(diagramFolderLocation, fileName);
+    public static Set<File> getAllFilesIncludingSubsequent(File directory) {
+        Set<File> fileSet = new HashSet<>();
+        if (directory.exists() && directory.isDirectory()) {
+            for (File file : directory.listFiles()) {
+                if (file.isFile()) {
+                    fileSet.add(file);
+                } else if (file.isDirectory()) {
+                    fileSet.addAll(getAllFilesIncludingSubsequent(file));
+                }
+            }
+        }
+        return fileSet;
+    }
+
+    public static void saveFile(String path, InputStream inputStream, String fileName) throws InvalidPathException, IOException {
+        final Path filePath = Path.of(path, fileName);
         Files.createDirectories(filePath.getParent());
         Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
     }

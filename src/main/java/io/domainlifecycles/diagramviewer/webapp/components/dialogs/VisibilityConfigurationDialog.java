@@ -8,14 +8,14 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
-import io.domainlifecycles.diagramviewer.model.DiagramConfiguration;
-import io.domainlifecycles.diagramviewer.session.AnalyzedDomainModel;
-import org.atmosphere.interceptor.AtmosphereResourceStateRecovery.B;
+import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 
 public class VisibilityConfigurationDialog extends Dialog {
 
-    private final Binder<DiagramConfiguration> diagramConfigurationBinder;
-    private final AnalyzedDomainModel analyzedDomainModel;
+    private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
+    private final Diagram diagram;
 
     private Button cancelButton;
     private Button saveButton;
@@ -65,14 +65,14 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showUnspecifiedServiceKindFieldsCheckbox;
     private Checkbox showUnspecifiedServiceKindMethodsCheckbox;
 
-    public VisibilityConfigurationDialog(AnalyzedDomainModel analyzedDomainModel) {
-        this.analyzedDomainModel = analyzedDomainModel;
-        diagramConfigurationBinder = new Binder<>(DiagramConfiguration.class);
+    public VisibilityConfigurationDialog(Diagram diagram) {
+        this.diagram = diagram;
+        diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Visibility");
 
         add(createDialogLayout());
-        diagramConfigurationBinder.readBean(analyzedDomainModel.getDiagramConfiguration());
+        diagramConfigurationBinder.readBean(this.diagram.getDiagramStylingConfiguration());
 
         getFooter().add(createSaveButton());
         getFooter().add(createCancelButton());
@@ -82,7 +82,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         saveButton = new Button("Save");
 
         saveButton.addClickListener(e -> {
-            diagramConfigurationBinder.writeBeanIfValid(analyzedDomainModel.getDiagramConfiguration());
+            diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             close();
         });
 
@@ -92,7 +92,7 @@ public class VisibilityConfigurationDialog extends Dialog {
 
     private Button createCancelButton() {
         cancelButton = new Button("Cancel", e -> {
-            diagramConfigurationBinder.readBean(analyzedDomainModel.getDiagramConfiguration());
+            diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
             close();
         });
         return cancelButton;
@@ -124,24 +124,24 @@ public class VisibilityConfigurationDialog extends Dialog {
 
         showAllFieldsCheckbox = new Checkbox();
         formLayout.addFormItem(showAllFieldsCheckbox,"Fields");
-        diagramConfigurationBinder.bind(showAllFieldsCheckbox, DiagramConfiguration::isShowFields, DiagramConfiguration::setShowFields);
+        diagramConfigurationBinder.bind(showAllFieldsCheckbox, DiagramStylingConfiguration::isShowFields, DiagramStylingConfiguration::setShowFields);
 
         showAllMethodsCheckbox = new Checkbox();
         formLayout.addFormItem(showAllMethodsCheckbox,"Methods");
         showAllMethodsCheckbox.addClickListener(event -> showOnlyPublicMethodsCheckbox.setEnabled(showAllMethodsCheckbox.getValue()));
-        diagramConfigurationBinder.bind(showAllMethodsCheckbox, DiagramConfiguration::isShowMethods, DiagramConfiguration::setShowMethods);
+        diagramConfigurationBinder.bind(showAllMethodsCheckbox, DiagramStylingConfiguration::isShowMethods, DiagramStylingConfiguration::setShowMethods);
 
         showFullQualifiedClassNamesCheckbox= new Checkbox();
         formLayout.addFormItem(showFullQualifiedClassNamesCheckbox,"Full qualified class names");
-        diagramConfigurationBinder.bind(showFullQualifiedClassNamesCheckbox, DiagramConfiguration::isShowFullQualifiedClassNames, DiagramConfiguration::setShowFullQualifiedClassNames);
+        diagramConfigurationBinder.bind(showFullQualifiedClassNamesCheckbox, DiagramStylingConfiguration::isShowFullQualifiedClassNames, DiagramStylingConfiguration::setShowFullQualifiedClassNames);
 
         showAssertionsCheckbox = new Checkbox();
         formLayout.addFormItem(showAssertionsCheckbox,"Assertions");
-        diagramConfigurationBinder.bind(showAssertionsCheckbox, DiagramConfiguration::isShowAssertions, DiagramConfiguration::setShowAssertions);
+        diagramConfigurationBinder.bind(showAssertionsCheckbox, DiagramStylingConfiguration::isShowAssertions, DiagramStylingConfiguration::setShowAssertions);
 
         showOnlyPublicMethodsCheckbox = new Checkbox();
         formLayout.addFormItem(showOnlyPublicMethodsCheckbox,"Public methods only");
-        diagramConfigurationBinder.bind(showOnlyPublicMethodsCheckbox, DiagramConfiguration::isShowOnlyPublicMethods, DiagramConfiguration::setShowOnlyPublicMethods);
+        diagramConfigurationBinder.bind(showOnlyPublicMethodsCheckbox, DiagramStylingConfiguration::isShowOnlyPublicMethods, DiagramStylingConfiguration::setShowOnlyPublicMethods);
 
         generalPanel.add(formLayout);
         return generalPanel;
@@ -154,13 +154,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout domainEventDialogFormLayout = new FormLayout();
 
         showDomainEventsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainEventsCheckbox, DiagramConfiguration::isShowDomainEvents, DiagramConfiguration::setShowDomainEvents);
+        diagramConfigurationBinder.bind(showDomainEventsCheckbox, DiagramStylingConfiguration::isShowDomainEvents, DiagramStylingConfiguration::setShowDomainEvents);
 
         showDomainEventFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainEventFieldsCheckbox, DiagramConfiguration::isShowDomainEventFields, DiagramConfiguration::setShowDomainEventFields);
+        diagramConfigurationBinder.bind(showDomainEventFieldsCheckbox, DiagramStylingConfiguration::isShowDomainEventFields, DiagramStylingConfiguration::setShowDomainEventFields);
 
         showDomainEventMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainEventMethodsCheckbox, DiagramConfiguration::isShowDomainEventMethods, DiagramConfiguration::setShowDomainEventMethods);
+        diagramConfigurationBinder.bind(showDomainEventMethodsCheckbox, DiagramStylingConfiguration::isShowDomainEventMethods, DiagramStylingConfiguration::setShowDomainEventMethods);
 
         domainEventDialogFormLayout.addFormItem(showDomainEventsCheckbox,"Show");
         domainEventDialogFormLayout.addFormItem(showDomainEventFieldsCheckbox,"Fields");
@@ -177,13 +177,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout domainCommandDialogFormLayout = new FormLayout();
 
         showDomainCommandsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainCommandsCheckbox, DiagramConfiguration::isShowDomainCommands, DiagramConfiguration::setShowDomainCommands);
+        diagramConfigurationBinder.bind(showDomainCommandsCheckbox, DiagramStylingConfiguration::isShowDomainCommands, DiagramStylingConfiguration::setShowDomainCommands);
 
         showDomainCommandFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainCommandFieldsCheckbox, DiagramConfiguration::isShowDomainCommandFields, DiagramConfiguration::setShowDomainCommandFields);
+        diagramConfigurationBinder.bind(showDomainCommandFieldsCheckbox, DiagramStylingConfiguration::isShowDomainCommandFields, DiagramStylingConfiguration::setShowDomainCommandFields);
 
         showDomainCommandMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainCommandMethodsCheckbox, DiagramConfiguration::isShowDomainCommandMethods, DiagramConfiguration::setShowDomainCommandMethods);
+        diagramConfigurationBinder.bind(showDomainCommandMethodsCheckbox, DiagramStylingConfiguration::isShowDomainCommandMethods, DiagramStylingConfiguration::setShowDomainCommandMethods);
 
         domainCommandDialogFormLayout.addFormItem(showDomainCommandsCheckbox,"Show");
         domainCommandDialogFormLayout.addFormItem(showDomainCommandFieldsCheckbox,"Fields");
@@ -200,13 +200,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout applicationServiceDialogFormLayout = new FormLayout();
 
         showApplicationServicesCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showApplicationServicesCheckbox, DiagramConfiguration::isShowApplicationServices, DiagramConfiguration::setShowApplicationServices);
+        diagramConfigurationBinder.bind(showApplicationServicesCheckbox, DiagramStylingConfiguration::isShowApplicationServices, DiagramStylingConfiguration::setShowApplicationServices);
 
         showApplicationServiceFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showApplicationServiceFieldsCheckbox, DiagramConfiguration::isShowApplicationServiceFields, DiagramConfiguration::setShowApplicationServiceFields);
+        diagramConfigurationBinder.bind(showApplicationServiceFieldsCheckbox, DiagramStylingConfiguration::isShowApplicationServiceFields, DiagramStylingConfiguration::setShowApplicationServiceFields);
 
         showApplicationServiceMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showApplicationServiceMethodsCheckbox, DiagramConfiguration::isShowApplicationServiceMethods, DiagramConfiguration::setShowApplicationServiceMethods);
+        diagramConfigurationBinder.bind(showApplicationServiceMethodsCheckbox, DiagramStylingConfiguration::isShowApplicationServiceMethods, DiagramStylingConfiguration::setShowApplicationServiceMethods);
 
         applicationServiceDialogFormLayout.addFormItem(showApplicationServicesCheckbox,"Show");
         applicationServiceDialogFormLayout.addFormItem(showApplicationServiceFieldsCheckbox,"Fields");
@@ -223,13 +223,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout domainServiceDialogFormLayout = new FormLayout();
 
         showDomainServicesCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainServicesCheckbox, DiagramConfiguration::isShowDomainServices, DiagramConfiguration::setShowDomainServices);
+        diagramConfigurationBinder.bind(showDomainServicesCheckbox, DiagramStylingConfiguration::isShowDomainServices, DiagramStylingConfiguration::setShowDomainServices);
 
         showDomainServiceFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainServiceFieldsCheckbox, DiagramConfiguration::isShowDomainServiceFields, DiagramConfiguration::setShowDomainServiceFields);
+        diagramConfigurationBinder.bind(showDomainServiceFieldsCheckbox, DiagramStylingConfiguration::isShowDomainServiceFields, DiagramStylingConfiguration::setShowDomainServiceFields);
 
         showDomainServiceMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showDomainServiceMethodsCheckbox, DiagramConfiguration::isShowDomainServiceMethods, DiagramConfiguration::setShowDomainServiceMethods);
+        diagramConfigurationBinder.bind(showDomainServiceMethodsCheckbox, DiagramStylingConfiguration::isShowDomainServiceMethods, DiagramStylingConfiguration::setShowDomainServiceMethods);
 
         domainServiceDialogFormLayout.addFormItem(showApplicationServicesCheckbox,"Show");
         domainServiceDialogFormLayout.addFormItem(showApplicationServiceFieldsCheckbox,"Fields");
@@ -246,13 +246,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout repositoryDialogFormLayout = new FormLayout();
 
         showRepositoriesCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showRepositoriesCheckbox, DiagramConfiguration::isShowRepositories, DiagramConfiguration::setShowRepositories);
+        diagramConfigurationBinder.bind(showRepositoriesCheckbox, DiagramStylingConfiguration::isShowRepositories, DiagramStylingConfiguration::setShowRepositories);
 
         showRepositoryFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showRepositoryFieldsCheckbox, DiagramConfiguration::isShowRepositoryFields, DiagramConfiguration::setShowRepositoryFields);
+        diagramConfigurationBinder.bind(showRepositoryFieldsCheckbox, DiagramStylingConfiguration::isShowRepositoryFields, DiagramStylingConfiguration::setShowRepositoryFields);
 
         showRepositoryMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showRepositoryMethodsCheckbox, DiagramConfiguration::isShowRepositoryMethods, DiagramConfiguration::setShowRepositoryMethods);
+        diagramConfigurationBinder.bind(showRepositoryMethodsCheckbox, DiagramStylingConfiguration::isShowRepositoryMethods, DiagramStylingConfiguration::setShowRepositoryMethods);
 
         repositoryDialogFormLayout.addFormItem(showRepositoriesCheckbox,"Show");
         repositoryDialogFormLayout.addFormItem(showRepositoryFieldsCheckbox,"Fields");
@@ -269,13 +269,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout readModelDialogFormLayout = new FormLayout();
 
         showReadModelsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showReadModelsCheckbox, DiagramConfiguration::isShowReadModels, DiagramConfiguration::setShowReadModels);
+        diagramConfigurationBinder.bind(showReadModelsCheckbox, DiagramStylingConfiguration::isShowReadModels, DiagramStylingConfiguration::setShowReadModels);
 
         showReadModelFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showReadModelFieldsCheckbox, DiagramConfiguration::isShowReadModelFields, DiagramConfiguration::setShowReadModelFields);
+        diagramConfigurationBinder.bind(showReadModelFieldsCheckbox, DiagramStylingConfiguration::isShowReadModelFields, DiagramStylingConfiguration::setShowReadModelFields);
 
         showReadModelMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showReadModelMethodsCheckbox, DiagramConfiguration::isShowReadModelMethods, DiagramConfiguration::setShowReadModelMethods);
+        diagramConfigurationBinder.bind(showReadModelMethodsCheckbox, DiagramStylingConfiguration::isShowReadModelMethods, DiagramStylingConfiguration::setShowReadModelMethods);
 
         readModelDialogFormLayout.addFormItem(showReadModelsCheckbox,"Show");
         readModelDialogFormLayout.addFormItem(showReadModelFieldsCheckbox,"Fields");
@@ -291,13 +291,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout queryHandlerDialogFormLayout = new FormLayout();
 
         showQueryHandlersCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showQueryHandlersCheckbox, DiagramConfiguration::isShowQueryHandlers, DiagramConfiguration::setShowQueryHandlers);
+        diagramConfigurationBinder.bind(showQueryHandlersCheckbox, DiagramStylingConfiguration::isShowQueryHandlers, DiagramStylingConfiguration::setShowQueryHandlers);
 
         showQueryHandlerFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showQueryHandlerFieldsCheckbox, DiagramConfiguration::isShowQueryHandlerFields, DiagramConfiguration::setShowQueryHandlerFields);
+        diagramConfigurationBinder.bind(showQueryHandlerFieldsCheckbox, DiagramStylingConfiguration::isShowQueryHandlerFields, DiagramStylingConfiguration::setShowQueryHandlerFields);
 
         showQueryHandlerMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showQueryHandlerMethodsCheckbox, DiagramConfiguration::isShowQueryHandlerMethods, DiagramConfiguration::setShowQueryHandlerMethods);
+        diagramConfigurationBinder.bind(showQueryHandlerMethodsCheckbox, DiagramStylingConfiguration::isShowQueryHandlerMethods, DiagramStylingConfiguration::setShowQueryHandlerMethods);
 
         queryHandlerDialogFormLayout.addFormItem(showQueryHandlersCheckbox,"Show");
         queryHandlerDialogFormLayout.addFormItem(showQueryHandlerFieldsCheckbox,"Fields");
@@ -313,13 +313,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout outboundServiceDialogFormLayout = new FormLayout();
 
         showOutboundServicesCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showOutboundServicesCheckbox, DiagramConfiguration::isShowOutboundServices, DiagramConfiguration::setShowOutboundServices);
+        diagramConfigurationBinder.bind(showOutboundServicesCheckbox, DiagramStylingConfiguration::isShowOutboundServices, DiagramStylingConfiguration::setShowOutboundServices);
 
         showOutboundServiceFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showOutboundServiceFieldsCheckbox, DiagramConfiguration::isShowOutboundServiceFields, DiagramConfiguration::setShowOutboundServiceFields);
+        diagramConfigurationBinder.bind(showOutboundServiceFieldsCheckbox, DiagramStylingConfiguration::isShowOutboundServiceFields, DiagramStylingConfiguration::setShowOutboundServiceFields);
 
         showOutboundServiceMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showOutboundServiceMethodsCheckbox, DiagramConfiguration::isShowOutboundServiceMethods, DiagramConfiguration::setShowOutboundServiceMethods);
+        diagramConfigurationBinder.bind(showOutboundServiceMethodsCheckbox, DiagramStylingConfiguration::isShowOutboundServiceMethods, DiagramStylingConfiguration::setShowOutboundServiceMethods);
 
         outboundServiceDialogFormLayout.addFormItem(showOutboundServicesCheckbox,"Show");
         outboundServiceDialogFormLayout.addFormItem(showOutboundServiceFieldsCheckbox,"Fields");
@@ -336,13 +336,13 @@ public class VisibilityConfigurationDialog extends Dialog {
         FormLayout unspecifiedServiceKindDialogFormLayout = new FormLayout();
 
         showUnspecifiedServiceKindsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showUnspecifiedServiceKindsCheckbox, DiagramConfiguration::isShowUnspecifiedServiceKinds, DiagramConfiguration::setShowUnspecifiedServiceKinds);
+        diagramConfigurationBinder.bind(showUnspecifiedServiceKindsCheckbox, DiagramStylingConfiguration::isShowUnspecifiedServiceKinds, DiagramStylingConfiguration::setShowUnspecifiedServiceKinds);
 
         showUnspecifiedServiceKindFieldsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showUnspecifiedServiceKindFieldsCheckbox, DiagramConfiguration::isShowUnspecifiedServiceKindFields, DiagramConfiguration::setShowUnspecifiedServiceKindFields);
+        diagramConfigurationBinder.bind(showUnspecifiedServiceKindFieldsCheckbox, DiagramStylingConfiguration::isShowUnspecifiedServiceKindFields, DiagramStylingConfiguration::setShowUnspecifiedServiceKindFields);
 
         showUnspecifiedServiceKindMethodsCheckbox = new Checkbox();
-        diagramConfigurationBinder.bind(showUnspecifiedServiceKindMethodsCheckbox, DiagramConfiguration::isShowUnspecifiedServiceKindMethods, DiagramConfiguration::setShowUnspecifiedServiceKindMethods);
+        diagramConfigurationBinder.bind(showUnspecifiedServiceKindMethodsCheckbox, DiagramStylingConfiguration::isShowUnspecifiedServiceKindMethods, DiagramStylingConfiguration::setShowUnspecifiedServiceKindMethods);
 
         unspecifiedServiceKindDialogFormLayout.addFormItem(showUnspecifiedServiceKindsCheckbox,"Show");
         unspecifiedServiceKindDialogFormLayout.addFormItem(showUnspecifiedServiceKindFieldsCheckbox,"Fields");

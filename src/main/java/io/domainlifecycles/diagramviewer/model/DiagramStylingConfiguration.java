@@ -5,10 +5,21 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycle
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import java.util.Collections;
 import java.util.List;
 
-public class DiagramConfiguration {
+@Entity
+public class DiagramStylingConfiguration {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long diagramStylingConfigurationId;
 
     private String contextPackageName = null;
 
@@ -96,6 +107,7 @@ public class DiagramConfiguration {
     /**
      * Full qualified class names to be excluded from the diagram
      */
+    @ElementCollection
     private List<String> classesBlacklist = Collections.emptyList();
     /**
      * If false, generally no fields are included
@@ -240,11 +252,13 @@ public class DiagramConfiguration {
     /**
      * Fields with named like elements of this black list are excluded
      */
+    @ElementCollection
     private List<String> fieldBlacklist = List.of("concurrencyVersion");
 
     /**
      * Methods with named like elements of this black list are excluded
      */
+    @ElementCollection
     private List<String> methodBlacklist = List.of(
         "builder",
         "validate",
@@ -288,8 +302,17 @@ public class DiagramConfiguration {
     /**
      * Enabling and initializing the seed for the {@link TransitiveDomainTypeFilter}.
      */
+    @ElementCollection
     private List<String> transitiveFilterSeedDomainServiceTypeNames = Collections.emptyList();
-    private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null);
+
+
+    public void setDiagramStylingConfigurationId(Long diagramConfigurationId) {
+        this.diagramStylingConfigurationId = diagramConfigurationId;
+    }
+
+    public Long getDiagramStylingConfigurationId() {
+        return diagramStylingConfigurationId;
+    }
 
     public String getContextPackageName() {
         return contextPackageName;
@@ -793,9 +816,5 @@ public class DiagramConfiguration {
 
     public void setTransitiveFilterSeedDomainServiceTypeNames(List<String> transitiveFilterSeedDomainServiceTypeNames) {
         this.transitiveFilterSeedDomainServiceTypeNames = transitiveFilterSeedDomainServiceTypeNames;
-    }
-
-    public DomainModelVisibility getDomainModelVisibility() {
-        return domainModelVisibility;
     }
 }
