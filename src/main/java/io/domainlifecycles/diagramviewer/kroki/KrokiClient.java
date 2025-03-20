@@ -30,6 +30,7 @@ public class KrokiClient {
 
     public KrokiClient() {
         this.krokiDockerAdapter = new KrokiDockerAdapter();
+        Runtime.getRuntime().addShutdownHook(new Thread(this::finish));
     }
 
     /**

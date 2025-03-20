@@ -39,6 +39,7 @@ public class MainLayout extends AppLayout {
     private final String diagramsDirectory;
     private final UploadDialog uploadDialog;
     private final GenerateDatabaseModelDialog databaseModelDialog;
+    private SideNav sideNav;
 
     public MainLayout(
         @Value("${targets.location}") String targetsLocation,
@@ -61,11 +62,12 @@ public class MainLayout extends AppLayout {
 
         Button uploadButton = new Button("Upload", new Icon("vaadin:cloud-upload-o"));
         uploadButton.addClickListener(e -> uploadDialog.open());
+
         addToDrawer(scroller, uploadButton);
     }
 
     private SideNav getSideNav() {
-        SideNav sideNav = new SideNav();
+        sideNav = new SideNav();
         sideNav.addItem(createSideNavLinks());
         return sideNav;
     }
@@ -104,9 +106,14 @@ public class MainLayout extends AppLayout {
         DirectoryWatcher.onDirectoryChange(directoryToWatch,
             (evt) -> {
                 log.debug("Noticed change in watched directory. Refreshing Sidenav.");
-                this.getUI().ifPresent(ui -> ui.access(this::buildDrawerContent));
+                this.getUI().ifPresent(ui -> ui.access(this::refreshSideNavLinks));
             }
         );
+    }
+
+    private void refreshSideNavLinks() {
+        sideNav.removeAll();
+        sideNav.addItem(createSideNavLinks());
     }
 
     private Button getDatabaseButton() {

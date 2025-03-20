@@ -129,7 +129,7 @@ public class AnalyzedDomainModel {
         this.domainModelNomNoml = DiagrammerUtils.generateNomnoml(domainModel, shownContextPackage, domainModelVisibility);
         this.domainModelSvg = krokiClient.convertTo(domainModelNomNoml, FileType.SVG);
         try {
-            FileIOUtils.saveFile(diagramDirectory, new ByteArrayInputStream(domainModelSvg), "currentJar.svg");
+            FileIOUtils.saveFile(diagramDirectory + "/rezeption", new ByteArrayInputStream(domainModelSvg), "currentJar.svg");
         } catch (IOException e) {
             throw DiagramViewerException.fail(String.format("Could not save diagram to '%s'.", diagramDirectory), e);
         }

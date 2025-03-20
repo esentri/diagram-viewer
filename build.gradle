@@ -38,8 +38,16 @@ dependencies {
 		exclude group: "org.slf4j"
 		exclude group: "ch.qos.logback"
 	}
-	implementation "org.springframework.boot:spring-boot-starter-data-jpa:*"
-	implementation "com.h2database:h2:*"
+	implementation ('org.springframework.boot:spring-boot-starter-data-jpa') {
+		exclude group: "commons-logging"
+		exclude group: "org.slf4j"
+		exclude group: "ch.qos.logback"
+	}
+	implementation ('com.h2database:h2') {
+		exclude group: "commons-logging"
+		exclude group: "org.slf4j"
+		exclude group: "ch.qos.logback"
+	}
 	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"
 	implementation "com.github.docker-java:docker-java-transport-httpclient5:${javaDockerVersion}"
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
