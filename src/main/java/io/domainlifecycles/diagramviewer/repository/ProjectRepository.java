@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface ProjectRepository extends CrudRepository<Project, Long> {
 
     Optional<Project> findByProjectNameFull(String projectNameFull);
+    Optional<Project> findByProjectNameClean(String projectNameClean);
+    Optional<Project> findByAbsolutePathToTarget(String absolutePathToTarget);
 }

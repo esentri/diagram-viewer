@@ -2,27 +2,31 @@ package io.domainlifecycles.diagramviewer.model;
 
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "DOMAIN_MODEL_VISIBILITY")
+@AllArgsConstructor
+@NoArgsConstructor
 public class DomainModelVisibility {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long domainModelVisibilityId;
 
-    @ElementCollection
-    private List<String> seedClassNames;
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> seedClassNames = new ArrayList<>();
 
-    @ElementCollection
-    private List<String> blacklistedClassNames;
-
-    public DomainModelVisibility() {
-    }
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> blacklistedClassNames = new ArrayList<>();
 
     public DomainModelVisibility(List<String> seedClassNames, List<String> blacklistedClassNames) {
         this.seedClassNames = seedClassNames == null ? new ArrayList<>() : seedClassNames;

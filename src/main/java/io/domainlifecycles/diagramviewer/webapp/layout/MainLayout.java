@@ -18,17 +18,21 @@ import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramViewerView;
+import java.net.URI;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")
@@ -37,20 +41,27 @@ public class MainLayout extends AppLayout {
     private final static Logger log = LoggerFactory.getLogger(MainLayout.class);
 
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
+    private final Path selectedTargetPath;
     private final ProjectService projectService;
+    private final DiagramService diagramService;
     private final DomainModelSessionStorage sessionStorage;
     private final UploadDialog uploadDialog;
     private final GenerateDatabaseModelDialog databaseModelDialog;
     private SideNav sideNav;
 
     public MainLayout(
+        @Value("${targets.location}") String defaultTargetsLocation,
         ProjectService projectService,
+        DiagramService diagramService,
         SQLDDLGeneratorService sqlddlGeneratorService,
         DomainModelSessionStorage sessionStorage) {
 
+        this.selectedTargetPath = Path.of(defaultTargetsLocation);
         this.projectService = projectService;
+        this.diagramService = diagramService;
         this.sessionStorage = sessionStorage;
-        this.uploadDialog = new UploadDialog();
+        this.uploadDialog = new UploadDialog(projectService, defaultTargetsLocation, this::refreshSideNavLinks);
+
         this.databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, sessionStorage);
 
         addToNavbar(new DrawerToggle(), getDlcLogo(), getDatabaseButton());
@@ -74,9 +85,17 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem[] createSideNavLinks() {
-        return projectService.getAll()
+        return projectService.getAll(selectedTargetPath)
             .map(project -> {
+                CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(project, diagramService, this::refreshSideNavLinks);
                 SideNavItem parentSideNavItem = new SideNavItem(project.getProjectNameFull());
+
+                Button createDiagramButton = new Button(new Icon("vaadin:plus"));
+                createDiagramButton.addClickListener(e -> {
+                    sessionStorage.setSelectedProject(project);
+                    createDiagramDialog.open();
+                });
+                parentSideNavItem.setPrefixComponent(createDiagramButton);
 
                 project.getDiagrams()
                     .forEach(diagram -> {
@@ -114,6 +133,12 @@ public class MainLayout extends AppLayout {
     private void refreshSideNavLinks() {
         sideNav.removeAll();
         sideNav.addItem(createSideNavLinks());
+    }
+
+    private void setNewTargetDirectory(String targetDirectory) {
+        projectService.setTargetsDirectory(targetDirectory);
+        uploadDialog.setTargetsLocation(targetDirectory);
+        refreshSideNavLinks();
     }
 
     private Button getDatabaseButton() {

@@ -24,10 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Holds information about the DLC Domain model for each project in the database.
+ * Holds session values about the initialized Domain models.
  */
 @SpringComponent
-@VaadinSessionScope
 public class DomainModelSessionStorage {
 
     private static final Logger log = LoggerFactory.getLogger(DomainModelSessionStorage.class);
@@ -58,5 +57,9 @@ public class DomainModelSessionStorage {
 
     public void setSelectedProject(Project selectedProject) {
         this.selectedProject = selectedProject;
+    }
+    public void purge() {
+        domainModelStore.clear();
+        selectedProject = null;
     }
 }

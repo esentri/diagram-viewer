@@ -11,99 +11,107 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import java.util.Collections;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "DIAGRAM_STYLING_CONFIGURATION")
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class DiagramStylingConfiguration {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long diagramStylingConfigurationId;
 
-    private String contextPackageName = null;
+    private String contextPackageName;
 
     /**
      * Style declaration for AggregateRoots (see Nomnoml style options)
      */
-    private String aggregateRootStyle = "fill=#8f8f bold";
+    @Builder.Default private String aggregateRootStyle = "fill=#8f8f bold";
     /**
      * Style declaration for AggregateRoot frames (see Nomnoml style options)
      */
-    private String aggregateFrameStyle = "visual=frame align=left";
+    @Builder.Default private String aggregateFrameStyle = "visual=frame align=left";
     /**
      * Style declaration for Entities  (see Nomnoml style options)
      */
-    private String entityStyle = "fill=#88AAFF bold";
+    @Builder.Default private String entityStyle = "fill=#88AAFF bold";
     /**
      * Style declaration for ValueObjects  (see Nomnoml style options)
      */
-    private String valueObjectStyle = "fill=#FFFFCC bold";
+    @Builder.Default private String valueObjectStyle = "fill=#FFFFCC bold";
     /**
      * Style declaration for Enums  (see Nomnoml style options)
      */
-    private String enumStyle = "fill=#FFFFCC bold";
+    @Builder.Default private String enumStyle = "fill=#FFFFCC bold";
     /**
      * Style declaration for Identities  (see Nomnoml style options)
      */
-    private String identityStyle = "fill=#FFFFCC bold";
+    @Builder.Default private String identityStyle = "fill=#FFFFCC bold";
     /**
      * Style declaration for DomainEvents  (see Nomnoml style options)
      */
-    private String domainEventStyle = "fill=#CCFFFF bold";
+    @Builder.Default private String domainEventStyle = "fill=#CCFFFF bold";
     /**
      * Style declaration for DomainCommands  (see Nomnoml style options)
      */
-    private String domainCommandStyle = "fill=#FFB266 bold";
+    @Builder.Default private String domainCommandStyle = "fill=#FFB266 bold";
     /**
      * Style declaration for ApplicationServices (see Nomnoml style options)
      */
-    private String applicationServiceStyle = "bold";
+    @Builder.Default private String applicationServiceStyle = "bold";
     /**
      * Style declaration for DomainServices  (see Nomnoml style options)
      */
-    private String domainServiceStyle = "fill=#E0E0E0 bold";
+    @Builder.Default private String domainServiceStyle = "fill=#E0E0E0 bold";
     /**
      * Style declaration for Repositories  (see Nomnoml style options)
      */
-    private String repositoryStyle = "fill=#C0C0C0 bold";
+    @Builder.Default private String repositoryStyle = "fill=#C0C0C0 bold";
     /**
      * Style declaration for ReadModels  (see Nomnoml style options)
      */
-    private String readModelStyle = "fill=#FFCCE5 bold";
+    @Builder.Default private String readModelStyle = "fill=#FFCCE5 bold";
     /**
      * Style declaration for QueryHandlers  (see Nomnoml style options)
      */
-    private String queryHandlerStyle = "fill=#C0C0C0 bold";
+    @Builder.Default private String queryHandlerStyle = "fill=#C0C0C0 bold";
     /**
      * Style declaration for OutboundServices  (see Nomnoml style options)
      */
-    private String outboundServiceStyle = "fill=#C0C0C0 bold";
+    @Builder.Default private String outboundServiceStyle = "fill=#C0C0C0 bold";
     /**
      * Style declaration for unspecified ServiceKinds  (see Nomnoml style options)
      */
-    private String unspecifiedServiceKindStyle = "fill=#C0C0C0 bold";
+    @Builder.Default private String unspecifiedServiceKindStyle = "fill=#C0C0C0 bold";
     /**
      * General font style declaration  (see Nomnoml style options)
      */
-    private Font font = Font.HELVETICA;
+    @Builder.Default private Font font = Font.HELVETICA;
     /**
      * General layout direction style declaration (see Nomnoml style options, 'down' or 'right' is supported)
      */
-    private Direction direction = Direction.DOWN;
+    @Builder.Default private Direction direction = Direction.DOWN;
     /**
      * General layout direction style declaration (see Nomnoml style options, 'network-simplex' or 'tight-tree' or
      * 'longest-path' is supported)
      */
-    private Ranker ranker = Ranker.LONGEST_PATH;
+    @Builder.Default private Ranker ranker = Ranker.LONGEST_PATH;
     /**
      * General acycling style declaration  (see Nomnoml style options, only 'greedy' supported)
      */
-    private Acycler acycler = Acycler.GREEDY;
+    @Builder.Default private Acycler acycler = Acycler.GREEDY;
     /**
      * Background color style declaration (see Nomnoml style options, only 'transparent' or HEX color-codes supported)
      */
-    private String backgroundColor = "transparent";
+    @Builder.Default private String backgroundColor = "transparent";
     /**
      * Full qualified class names to be excluded from the diagram
      */
@@ -112,154 +120,154 @@ public class DiagramStylingConfiguration {
     /**
      * If false, generally no fields are included
      */
-    private boolean showFields = true;
+    @Builder.Default private boolean showFields = true;
     /**
      * If true, generally full qualified class names are used
      */
-    private boolean showFullQualifiedClassNames = false;
+    @Builder.Default private boolean showFullQualifiedClassNames = false;
     /**
      * If true, assertions (currently only if specified by Bean Validation Annotations) are included.
      */
-    private boolean showAssertions = true;
+    @Builder.Default private boolean showAssertions = true;
     /**
      * If false, generally no methods are included
      */
-    private boolean showMethods = true;
+    @Builder.Default private boolean showMethods = true;
     /**
      * If true, generally only public methods are included
      */
-    private boolean showOnlyPublicMethods = true;
+    @Builder.Default private boolean showOnlyPublicMethods = true;
     /**
      * If true, DomainEvent classes are included
      */
-    private boolean showDomainEvents = true;
+    @Builder.Default private boolean showDomainEvents = true;
     /**
      * If true, fields of DomainEvents are included
      */
-    private boolean showDomainEventFields = false;
+    @Builder.Default private boolean showDomainEventFields = false;
     /**
      * If true, methods of DomainEvents are included
      */
-    private boolean showDomainEventMethods = false;
+    @Builder.Default private boolean showDomainEventMethods = false;
     /**
      * If true, DomainCommand classes are included
      */
-    private boolean showDomainCommands = true;
+    @Builder.Default private boolean showDomainCommands = true;
     /**
      * DomainCommands might be passed down to subsequent classes in the flow.
      * If true, DomainCommands relations are only drawn on the top most processing class.
      */
-    private boolean showOnlyTopLevelDomainCommandRelations = true;
+    @Builder.Default private boolean showOnlyTopLevelDomainCommandRelations = true;
     /**
      * If true, fields of DomainCommands are included
      */
-    private boolean showDomainCommandFields = false;
+    @Builder.Default private boolean showDomainCommandFields = false;
     /**
      * If true, methods of DomainCommands are included
      */
-    private boolean showDomainCommandMethods = false;
+    @Builder.Default private boolean showDomainCommandMethods = false;
     /**
      * If true, DomainService classes are included
      */
-    private boolean showDomainServices = true;
+    @Builder.Default private boolean showDomainServices = true;
     /**
      * If true, fields of DomainServices are included
      */
-    private boolean showDomainServiceFields = false;
+    @Builder.Default private boolean showDomainServiceFields = false;
     /**
      * If true, methods of DomainServices are included
      */
-    private boolean showDomainServiceMethods = true;
+    @Builder.Default private boolean showDomainServiceMethods = true;
     /**
      * If true, ApplicationService/Driver classes are included
      */
-    private boolean showApplicationServices = true;
+    @Builder.Default private boolean showApplicationServices = true;
     /**
      * If true, fields of ApplicationServices/Drivers are included
      */
-    private boolean showApplicationServiceFields = false;
+    @Builder.Default private boolean showApplicationServiceFields = false;
     /**
      * If true, methods of ApplicationServices/Drivers are included
      */
-    private boolean showApplicationServiceMethods = true;
+    @Builder.Default private boolean showApplicationServiceMethods = true;
     /**
      * If true, Repository classes are included
      */
-    private boolean showRepositories = true;
+    @Builder.Default private boolean showRepositories = true;
     /**
      * If true, fields of Repositories are included
      */
-    private boolean showRepositoryFields = false;
+    @Builder.Default private boolean showRepositoryFields = false;
     /**
      * If true, methods of Repositories are included
      */
-    private boolean showRepositoryMethods = true;
+    @Builder.Default private boolean showRepositoryMethods = true;
     /**
      * If true, ReadModel classes are included
      */
-    private boolean showReadModels = true;
+    @Builder.Default private boolean showReadModels = true;
     /**
      * If true, fields of ReadModels are included
      */
-    private boolean showReadModelFields = true;
+    @Builder.Default private boolean showReadModelFields = true;
     /**
      * If true, methods of ReadModels are included
      */
-    private boolean showReadModelMethods = false;
+    @Builder.Default private boolean showReadModelMethods = false;
     /**
      * If true, QueryHandler classes are included
      */
-    private boolean showQueryHandlers = true;
+    @Builder.Default private boolean showQueryHandlers = true;
     /**
      * If true, fields of QueryHandlers are included
      */
-    private boolean showQueryHandlerFields = false;
+    @Builder.Default private boolean showQueryHandlerFields = false;
     /**
      * If true, methods of QueryHandlers are included
      */
-    private boolean showQueryHandlerMethods = false;
+    @Builder.Default private boolean showQueryHandlerMethods = false;
     /**
      * If true, OutboundService classes are included
      */
-    private boolean showOutboundServices = true;
+    @Builder.Default private boolean showOutboundServices = true;
     /**
      * If true, fields of OutboundServices are included
      */
-    private boolean showOutboundServiceFields = false;
+    @Builder.Default private boolean showOutboundServiceFields = false;
     /**
      * If true, methods of OutboundServices are included
      */
-    private boolean showOutboundServiceMethods = false;
+    @Builder.Default private boolean showOutboundServiceMethods = false;
 
     /**
      * If true, unspecified ServiceKind classes are included
      */
-    private boolean showUnspecifiedServiceKinds = true;
+    @Builder.Default private boolean showUnspecifiedServiceKinds = true;
     /**
      * If true, fields of unspecified ServiceKinds are included
      */
-    private boolean showUnspecifiedServiceKindFields = false;
+    @Builder.Default private boolean showUnspecifiedServiceKindFields = false;
     /**
      * If true, methods of unspecified ServiceKinds are included
      */
-    private boolean showUnspecifiedServiceKindMethods = false;
+    @Builder.Default private boolean showUnspecifiedServiceKindMethods = false;
 
     /**
      * If true, the stereotype {@code <Driver>} is used instead of {@code <ApplicationService>}
      */
-    private boolean callApplicationServiceDriver = true;
+    @Builder.Default private boolean callApplicationServiceDriver = true;
 
     /**
      * Fields with named like elements of this black list are excluded
      */
     @ElementCollection
-    private List<String> fieldBlacklist = List.of("concurrencyVersion");
+    @Builder.Default private List<String> fieldBlacklist = List.of("concurrencyVersion");
 
     /**
      * Methods with named like elements of this black list are excluded
      */
     @ElementCollection
-    private List<String> methodBlacklist = List.of(
+    @Builder.Default private List<String> methodBlacklist = List.of(
         "builder",
         "validate",
         "concurrencyVersion",
@@ -274,16 +282,16 @@ public class DiagramStylingConfiguration {
     /**
      * If true, members declared by inherited classes are included
      */
-    private boolean showInheritedMembersInClasses = true;
+    @Builder.Default private boolean showInheritedMembersInClasses = true;
     /**
      * If true, members declared by {@code java.lang.Object} are included
      */
-    private boolean showObjectMembersInClasses = true;
+    @Builder.Default private boolean showObjectMembersInClasses = true;
 
     /**
      * If true, multiplicity is added to the associations label.
      */
-    private boolean multiplicityInLabel = true;
+    @Builder.Default private boolean multiplicityInLabel = true;
 
     /**
      * Show field 'stereotypes' like {@code <ID>, <ENUM, <IDREF> or <VO>}, indicating
@@ -297,13 +305,13 @@ public class DiagramStylingConfiguration {
      *   <li>{@code <VO>}: Signifies a value object.</li>
      * </ul>
      */
-    private boolean fieldStereotypes = true;
+    @Builder.Default private boolean fieldStereotypes = true;
 
     /**
      * Enabling and initializing the seed for the {@link TransitiveDomainTypeFilter}.
      */
     @ElementCollection
-    private List<String> transitiveFilterSeedDomainServiceTypeNames = Collections.emptyList();
+    @Builder.Default private List<String> transitiveFilterSeedDomainServiceTypeNames = Collections.emptyList();
 
 
     public void setDiagramStylingConfigurationId(Long diagramConfigurationId) {

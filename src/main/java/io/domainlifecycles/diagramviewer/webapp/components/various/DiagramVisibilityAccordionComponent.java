@@ -10,6 +10,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -20,14 +21,16 @@ import static java.util.stream.Collectors.groupingBy;
 public class DiagramVisibilityAccordionComponent extends Accordion {
 
     private final DomainModelSessionStorage sessionStorage;
+    private final DiagramService diagramService;
     private final Project project;
     private final Diagram diagram;
     private final RefreshCallback callback;
 
-    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DomainModelSessionStorage sessionStorage, RefreshCallback callback) {
+    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DomainModelSessionStorage sessionStorage, DiagramService diagramService, RefreshCallback callback) {
         this.setWidth("30%");
         this.setClassName("visibility-accordion");
         this.sessionStorage = sessionStorage;
+        this.diagramService = diagramService;
         this.project = project;
         this.diagram = diagram;
         this.callback = callback;
@@ -73,6 +76,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                                 visibleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                             }
                             diagram.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(blackListed));
+                            diagramService.save(diagram);
                             callback.run();
                         });
                         buttonLayout.add(visibleButton);
@@ -96,6 +100,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                                     seedButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                                 }
                                 diagram.setDomainModelVisibility(visibility.replaceSeedClassNames(seed));
+                                diagramService.save(diagram);
                                 callback.run();
                             });
                         }

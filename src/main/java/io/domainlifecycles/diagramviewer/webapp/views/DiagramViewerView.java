@@ -9,6 +9,7 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.rest.ResourceController;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
@@ -18,7 +19,6 @@ import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.context.request.SessionScope;
 import static java.util.stream.Collectors.groupingBy;
 
 @Route(value = "/:projectName/:diagramName", layout = MainLayout.class)
@@ -28,6 +28,7 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     private final static Logger log = LoggerFactory.getLogger(DiagramViewerView.class);
 
     private final ProjectService projectService;
+    private final DiagramService diagramService;
     private final DomainModelSessionStorage sessionStorage;
     private String projectNameClean;
     private String diagramName;
@@ -36,9 +37,10 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     private FlexLayout zoomComponentContainer;
     private DiagramZoomComponent diagramZoomComponent;
 
-    public DiagramViewerView(DomainModelSessionStorage sessionStorage, ProjectService projectService) {
+    public DiagramViewerView(DomainModelSessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
         this.sessionStorage = sessionStorage;
         this.projectService = projectService;
+        this.diagramService = diagramService;
         setSizeFull();
         setClassName("diagram-viewer");
     }
@@ -54,7 +56,7 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     }
 
     private void setProjectAndDiagram() {
-        project = projectService.get(projectNameClean);
+        project = projectService.getByProjectNameClean(projectNameClean);
         diagram = project.getDiagrams().stream().filter(foundDiagram ->
             Objects.equals(foundDiagram.getFileName(), diagramName))
             .findAny()
@@ -66,7 +68,7 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     private void addPageContents() {
         add(new DiagramConfigurationButtonBarComponent(diagram));
         add(createDiagramZoomComponent());
-        add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, this::reloadDiagramZoomComponent));
+        add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService, this::reloadDiagramZoomComponent));
     }
 
     private FlexLayout createDiagramZoomComponent() {

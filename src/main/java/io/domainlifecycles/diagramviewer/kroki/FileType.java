@@ -3,16 +3,18 @@ package io.domainlifecycles.diagramviewer.kroki;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 
 public enum FileType {
-    PDF(".pdf"),
-    SVG(".svg"),
-    PNG(".png"),
-    JPG( ".jpg"),
-    NOMNOML(".nomnoml");
+    PDF(".pdf", "PDF"),
+    SVG(".svg", "SVG"),
+    PNG(".png", "PNG"),
+    JPG( ".jpg", "JPG"),
+    NOMNOML(".nomnoml", "NOMNOML");
 
     private final String fileSuffix;
+    private final String displayValue;
 
-    FileType(String fileSuffix) {
+    FileType(String fileSuffix, String displayValue) {
         this.fileSuffix = fileSuffix;
+        this.displayValue = displayValue;
     }
 
     public static FileType byName(final String name) {
@@ -26,5 +28,9 @@ public enum FileType {
 
     public String getFileSuffix() {
         return fileSuffix;
+    }
+
+    public String getDisplayValue() {
+        return displayValue;
     }
 }
