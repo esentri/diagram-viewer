@@ -4,13 +4,8 @@
     padding: 1rem
 }
 
-.zoomist {
-    height: 100%;
-}
-
-.zoomist-container {
-    height: 100%;
-    margin: 0.5rem;
+.outer-zoomist-container {
+    margin: 0 1rem 0;
     overflow: hidden;
 }
 
@@ -18,4 +13,3 @@
 margin-right: 1rem;
 margin-left: auto;
 }
-

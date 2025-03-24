@@ -75,7 +75,8 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
         if(zoomComponentContainer != null) remove(zoomComponentContainer);
 
         zoomComponentContainer = new FlexLayout();
-        zoomComponentContainer.setClassName("zoomist-container");
+        zoomComponentContainer.setClassName("outer-zoomist-container");
+        zoomComponentContainer.setMinHeight("100%");
         zoomComponentContainer.setMaxHeight("100%");
         zoomComponentContainer.setSizeFull();
         return zoomComponentContainer;
