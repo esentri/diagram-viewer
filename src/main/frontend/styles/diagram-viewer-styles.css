@@ -4,7 +4,12 @@
     padding: 1rem
 }
 
+.zoomist {
+    height: 100%;
+}
+
 .zoomist-container {
+    height: 100%;
     margin: 0.5rem;
     overflow: hidden;
 }

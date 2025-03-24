@@ -72,7 +72,7 @@ public class DiagramServiceImpl implements DiagramService {
     public void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
         final String nomnoml = DiagrammerUtils.generateNomnoml(
             sessionStorage.get(project.getProjectId()),
-            diagram.getDiagramStylingConfiguration().getContextPackageName(),
+            diagram.getDiagramStylingConfiguration(),
             diagram.getDomainModelVisibility());
 
         byte[] diagramFileContents = krokiClient.convertTo(nomnoml, diagram.getFileType());

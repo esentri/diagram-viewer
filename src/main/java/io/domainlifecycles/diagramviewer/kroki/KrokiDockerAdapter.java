@@ -11,6 +11,8 @@ import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,11 +54,17 @@ class KrokiDockerAdapter {
     }
 
     private String createOrGetKrokiDockerContainerId() {
-        final List<Container> foundKrokiContainers = dockerClient
-            .listContainersCmd()
-            .withShowAll(true)
-            .withAncestorFilter(List.of(KROKI_CONTAINER_IMAGE_NAME))
-            .exec();
+        List<Container> foundKrokiContainers;
+        try {
+            foundKrokiContainers = dockerClient
+                .listContainersCmd()
+                .withShowAll(true)
+                .withAncestorFilter(List.of(KROKI_CONTAINER_IMAGE_NAME))
+                .exec();
+        } catch(RuntimeException e) {
+            throw DiagramViewerException.fail(
+                "Could not create Kroki Docker container. Please check whether your Docker engine is up and running.", e);
+        }
 
         if(!foundKrokiContainers.isEmpty()) {
             String krokiContainerId = foundKrokiContainers.get(0).getId();

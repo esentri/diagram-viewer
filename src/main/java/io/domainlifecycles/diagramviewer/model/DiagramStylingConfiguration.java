@@ -7,6 +7,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,7 +35,7 @@ public class DiagramStylingConfiguration {
     /**
      * Style declaration for AggregateRoots (see Nomnoml style options)
      */
-    @Builder.Default private String aggregateRootStyle = "fill=#8f8f bold";
+    @Builder.Default private String aggregateRootStyle = "fill=#88ff00 bold";
     /**
      * Style declaration for AggregateRoot frames (see Nomnoml style options)
      */
@@ -112,11 +113,6 @@ public class DiagramStylingConfiguration {
      * Background color style declaration (see Nomnoml style options, only 'transparent' or HEX color-codes supported)
      */
     @Builder.Default private String backgroundColor = "transparent";
-    /**
-     * Full qualified class names to be excluded from the diagram
-     */
-    @ElementCollection
-    private List<String> classesBlacklist = Collections.emptyList();
     /**
      * If false, generally no fields are included
      */
@@ -260,13 +256,13 @@ public class DiagramStylingConfiguration {
     /**
      * Fields with named like elements of this black list are excluded
      */
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> fieldBlacklist = List.of("concurrencyVersion");
 
     /**
      * Methods with named like elements of this black list are excluded
      */
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> methodBlacklist = List.of(
         "builder",
         "validate",
@@ -306,12 +302,6 @@ public class DiagramStylingConfiguration {
      * </ul>
      */
     @Builder.Default private boolean fieldStereotypes = true;
-
-    /**
-     * Enabling and initializing the seed for the {@link TransitiveDomainTypeFilter}.
-     */
-    @ElementCollection
-    @Builder.Default private List<String> transitiveFilterSeedDomainServiceTypeNames = Collections.emptyList();
 
 
     public void setDiagramStylingConfigurationId(Long diagramConfigurationId) {
@@ -488,14 +478,6 @@ public class DiagramStylingConfiguration {
 
     public void setBackgroundColor(String backgroundColor) {
         this.backgroundColor = backgroundColor;
-    }
-
-    public List<String> getClassesBlacklist() {
-        return classesBlacklist;
-    }
-
-    public void setClassesBlacklist(List<String> classesBlacklist) {
-        this.classesBlacklist = classesBlacklist;
     }
 
     public boolean isShowFields() {
@@ -816,13 +798,5 @@ public class DiagramStylingConfiguration {
 
     public void setFieldStereotypes(boolean fieldStereotypes) {
         this.fieldStereotypes = fieldStereotypes;
-    }
-
-    public List<String> getTransitiveFilterSeedDomainServiceTypeNames() {
-        return transitiveFilterSeedDomainServiceTypeNames;
-    }
-
-    public void setTransitiveFilterSeedDomainServiceTypeNames(List<String> transitiveFilterSeedDomainServiceTypeNames) {
-        this.transitiveFilterSeedDomainServiceTypeNames = transitiveFilterSeedDomainServiceTypeNames;
     }
 }

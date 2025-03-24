@@ -33,7 +33,7 @@ public class Project {
     @Column(unique=true)
     private String absolutePathToTarget;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<String> boundedContextPackages;
 
     @OneToMany(fetch = FetchType.EAGER)

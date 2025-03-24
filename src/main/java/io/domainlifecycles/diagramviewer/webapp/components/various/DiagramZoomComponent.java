@@ -10,6 +10,7 @@ public class DiagramZoomComponent extends Zoomist {
 
     public DiagramZoomComponent(String... diagramSrc) {
         super(assembleRequestUrl(diagramSrc) + getDummyRequestParameter());
+        addClassName("zoomist");
         setZoomer(true);
         setBounds(false);
         setDraggable(true);

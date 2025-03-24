@@ -66,7 +66,7 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     }
 
     private void addPageContents() {
-        add(new DiagramConfigurationButtonBarComponent(diagram));
+        add(new DiagramConfigurationButtonBarComponent(diagram, diagramService, this::reloadDiagramZoomComponent));
         add(createDiagramZoomComponent());
         add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService, this::reloadDiagramZoomComponent));
     }
