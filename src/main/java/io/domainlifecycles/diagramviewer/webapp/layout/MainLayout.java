@@ -95,7 +95,7 @@ public class MainLayout extends AppLayout {
                     sessionStorage.setSelectedProject(project);
                     createDiagramDialog.open();
                 });
-                parentSideNavItem.setPrefixComponent(createDiagramButton);
+                parentSideNavItem.setSuffixComponent(createDiagramButton);
 
                 project.getDiagrams()
                     .forEach(diagram -> {

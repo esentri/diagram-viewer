@@ -15,6 +15,7 @@ import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponent;
+import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -34,8 +35,7 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     private String diagramName;
     private Project project;
     private Diagram diagram;
-    private FlexLayout zoomComponentContainer;
-    private DiagramZoomComponent diagramZoomComponent;
+    private DiagramZoomComponentContainer zoomComponentContainer;
 
     public DiagramViewerView(DomainModelSessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
         this.sessionStorage = sessionStorage;
@@ -50,9 +50,10 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
         projectNameClean = event.getRouteParameters().get("projectName").get();
         diagramName = event.getRouteParameters().get("diagramName").get();
 
+        removeAll();
         setProjectAndDiagram();
         addPageContents();
-        reloadDiagramZoomComponent();
+        zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName);
     }
 
     private void setProjectAndDiagram() {
@@ -66,31 +67,13 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
     }
 
     private void addPageContents() {
-        add(new DiagramConfigurationButtonBarComponent(diagram, diagramService, this::reloadDiagramZoomComponent));
+        add(new DiagramConfigurationButtonBarComponent(diagram, diagramService, () -> zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName)));
         add(createDiagramZoomComponent());
-        add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService, this::reloadDiagramZoomComponent));
+        add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService, () -> zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName)));
     }
 
     private FlexLayout createDiagramZoomComponent() {
-        if(zoomComponentContainer != null) remove(zoomComponentContainer);
-
-        zoomComponentContainer = new FlexLayout();
-        zoomComponentContainer.setClassName("outer-zoomist-container");
-        zoomComponentContainer.setMinHeight("100%");
-        zoomComponentContainer.setMaxHeight("100%");
-        zoomComponentContainer.setSizeFull();
+        zoomComponentContainer = new DiagramZoomComponentContainer();
         return zoomComponentContainer;
-    }
-
-    private void reloadDiagramZoomComponent() {
-        if(diagramZoomComponent != null) {
-            zoomComponentContainer.remove(diagramZoomComponent);
-        }
-
-        diagramZoomComponent = new DiagramZoomComponent(
-            ResourceController.RESOURCES_API_PATH, projectNameClean, diagramName);
-
-        zoomComponentContainer.setFlexGrow(1, diagramZoomComponent);
-        zoomComponentContainer.add(diagramZoomComponent);
     }
 }
