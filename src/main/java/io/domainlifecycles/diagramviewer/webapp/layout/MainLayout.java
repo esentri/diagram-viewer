@@ -27,6 +27,7 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.various.DirectoryPicker;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramViewerView;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -64,7 +65,7 @@ public class MainLayout extends AppLayout {
         this.databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, sessionStorage);
 
         sessionStorage.setMainLayout(this);
-        addToNavbar(new DrawerToggle(), getDlcLogo(), getDownloadLink(), getDatabaseButton());
+        addToNavbar(new DrawerToggle(), getDlcLogo(), new DirectoryPicker(sessionStorage), getDownloadLink(), getDatabaseButton());
         buildDrawerContent();
     }
 

@@ -91,6 +91,10 @@ public class DomainModelSessionStorage {
         return selectedTargetsDirectory;
     }
 
+    public void setSelectedTargetsDirectory(String selectedTargetsDirectory) {
+        this.selectedTargetsDirectory = selectedTargetsDirectory;
+    }
+
     public boolean isDiagramSelected() {
         return selectedDiagram != null;
     }
