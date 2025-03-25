@@ -28,7 +28,7 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long projectId;
     private String projectNameFull;
-    private String projectNameClean; // First part of project name split by special character like '.'
+    private String projectNameClean; // Project name escaping special characters like '.'
 
     @Column(unique=true)
     private String absolutePathToTarget;

@@ -42,7 +42,6 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    @Transactional
     public Stream<Project> getAll(Path targetDirectory) {
         Set<File> allFilesInDirectory = FileIOUtils.getFilesInDirectory(targetDirectory);
 
@@ -101,7 +100,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private String buildCleanFileName(final String fileName) {
-        return fileName == null || fileName.isBlank() ? fileName : fileName.split("[.-]")[0];
+        return fileName == null || fileName.isBlank() ? fileName : fileName.replaceAll("[.-]", "_");
     }
 
     private void initializeAllDomainModels(){

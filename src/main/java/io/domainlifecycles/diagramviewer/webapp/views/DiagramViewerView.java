@@ -8,19 +8,16 @@ import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.rest.ResourceController;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
-import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static java.util.stream.Collectors.groupingBy;
 
 @Route(value = "/:projectName/:diagramName", layout = MainLayout.class)
 @PageTitle("DLC | Diagram Viewer")
@@ -64,6 +61,7 @@ public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver
             .orElseThrow(() -> DiagramViewerException.fail(String.format("No diagram found with name '%s' .", diagramName)));
 
         sessionStorage.setSelectedProject(project);
+        sessionStorage.setSelectedDiagram(diagram);
     }
 
     private void addPageContents() {

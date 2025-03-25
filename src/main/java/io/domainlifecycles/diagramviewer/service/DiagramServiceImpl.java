@@ -69,7 +69,7 @@ public class DiagramServiceImpl implements DiagramService {
         createAndSaveDiagramToFilesystem(project, persistedDiagram);
     }
 
-    public void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
+    private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
         final String nomnoml = DiagrammerUtils.generateNomnoml(
             sessionStorage.get(project.getProjectId()),
             diagram.getDiagramStylingConfiguration(),

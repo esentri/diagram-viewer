@@ -1,11 +1,13 @@
 package io.domainlifecycles.diagramviewer.util;
 
+import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.Objects;
@@ -40,5 +42,14 @@ public class FileIOUtils {
     public static void saveFile(Path path, InputStream inputStream) throws IOException {
         Files.createDirectories(path.getParent());
         Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static byte[] readFile(String absoluteLocationPath) {
+        try {
+            Path path = Paths.get(absoluteLocationPath);
+            return Files.readAllBytes(path);
+        } catch (IOException e) {
+            throw DiagramViewerException.fail(String.format("Could not read file at '%s'.", absoluteLocationPath), e);
+        }
     }
 }

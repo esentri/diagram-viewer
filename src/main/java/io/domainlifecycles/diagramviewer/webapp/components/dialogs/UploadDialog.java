@@ -9,6 +9,7 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.various.RefreshCallback;
 import java.io.InputStream;
 import org.slf4j.Logger;
@@ -19,20 +20,21 @@ public class UploadDialog extends Dialog {
     private final static Logger log = LoggerFactory.getLogger(UploadDialog.class);
 
     private final ProjectService projectService;
+    private final DomainModelSessionStorage sessionStorage;
     private String boundedContextPackages;
-    private String targetsLocation;
     private InputStream fileInputStream;
     private String fileName;
 
-    public UploadDialog(ProjectService projectService, final String defaultTargetsLocation, RefreshCallback callback) {
+    public UploadDialog(ProjectService projectService, DomainModelSessionStorage sessionStorage, RefreshCallback callback) {
         this.projectService = projectService;
-        this.targetsLocation = defaultTargetsLocation;
+        this.sessionStorage = sessionStorage;
         add(createDialogLayout());
         getFooter().add(createUploadButton(callback));
         getFooter().add(createCancelButton());
     }
 
     private Button createUploadButton(final RefreshCallback callback) {
+        final String targetsLocation =sessionStorage.getSelectedTargetsDirectory();
         Button uploadButton = new Button("Upload");
 
         uploadButton.addClickListener(e -> {
@@ -79,9 +81,5 @@ public class UploadDialog extends Dialog {
             fileInputStream = uploadBuffer.getInputStream(fileName);
         });
         return upload;
-    }
-
-    public void setTargetsLocation(String targetsLocation) {
-        this.targetsLocation = targetsLocation;
     }
 }
