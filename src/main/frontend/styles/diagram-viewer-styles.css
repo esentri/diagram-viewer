@@ -10,10 +10,14 @@
 }
 
 #databaseButton {
-    margin-right: 1rem;
+    margin-right: 2rem;
 }
 
 #diagramDownloadButton {
     margin-right: 1rem;
     margin-left: auto;
+}
+
+#userButton {
+    margin-right: 1rem;
 }

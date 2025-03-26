@@ -15,12 +15,14 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfig
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
+import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Route(value = "/:projectName/:diagramName", layout = MainLayout.class)
 @PageTitle("DLC | Diagram Viewer")
+@PermitAll
 public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver {
 
     private final static Logger log = LoggerFactory.getLogger(DiagramViewerView.class);

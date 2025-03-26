@@ -3,13 +3,22 @@ package io.domainlifecycles.diagramviewer.webapp.layout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.popover.Popover;
+import com.vaadin.flow.component.popover.PopoverPosition;
+import com.vaadin.flow.component.popover.PopoverVariant;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
@@ -19,6 +28,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.security.SecurityService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
@@ -43,6 +53,7 @@ public class MainLayout extends AppLayout {
     private final static Logger log = LoggerFactory.getLogger(MainLayout.class);
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
 
+    private final SecurityService securityService;
     private final ProjectService projectService;
     private final DiagramService diagramService;
     private final DomainModelSessionStorage sessionStorage;
@@ -51,11 +62,13 @@ public class MainLayout extends AppLayout {
     private Anchor downloadButton;
     private SideNav sideNav;
 
-    public MainLayout(ProjectService projectService,
+    public MainLayout(SecurityService securityService,
+        ProjectService projectService,
         DiagramService diagramService,
         SQLDDLGeneratorService sqlddlGeneratorService,
         DomainModelSessionStorage sessionStorage) {
 
+        this.securityService = securityService;
         this.projectService = projectService;
         this.diagramService = diagramService;
         this.sessionStorage = sessionStorage;
@@ -64,8 +77,66 @@ public class MainLayout extends AppLayout {
         this.databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, sessionStorage);
 
         sessionStorage.setMainLayout(this);
-        addToNavbar(new DrawerToggle(), getDlcLogo(), getDownloadLink(), getDatabaseButton());
+
+        Button userInfoButton = getUserInfoButton();
+        Popover userInfoPopover = getUserInfoPopover();
+        userInfoPopover.setTarget(userInfoButton);
+
+        addToNavbar(new DrawerToggle(), getDlcLogo(), getDownloadLink(), getDatabaseButton(), userInfoButton, userInfoPopover);
         buildDrawerContent();
+    }
+
+    private Popover getUserInfoPopover() {
+        Avatar avatar = new Avatar();
+        avatar.getStyle().set("display", "block");
+        avatar.getStyle().set("cursor", "pointer");
+        avatar.getElement().setAttribute("tabindex", "-1");
+
+        Popover popover = new Popover();
+        popover.setModal(true);
+        popover.setOverlayRole("menu");
+        popover.setAriaLabel("User menu");
+        popover.setPosition(PopoverPosition.BOTTOM_END);
+        popover.addThemeVariants(PopoverVariant.LUMO_NO_PADDING);
+
+        HorizontalLayout userInfo = new HorizontalLayout();
+        userInfo.addClassName("userMenuHeader");
+        userInfo.setSpacing(false);
+
+        Avatar userAvatar = new Avatar();
+        userAvatar.getElement().setAttribute("tabindex", "-1");
+        userAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
+
+        VerticalLayout nameLayout = new VerticalLayout();
+        nameLayout.setSpacing(false);
+        nameLayout.setPadding(false);
+
+        Div fullName = new Div("Leon Völlinger");
+        fullName.getStyle().set("font-weight", "bold");
+        nameLayout.add(fullName);
+
+        userInfo.add(userAvatar, nameLayout);
+
+        VerticalLayout linksLayout = new VerticalLayout();
+        linksLayout.setSpacing(false);
+        linksLayout.setPadding(false);
+        linksLayout.addClassName("userMenuLinks");
+
+        Button signOutButton = new Button("Sign out");
+        signOutButton.addClickListener(e -> securityService.logout());
+
+        linksLayout.add(signOutButton);
+        popover.add(userInfo, linksLayout);
+
+        return popover;
+    }
+
+    private Button getUserInfoButton() {
+        Button button = new Button(new Avatar());
+        button.setId("userButton");
+        button.addThemeVariants(ButtonVariant.LUMO_ICON,
+            ButtonVariant.LUMO_TERTIARY_INLINE);
+        return button;
     }
 
     private void buildDrawerContent() {
