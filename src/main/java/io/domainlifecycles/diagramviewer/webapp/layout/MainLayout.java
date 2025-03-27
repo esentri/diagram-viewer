@@ -61,6 +61,7 @@ public class MainLayout extends AppLayout {
     private final UploadDialog uploadDialog;
     private final GenerateDatabaseModelDialog databaseModelDialog;
     private Anchor downloadButton;
+    private Button databaseButton;
     private SideNav sideNav;
 
     public MainLayout(SecurityService securityService,
@@ -228,9 +229,10 @@ public class MainLayout extends AppLayout {
         return new StreamResource(selectedDiagram.getFileName(), () -> getDiagramFileStream(selectedDiagram.getFullAbsoluteLocationPath()));
     }
 
-    public void updateDownloadLink(boolean buttonEnabled) {
+    public void updateDownloadLinksState(boolean buttonEnabled) {
         downloadButton.setHref(buildDiagramDownloadStreamResource());
         downloadButton.setEnabled(buttonEnabled);
+        databaseButton.setEnabled(buttonEnabled);
     }
 
     private InputStream getDiagramFileStream(final String diagramLocation) {
@@ -239,8 +241,9 @@ public class MainLayout extends AppLayout {
     }
 
     private Button getDatabaseButton() {
-        Button databaseButton = new Button(new Icon("vaadin:database"));
+        databaseButton = new Button(new Icon("vaadin:database"));
         databaseButton.setId("databaseButton");
+        databaseButton.setEnabled(sessionStorage.isDiagramSelected());
         databaseButton.addClickListener(e -> databaseModelDialog.open());
         return databaseButton;
     }
