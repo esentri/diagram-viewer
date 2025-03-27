@@ -2,9 +2,7 @@ package io.domainlifecycles.diagramviewer.webapp.views;
 
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -25,8 +23,21 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         setJustifyContentMode(JustifyContentMode.CENTER);
         setAlignItems(Alignment.CENTER);
 
+        add(getPageContents());
+    }
 
-        add(new H1("DLC | Diagram Viewer"), new H2("Welcome back!"), new SignInWithGoogleButton());
+    private VerticalLayout getPageContents() {
+        VerticalLayout verticalLayout = new VerticalLayout();
+        verticalLayout.setId("login-box");
+        verticalLayout.setHeight("50%");
+        verticalLayout.setWidth("20%");
+
+        verticalLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        verticalLayout.setAlignItems(Alignment.CENTER);
+
+        verticalLayout.add(new H2("DLC | Diagram Viewer"), new SignInWithGoogleButton());
+
+        return verticalLayout;
     }
 
     @Override

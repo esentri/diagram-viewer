@@ -42,6 +42,9 @@ public class StylingConfigurationDialog extends Dialog {
 
         setHeaderTitle("Configuration | Styling");
 
+        setWidth("40%");
+        setHeight("60%");
+
         add(createDialogLayout());
 
         getFooter().add(createSaveButton());
