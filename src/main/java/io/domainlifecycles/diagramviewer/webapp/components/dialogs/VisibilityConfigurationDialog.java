@@ -21,8 +21,6 @@ public class VisibilityConfigurationDialog extends Dialog {
     private final Diagram diagram;
     private final RefreshCallback callback;
 
-    private Checkbox showOnlyTopLevelDomainCommandRelationCheckbox;
-
     public VisibilityConfigurationDialog(Diagram diagram, DiagramService diagramService, RefreshCallback callback) {
         this.diagram = diagram;
         this.diagramService = diagramService;
@@ -88,7 +86,6 @@ public class VisibilityConfigurationDialog extends Dialog {
 
         Checkbox showAllMethodsCheckbox = new Checkbox();
         formLayout.addFormItem(showAllMethodsCheckbox,"Methods");
-        showAllMethodsCheckbox.addClickListener(event -> showAllMethodsCheckbox.setEnabled(showAllMethodsCheckbox.getValue()));
         diagramConfigurationBinder.bind(showAllMethodsCheckbox, DiagramStylingConfiguration::isShowMethods, DiagramStylingConfiguration::setShowMethods);
 
         Checkbox showFullQualifiedClassNamesCheckbox = new Checkbox();

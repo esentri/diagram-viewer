@@ -21,3 +21,8 @@
 #userButton {
     margin-right: 1rem;
 }
+
+#sql-generate-link {
+    text-decoration: none;
+    color: white;
+}
