@@ -13,7 +13,7 @@ import jakarta.annotation.security.PermitAll;
 
 @Route(value = "/", layout = MainLayout.class)
 @PageTitle("DLC | Home")
-@AnonymousAllowed
+@PermitAll
 public class DefaultView extends FlexLayout {
 
     public DefaultView(DomainModelSessionStorage sessionStorage) {

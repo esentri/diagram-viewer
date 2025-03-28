@@ -48,7 +48,7 @@ dependencies {
 		exclude group: "org.slf4j"
 		exclude group: "ch.qos.logback"
 	}
-	implementation ('org.springframework.boot:spring-boot-starter-security') {
+	implementation ('com.okta.spring:okta-spring-boot-starter:1.4.0') {
 		exclude group: "commons-logging"
 		exclude group: "org.slf4j"
 		exclude group: "ch.qos.logback"
