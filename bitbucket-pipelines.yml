@@ -1,36 +1,54 @@
-#  Template Java Gradle build
+#  Template Java Spring Boot App for Elastic Beanstalk
 
-#  This template allows you to test and build your Java project with Gradle.
-#  The workflow allows running tests, code checkstyle and security scans on the default branch.
+#  This template allows you to deploy your application as code using AWS Elastic Beanstalk.
+#  The workflow allows validate, linting and security scans on feature branches (as well as master).
+#  The Spring Boot App will be validated and deployed after the code is merged to master.
 
-# Prerequisites: appropriate project structure should exist in the repository.
+# Prerequisites: $AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY, $AWS_DEFAULT_REGION setup in the Deployment variables.
+# For advanced cases, please, follow examples from the pipe's README https://bitbucket.org/atlassian/aws-elasticbeanstalk-deploy/src/master/README.md
 
-image: gradle:8.10.1
+image: atlassian/default-image:3
 
 pipelines:
   default:
     - parallel:
       - step:
           name: Build and Test
-          caches:
-            - gradle
           script:
-            - gradle build
+            - ./gradlew check
+          caches:
+            - maven
           after-script:
             - pipe: atlassian/checkstyle-report:0.3.0
+              variables:
+                DEBUG: "true"
       - step:
           name: Security Scan
           script:
             # Run a security scan for sensitive data.
             # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
             - pipe: atlassian/git-secrets-scan:0.5.1
+
+  branches:
+    master:
       - step:
-          name: Deploy to AWS
+          name: Build
           script:
-            - pipe: atlassian/aws-elasticbeanstalk-deploy:1.4.1
+            - ./gradlew clean build -x tests
+            - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
+          artifacts:
+            - application.zip
+      - step:
+          name: Deploy to Production
+          deployment: Production
+          trigger: manual
+          script:
+            - pipe: atlassian/aws-elasticbeanstalk-deploy:1.0.2
               variables:
-                AWS_ACCESS_KEY_ID: 'AKIA4RBABU2BSBS7CCBR'
-                AWS_SECRET_ACCESS_KEY: '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'
-                AWS_DEFAULT_REGION: 'eu-central-1'
+                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+                AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
                 APPLICATION_NAME: 'diagram-viewer'
                 ENVIRONMENT_NAME: 'diagram-viewer-env'
+                ZIP_FILE: 'application.zip'
+                VERSION_LABEL: '0.0.1-$BITBUCKET_BUILD_NUMBER'
