@@ -1,0 +1,36 @@
+#  Template Java Gradle build
+
+#  This template allows you to test and build your Java project with Gradle.
+#  The workflow allows running tests, code checkstyle and security scans on the default branch.
+
+# Prerequisites: appropriate project structure should exist in the repository.
+
+image: gradle:6.6.0
+
+pipelines:
+  default:
+    - parallel:
+      - step:
+          name: Build and Test
+          caches:
+            - gradle
+          script:
+            - gradle build
+          after-script:
+            - pipe: atlassian/checkstyle-report:0.3.0
+      - step:
+          name: Security Scan
+          script:
+            # Run a security scan for sensitive data.
+            # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
+            - pipe: atlassian/git-secrets-scan:0.5.1
+      - step:
+          name: Deploy to AWS
+          script:
+            - pipe: atlassian/aws-elasticbeanstalk-deploy:1.4.1
+              variables:
+                AWS_ACCESS_KEY_ID: 'AKIA4RBABU2BSBS7CCBR'
+                AWS_SECRET_ACCESS_KEY: '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'
+                AWS_DEFAULT_REGION: 'eu-central-1'
+                APPLICATION_NAME: 'diagram-viewer'
+                ENVIRONMENT_NAME: 'diagram-viewer-env'
