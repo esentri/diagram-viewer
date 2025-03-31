@@ -14,14 +14,14 @@ pipelines:
     main:
       - step:
           name: Build Local Dependencies
+          image: maven:3.8.3-openjdk-17
           caches:
-            - gradle
+            - maven
           script:
             - git clone git@bitbucket.org:esentri/nitrox-kickstart.git
             - cd nitrox-kickstart
             - git checkout feature/roaster
-            - gradle clean build -x test
-            - gradle publishToMavenLocal
+            - mvn clean install
             - cd ..
       - parallel:
         - step:
@@ -43,7 +43,6 @@ pipelines:
       - step:
           name: Build
           script:
-            - cd diagram-viewer
             - gradle clean build -x test
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
           artifacts:
