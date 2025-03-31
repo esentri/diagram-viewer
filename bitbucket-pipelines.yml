@@ -11,18 +11,18 @@ image: gradle:8.10.1-jdk17
 
 pipelines:
   default:
+    - step:
+        name: Build Local Dependencies
+        caches:
+          - gradle
+        script:
+          - git clone git@bitbucket.org:esentri/nitrox-kickstart.git
+          - cd nitrox-kickstart
+          - git checkout feature/roaster
+          - gradle clean build -x test
+          - gradle publishToMavenLocal
+          - cd ..
     - parallel:
-      - step:
-          name: Build Local Dependencies
-          caches:
-            - gradle
-          script:
-            - git clone git@bitbucket.org:esentri/nitrox-kickstart.git
-            - cd nitrox-kickstart
-            - git checkout feature/roaster
-            - gradle clean build -x test
-            - gradle publishToMavenLocal
-            - cd ..
       - step:
           name: Build and Test
           script:
