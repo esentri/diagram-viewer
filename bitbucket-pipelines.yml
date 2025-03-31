@@ -9,39 +9,37 @@
 
 image: gradle:8.10.1-jdk17
 
-pipelines:
-  default:
-    - step:
-        name: Build Local Dependencies
-        caches:
-          - gradle
-        script:
-          - git clone git@bitbucket.org:esentri/nitrox-kickstart.git
-          - cd nitrox-kickstart
-          - git checkout feature/roaster
-          - gradle clean build -x test
-          - gradle publishToMavenLocal
-          - cd ..
-    - parallel:
-      - step:
-          name: Build and Test
-          script:
-            - gradle check
-          caches:
-            - gradle
-          after-script:
-            - pipe: atlassian/checkstyle-report:0.3.0
-              variables:
-                DEBUG: "true"
-      - step:
-          name: Security Scan
-          script:
-            # Run a security scan for sensitive data.
-            # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
-            - pipe: atlassian/git-secrets-scan:0.5.1
-
+pipelines:    
   branches:
     main:
+      - step:
+          name: Build Local Dependencies
+          caches:
+            - gradle
+          script:
+            - git clone git@bitbucket.org:esentri/nitrox-kickstart.git
+            - cd nitrox-kickstart
+            - git checkout feature/roaster
+            - gradle clean build -x test
+            - gradle publishToMavenLocal
+            - cd ..
+      - parallel:
+        - step:
+            name: Build and Test
+            script:
+              - gradle check
+            caches:
+              - gradle
+            after-script:
+              - pipe: atlassian/checkstyle-report:0.3.0
+                variables:
+                  DEBUG: "true"
+        - step:
+            name: Security Scan
+            script:
+              # Run a security scan for sensitive data.
+              # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
+              - pipe: atlassian/git-secrets-scan:0.5.1
       - step:
           name: Build
           script:
