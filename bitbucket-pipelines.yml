@@ -9,6 +9,10 @@
 
 image: gradle:8.10.1-jdk17
 
+definitions:
+  caches:
+    zip: /usr/bin
+
 pipelines:    
   branches:
     main:
@@ -25,7 +29,7 @@ pipelines:
             - cd ..
       - parallel:
         - step:
-            name: Build and Test
+            name: Check
             script:
               - gradle check
             caches:
@@ -43,6 +47,8 @@ pipelines:
               - pipe: atlassian/git-secrets-scan:0.5.1
         - step:
             name: Download bash Packages
+            caches:
+              - zip
             script:
               - apt-get update
               - apt-get install -y zip
@@ -51,6 +57,7 @@ pipelines:
           caches:
             - maven
             - gradle
+            - zip
           script:
             - gradle clean build -x test
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
