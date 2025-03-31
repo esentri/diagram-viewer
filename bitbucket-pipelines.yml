@@ -30,7 +30,7 @@ pipelines:
             - pipe: atlassian/git-secrets-scan:0.5.1
 
   branches:
-    master:
+    main:
       - step:
           name: Build
           script:
