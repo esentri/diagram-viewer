@@ -13,11 +13,21 @@ pipelines:
   default:
     - parallel:
       - step:
+          name: Build Local Dependencies
+          caches:
+            - gradle
+          script:
+            - git clone git@bitbucket.org:esentri/nitrox-kickstart.git
+            - cd nitrox-kickstart
+            - git checkout feature/roaster
+            - gradle clean build -x test
+            - cd ..
+      - step:
           name: Build and Test
           script:
             - gradle check
           caches:
-            - maven
+            - gradle
           after-script:
             - pipe: atlassian/checkstyle-report:0.3.0
               variables:
