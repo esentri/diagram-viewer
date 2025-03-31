@@ -1,0 +1,22 @@
+version: '3'
+services:
+  kroki:
+    image: yuzutech/kroki:latest
+    ports:
+      - "8000:8000"
+    networks:
+      - my-network
+
+  database:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
