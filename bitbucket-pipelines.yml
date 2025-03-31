@@ -7,7 +7,7 @@
 # Prerequisites: $AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY, $AWS_DEFAULT_REGION setup in the Deployment variables.
 # For advanced cases, please, follow examples from the pipe's README https://bitbucket.org/atlassian/aws-elasticbeanstalk-deploy/src/master/README.md
 
-image: atlassian/default-image:3
+image: gradle:8.10.1-jdk17
 
 pipelines:
   default:
@@ -15,7 +15,7 @@ pipelines:
       - step:
           name: Build and Test
           script:
-            - ./gradlew check
+            - gradle check
           caches:
             - maven
           after-script:
@@ -34,7 +34,7 @@ pipelines:
       - step:
           name: Build
           script:
-            - ./gradlew clean build -x tests
+            - gradle clean build -x tests
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
           artifacts:
             - application.zip
