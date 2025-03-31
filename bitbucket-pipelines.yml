@@ -21,6 +21,7 @@ pipelines:
             - cd nitrox-kickstart
             - git checkout feature/roaster
             - gradle clean build -x test
+            - gradle publishToMavenLocal
             - cd ..
       - step:
           name: Build and Test
