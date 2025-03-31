@@ -43,6 +43,7 @@ pipelines:
       - step:
           name: Build
           script:
+            - cd diagram-viewer
             - gradle clean build -x test
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
           artifacts:
