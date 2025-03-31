@@ -59,7 +59,7 @@ pipelines:
             - gradle
             - zip
           script:
-            - gradle clean build -x test
+            - gradle clean build -x test -Pproduction
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
           artifacts:
             - application.zip
