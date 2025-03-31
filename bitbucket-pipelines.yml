@@ -30,6 +30,7 @@ pipelines:
               - gradle check
             caches:
               - maven
+              - gradle
             after-script:
               - pipe: atlassian/checkstyle-report:0.3.0
                 variables:
@@ -44,6 +45,7 @@ pipelines:
           name: Build
           caches:
             - maven
+            - gradle
           script:
             - gradle clean build -x test
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
