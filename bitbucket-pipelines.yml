@@ -75,6 +75,6 @@ pipelines:
                 AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
                 S3_BUCKET: $S3_BUCKET
                 APPLICATION_NAME: 'diagram-viewer'
-                ENVIRONMENT_NAME: 'diagram-viewer-env'
+                ENVIRONMENT_NAME: 'diagram-viewer-environment'
                 ZIP_FILE: 'application.zip'
                 VERSION_LABEL: '0.0.1-$BITBUCKET_BUILD_NUMBER'
