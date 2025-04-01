@@ -13,32 +13,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class KrokiClient {
 
-    private static final Logger log = LoggerFactory.getLogger(KrokiDockerAdapter.class);
+    private static final Logger log = LoggerFactory.getLogger(KrokiClient.class);
 
-    private static final String KROKI_CONTAINER_URL = "http://localhost:8000";
     private static final String KROKI_NOMNOML_SVG_PATH = "/nomnoml/svg";
-
     private static final Integer MAX_RETRIES = 5;
     private static final Integer WAIT_TIMEOUT_MS = 500;
 
-    private final KrokiDockerAdapter krokiDockerAdapter;
+    private final String krokiContainerUrl;
 
-    public KrokiClient() {
-        this.krokiDockerAdapter = new KrokiDockerAdapter();
-        Runtime.getRuntime().addShutdownHook(new Thread(this::finish));
-    }
-
-    /**
-     * Has to be called after all Kroki actions have been performed, otherwise Docker-Container
-     * keeps running.
-     */
-    public void finish() {
-        krokiDockerAdapter.stop();
+    public KrokiClient(@Value("${kroki.container.url}") String krokiContainerUrl) {
+        this.krokiContainerUrl = krokiContainerUrl;
     }
 
     public byte[] convertTo(final String rawNomNomlContent, final FileType fileType) {
@@ -50,7 +40,7 @@ public class KrokiClient {
         log.info("Converting Nomnoml diagram to specified format via Kroki Docker container.");
 
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(KROKI_CONTAINER_URL + path))
+            .uri(URI.create(krokiContainerUrl + path))
             .header("Accept", "text/plain")
             .POST(BodyPublishers.ofString(rawInputDiagramContent))
             .build();
@@ -70,7 +60,6 @@ public class KrokiClient {
                     return response.body();
                 }
                 if (response.statusCode() >= 400) {
-                    krokiDockerAdapter.stop();
                     throw DiagramViewerException.fail(String.format("Kroki Docker container returned error for conversion: %s",
                         new String(response.body(), StandardCharsets.UTF_8)));
                 }
@@ -80,7 +69,6 @@ public class KrokiClient {
                 } catch (InterruptedException ignored) { }
             }
         }
-        krokiDockerAdapter.stop();
         throw DiagramViewerException.fail(String.format("Kroki server couldn't be reached in specified retry limit (Retries: %s, Timeout: %s)", MAX_RETRIES, WAIT_TIMEOUT_MS));
     }
 
@@ -88,7 +76,7 @@ public class KrokiClient {
         String krokiPath;
         switch (fileType) {
             case SVG -> krokiPath = KROKI_NOMNOML_SVG_PATH;
-            default -> throw DiagramViewerException.fail(String.format("Filetype %s not allowed for Kroki conversion", fileType));
+            default -> throw DiagramViewerException.fail(String.format("Filetype '%s' not allowed for Kroki conversion.", fileType));
         }
         return krokiPath;
     }
