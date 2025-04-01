@@ -27,6 +27,10 @@ ext {
 	javaDockerVersion = "3.4.0"
 }
 
+tasks.named('bootJar') {
+	enabled = true
+}
+
 dependencies {
 	implementation ('org.springframework.boot:spring-boot-starter-web'){
 		exclude group: "commons-logging"
@@ -43,7 +47,8 @@ dependencies {
 		exclude group: "org.slf4j"
 		exclude group: "ch.qos.logback"
 	}
-	implementation ('com.h2database:h2') {
+	implementation 'org.postgresql:postgresql'
+	implementation ('org.springframework.boot:spring-boot-starter-actuator') {
 		exclude group: "commons-logging"
 		exclude group: "org.slf4j"
 		exclude group: "ch.qos.logback"
