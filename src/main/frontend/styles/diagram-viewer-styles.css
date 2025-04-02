@@ -10,10 +10,24 @@
 }
 
 #databaseButton {
-    margin-right: 1rem;
+    margin-right: 2rem;
 }
 
 #diagramDownloadButton {
     margin-right: 1rem;
     margin-left: auto;
+}
+
+#userButton {
+    margin-right: 1rem;
+}
+
+#sql-generate-link {
+    text-decoration: none;
+    color: white;
+}
+
+#login-box {
+    border: 1px solid darkgrey;
+    border-radius: 0.7rem;
 }

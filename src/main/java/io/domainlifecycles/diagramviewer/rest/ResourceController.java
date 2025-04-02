@@ -1,5 +1,6 @@
 package io.domainlifecycles.diagramviewer.rest;
 
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import java.io.File;
 import java.io.FileInputStream;

@@ -5,6 +5,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
@@ -15,12 +16,14 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfig
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
+import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Route(value = "/:projectName/:diagramName", layout = MainLayout.class)
 @PageTitle("DLC | Diagram Viewer")
+@PermitAll
 public class DiagramViewerView extends FlexLayout implements BeforeEnterObserver {
 
     private final static Logger log = LoggerFactory.getLogger(DiagramViewerView.class);

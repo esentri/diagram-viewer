@@ -29,6 +29,8 @@ public class VariousConfigurationDialog extends Dialog {
         this.diagram = diagram;
 
         setHeaderTitle("Configuration | Various");
+        setWidth("40%");
+        setHeight("60%");
 
         add(createDialogLayout());
         diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());

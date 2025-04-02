@@ -1,28 +1,13 @@
 package io.domainlifecycles.diagramviewer.session;
 
 import com.vaadin.flow.spring.annotation.SpringComponent;
-import com.vaadin.flow.spring.annotation.VaadinSessionScope;
-import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
-import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
-import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
-import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.mirror.api.DomainModel;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import jdk.jshell.Diag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,7 +52,7 @@ public class DomainModelSessionStorage {
     public void setNoneSelected() {
         selectedProject = null;
         selectedDiagram = null;
-        if(mainLayout != null) mainLayout.updateDownloadLink(false);
+        if(mainLayout != null) mainLayout.updateDownloadLinksState(false);
     }
 
     public Project getSelectedProject() {
@@ -84,7 +69,7 @@ public class DomainModelSessionStorage {
 
     public void setSelectedDiagram(Diagram selectedDiagram) {
         this.selectedDiagram = selectedDiagram;
-        if(mainLayout != null) mainLayout.updateDownloadLink(true);
+        if(mainLayout != null) mainLayout.updateDownloadLinksState(true);
     }
 
     public String getSelectedTargetsDirectory() {
