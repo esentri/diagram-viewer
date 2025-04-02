@@ -4,9 +4,28 @@
     padding: 1rem
 }
 
+#diagram-viewer-and-styling-container {
+    margin-top: 2rem;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.project-viewer {
+    box-sizing: border-box;
+    padding: 2rem
+}
+
+.diagram-card-grid {
+    margin-top: 2rem;
+}
+
 .outer-zoomist-container {
     margin: 0 1rem 0;
     overflow: hidden;
+}
+
+#project-view-button-bar {
+    margin-top: 2rem;
 }
 
 #databaseButton {
@@ -14,11 +33,11 @@
 }
 
 #diagramDownloadButton {
-    margin-right: 1rem;
-    margin-left: auto;
+    margin-left: 3.5rem;
 }
 
 #userButton {
+    margin-left: auto;
     margin-right: 1rem;
 }
 

@@ -9,22 +9,20 @@ import com.vaadin.flow.component.textfield.TextField;
 import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.components.various.RefreshCallback;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEvent;
 
 public class CreateDiagramDialog extends Dialog {
 
     private final DiagramService diagramService;
     private final Project project;
-    private final RefreshCallback callback;
 
     private String fileName;
     private String packageName;
     private FileType fileType;
 
-    public CreateDiagramDialog(Project project, DiagramService diagramService, RefreshCallback callback) {
+    public CreateDiagramDialog(Project project, DiagramService diagramService) {
         this.diagramService = diagramService;
         this.project = project;
-        this.callback = callback;
 
         setHeaderTitle("Create Diagram");
 
@@ -38,7 +36,7 @@ public class CreateDiagramDialog extends Dialog {
 
         createButton.addClickListener(e -> {
             diagramService.save(project, fileName, packageName, fileType);
-            callback.run();
+            fireEvent(new DiagramsChangedEvent(this, true));
             close();
         });
 

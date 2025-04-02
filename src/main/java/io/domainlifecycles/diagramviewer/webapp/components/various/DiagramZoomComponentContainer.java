@@ -19,8 +19,7 @@ public class DiagramZoomComponentContainer extends FlexLayout {
             removeAll();
         }
 
-        zoomComponent = new DiagramZoomComponent(
-            ResourceController.RESOURCES_API_PATH, projectNameClean, diagramName);
+        zoomComponent = new DiagramZoomComponent(projectNameClean, diagramName);
 
         setFlexGrow(1, zoomComponent);
         add(zoomComponent);

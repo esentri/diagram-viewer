@@ -36,9 +36,9 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private final SQLDDLGeneratorService sqlDDLGeneratorService;
     private final DomainModelSessionStorage sessionStorage;
 
-    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, DomainModelSessionStorage domainModelSessionStorage) {
+    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, DomainModelSessionStorage sessionStorage) {
         this.sqlDDLGeneratorService = sqlDDLGeneratorService;
-        this.sessionStorage = domainModelSessionStorage;
+        this.sessionStorage = sessionStorage;
         this.binder = new Binder<>();
 
         setHeaderTitle("Download SQL-DDL-Model");
@@ -86,6 +86,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
         generateButton = new Button(generateLink);
         generateButton.setEnabled(binder.isValid());
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        generateButton.addClickListener(event -> close());
 
         return generateButton;
     }

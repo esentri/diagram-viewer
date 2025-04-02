@@ -11,6 +11,7 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.various.RefreshCallback;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEvent;
 import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +26,16 @@ public class UploadDialog extends Dialog {
     private InputStream fileInputStream;
     private String fileName;
 
-    public UploadDialog(ProjectService projectService, DomainModelSessionStorage sessionStorage, RefreshCallback callback) {
+    public UploadDialog(ProjectService projectService, DomainModelSessionStorage sessionStorage) {
         this.projectService = projectService;
         this.sessionStorage = sessionStorage;
         add(createDialogLayout());
-        getFooter().add(createUploadButton(callback));
+        getFooter().add(createUploadButton());
         getFooter().add(createCancelButton());
     }
 
-    private Button createUploadButton(final RefreshCallback callback) {
-        final String targetsLocation =sessionStorage.getSelectedTargetsDirectory();
+    private Button createUploadButton() {
+        final String targetsLocation = sessionStorage.getSelectedTargetsDirectory();
         Button uploadButton = new Button("Upload");
 
         uploadButton.addClickListener(e -> {
@@ -43,7 +44,7 @@ public class UploadDialog extends Dialog {
             }
 
             projectService.save(targetsLocation, fileInputStream, fileName, boundedContextPackages);
-            callback.run();
+            fireEvent(new DiagramsChangedEvent(this, true));
 
             log.info(String.format("Successfully uploaded file '%s' to '%s'.", fileName, targetsLocation));
             close();

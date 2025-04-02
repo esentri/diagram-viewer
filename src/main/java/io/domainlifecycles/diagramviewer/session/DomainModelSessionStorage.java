@@ -20,7 +20,6 @@ public class DomainModelSessionStorage {
 
     private static final Logger log = LoggerFactory.getLogger(DomainModelSessionStorage.class);
 
-    private MainLayout mainLayout;
     private Project selectedProject;
     private Diagram selectedDiagram;
     private String selectedTargetsDirectory;
@@ -52,7 +51,6 @@ public class DomainModelSessionStorage {
     public void setNoneSelected() {
         selectedProject = null;
         selectedDiagram = null;
-        if(mainLayout != null) mainLayout.updateDownloadLinksState(false);
     }
 
     public Project getSelectedProject() {
@@ -69,7 +67,6 @@ public class DomainModelSessionStorage {
 
     public void setSelectedDiagram(Diagram selectedDiagram) {
         this.selectedDiagram = selectedDiagram;
-        if(mainLayout != null) mainLayout.updateDownloadLinksState(true);
     }
 
     public String getSelectedTargetsDirectory() {
@@ -84,7 +81,4 @@ public class DomainModelSessionStorage {
         return selectedDiagram != null;
     }
 
-    public void setMainLayout(MainLayout mainLayout) {
-        this.mainLayout = mainLayout;
-    }
 }

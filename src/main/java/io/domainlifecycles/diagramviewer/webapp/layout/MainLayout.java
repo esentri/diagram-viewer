@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.layout;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -24,20 +25,19 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.security.SecurityService;
-import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
-import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
+import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.InvalidPathException;
@@ -56,36 +56,26 @@ public class MainLayout extends AppLayout {
 
     private final SecurityService securityService;
     private final ProjectService projectService;
-    private final DiagramService diagramService;
     private final DomainModelSessionStorage sessionStorage;
     private final UploadDialog uploadDialog;
-    private final GenerateDatabaseModelDialog databaseModelDialog;
-    private Anchor downloadButton;
-    private Button databaseButton;
     private SideNav sideNav;
 
     public MainLayout(SecurityService securityService,
         ProjectService projectService,
-        DiagramService diagramService,
-        SQLDDLGeneratorService sqlddlGeneratorService,
         DomainModelSessionStorage sessionStorage) {
 
         this.securityService = securityService;
         this.projectService = projectService;
-        this.diagramService = diagramService;
         this.sessionStorage = sessionStorage;
-        this.uploadDialog = new UploadDialog(projectService, sessionStorage, this::refreshSideNavLinks);
-
-        this.databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, sessionStorage);
-
-        sessionStorage.setMainLayout(this);
+        this.uploadDialog = new UploadDialog(projectService, sessionStorage);
 
         Button userInfoButton = getUserInfoButton();
         Popover userInfoPopover = getUserInfoPopover();
         userInfoPopover.setTarget(userInfoButton);
 
-        addToNavbar(new DrawerToggle(), getDlcLogo(), getDownloadLink(), getDatabaseButton(), userInfoButton, userInfoPopover);
+        addToNavbar(new DrawerToggle(), getDlcLogo(), userInfoButton, userInfoPopover);
         buildDrawerContent();
+        addListener(DiagramsChangedEvent.class, (DiagramsChangedEventListener<DiagramsChangedEvent>) event -> refreshSideNavLinks());
     }
 
     private Popover getUserInfoPopover() {
@@ -160,15 +150,7 @@ public class MainLayout extends AppLayout {
     private SideNavItem[] createSideNavLinks() {
         return projectService.getAll(buildPath(sessionStorage.getSelectedTargetsDirectory()))
             .map(project -> {
-                CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(project, diagramService, this::refreshSideNavLinks);
-                SideNavItem parentSideNavItem = new SideNavItem(project.getProjectNameFull());
-
-                Button createDiagramButton = new Button(new Icon("vaadin:plus"));
-                createDiagramButton.addClickListener(e -> {
-                    sessionStorage.setSelectedProject(project);
-                    createDiagramDialog.open();
-                });
-                parentSideNavItem.setSuffixComponent(createDiagramButton);
+                SideNavItem parentSideNavItem = new SideNavItem(project.getProjectNameFull(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
 
                 project.getDiagrams()
                     .forEach(diagram -> {
@@ -210,44 +192,6 @@ public class MainLayout extends AppLayout {
         sideNav.addItem(createSideNavLinks());
     }
 
-    private Anchor getDownloadLink() {
-        downloadButton = new Anchor(buildDiagramDownloadStreamResource(), "Download Diagram");
-        downloadButton.setId("diagramDownloadButton");
-        downloadButton.getElement().setAttribute("download", true);
-        downloadButton.removeAll();
-        downloadButton.setEnabled(sessionStorage.isDiagramSelected());
-        downloadButton.add(new Button(new Icon(VaadinIcon.DOWNLOAD_ALT)));
-        return downloadButton;
-    }
-
-    private StreamResource buildDiagramDownloadStreamResource() {
-        if(!sessionStorage.isDiagramSelected()) {
-            return null;
-        }
-
-        final Diagram selectedDiagram = sessionStorage.getSelectedDiagram();
-        return new StreamResource(selectedDiagram.getFileName(), () -> getDiagramFileStream(selectedDiagram.getFullAbsoluteLocationPath()));
-    }
-
-    public void updateDownloadLinksState(boolean buttonEnabled) {
-        downloadButton.setHref(buildDiagramDownloadStreamResource());
-        downloadButton.setEnabled(buttonEnabled);
-        databaseButton.setEnabled(buttonEnabled);
-    }
-
-    private InputStream getDiagramFileStream(final String diagramLocation) {
-        byte[] fileContents = FileIOUtils.readFile(diagramLocation);
-        return new ByteArrayInputStream(fileContents);
-    }
-
-    private Button getDatabaseButton() {
-        databaseButton = new Button(new Icon("vaadin:database"));
-        databaseButton.setId("databaseButton");
-        databaseButton.setEnabled(sessionStorage.isDiagramSelected());
-        databaseButton.addClickListener(e -> databaseModelDialog.open());
-        return databaseButton;
-    }
-
     private Component getDlcLogo() {
         Image dlcLogo = new Image(DLC_LOGO_LOCATION, "DLC Logo");
         dlcLogo.setMaxHeight("60px");
@@ -265,4 +209,6 @@ public class MainLayout extends AppLayout {
         }
         return directoryToWatch;
     }
+
+    interface DiagramsChangedEventListener<T> extends ComponentEventListener<DiagramsChangedEvent> {}
 }

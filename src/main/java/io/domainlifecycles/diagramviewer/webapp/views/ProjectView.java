@@ -1,7 +1,11 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
-import com.vaadin.flow.component.Unit;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -11,7 +15,11 @@ import io.domainlifecycles.diagramviewer.rest.ResourceController;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
-import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramCard;
+import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCard;
+import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGrid;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.time.LocalDateTime;
@@ -25,19 +33,25 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private final static Logger log = LoggerFactory.getLogger(DiagramView.class);
 
+    private final SQLDDLGeneratorService sqlddlGeneratorService;
     private final ProjectService projectService;
     private final DiagramService diagramService;
     private final DomainModelSessionStorage sessionStorage;
 
+    private Button databaseButton;
+
+
     private Project project;
     private String projectNameClean;
 
-    public ProjectView(DomainModelSessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
+    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, DomainModelSessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
+        this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.projectService = projectService;
         this.diagramService = diagramService;
         this.sessionStorage = sessionStorage;
+
         setSizeFull();
-        setAlignItems(Alignment.START);
+        setFlexDirection(FlexDirection.COLUMN);
         setClassName("project-viewer");
     }
 
@@ -55,18 +69,37 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private void addPageContents() {
-        add(new DiagramCard("first.svg", assembleDiagramUrl(ResourceController.RESOURCES_API_PATH, projectNameClean, "first.svg")));
+        add(new H2(projectNameClean));
+        add(createAndGetButtonBar());
+        add(new DiagramCardGrid(project));
     }
 
-    private static String assembleDiagramUrl(String... diagramSrc) {
-        return assembleRequestUrl(diagramSrc) + getDummyRequestParameter();
+    private HorizontalLayout createAndGetButtonBar() {
+        HorizontalLayout buttonBar = new HorizontalLayout();
+        buttonBar.setId("project-view-button-bar");
+
+        buttonBar.add(getCreateDiagramButton(), getDatabaseButton());
+
+        return buttonBar;
     }
 
-    private static String assembleRequestUrl(String... diagramSrc) {
-        return String.join("/", diagramSrc);
+    private Button getCreateDiagramButton() {
+        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(project, diagramService);
+
+        Button createDiagramButton = new Button("Create new Diagram", new Icon("vaadin:plus"));
+        createDiagramButton.addClickListener(e -> {
+            sessionStorage.setSelectedProject(project);
+            createDiagramDialog.open();
+        });
+        return createDiagramButton;
     }
 
-    private static String getDummyRequestParameter() {
-        return "?" + ResourceController.TIMESTAMP_REQUEST_PARAMETER_NAME + "=" + LocalDateTime.now();
+    private Button getDatabaseButton() {
+        GenerateDatabaseModelDialog databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, sessionStorage);
+
+        databaseButton = new Button("Download DDL-SQL-Script", new Icon("vaadin:database"));
+        databaseButton.setId("databaseButton");
+        databaseButton.addClickListener(e -> databaseModelDialog.open());
+        return databaseButton;
     }
 }
