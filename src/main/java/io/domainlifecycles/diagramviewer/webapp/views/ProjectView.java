@@ -1,5 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
@@ -38,9 +39,6 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final DiagramService diagramService;
     private final DomainModelSessionStorage sessionStorage;
 
-    private Button databaseButton;
-
-
     private Project project;
     private String projectNameClean;
 
@@ -78,7 +76,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.setId("project-view-button-bar");
 
-        buttonBar.add(getCreateDiagramButton(), getDatabaseButton());
+        buttonBar.add(getCreateDiagramButton(), getDatabaseButton(), getManageUsersButton());
 
         return buttonBar;
     }
@@ -97,9 +95,13 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private Button getDatabaseButton() {
         GenerateDatabaseModelDialog databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, sessionStorage);
 
-        databaseButton = new Button("Download DDL-SQL-Script", new Icon("vaadin:database"));
-        databaseButton.setId("databaseButton");
+        Button databaseButton = new Button("Download DDL-SQL-Script", new Icon("vaadin:database"));
         databaseButton.addClickListener(e -> databaseModelDialog.open());
         return databaseButton;
+    }
+
+    private Button getManageUsersButton() {
+        Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
+        return manageUsersButton;
     }
 }
