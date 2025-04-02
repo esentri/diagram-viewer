@@ -2,7 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.1'
 	id 'io.spring.dependency-management' version '1.1.7'
-	id 'com.vaadin' version '24.6.2'
+	id 'com.vaadin' version '24.7.1'
 }
 
 group = 'io.domainlifecycles'
@@ -23,7 +23,7 @@ repositories {
 }
 
 ext {
-	set('vaadinVersion', "24.6.2")
+	set('vaadinVersion', "24.7.1")
 	javaDockerVersion = "3.4.0"
 }
 

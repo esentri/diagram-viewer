@@ -37,7 +37,7 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
-import io.domainlifecycles.diagramviewer.webapp.views.DiagramViewerView;
+import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.InvalidPathException;
@@ -172,7 +172,7 @@ public class MainLayout extends AppLayout {
 
                 project.getDiagrams()
                     .forEach(diagram -> {
-                        SideNavItem sideNavItem = new SideNavItem(diagram.getFileName(), DiagramViewerView.class,
+                        SideNavItem sideNavItem = new SideNavItem(diagram.getFileName(), DiagramView.class,
                             new RouteParameters(Map.of("projectName", project.getProjectNameClean(), "diagramName",
                                 diagram.getFileName())));
 

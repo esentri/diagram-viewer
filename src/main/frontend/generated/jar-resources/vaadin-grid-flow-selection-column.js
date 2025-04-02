@@ -41,7 +41,6 @@ export class GridFlowSelectionColumn extends GridSelectionColumnBaseMixin(GridCo
     }
   }
 
-
   /**
    * Override a method from `GridSelectionColumnBaseMixin` to handle the user
    * selecting all items.
@@ -75,6 +74,7 @@ export class GridFlowSelectionColumn extends GridSelectionColumnBaseMixin(GridCo
    * @override
    */
   _selectItem(item) {
+    this.$server.setShiftKeyDown(this._shiftKeyDown);
     this._grid.$connector.doSelection([item], true);
   }
 
@@ -87,6 +87,7 @@ export class GridFlowSelectionColumn extends GridSelectionColumnBaseMixin(GridCo
    * @override
    */
   _deselectItem(item) {
+    this.$server.setShiftKeyDown(this._shiftKeyDown);
     this._grid.$connector.doDeselection([item], true);
     // Optimistically update select all state
     this.selectAll = false;
