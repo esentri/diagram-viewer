@@ -17,14 +17,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable);
-        http.authorizeHttpRequests(request -> {
-            request.requestMatchers(
-                "/login",
-                "/actuator/**").permitAll();
-            request.anyRequest().authenticated();
-        });
-        http.oauth2Login(AbstractAuthenticationFilterConfigurer::permitAll);
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(request -> {
+                request.requestMatchers(
+                    "/login",
+                    "/actuator/**").permitAll();
+                request.anyRequest().authenticated();
+            })
+            .oauth2Login(AbstractAuthenticationFilterConfigurer::permitAll);
 
         return http.build();
     }
