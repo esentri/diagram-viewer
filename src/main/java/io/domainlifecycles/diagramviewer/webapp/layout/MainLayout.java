@@ -78,10 +78,6 @@ public class MainLayout extends AppLayout {
     }
 
     private void createAndAddUserInfoPopover() {
-        DefaultOidcUser principal = (DefaultOidcUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String userFullName = (String) principal.getUserInfo().getClaims().get("name");
-        String userEmail = (String) principal.getUserInfo().getClaims().get("e-mail");
-
         Avatar avatar = new Avatar();
         avatar.getStyle().set("display", "block");
         avatar.getStyle().set("cursor", "pointer");
@@ -103,35 +99,23 @@ public class MainLayout extends AppLayout {
         popover.addThemeVariants(PopoverVariant.LUMO_NO_PADDING);
 
         HorizontalLayout userInfo = new HorizontalLayout();
-        userInfo.addClassName("userMenuHeader");
-        userInfo.setSpacing(false);
+        userInfo.getStyle().setPadding("0rem 1rem 0rem");
+        userInfo.getThemeList().remove("spacing");
 
-        Avatar userAvatar = new Avatar();
-        userAvatar.getElement().setAttribute("tabindex", "-1");
-        userAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
+        Avatar popoverAvatar = new Avatar();
+        popoverAvatar.getStyle().set("margin", "auto");
+        popoverAvatar.getElement().setAttribute("tabindex", "-1");
+        popoverAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
 
         VerticalLayout nameLayout = new VerticalLayout();
-        nameLayout.setSpacing(false);
-        nameLayout.setPadding(false);
-
-        Div fullName = new Div(userFullName);
+        nameLayout.getThemeList().remove("spacing");
+        Div fullName = new Div(sessionStorage.getAuthenticatedUser().getFullName());
         fullName.getStyle().set("font-weight", "bold");
-        Div nickName = new Div(userEmail);
-        nickName.addClassName("userMenuNickname");
+        Div nickName = new Div(sessionStorage.getAuthenticatedUser().getEmailAddress());
         nameLayout.add(fullName, nickName);
 
-        userInfo.add(userAvatar, nameLayout);
-
-        VerticalLayout linksLayout = new VerticalLayout();
-        linksLayout.setSpacing(false);
-        linksLayout.setPadding(false);
-        linksLayout.addClassName("userMenuLinks");
-
-        Button signOutButton = new Button("Sign out");
-        signOutButton.addClickListener(e -> securityService.logout());
-
-        linksLayout.add(signOutButton);
-        popover.add(userInfo, linksLayout);
+        userInfo.add(popoverAvatar, nameLayout);
+        popover.add(userInfo);
 
         addToNavbar(button, popover);
     }
