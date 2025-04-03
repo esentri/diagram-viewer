@@ -1,5 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
@@ -13,13 +15,10 @@ import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.ColorPickerComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Styling;
-import io.domainlifecycles.diagramviewer.webapp.components.various.RefreshCallback;
-import java.util.Arrays;
-import java.util.HashSet;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Dialog allowing configuration for each DDD building block (i.e. AggregateRoot, Repository, etc.).
@@ -30,14 +29,12 @@ public class StylingConfigurationDialog extends Dialog {
 
     private final Diagram diagram;
     private final DiagramService diagramService;
-    private final RefreshCallback callback;
     private final Binder<DiagramStylingConfiguration> binder;
 
 
-    public StylingConfigurationDialog(Diagram diagram, DiagramService diagramService, RefreshCallback callback) {
+    public StylingConfigurationDialog(Diagram diagram, DiagramService diagramService) {
         this.diagram = diagram;
         this.diagramService = diagramService;
-        this.callback = callback;
         this.binder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Styling");
@@ -59,7 +56,7 @@ public class StylingConfigurationDialog extends Dialog {
         saveButton.addClickListener(e -> {
             binder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             diagramService.save(diagram);
-            callback.run();
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });
 

@@ -1,5 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
@@ -14,6 +16,9 @@ import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.RefreshCallback;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.ArrayList;
@@ -27,16 +32,14 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     private final DiagramService diagramService;
     private final Project project;
     private final Diagram diagram;
-    private final RefreshCallback callback;
 
-    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DomainModelSessionStorage sessionStorage, DiagramService diagramService, RefreshCallback callback) {
+    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DomainModelSessionStorage sessionStorage, DiagramService diagramService) {
         this.setWidth("30%");
         this.setClassName("visibility-accordion");
         this.sessionStorage = sessionStorage;
         this.diagramService = diagramService;
         this.project = project;
         this.diagram = diagram;
-        this.callback = callback;
         createAccordion();
     }
 
@@ -85,7 +88,8 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
 
                             diagram.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(blackListedClassNames));
                             diagramService.save(diagram);
-                            callback.run();
+                            ComponentUtil.fireEvent(
+                                UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
                         });
 
                         buttonLayout.add(visibleButton);
@@ -114,7 +118,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
 
                                 diagram.setDomainModelVisibility(visibility.replaceSeedClassNames(seed));
                                 diagramService.save(diagram);
-                                callback.run();
+                                ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
                             });
                         }
                     }

@@ -11,7 +11,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 
 public class CreateDiagramDialog extends Dialog {
 
@@ -38,7 +38,7 @@ public class CreateDiagramDialog extends Dialog {
 
         createButton.addClickListener(e -> {
             diagramService.save(project, fileName, packageName, fileType);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsChangedEvent(this, false));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });
 

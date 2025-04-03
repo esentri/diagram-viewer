@@ -29,13 +29,11 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
-import io.domainlifecycles.diagramviewer.security.SecurityService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.service.UserService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEventListener;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEventListener;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.nio.file.InvalidPathException;
@@ -43,8 +41,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")
@@ -54,18 +50,15 @@ public class MainLayout extends AppLayout {
     private final static Logger log = LoggerFactory.getLogger(MainLayout.class);
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
 
-    private final SecurityService securityService;
     private final ProjectService projectService;
     private final DomainModelSessionStorage sessionStorage;
     private final UploadDialog uploadDialog;
     private SideNav sideNav;
     private Registration registration;
 
-    public MainLayout(SecurityService securityService,
-                      ProjectService projectService,
+    public MainLayout(ProjectService projectService,
                       DomainModelSessionStorage sessionStorage) {
 
-        this.securityService = securityService;
         this.projectService = projectService;
         this.sessionStorage = sessionStorage;
         this.uploadDialog = new UploadDialog(projectService, sessionStorage);
@@ -74,7 +67,8 @@ public class MainLayout extends AppLayout {
         createAndAddUserInfoPopover();
         buildDrawerContent();
 
-        addListener(DiagramsChangedEvent.class, (DiagramsChangedEventListener<DiagramsChangedEvent>) event -> refreshSideNavLinks());
+        addListener(
+            DiagramsOrProjectsChangedEvent.class, (DiagramsOrProjectsChangedEventListener<DiagramsOrProjectsChangedEvent>) event -> refreshSideNavLinks());
     }
 
     private void createAndAddUserInfoPopover() {
@@ -205,7 +199,7 @@ public class MainLayout extends AppLayout {
         registration =
             ComponentUtil.addListener(
                 attachEvent.getUI(),
-                DiagramsChangedEvent.class,
+                DiagramsOrProjectsChangedEvent.class,
                 event -> refreshSideNavLinks()
             );
     }

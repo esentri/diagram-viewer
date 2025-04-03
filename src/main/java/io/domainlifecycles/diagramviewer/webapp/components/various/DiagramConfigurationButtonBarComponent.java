@@ -16,16 +16,16 @@ import java.util.stream.Stream;
 
 public class DiagramConfigurationButtonBarComponent extends FlexLayout {
 
-    public DiagramConfigurationButtonBarComponent(Diagram diagram, DiagramService diagramService, RefreshCallback callback) {
+    public DiagramConfigurationButtonBarComponent(Diagram diagram, DiagramService diagramService) {
         setJustifyContentMode(JustifyContentMode.CENTER);
         setFlexDirection(FlexDirection.COLUMN);
-        add(createAndGetConfigurationButtonsAndDialogs(diagram, diagramService, callback));
+        add(createAndGetConfigurationButtonsAndDialogs(diagram, diagramService));
     }
 
-    private List<Component> createAndGetConfigurationButtonsAndDialogs(Diagram diagram, DiagramService diagramService, RefreshCallback callback) {
-        List<Component> stylingConfigurationButtonAndDialog = getStylingConfigurationButtonAndDialog(diagram, diagramService, callback);
-        List<Component> visibilityConfigurationButtonAndDialog = getVisibilityConfigurationButtonAndDialog(diagram, diagramService, callback);
-        List<Component> variousConfigurationButtonAndDialog = getVariousConfigurationButtonAndDialog(diagram, diagramService, callback);
+    private List<Component> createAndGetConfigurationButtonsAndDialogs(Diagram diagram, DiagramService diagramService) {
+        List<Component> stylingConfigurationButtonAndDialog = getStylingConfigurationButtonAndDialog(diagram, diagramService);
+        List<Component> visibilityConfigurationButtonAndDialog = getVisibilityConfigurationButtonAndDialog(diagram, diagramService);
+        List<Component> variousConfigurationButtonAndDialog = getVariousConfigurationButtonAndDialog(diagram, diagramService);
         return Stream.of(
                 stylingConfigurationButtonAndDialog,
                 visibilityConfigurationButtonAndDialog,
@@ -34,18 +34,18 @@ public class DiagramConfigurationButtonBarComponent extends FlexLayout {
             .collect(Collectors.toList());
     }
 
-    private List<Component> getStylingConfigurationButtonAndDialog(Diagram diagram, DiagramService diagramService, RefreshCallback callback) {
-        Dialog stylingConfigurationDialog = new StylingConfigurationDialog(diagram, diagramService, callback);
+    private List<Component> getStylingConfigurationButtonAndDialog(Diagram diagram, DiagramService diagramService) {
+        Dialog stylingConfigurationDialog = new StylingConfigurationDialog(diagram, diagramService);
         return List.of(new Button(new Icon("vaadin:paintbrush"), e -> stylingConfigurationDialog.open()), stylingConfigurationDialog);
     }
 
-    private List<Component> getVisibilityConfigurationButtonAndDialog(Diagram diagram, DiagramService diagramService, RefreshCallback callback) {
-        Dialog visibilityConfigurationDialog = new VisibilityConfigurationDialog(diagram, diagramService, callback);
+    private List<Component> getVisibilityConfigurationButtonAndDialog(Diagram diagram, DiagramService diagramService) {
+        Dialog visibilityConfigurationDialog = new VisibilityConfigurationDialog(diagram, diagramService);
         return List.of(new Button(new Icon("vaadin:eye"), e -> visibilityConfigurationDialog.open()), visibilityConfigurationDialog);
     }
 
-    private List<Component> getVariousConfigurationButtonAndDialog(Diagram diagram, DiagramService diagramService, RefreshCallback callback) {
-        Dialog variousConfigurationDialog = new VariousConfigurationDialog(diagram, diagramService, callback);
+    private List<Component> getVariousConfigurationButtonAndDialog(Diagram diagram, DiagramService diagramService) {
+        Dialog variousConfigurationDialog = new VariousConfigurationDialog(diagram, diagramService);
         return List.of(new Button(new Icon("vaadin:cogs"), e -> variousConfigurationDialog.open()), variousConfigurationDialog);
     }
 }

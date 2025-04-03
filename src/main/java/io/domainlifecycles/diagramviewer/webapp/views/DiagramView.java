@@ -20,6 +20,8 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponentContainer;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEventListener;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
@@ -62,6 +64,8 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         setProjectAndDiagram();
         addPageContents();
         zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName);
+        addListener(
+            DiagramStylingChangedEvent.class, (DiagramStylingChangedEventListener<DiagramStylingChangedEvent>) changeEvent -> zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName));
     }
 
     private void setProjectAndDiagram() {
@@ -80,9 +84,9 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
-        diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(diagram, diagramService, () -> zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName)));
+        diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(diagram, diagramService));
         diagramViewerAndStylingContainer.add(createDiagramZoomComponent());
-        diagramViewerAndStylingContainer.add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService, () -> zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName)));
+        diagramViewerAndStylingContainer.add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService));
 
         add(diagramViewerAndStylingContainer);
     }

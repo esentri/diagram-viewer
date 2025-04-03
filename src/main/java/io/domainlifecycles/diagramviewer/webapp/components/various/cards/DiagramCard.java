@@ -1,7 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.cards;
 
 import com.vaadin.flow.component.html.Image;
-import io.domainlifecycles.diagramviewer.webapp.components.various.cards.Card;
 
 public class DiagramCard extends Card {
 

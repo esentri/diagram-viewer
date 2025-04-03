@@ -3,9 +3,9 @@ package io.domainlifecycles.diagramviewer.webapp.events;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
 
-public class DiagramsChangedEvent extends ComponentEvent<Component> {
+public class DiagramsOrProjectsChangedEvent extends ComponentEvent<Component> {
 
-    public DiagramsChangedEvent(Component source, boolean fromClient) {
+    public DiagramsOrProjectsChangedEvent(Component source, boolean fromClient) {
         super(source, fromClient);
     }
 }

@@ -1,7 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various;
 
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
-import io.domainlifecycles.diagramviewer.rest.ResourceController;
 
 public class DiagramZoomComponentContainer extends FlexLayout {
 

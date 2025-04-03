@@ -5,7 +5,7 @@ import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.server.auth.NavigationContext;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 
-public class VotingNavigationAccessChecker implements NavigationAccessChecker {
+public class ProjectAndDiagramNavigationAccessChecker implements NavigationAccessChecker {
 
     @Override
     public AccessCheckResult check(NavigationContext context) {

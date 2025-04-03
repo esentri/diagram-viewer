@@ -14,11 +14,9 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final ClientRegistrationRepository clientRegistrationRepository;
     private final CustomAuthenticationSuccessHandler successHandler;
 
-    public SecurityConfig(ClientRegistrationRepository clientRegistrationRepository, CustomAuthenticationSuccessHandler successHandler) {
-        this.clientRegistrationRepository = clientRegistrationRepository;
+    public SecurityConfig(CustomAuthenticationSuccessHandler successHandler) {
         this.successHandler = successHandler;
     }
 
@@ -27,25 +25,11 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(request -> {
-                request.requestMatchers(
-                    "/login",
-                    "/actuator/**").permitAll();
+                request.requestMatchers("/actuator/**").permitAll();
                 request.anyRequest().authenticated();
             })
-            .oauth2Login((login) -> login.successHandler(successHandler))
-            .logout((logout) -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler()));
+            .oauth2Login((login) -> login.successHandler(successHandler));
 
         return http.build();
-    }
-
-    private LogoutSuccessHandler oidcLogoutSuccessHandler() {
-        OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler =
-            new OidcClientInitiatedLogoutSuccessHandler(this.clientRegistrationRepository);
-
-        // Sets the location that the End-User's User Agent will be redirected to
-        // after the logout has been performed at the Provider
-        oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
-
-        return oidcLogoutSuccessHandler;
     }
 }

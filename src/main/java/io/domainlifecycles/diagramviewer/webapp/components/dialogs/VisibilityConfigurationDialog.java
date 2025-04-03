@@ -1,5 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
@@ -11,15 +13,14 @@ import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
-import io.domainlifecycles.diagramviewer.webapp.components.various.RefreshCallback;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 
 public class VisibilityConfigurationDialog extends Dialog {
 
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
     private final DiagramService diagramService;
     private final Diagram diagram;
-    private final RefreshCallback callback;
 
     private Checkbox showAllFieldsCheckbox;
     private Checkbox showAllMethodsCheckbox;
@@ -43,10 +44,9 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showUnspecifiedServiceKindMethodsCheckbox;
 
 
-    public VisibilityConfigurationDialog(Diagram diagram, DiagramService diagramService, RefreshCallback callback) {
+    public VisibilityConfigurationDialog(Diagram diagram, DiagramService diagramService) {
         this.diagram = diagram;
         this.diagramService = diagramService;
-        this.callback = callback;
         diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Visibility");
@@ -67,7 +67,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             diagramService.save(diagram);
-            callback.run();
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });
 

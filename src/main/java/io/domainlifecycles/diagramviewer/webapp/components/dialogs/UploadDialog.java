@@ -12,7 +12,7 @@ import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class UploadDialog extends Dialog {
             }
 
             projectService.save(targetsLocation, fileInputStream, fileName, boundedContextPackages);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsChangedEvent(this, false));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
 
             log.info(String.format("Successfully uploaded file '%s' to '%s'.", fileName, targetsLocation));
             close();
