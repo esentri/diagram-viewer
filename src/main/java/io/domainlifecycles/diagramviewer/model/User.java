@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@Table(name = "USER")
+@Table(name = "SERVICE_USER")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,5 +30,11 @@ public class User {
     private String emailAddress;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    private List<Project> assignedProjects;
+    private List<Project> assignedProjects = new ArrayList<>();
+
+    public void addAssignedProject(Project project) {
+        List<Project> currentProjects = new ArrayList<>(assignedProjects);
+        currentProjects.add(project);
+        assignedProjects = currentProjects;
+    }
 }

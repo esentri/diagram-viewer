@@ -1,6 +1,9 @@
 package io.domainlifecycles.diagramviewer.webapp.layout;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -22,6 +25,7 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouteParameters;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
@@ -55,6 +59,7 @@ public class MainLayout extends AppLayout {
     private final DomainModelSessionStorage sessionStorage;
     private final UploadDialog uploadDialog;
     private SideNav sideNav;
+    private Registration registration;
 
     public MainLayout(SecurityService securityService,
                       ProjectService projectService,
@@ -208,5 +213,22 @@ public class MainLayout extends AppLayout {
                 String.format("Specified path '%s' is not a directory.", absolutePath), e);
         }
         return directoryToWatch;
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        registration =
+            ComponentUtil.addListener(
+                attachEvent.getUI(),
+                DiagramsChangedEvent.class,
+                event -> refreshSideNavLinks()
+            );
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        registration.remove();
     }
 }

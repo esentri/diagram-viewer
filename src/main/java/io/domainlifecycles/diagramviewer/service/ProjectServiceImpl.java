@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
@@ -20,31 +21,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
 
     private static final Logger log = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
-    private String targetsDirectory;
+
     private final DomainModelSessionStorage sessionStorage;
+
+    private final UserService userService;
     private final ProjectRepository repository;
+
+    private String targetsDirectory;
+
 
     public ProjectServiceImpl(
         @Value("${targets.location}") String defaultTargetsDirectory,
         DomainModelSessionStorage sessionStorage,
+        UserService userService,
         ProjectRepository repository) {
 
         this.targetsDirectory = defaultTargetsDirectory;
         this.sessionStorage = sessionStorage;
+        this.userService = userService;
         this.repository = repository;
         initializeAllDomainModels();
     }
 
     @Override
     public Stream<Project> getAll(Path targetDirectory, User user) {
-        return getAll(targetDirectory).filter(project -> project.getAssignedUsers().contains(user));
+        return getAll(targetDirectory)
+            .filter(project -> project.getAssignedUsers().stream()
+                .anyMatch(assignedUser -> Objects.equals(assignedUser.getUserId(), user.getUserId())));
     }
 
     private Stream<Project> getAll(Path targetDirectory) {
@@ -66,14 +75,22 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void save(Project project) {
-        repository.save(project);
+    public Project save(Project project) {
+        Project persistedProject = repository.save(project);
+        userService.addProject(sessionStorage.getAuthenticatedUser(), persistedProject);
+        return persistedProject;
+    }
+
+    @Override
+    public Project save(Project project, Diagram diagramToAdd) {
+        project.addDiagram(diagramToAdd);
+        return repository.save(project);
     }
 
     @Override
     public void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages) {
         final Project project = mapProject(targetsLocation, fileName, boundedContextPackages);
-        Project persistedProject = repository.save(project);
+        Project persistedProject = save(project);
 
         try {
             FileIOUtils.saveFile(targetsLocation, fileName, fileContents);
@@ -88,12 +105,15 @@ public class ProjectServiceImpl implements ProjectService {
     private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages) {
         Path filePath = Path.of(targetsLocation);
         List<String> boundedContexts = Arrays.stream(boundedContextPackages.split(",")).toList();
+        User authenticatedUser = sessionStorage.getAuthenticatedUser();
 
         return Project.builder()
             .projectNameFull(fileName)
             .projectNameClean(buildCleanFileName(fileName))
             .absolutePathToTarget(filePath.toAbsolutePath() + "/" + fileName)
             .boundedContextPackages(boundedContexts)
+            .creator(authenticatedUser)
+            .assignedUsers(List.of(authenticatedUser))
             .build();
     }
 

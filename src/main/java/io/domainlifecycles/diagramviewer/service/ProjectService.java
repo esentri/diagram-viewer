@@ -1,5 +1,6 @@
 package io.domainlifecycles.diagramviewer.service;
 
+import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.User;
 import java.io.InputStream;
@@ -12,7 +13,8 @@ public interface ProjectService {
 
     Project getByProjectNameClean(final String projectNameClean);
 
-    void save(Project project);
+    Project save(Project project);
+    Project save(Project project, Diagram diagramToAdd);
 
     void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages);
 }

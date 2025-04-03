@@ -1,8 +1,11 @@
 package io.domainlifecycles.diagramviewer.service;
 
+import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.UserRepository;
+import java.util.ArrayList;
+import java.util.Collections;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,6 +36,12 @@ public class UserServiceImpl implements UserService {
         return createNewUserAndRemoveTemporaryUser(temporaryUser);
     }
 
+    @Override
+    public void addProject(User user, Project project) {
+        user.addAssignedProject(project);
+        repository.save(user);
+    }
+
     private User get(final String userEmailAddress) {
         return repository.getByEmailAddress(userEmailAddress);
     }
@@ -46,6 +55,7 @@ public class UserServiceImpl implements UserService {
         final User user = User.builder()
             .emailAddress(userEmailAddress)
             .fullName(fullName)
+            .assignedProjects(Collections.emptyList())
             .build();
 
         return repository.save(user);
@@ -55,7 +65,7 @@ public class UserServiceImpl implements UserService {
         final User user = User.builder()
             .emailAddress(temporaryUser.getEmailAddress())
             .fullName(temporaryUser.getFullName())
-            .assignedProjects(temporaryUser.getAssignedProjects())
+            .assignedProjects(new ArrayList<>())
             .build();
 
         return repository.save(user);

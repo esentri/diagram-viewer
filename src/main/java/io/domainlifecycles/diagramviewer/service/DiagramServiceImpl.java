@@ -62,9 +62,7 @@ public class DiagramServiceImpl implements DiagramService {
             .build();
 
         Diagram persistedDiagram = repository.save(diagram);
-
-        project.addDiagram(persistedDiagram);
-        projectService.save(project);
+        projectService.save(project, persistedDiagram);
 
         createAndSaveDiagramToFilesystem(project, persistedDiagram);
     }

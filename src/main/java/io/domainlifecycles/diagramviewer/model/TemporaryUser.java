@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,7 +37,7 @@ public class TemporaryUser {
     private String fullName;
 
     @OneToMany(fetch = FetchType.EAGER)
-    private List<Project> assignedProjects;
+    private List<Project> assignedProjects = new ArrayList<>();
 
     public void addProject(Project project) {
         assignedProjects.add(project);

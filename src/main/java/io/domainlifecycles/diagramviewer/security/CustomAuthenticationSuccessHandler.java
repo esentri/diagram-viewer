@@ -6,11 +6,14 @@ import io.domainlifecycles.diagramviewer.service.UserService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -28,7 +31,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) {
+                                        Authentication authentication) throws IOException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
@@ -46,5 +49,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         User user = userService.acknowledgeUserAuthentication(email, fullName);
         sessionStorage.setAuthenticatedUser(user);
+
+        SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
+        response.sendRedirect(savedRequest.getRedirectUrl());
     }
 }

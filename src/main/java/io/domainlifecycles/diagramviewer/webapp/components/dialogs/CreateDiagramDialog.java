@@ -1,5 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -36,7 +38,7 @@ public class CreateDiagramDialog extends Dialog {
 
         createButton.addClickListener(e -> {
             diagramService.save(project, fileName, packageName, fileType);
-            fireEvent(new DiagramsChangedEvent(this, true));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsChangedEvent(this, false));
             close();
         });
 

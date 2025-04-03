@@ -106,7 +106,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project);
 
         Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
-        manageUsersButton.setEnabled(Objects.equals(project.getCreator(), sessionStorage.getAuthenticatedUser()));
+        manageUsersButton.setEnabled(Objects.equals(project.getCreator().getUserId(), sessionStorage.getAuthenticatedUser().getUserId()));
         manageUsersButton.addClickListener(e -> manageUsersDialog.open());
         return manageUsersButton;
     }
