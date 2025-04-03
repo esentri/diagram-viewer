@@ -7,6 +7,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -39,7 +41,19 @@ public class Project {
     @OneToMany(fetch = FetchType.EAGER)
     private List<Diagram> diagrams;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    private List<User> assignedUsers;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private User creator;
+
     public void addDiagram(Diagram diagram) {
         diagrams.add(diagram);
+    }
+    public void addUser(User user) {
+        assignedUsers.add(user);
+    }
+    public void removeUser(User user) {
+        assignedUsers.remove(user);
     }
 }

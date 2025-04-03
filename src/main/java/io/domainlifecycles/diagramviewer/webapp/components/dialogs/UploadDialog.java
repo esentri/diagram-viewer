@@ -10,7 +10,6 @@ import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
-import io.domainlifecycles.diagramviewer.webapp.components.various.RefreshCallback;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEvent;
 import java.io.InputStream;
 import org.slf4j.Logger;
@@ -35,7 +34,7 @@ public class UploadDialog extends Dialog {
     }
 
     private Button createUploadButton() {
-        final String targetsLocation = sessionStorage.getSelectedTargetsDirectory();
+        final String targetsLocation = sessionStorage.getTargetsLocation();
         Button uploadButton = new Button("Upload");
 
         uploadButton.addClickListener(e -> {

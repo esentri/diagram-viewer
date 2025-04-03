@@ -19,11 +19,13 @@ import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ManageUsersDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCard;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGrid;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +103,11 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getManageUsersButton() {
+        ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project);
+
         Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
+        manageUsersButton.setEnabled(Objects.equals(project.getCreator(), sessionStorage.getAuthenticatedUser()));
+        manageUsersButton.addClickListener(e -> manageUsersDialog.open());
         return manageUsersButton;
     }
 }

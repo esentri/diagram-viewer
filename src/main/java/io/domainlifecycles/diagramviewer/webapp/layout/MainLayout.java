@@ -1,7 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.layout;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -13,7 +12,6 @@ import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -24,27 +22,25 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouteParameters;
-import com.vaadin.flow.server.StreamResource;
-import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
-import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.security.SecurityService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.service.UserService;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
-import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsChangedEventListener;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")
@@ -61,33 +57,43 @@ public class MainLayout extends AppLayout {
     private SideNav sideNav;
 
     public MainLayout(SecurityService securityService,
-        ProjectService projectService,
-        DomainModelSessionStorage sessionStorage) {
+                      ProjectService projectService,
+                      DomainModelSessionStorage sessionStorage) {
 
         this.securityService = securityService;
         this.projectService = projectService;
         this.sessionStorage = sessionStorage;
         this.uploadDialog = new UploadDialog(projectService, sessionStorage);
 
-        Button userInfoButton = getUserInfoButton();
-        Popover userInfoPopover = getUserInfoPopover();
-        userInfoPopover.setTarget(userInfoButton);
-
-        addToNavbar(new DrawerToggle(), getDlcLogo(), userInfoButton, userInfoPopover);
+        addToNavbar(new DrawerToggle(), getDlcLogo());
+        createAndAddUserInfoPopover();
         buildDrawerContent();
+
         addListener(DiagramsChangedEvent.class, (DiagramsChangedEventListener<DiagramsChangedEvent>) event -> refreshSideNavLinks());
     }
 
-    private Popover getUserInfoPopover() {
+    private void createAndAddUserInfoPopover() {
+        DefaultOidcUser principal = (DefaultOidcUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userFullName = (String) principal.getUserInfo().getClaims().get("name");
+        String userEmail = (String) principal.getUserInfo().getClaims().get("e-mail");
+
         Avatar avatar = new Avatar();
         avatar.getStyle().set("display", "block");
         avatar.getStyle().set("cursor", "pointer");
         avatar.getElement().setAttribute("tabindex", "-1");
 
+        Button button = new Button(avatar);
+        button.addThemeVariants(ButtonVariant.LUMO_ICON,
+            ButtonVariant.LUMO_TERTIARY_INLINE);
+        button.getStyle().set("margin", "var(--lumo-space-s)");
+        button.getStyle().set("margin-inline-start", "auto");
+        button.getStyle().set("border-radius", "50%");
+
         Popover popover = new Popover();
         popover.setModal(true);
         popover.setOverlayRole("menu");
         popover.setAriaLabel("User menu");
+        popover.setTarget(button);
         popover.setPosition(PopoverPosition.BOTTOM_END);
         popover.addThemeVariants(PopoverVariant.LUMO_NO_PADDING);
 
@@ -103,9 +109,11 @@ public class MainLayout extends AppLayout {
         nameLayout.setSpacing(false);
         nameLayout.setPadding(false);
 
-        Div fullName = new Div("Leon Völlinger");
+        Div fullName = new Div(userFullName);
         fullName.getStyle().set("font-weight", "bold");
-        nameLayout.add(fullName);
+        Div nickName = new Div(userEmail);
+        nickName.addClassName("userMenuNickname");
+        nameLayout.add(fullName, nickName);
 
         userInfo.add(userAvatar, nameLayout);
 
@@ -120,15 +128,7 @@ public class MainLayout extends AppLayout {
         linksLayout.add(signOutButton);
         popover.add(userInfo, linksLayout);
 
-        return popover;
-    }
-
-    private Button getUserInfoButton() {
-        Button button = new Button(new Avatar());
-        button.setId("userButton");
-        button.addThemeVariants(ButtonVariant.LUMO_ICON,
-            ButtonVariant.LUMO_TERTIARY_INLINE);
-        return button;
+        addToNavbar(button, popover);
     }
 
     private void buildDrawerContent() {
@@ -148,7 +148,7 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem[] createSideNavLinks() {
-        return projectService.getAll(buildPath(sessionStorage.getSelectedTargetsDirectory()))
+        return projectService.getAll(buildPath(sessionStorage.getTargetsLocation()), sessionStorage.getAuthenticatedUser())
             .map(project -> {
                 SideNavItem parentSideNavItem = new SideNavItem(project.getProjectNameFull(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
 
@@ -209,6 +209,4 @@ public class MainLayout extends AppLayout {
         }
         return directoryToWatch;
     }
-
-    interface DiagramsChangedEventListener<T> extends ComponentEventListener<DiagramsChangedEvent> {}
 }

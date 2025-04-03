@@ -9,7 +9,7 @@ public class DiagramCard extends Card {
         setTitle(diagramName);
         Image image = new Image(diagramSrc, diagramName);
         image.setMaxHeight("200px");
-        image.setMaxWidth("300px");
+        image.setMaxWidth("250px");
         setMedia(image);
     }
 }

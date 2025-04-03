@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
@@ -42,7 +43,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Stream<Project> getAll(Path targetDirectory) {
+    public Stream<Project> getAll(Path targetDirectory, User user) {
+        return getAll(targetDirectory).filter(project -> project.getAssignedUsers().contains(user));
+    }
+
+    private Stream<Project> getAll(Path targetDirectory) {
         Set<File> allFilesInDirectory = FileIOUtils.getFilesInDirectory(targetDirectory);
 
         return allFilesInDirectory.stream()
@@ -78,13 +83,6 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         sessionStorage.add(persistedProject);
-    }
-
-    @Override
-    public void setTargetsDirectory(String targetsDirectory) {
-        this.targetsDirectory = targetsDirectory;
-        sessionStorage.purge();
-        initializeAllDomainModels();
     }
 
     private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages) {

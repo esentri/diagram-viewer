@@ -3,8 +3,8 @@ package io.domainlifecycles.diagramviewer.session;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
-import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.mirror.api.DomainModel;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -20,14 +20,23 @@ public class DomainModelSessionStorage {
 
     private static final Logger log = LoggerFactory.getLogger(DomainModelSessionStorage.class);
 
+    private User authenticatedUser;
     private Project selectedProject;
     private Diagram selectedDiagram;
-    private String selectedTargetsDirectory;
+    private final String targetsLocation;
     private final HashMap<Long, DomainModel> domainModelStore;
 
-    public DomainModelSessionStorage(@Value("${targets.location}") String defaultTargetsLocation) {
+    public DomainModelSessionStorage(@Value("${targets.location}") String targetsLocation) {
         domainModelStore = new HashMap<>();
-        this.selectedTargetsDirectory = defaultTargetsLocation;
+        this.targetsLocation = targetsLocation;
+    }
+
+    public User getAuthenticatedUser() {
+        return authenticatedUser;
+    }
+
+    public void setAuthenticatedUser(User authenticatedUser) {
+        this.authenticatedUser = authenticatedUser;
     }
 
     public DomainModel get(Long projectId) {
@@ -41,11 +50,6 @@ public class DomainModelSessionStorage {
 
         domainModelStore.put(project.getProjectId(), domainModel);
         return domainModel;
-    }
-
-    public void purge() {
-        domainModelStore.clear();
-        setNoneSelected();
     }
 
     public void setNoneSelected() {
@@ -69,12 +73,8 @@ public class DomainModelSessionStorage {
         this.selectedDiagram = selectedDiagram;
     }
 
-    public String getSelectedTargetsDirectory() {
-        return selectedTargetsDirectory;
-    }
-
-    public void setSelectedTargetsDirectory(String selectedTargetsDirectory) {
-        this.selectedTargetsDirectory = selectedTargetsDirectory;
+    public String getTargetsLocation() {
+        return targetsLocation;
     }
 
     public boolean isDiagramSelected() {

@@ -1,0 +1,50 @@
+package io.domainlifecycles.diagramviewer.security;
+
+import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.User;
+import io.domainlifecycles.diagramviewer.service.UserService;
+import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomAuthenticationSuccessHandler.class);
+
+    private final UserService userService;
+    private final DomainModelSessionStorage sessionStorage;
+
+    public CustomAuthenticationSuccessHandler(UserService userService, DomainModelSessionStorage sessionStorage) {
+        this.userService = userService;
+        this.sessionStorage = sessionStorage;
+    }
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                        Authentication authentication) {
+
+        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+
+        String email = oAuth2User.getAttribute("email");
+
+        if (email == null) {
+            email = oAuth2User.getAttribute("preferred_username");
+        }
+
+        if (email == null) {
+            throw DiagramViewerException.fail("Email or username not found in OAuth2 response.");
+        }
+
+        final String fullName = oAuth2User.getAttribute("name");
+
+        User user = userService.acknowledgeUserAuthentication(email, fullName);
+        sessionStorage.setAuthenticatedUser(user);
+    }
+}
