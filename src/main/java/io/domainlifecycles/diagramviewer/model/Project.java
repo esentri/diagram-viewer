@@ -41,18 +41,28 @@ public class Project {
     private List<Diagram> diagrams;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    private List<User> assignedUsers;
+    private List<AuthenticatedUser> assignedAuthenticatedUsers;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    private List<TemporaryUser> assignedTemporaryUsers;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    private User creator;
+    private AuthenticatedUser creator;
 
     public void addDiagram(Diagram diagram) {
         diagrams.add(diagram);
     }
-    public void addUser(User user) {
-        assignedUsers.add(user);
+    public void addAuthenticatedUser(AuthenticatedUser authenticatedUser) {
+        assignedAuthenticatedUsers.add(authenticatedUser);
     }
-    public void removeUser(User user) {
-        assignedUsers.remove(user);
+    public void removeAuthenticatedUser(AuthenticatedUser authenticatedUser) {
+        assignedAuthenticatedUsers.remove(authenticatedUser);
+    }
+
+    public void addTemporaryUser(TemporaryUser temporaryUser) {
+        assignedTemporaryUsers.add(temporaryUser);
+    }
+    public void removeTemporaryUser(TemporaryUser temporaryUser) {
+        assignedTemporaryUsers.remove(temporaryUser);
     }
 }

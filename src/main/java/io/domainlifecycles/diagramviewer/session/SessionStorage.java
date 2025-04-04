@@ -3,7 +3,7 @@ package io.domainlifecycles.diagramviewer.session;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.User;
+import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
 import java.nio.file.Path;
@@ -20,7 +20,7 @@ public class SessionStorage {
 
     private static final Logger log = LoggerFactory.getLogger(SessionStorage.class);
 
-    private User authenticatedUser;
+    private AuthenticatedUser authenticatedAuthenticatedUser;
     private Project selectedProject;
     private Diagram selectedDiagram;
     private final String targetsLocation;
@@ -31,12 +31,12 @@ public class SessionStorage {
         this.targetsLocation = targetsLocation;
     }
 
-    public User getAuthenticatedUser() {
-        return authenticatedUser;
+    public AuthenticatedUser getAuthenticatedUser() {
+        return authenticatedAuthenticatedUser;
     }
 
-    public void setAuthenticatedUser(User authenticatedUser) {
-        this.authenticatedUser = authenticatedUser;
+    public void setAuthenticatedUser(AuthenticatedUser authenticatedAuthenticatedUser) {
+        this.authenticatedAuthenticatedUser = authenticatedAuthenticatedUser;
     }
 
     public DomainModel get(Long projectId) {

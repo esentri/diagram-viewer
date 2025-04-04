@@ -73,6 +73,7 @@ public class MainLayout extends AppLayout {
 
     private void createAndAddUserInfoPopover() {
         Avatar avatar = new Avatar();
+        avatar.setName(sessionStorage.getAuthenticatedUser().getFullName());
         avatar.getStyle().set("display", "block");
         avatar.getStyle().set("cursor", "pointer");
         avatar.getElement().setAttribute("tabindex", "-1");
@@ -97,6 +98,7 @@ public class MainLayout extends AppLayout {
         userInfo.getThemeList().remove("spacing");
 
         Avatar popoverAvatar = new Avatar();
+        popoverAvatar.setName(sessionStorage.getAuthenticatedUser().getFullName());
         popoverAvatar.getStyle().set("margin", "auto");
         popoverAvatar.getElement().setAttribute("tabindex", "-1");
         popoverAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);

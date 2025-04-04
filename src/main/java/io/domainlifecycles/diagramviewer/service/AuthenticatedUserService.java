@@ -1,0 +1,12 @@
+package io.domainlifecycles.diagramviewer.service;
+
+import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
+
+public interface AuthenticatedUserService {
+
+    boolean userKnown(final String userEmailAddress);
+    AuthenticatedUser acknowledgeUserAuthentication(String userEmailAddress, String fullName);
+    void addProject(AuthenticatedUser authenticatedUser, Project project);
+    boolean checkAccess(String projectNameClean, AuthenticatedUser authenticatedUser);
+}

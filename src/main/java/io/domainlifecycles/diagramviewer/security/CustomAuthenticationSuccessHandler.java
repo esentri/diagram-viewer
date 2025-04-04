@@ -1,8 +1,8 @@
 package io.domainlifecycles.diagramviewer.security;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.User;
-import io.domainlifecycles.diagramviewer.service.UserService;
+import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
+import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,11 +21,11 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomAuthenticationSuccessHandler.class);
 
-    private final UserService userService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final SessionStorage sessionStorage;
 
-    public CustomAuthenticationSuccessHandler(UserService userService, SessionStorage sessionStorage) {
-        this.userService = userService;
+    public CustomAuthenticationSuccessHandler(AuthenticatedUserService authenticatedUserService, SessionStorage sessionStorage) {
+        this.authenticatedUserService = authenticatedUserService;
         this.sessionStorage = sessionStorage;
     }
 
@@ -46,8 +46,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         final String fullName = oAuth2User.getAttribute("name");
 
-        User user = userService.acknowledgeUserAuthentication(email, fullName);
-        sessionStorage.setAuthenticatedUser(user);
+        AuthenticatedUser authenticatedUser = authenticatedUserService.acknowledgeUserAuthentication(email, fullName);
+        sessionStorage.setAuthenticatedUser(authenticatedUser);
 
         SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
         response.sendRedirect(savedRequest.getRedirectUrl());

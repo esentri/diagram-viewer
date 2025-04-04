@@ -10,15 +10,16 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.service.TemporaryUserService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ManageUsersDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramCardGridContainer;
-import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGrid;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEventListener;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
@@ -37,18 +38,21 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final SQLDDLGeneratorService sqlddlGeneratorService;
     private final ProjectService projectService;
     private final DiagramService diagramService;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final TemporaryUserService temporaryUserService;
     private final SessionStorage sessionStorage;
 
     private Project project;
     private String projectNameClean;
     private DiagramCardGridContainer diagramCardGridContainer;
-    private DiagramCardGrid diagramCardGrid;
 
-    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
+    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService, AuthenticatedUserService authenticatedUserService, TemporaryUserService temporaryUserService) {
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.projectService = projectService;
         this.diagramService = diagramService;
         this.sessionStorage = sessionStorage;
+        this.authenticatedUserService = authenticatedUserService;
+        this.temporaryUserService = temporaryUserService;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
@@ -112,10 +116,11 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getManageUsersButton() {
-        ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project);
+        ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project, authenticatedUserService,
+            temporaryUserService);
 
         Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
-        manageUsersButton.setEnabled(Objects.equals(project.getCreator().getUserId(), sessionStorage.getAuthenticatedUser().getUserId()));
+        manageUsersButton.setEnabled(Objects.equals(project.getCreator().getAuthenticatedUserId(), sessionStorage.getAuthenticatedUser().getAuthenticatedUserId()));
         manageUsersButton.addClickListener(e -> manageUsersDialog.open());
         return manageUsersButton;
     }

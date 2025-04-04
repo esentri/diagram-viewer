@@ -38,7 +38,7 @@ public class TemporaryUserServiceImpl implements TemporaryUserService {
 
         if(foundTemporaryUser.isPresent()) {
             temporaryUser = foundTemporaryUser.get();
-            temporaryUser.addProject(project);
+            temporaryUser.addAssignedProject(project);
         } else {
             temporaryUser = TemporaryUser.builder()
                 .emailAddress(userEmailAddress)

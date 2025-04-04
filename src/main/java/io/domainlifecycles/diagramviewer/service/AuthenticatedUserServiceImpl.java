@@ -1,8 +1,8 @@
 package io.domainlifecycles.diagramviewer.service;
 
+import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
-import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,12 +10,12 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
 
     private final UserRepository repository;
     private final TemporaryUserService temporaryUserService;
 
-    public UserServiceImpl(UserRepository repository, TemporaryUserService temporaryUserService) {
+    public AuthenticatedUserServiceImpl(UserRepository repository, TemporaryUserService temporaryUserService) {
         this.repository = repository;
         this.temporaryUserService = temporaryUserService;
     }
@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User acknowledgeUserAuthentication(String userEmailAddress, String fullName) {
+    public AuthenticatedUser acknowledgeUserAuthentication(String userEmailAddress, String fullName) {
         if(userKnown(userEmailAddress)) return get(userEmailAddress);
 
         if(!temporaryUserService.userKnown(userEmailAddress)) {
@@ -38,45 +38,45 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void addProject(User user, Project project) {
-        user.addAssignedProject(project);
-        repository.save(user);
+    public void addProject(AuthenticatedUser authenticatedUser, Project project) {
+        authenticatedUser.addAssignedProject(project);
+        repository.save(authenticatedUser);
     }
 
     @Override
-    public boolean checkAccess(String projectNameClean, User user) {
-        if(user == null || user.getAssignedProjects() == null) return false;
+    public boolean checkAccess(String projectNameClean, AuthenticatedUser authenticatedUser) {
+        if(authenticatedUser == null || authenticatedUser.getAssignedProjects() == null) return false;
 
-        return user.getAssignedProjects().stream()
+        return authenticatedUser.getAssignedProjects().stream()
             .anyMatch(project -> Objects.equals(project.getProjectNameClean(), projectNameClean));
     }
 
-    private User get(final String userEmailAddress) {
+    private AuthenticatedUser get(final String userEmailAddress) {
         return repository.getByEmailAddress(userEmailAddress);
     }
 
-    private User createNewUserAndRemoveTemporaryUser(TemporaryUser temporaryUser) {
+    private AuthenticatedUser createNewUserAndRemoveTemporaryUser(TemporaryUser temporaryUser) {
         temporaryUserService.delete(temporaryUser);
         return addUser(temporaryUser);
     }
 
-    private User addUser(String userEmailAddress, String fullName) {
-        final User user = User.builder()
+    private AuthenticatedUser addUser(String userEmailAddress, String fullName) {
+        final AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
             .emailAddress(userEmailAddress)
             .fullName(fullName)
             .assignedProjects(Collections.emptyList())
             .build();
 
-        return repository.save(user);
+        return repository.save(authenticatedUser);
     }
 
-    private User addUser(TemporaryUser temporaryUser) {
-        final User user = User.builder()
+    private AuthenticatedUser addUser(TemporaryUser temporaryUser) {
+        final AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
             .emailAddress(temporaryUser.getEmailAddress())
             .fullName(temporaryUser.getFullName())
             .assignedProjects(new ArrayList<>())
             .build();
 
-        return repository.save(user);
+        return repository.save(authenticatedUser);
     }
 }

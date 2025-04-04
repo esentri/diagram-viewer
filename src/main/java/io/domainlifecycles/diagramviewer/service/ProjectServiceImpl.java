@@ -1,9 +1,9 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
@@ -30,7 +30,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final SessionStorage sessionStorage;
 
-    private final UserService userService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final ProjectRepository repository;
 
     private String targetsDirectory;
@@ -39,21 +39,21 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectServiceImpl(
         @Value("${targets.location}") String defaultTargetsDirectory,
         SessionStorage sessionStorage,
-        UserService userService,
+        AuthenticatedUserService authenticatedUserService,
         ProjectRepository repository) {
 
         this.targetsDirectory = defaultTargetsDirectory;
         this.sessionStorage = sessionStorage;
-        this.userService = userService;
+        this.authenticatedUserService = authenticatedUserService;
         this.repository = repository;
         initializeAllDomainModels();
     }
 
     @Override
-    public Stream<Project> getAll(Path targetDirectory, User user) {
+    public Stream<Project> getAll(Path targetDirectory, AuthenticatedUser authenticatedUser) {
         return getAll(targetDirectory)
-            .filter(project -> project.getAssignedUsers().stream()
-                .anyMatch(assignedUser -> Objects.equals(assignedUser.getUserId(), user.getUserId())));
+            .filter(project -> project.getAssignedAuthenticatedUsers().stream()
+                .anyMatch(assignedUser -> Objects.equals(assignedUser.getAuthenticatedUserId(), authenticatedUser.getAuthenticatedUserId())));
     }
 
     private Stream<Project> getAll(Path targetDirectory) {
@@ -77,7 +77,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public Project save(Project project) {
         Project persistedProject = repository.save(project);
-        userService.addProject(sessionStorage.getAuthenticatedUser(), persistedProject);
+        authenticatedUserService.addProject(sessionStorage.getAuthenticatedUser(), persistedProject);
         return persistedProject;
     }
 
@@ -105,15 +105,15 @@ public class ProjectServiceImpl implements ProjectService {
     private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages) {
         Path filePath = Path.of(targetsLocation);
         List<String> boundedContexts = Arrays.stream(boundedContextPackages.split(",")).toList();
-        User authenticatedUser = sessionStorage.getAuthenticatedUser();
+        AuthenticatedUser authenticatedAuthenticatedUser = sessionStorage.getAuthenticatedUser();
 
         return Project.builder()
             .projectNameFull(fileName)
             .projectNameClean(buildCleanFileName(fileName))
             .absolutePathToTarget(filePath.toAbsolutePath() + "/" + fileName)
             .boundedContextPackages(boundedContexts)
-            .creator(authenticatedUser)
-            .assignedUsers(List.of(authenticatedUser))
+            .creator(authenticatedAuthenticatedUser)
+            .assignedAuthenticatedUsers(List.of(authenticatedAuthenticatedUser))
             .build();
     }
 

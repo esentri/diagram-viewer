@@ -3,7 +3,7 @@ package io.domainlifecycles.diagramviewer.security;
 import com.vaadin.flow.server.auth.AccessCheckResult;
 import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.server.auth.NavigationContext;
-import io.domainlifecycles.diagramviewer.service.UserService;
+import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProjectAndDiagramNavigationAccessChecker implements NavigationAccessChecker {
 
-    private final UserService userService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final SessionStorage sessionStorage;
 
-    public ProjectAndDiagramNavigationAccessChecker(UserService userService, SessionStorage sessionStorage) {
-        this.userService = userService;
+    public ProjectAndDiagramNavigationAccessChecker(AuthenticatedUserService authenticatedUserService, SessionStorage sessionStorage) {
+        this.authenticatedUserService = authenticatedUserService;
         this.sessionStorage = sessionStorage;
     }
 
@@ -27,7 +27,7 @@ public class ProjectAndDiagramNavigationAccessChecker implements NavigationAcces
         if (ProjectView.class.equals(context.getNavigationTarget()) || DiagramView.class.equals(context.getNavigationTarget())) {
             if (context.getParameters().getParameterNames().contains("projectName")) {
                 String projectName = context.getParameters().get("projectName").get();
-                result = userService.checkAccess(projectName, sessionStorage.getAuthenticatedUser()) ? AccessCheckResult.allow() : AccessCheckResult.reject("User has no access to this resource.");
+                result = authenticatedUserService.checkAccess(projectName, sessionStorage.getAuthenticatedUser()) ? AccessCheckResult.allow() : AccessCheckResult.reject("User has no access to this resource.");
             } else {
                 result = AccessCheckResult.reject("Project name not specified");
             }
