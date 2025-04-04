@@ -4,6 +4,8 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.TemporaryUser;
+import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
@@ -27,24 +29,22 @@ public class ProjectServiceImpl implements ProjectService {
 
     private static final Logger log = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
-
     private final SessionStorage sessionStorage;
-
     private final AuthenticatedUserService authenticatedUserService;
+    private final TemporaryUserService temporaryUserService;
     private final ProjectRepository repository;
-
-    private String targetsDirectory;
-
+    private final String targetsDirectory;
 
     public ProjectServiceImpl(
         @Value("${targets.location}") String defaultTargetsDirectory,
         SessionStorage sessionStorage,
         AuthenticatedUserService authenticatedUserService,
-        ProjectRepository repository) {
+        TemporaryUserService temporaryUserService, ProjectRepository repository) {
 
         this.targetsDirectory = defaultTargetsDirectory;
         this.sessionStorage = sessionStorage;
         this.authenticatedUserService = authenticatedUserService;
+        this.temporaryUserService = temporaryUserService;
         this.repository = repository;
         initializeAllDomainModels();
     }
@@ -82,7 +82,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project save(Project project, Diagram diagramToAdd) {
+    public Project addDiagram(Project project, Diagram diagramToAdd) {
         project.addDiagram(diagramToAdd);
         return repository.save(project);
     }
@@ -100,6 +100,28 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         sessionStorage.add(persistedProject);
+    }
+
+    @Override
+    public void assignUser(Project project, String emailAddress) {
+        if(project.getAssignedAuthenticatedUsers().stream()
+            .anyMatch(user -> Objects.equals(user.getEmailAddress(), emailAddress))) return;
+
+        boolean userIsSignedUp = authenticatedUserService.userKnown(emailAddress);
+
+        final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.create(emailAddress);
+        project.assignUser(user);
+        save(project);
+    }
+
+    @Override
+    public void unassignUser(Project project, User user) {
+        if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getAuthenticatedUserId(), ((AuthenticatedUser) user).getAuthenticatedUserId())) return;
+
+        project.unassignUser(user);
+        save(project);
+
+        if(user instanceof TemporaryUser && user.getAssignedProjects().isEmpty()) temporaryUserService.delete((TemporaryUser) user);
     }
 
     private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages) {

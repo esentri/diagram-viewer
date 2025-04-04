@@ -18,7 +18,12 @@ public class DiagramCardGrid extends FormLayout {
 
         setClassName("diagram-card-grid");
         setSizeFull();
-        setResponsiveSteps(new ResponsiveStep("0", 5));
+        setResponsiveSteps(
+            new ResponsiveStep("300px", 2),
+            new ResponsiveStep("600px", 3),
+            new ResponsiveStep("900px", 4),
+            new ResponsiveStep("1200px", 5)
+        );
         buildGrid();
     }
 

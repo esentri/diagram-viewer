@@ -21,5 +21,4 @@ public class AuthenticatedUser extends User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long authenticatedUserId;
-    private String fullName;
 }

@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,16 +36,16 @@ public class Project {
     private String absolutePathToTarget;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> boundedContextPackages;
+    @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.EAGER)
-    private List<Diagram> diagrams;
+    @Builder.Default private List<Diagram> diagrams = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    private List<AuthenticatedUser> assignedAuthenticatedUsers;
+    @Builder.Default private List<AuthenticatedUser> assignedAuthenticatedUsers = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    private List<TemporaryUser> assignedTemporaryUsers;
+    @Builder.Default private List<TemporaryUser> assignedTemporaryUsers = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
     private AuthenticatedUser creator;
@@ -52,17 +53,28 @@ public class Project {
     public void addDiagram(Diagram diagram) {
         diagrams.add(diagram);
     }
-    public void addAuthenticatedUser(AuthenticatedUser authenticatedUser) {
-        assignedAuthenticatedUsers.add(authenticatedUser);
-    }
-    public void removeAuthenticatedUser(AuthenticatedUser authenticatedUser) {
-        assignedAuthenticatedUsers.remove(authenticatedUser);
+
+    public void unassignUser(User user) {
+        if(user instanceof AuthenticatedUser) {
+            List<AuthenticatedUser> currentAssignedAuthenticatedUsers = new ArrayList<>(assignedAuthenticatedUsers);
+            currentAssignedAuthenticatedUsers.remove((AuthenticatedUser) user);
+            assignedAuthenticatedUsers = currentAssignedAuthenticatedUsers;
+        } else {
+            List<TemporaryUser> currentAssignedTemporaryUsers = new ArrayList<>(assignedTemporaryUsers);
+            currentAssignedTemporaryUsers.remove((TemporaryUser) user);
+            assignedTemporaryUsers = currentAssignedTemporaryUsers;
+        }
     }
 
-    public void addTemporaryUser(TemporaryUser temporaryUser) {
-        assignedTemporaryUsers.add(temporaryUser);
-    }
-    public void removeTemporaryUser(TemporaryUser temporaryUser) {
-        assignedTemporaryUsers.remove(temporaryUser);
+    public void assignUser(User user) {
+        if(user instanceof AuthenticatedUser) {
+            List<AuthenticatedUser> currentAssignedAuthenticatedUsers = new ArrayList<>(assignedAuthenticatedUsers);
+            currentAssignedAuthenticatedUsers.add((AuthenticatedUser) user);
+            assignedAuthenticatedUsers = currentAssignedAuthenticatedUsers;
+        } else {
+            List<TemporaryUser> currentAssignedTemporaryUsers = new ArrayList<>(assignedTemporaryUsers);
+            currentAssignedTemporaryUsers.add((TemporaryUser) user);
+            assignedTemporaryUsers = currentAssignedTemporaryUsers;
+        }
     }
 }

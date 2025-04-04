@@ -1,5 +1,8 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.icon.Icon;
@@ -10,6 +13,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
@@ -22,6 +26,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibi
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEventListener;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
@@ -45,6 +50,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private Project project;
     private Diagram diagram;
     private DiagramZoomComponentContainer zoomComponentContainer;
+    private Registration registration;
 
     public DiagramView(SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
         this.sessionStorage = sessionStorage;
@@ -64,8 +70,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         setProjectAndDiagram();
         addPageContents();
         zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName);
-        addListener(
-            DiagramStylingChangedEvent.class, (DiagramStylingChangedEventListener<DiagramStylingChangedEvent>) changeEvent -> zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName));
     }
 
     private void setProjectAndDiagram() {
@@ -118,5 +122,22 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private InputStream getDiagramFileStream(final String diagramLocation) {
         byte[] fileContents = FileIOUtils.readFile(diagramLocation);
         return new ByteArrayInputStream(fileContents);
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        registration =
+            ComponentUtil.addListener(
+                attachEvent.getUI(),
+                DiagramStylingChangedEvent.class,
+                event -> zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName)
+            );
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        registration.remove();
     }
 }

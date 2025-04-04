@@ -27,6 +27,7 @@ import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
@@ -66,9 +67,6 @@ public class MainLayout extends AppLayout {
         addToNavbar(new DrawerToggle(), getDlcLogo());
         createAndAddUserInfoPopover();
         buildDrawerContent();
-
-        addListener(
-            DiagramsOrProjectsChangedEvent.class, (DiagramsOrProjectsChangedEventListener<DiagramsOrProjectsChangedEvent>) event -> refreshSideNavLinks());
     }
 
     private void createAndAddUserInfoPopover() {
@@ -136,6 +134,7 @@ public class MainLayout extends AppLayout {
         return projectService.getAll(buildPath(sessionStorage.getTargetsLocation()), sessionStorage.getAuthenticatedUser())
             .map(project -> {
                 SideNavItem parentSideNavItem = new SideNavItem(project.getProjectNameFull(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
+                parentSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
 
                 project.getDiagrams()
                     .forEach(diagram -> {
@@ -143,6 +142,7 @@ public class MainLayout extends AppLayout {
                             new RouteParameters(Map.of("projectName", project.getProjectNameClean(), "diagramName",
                                 diagram.getFileName())));
 
+                        sideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
                         parentSideNavItem.addItem(sideNavItem);
                         initWatcherService(diagram.getFullAbsoluteLocationPath());
                     });

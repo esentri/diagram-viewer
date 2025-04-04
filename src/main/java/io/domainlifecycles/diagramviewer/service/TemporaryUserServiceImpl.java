@@ -23,30 +23,12 @@ public class TemporaryUserServiceImpl implements TemporaryUserService {
     }
 
     @Override
-    public void add(String userEmailAddress, String fullName) {
+    public TemporaryUser create(String userEmailAddress) {
         TemporaryUser temporaryUser = TemporaryUser.builder()
             .emailAddress(userEmailAddress)
             .build();
 
-        repository.save(temporaryUser);
-    }
-
-    @Override
-    public void addToProject(String userEmailAddress, Project project) {
-        Optional<TemporaryUser> foundTemporaryUser = repository.findByEmailAddress(userEmailAddress);
-        TemporaryUser temporaryUser;
-
-        if(foundTemporaryUser.isPresent()) {
-            temporaryUser = foundTemporaryUser.get();
-            temporaryUser.addAssignedProject(project);
-        } else {
-            temporaryUser = TemporaryUser.builder()
-                .emailAddress(userEmailAddress)
-                .assignedProjects(List.of(project))
-                .build();
-        }
-
-        repository.save(temporaryUser);
+        return repository.save(temporaryUser);
     }
 
     @Override

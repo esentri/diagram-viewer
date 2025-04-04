@@ -1,5 +1,8 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.Icon;
@@ -9,6 +12,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
@@ -20,6 +24,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagram
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ManageUsersDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramCardGridContainer;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEventListener;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
@@ -38,27 +43,22 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final SQLDDLGeneratorService sqlddlGeneratorService;
     private final ProjectService projectService;
     private final DiagramService diagramService;
-    private final AuthenticatedUserService authenticatedUserService;
-    private final TemporaryUserService temporaryUserService;
     private final SessionStorage sessionStorage;
 
     private Project project;
     private String projectNameClean;
     private DiagramCardGridContainer diagramCardGridContainer;
+    private Registration registration;
 
-    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService, AuthenticatedUserService authenticatedUserService, TemporaryUserService temporaryUserService) {
+    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.projectService = projectService;
         this.diagramService = diagramService;
         this.sessionStorage = sessionStorage;
-        this.authenticatedUserService = authenticatedUserService;
-        this.temporaryUserService = temporaryUserService;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
         setClassName("project-viewer");
-        addListener(
-            DiagramsOrProjectsChangedEvent.class, (DiagramsOrProjectsChangedEventListener<DiagramsOrProjectsChangedEvent>) event -> refreshDiagramCardGrid());
     }
 
     @Override
@@ -116,12 +116,27 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getManageUsersButton() {
-        ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project, authenticatedUserService,
-            temporaryUserService);
+        ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project, projectService);
 
         Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
         manageUsersButton.setEnabled(Objects.equals(project.getCreator().getAuthenticatedUserId(), sessionStorage.getAuthenticatedUser().getAuthenticatedUserId()));
         manageUsersButton.addClickListener(e -> manageUsersDialog.open());
         return manageUsersButton;
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        registration = ComponentUtil.addListener(
+                attachEvent.getUI(),
+                DiagramsOrProjectsChangedEvent.class,
+                event -> refreshDiagramCardGrid()
+        );
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        registration.remove();
     }
 }

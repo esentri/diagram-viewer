@@ -34,7 +34,7 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
         }
 
         final TemporaryUser temporaryUser = temporaryUserService.get(userEmailAddress);
-        return createNewUserAndRemoveTemporaryUser(temporaryUser);
+        return createNewUserAndRemoveTemporaryUser(temporaryUser, fullName);
     }
 
     @Override
@@ -51,13 +51,14 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
             .anyMatch(project -> Objects.equals(project.getProjectNameClean(), projectNameClean));
     }
 
-    private AuthenticatedUser get(final String userEmailAddress) {
+    @Override
+    public AuthenticatedUser get(final String userEmailAddress) {
         return repository.getByEmailAddress(userEmailAddress);
     }
 
-    private AuthenticatedUser createNewUserAndRemoveTemporaryUser(TemporaryUser temporaryUser) {
+    private AuthenticatedUser createNewUserAndRemoveTemporaryUser(TemporaryUser temporaryUser, String fullName) {
         temporaryUserService.delete(temporaryUser);
-        return addUser(temporaryUser);
+        return addUser(temporaryUser, fullName);
     }
 
     private AuthenticatedUser addUser(String userEmailAddress, String fullName) {
@@ -70,10 +71,10 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
         return repository.save(authenticatedUser);
     }
 
-    private AuthenticatedUser addUser(TemporaryUser temporaryUser) {
+    private AuthenticatedUser addUser(TemporaryUser temporaryUser, String fullName) {
         final AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
             .emailAddress(temporaryUser.getEmailAddress())
-            .fullName(temporaryUser.getFullName())
+            .fullName(fullName)
             .assignedProjects(new ArrayList<>())
             .build();
 
