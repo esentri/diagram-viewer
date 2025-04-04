@@ -15,7 +15,7 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
@@ -39,14 +39,14 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     private final ProjectService projectService;
     private final DiagramService diagramService;
-    private final DomainModelSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
     private String projectNameClean;
     private String diagramName;
     private Project project;
     private Diagram diagram;
     private DiagramZoomComponentContainer zoomComponentContainer;
 
-    public DiagramView(DomainModelSessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
+    public DiagramView(SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
         this.sessionStorage = sessionStorage;
         this.projectService = projectService;
         this.diagramService = diagramService;
@@ -85,13 +85,13 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
         diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(diagram, diagramService));
-        diagramViewerAndStylingContainer.add(createDiagramZoomComponent());
+        diagramViewerAndStylingContainer.add(createDiagramZoomComponentContainer());
         diagramViewerAndStylingContainer.add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService));
 
         add(diagramViewerAndStylingContainer);
     }
 
-    private FlexLayout createDiagramZoomComponent() {
+    private FlexLayout createDiagramZoomComponentContainer() {
         zoomComponentContainer = new DiagramZoomComponentContainer();
         return zoomComponentContainer;
     }

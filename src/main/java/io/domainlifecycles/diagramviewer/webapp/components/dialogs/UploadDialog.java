@@ -11,7 +11,7 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import java.io.InputStream;
 import org.slf4j.Logger;
@@ -22,12 +22,12 @@ public class UploadDialog extends Dialog {
     private final static Logger log = LoggerFactory.getLogger(UploadDialog.class);
 
     private final ProjectService projectService;
-    private final DomainModelSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
     private String boundedContextPackages;
     private InputStream fileInputStream;
     private String fileName;
 
-    public UploadDialog(ProjectService projectService, DomainModelSessionStorage sessionStorage) {
+    public UploadDialog(ProjectService projectService, SessionStorage sessionStorage) {
         this.projectService = projectService;
         this.sessionStorage = sessionStorage;
         add(createDialogLayout());

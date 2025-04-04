@@ -12,12 +12,15 @@ import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ManageUsersDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramCardGridContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGrid;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEventListener;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
@@ -34,12 +37,14 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final SQLDDLGeneratorService sqlddlGeneratorService;
     private final ProjectService projectService;
     private final DiagramService diagramService;
-    private final DomainModelSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
 
     private Project project;
     private String projectNameClean;
+    private DiagramCardGridContainer diagramCardGridContainer;
+    private DiagramCardGrid diagramCardGrid;
 
-    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, DomainModelSessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
+    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.projectService = projectService;
         this.diagramService = diagramService;
@@ -48,6 +53,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
         setClassName("project-viewer");
+        addListener(
+            DiagramsOrProjectsChangedEvent.class, (DiagramsOrProjectsChangedEventListener<DiagramsOrProjectsChangedEvent>) event -> refreshDiagramCardGrid());
     }
 
     @Override
@@ -56,6 +63,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         setProject();
         addPageContents();
+        refreshDiagramCardGrid();
     }
 
     private void setProject() {
@@ -66,7 +74,13 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private void addPageContents() {
         add(new H2(projectNameClean));
         add(createAndGetButtonBar());
-        add(new DiagramCardGrid(project));
+
+        diagramCardGridContainer = new DiagramCardGridContainer();
+        add(diagramCardGridContainer);
+    }
+
+    private void refreshDiagramCardGrid() {
+        diagramCardGridContainer.reloadDiagramCardGrid(project);
     }
 
     private HorizontalLayout createAndGetButtonBar() {

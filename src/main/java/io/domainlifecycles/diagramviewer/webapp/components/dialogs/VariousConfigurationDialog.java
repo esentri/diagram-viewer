@@ -16,7 +16,6 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direct
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 
 public class VariousConfigurationDialog extends Dialog {
 

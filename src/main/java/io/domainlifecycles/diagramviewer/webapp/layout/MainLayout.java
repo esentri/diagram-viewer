@@ -30,7 +30,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEventListener;
@@ -51,13 +51,13 @@ public class MainLayout extends AppLayout {
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
 
     private final ProjectService projectService;
-    private final DomainModelSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
     private final UploadDialog uploadDialog;
     private SideNav sideNav;
     private Registration registration;
 
     public MainLayout(ProjectService projectService,
-                      DomainModelSessionStorage sessionStorage) {
+                      SessionStorage sessionStorage) {
 
         this.projectService = projectService;
         this.sessionStorage = sessionStorage;

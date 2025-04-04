@@ -7,7 +7,7 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DiagramServiceImpl implements DiagramService {
@@ -23,14 +22,14 @@ public class DiagramServiceImpl implements DiagramService {
     private final String diagramsLocation;
     private final ProjectService projectService;
     private final DiagramRepository repository;
-    private final DomainModelSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
     private final KrokiClient krokiClient;
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
         ProjectService projectService,
         DiagramRepository repository,
-        DomainModelSessionStorage sessionStorage,
+        SessionStorage sessionStorage,
         KrokiClient krokiClient) {
 
         this.diagramsLocation = diagramsLocation;

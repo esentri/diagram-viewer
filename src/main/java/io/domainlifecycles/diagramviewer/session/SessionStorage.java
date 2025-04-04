@@ -16,9 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
  * Holds session values about the initialized Domain models.
  */
 @SpringComponent
-public class DomainModelSessionStorage {
+public class SessionStorage {
 
-    private static final Logger log = LoggerFactory.getLogger(DomainModelSessionStorage.class);
+    private static final Logger log = LoggerFactory.getLogger(SessionStorage.class);
 
     private User authenticatedUser;
     private Project selectedProject;
@@ -26,7 +26,7 @@ public class DomainModelSessionStorage {
     private final String targetsLocation;
     private final HashMap<Long, DomainModel> domainModelStore;
 
-    public DomainModelSessionStorage(@Value("${targets.location}") String targetsLocation) {
+    public SessionStorage(@Value("${targets.location}") String targetsLocation) {
         domainModelStore = new HashMap<>();
         this.targetsLocation = targetsLocation;
     }

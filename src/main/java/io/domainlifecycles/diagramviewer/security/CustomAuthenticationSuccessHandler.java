@@ -3,7 +3,7 @@ package io.domainlifecycles.diagramviewer.security;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.service.UserService;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -22,9 +22,9 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomAuthenticationSuccessHandler.class);
 
     private final UserService userService;
-    private final DomainModelSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
 
-    public CustomAuthenticationSuccessHandler(UserService userService, DomainModelSessionStorage sessionStorage) {
+    public CustomAuthenticationSuccessHandler(UserService userService, SessionStorage sessionStorage) {
         this.userService = userService;
         this.sessionStorage = sessionStorage;
     }

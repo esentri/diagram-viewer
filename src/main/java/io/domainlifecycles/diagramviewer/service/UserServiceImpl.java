@@ -6,6 +6,7 @@ import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,6 +41,14 @@ public class UserServiceImpl implements UserService {
     public void addProject(User user, Project project) {
         user.addAssignedProject(project);
         repository.save(user);
+    }
+
+    @Override
+    public boolean checkAccess(String projectNameClean, User user) {
+        if(user == null || user.getAssignedProjects() == null) return false;
+
+        return user.getAssignedProjects().stream()
+            .anyMatch(project -> Objects.equals(project.getProjectNameClean(), projectNameClean));
     }
 
     private User get(final String userEmailAddress) {

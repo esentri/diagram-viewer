@@ -3,40 +3,37 @@ package io.domainlifecycles.diagramviewer.security;
 import com.vaadin.flow.server.auth.AccessCheckResult;
 import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.server.auth.NavigationContext;
+import io.domainlifecycles.diagramviewer.service.UserService;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
+import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ProjectAndDiagramNavigationAccessChecker implements NavigationAccessChecker {
+
+    private final UserService userService;
+    private final SessionStorage sessionStorage;
+
+    public ProjectAndDiagramNavigationAccessChecker(UserService userService, SessionStorage sessionStorage) {
+        this.userService = userService;
+        this.sessionStorage = sessionStorage;
+    }
 
     @Override
     public AccessCheckResult check(NavigationContext context) {
         AccessCheckResult result;
-        if (ProjectView.class.equals(context.getNavigationTarget())) {
-            if (context.getParameters().getParameterNames()
-                    .contains("eventId")) {
-                // Allow access only if the event the user is going to express
-                // its vote is actually open for voting, otherwise deny it.
-                result = context.getParameters().getInteger("eventId")
-                        .filter(this::isVotingOpen)
-                        .map(unused -> AccessCheckResult.allow()).orElseGet(
-                                () -> AccessCheckResult.deny("Voting closed"));
+
+        if (ProjectView.class.equals(context.getNavigationTarget()) || DiagramView.class.equals(context.getNavigationTarget())) {
+            if (context.getParameters().getParameterNames().contains("projectName")) {
+                String projectName = context.getParameters().get("projectName").get();
+                result = userService.checkAccess(projectName, sessionStorage.getAuthenticatedUser()) ? AccessCheckResult.allow() : AccessCheckResult.reject("User has no access to this resource.");
             } else {
-                // Critical error, the navigation does not carry a required
-                // information. Probably a misconfigured route annotation or
-                // a broken link in another view
-                result = AccessCheckResult
-                        .reject("Event identifier not provided");
+                result = AccessCheckResult.reject("Project name not specified");
             }
         } else {
-            // Not a navigation to voting view, let other checkers take the
-            // decision
             result = AccessCheckResult.neutral();
         }
         return result;
-    }
-
-    private boolean isVotingOpen(int eventId) {
-        // Fetch the event from data storage and check if voting is currently
-        // opened (implementation omitted in this example)
-        return false;
     }
 }

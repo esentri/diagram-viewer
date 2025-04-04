@@ -5,7 +5,7 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class ProjectServiceImpl implements ProjectService {
     private static final Logger log = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
 
-    private final DomainModelSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
 
     private final UserService userService;
     private final ProjectRepository repository;
@@ -38,7 +38,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     public ProjectServiceImpl(
         @Value("${targets.location}") String defaultTargetsDirectory,
-        DomainModelSessionStorage sessionStorage,
+        SessionStorage sessionStorage,
         UserService userService,
         ProjectRepository repository) {
 

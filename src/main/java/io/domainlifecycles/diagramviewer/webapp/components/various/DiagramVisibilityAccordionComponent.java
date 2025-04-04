@@ -15,10 +15,8 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.session.DomainModelSessionStorage;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.RefreshCallback;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.ArrayList;
@@ -28,12 +26,12 @@ import static java.util.stream.Collectors.groupingBy;
 
 public class DiagramVisibilityAccordionComponent extends Accordion {
 
-    private final DomainModelSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
     private final DiagramService diagramService;
     private final Project project;
     private final Diagram diagram;
 
-    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DomainModelSessionStorage sessionStorage, DiagramService diagramService) {
+    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, SessionStorage sessionStorage, DiagramService diagramService) {
         this.setWidth("30%");
         this.setClassName("visibility-accordion");
         this.sessionStorage = sessionStorage;

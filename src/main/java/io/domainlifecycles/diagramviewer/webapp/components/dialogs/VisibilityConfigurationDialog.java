@@ -14,7 +14,6 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 
 public class VisibilityConfigurationDialog extends Dialog {
 
