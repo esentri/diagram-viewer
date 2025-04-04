@@ -3,7 +3,10 @@ package io.domainlifecycles.diagramviewer.webapp.views;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
@@ -27,6 +30,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramCardGr
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEventListener;
+import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
@@ -91,7 +95,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.setId("project-view-button-bar");
 
-        buttonBar.add(getCreateDiagramButton(), getDatabaseButton(), getManageUsersButton());
+        buttonBar.add(getCreateDiagramButton(), getDatabaseButton(), getManageUsersButton(), getDeleteProjectButton());
 
         return buttonBar;
     }
@@ -122,6 +126,31 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         manageUsersButton.setEnabled(Objects.equals(project.getCreator().getAuthenticatedUserId(), sessionStorage.getAuthenticatedUser().getAuthenticatedUserId()));
         manageUsersButton.addClickListener(e -> manageUsersDialog.open());
         return manageUsersButton;
+    }
+
+    private Button getDeleteProjectButton() {
+        ConfirmDialog confirmDialog = new ConfirmDialog();
+        confirmDialog.setHeader("Delete Project");
+        confirmDialog.setText(String.format(
+            "Are you sure you want to delete project '%s'", project.getProjectNameClean()));
+
+        confirmDialog.setCancelable(true);
+
+        confirmDialog.setConfirmText("Delete");
+        confirmDialog.setConfirmButtonTheme("error primary");
+        confirmDialog.addConfirmListener(event -> {
+            projectService.delete(project);
+            UI.getCurrent().navigate(DefaultView.class);
+            confirmDialog.close();
+        });
+
+        Button deleteProjectButton = new Button("Delete", new Icon("vaadin:trash"));
+        deleteProjectButton.getElement().getStyle().set("margin-left", "auto");
+        deleteProjectButton.getElement().getStyle().set("margin-right", "1rem");
+        deleteProjectButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getAuthenticatedUserId(), sessionStorage.getAuthenticatedUser().getAuthenticatedUserId()));
+        deleteProjectButton.addClickListener(e -> confirmDialog.open());
+        return deleteProjectButton;
     }
 
     @Override

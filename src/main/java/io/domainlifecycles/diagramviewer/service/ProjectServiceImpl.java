@@ -124,6 +124,11 @@ public class ProjectServiceImpl implements ProjectService {
         if(user instanceof TemporaryUser && user.getAssignedProjects().isEmpty()) temporaryUserService.delete((TemporaryUser) user);
     }
 
+    @Override
+    public void delete(Project project) {
+        repository.delete(project);
+    }
+
     private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages) {
         Path filePath = Path.of(targetsLocation);
         List<String> boundedContexts = Arrays.stream(boundedContextPackages.split(",")).toList();
