@@ -28,5 +28,5 @@ public class TemporaryUser extends User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long temporaryUserId;
+    private Long id;
 }

@@ -7,5 +7,6 @@ import io.domainlifecycles.diagramviewer.model.Project;
 public interface DiagramService {
 
     void save(Diagram diagram);
-    void save(Project project, String fileName, String contextPackageName, FileType fileType);
+    Diagram save(Project project, String fileName, String contextPackageName, FileType fileType);
+    void delete(Long id);
 }

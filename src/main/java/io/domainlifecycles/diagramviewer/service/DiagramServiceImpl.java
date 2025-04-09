@@ -20,20 +20,17 @@ import org.springframework.stereotype.Service;
 public class DiagramServiceImpl implements DiagramService {
 
     private final String diagramsLocation;
-    private final ProjectService projectService;
     private final DiagramRepository repository;
     private final SessionStorage sessionStorage;
     private final KrokiClient krokiClient;
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
-        ProjectService projectService,
         DiagramRepository repository,
         SessionStorage sessionStorage,
         KrokiClient krokiClient) {
 
         this.diagramsLocation = diagramsLocation;
-        this.projectService = projectService;
         this.repository = repository;
         this.sessionStorage = sessionStorage;
         this.krokiClient = krokiClient;
@@ -46,7 +43,7 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public void save(Project project, String fileName, String contextPackageName, FileType fileType) {
+    public Diagram save(Project project, String fileName, String contextPackageName, FileType fileType) {
         Path diagramPath = Path.of(diagramsLocation, project.getProjectNameClean(), fileName + fileType.getFileSuffix());
 
         Diagram diagram = Diagram.builder()
@@ -60,14 +57,19 @@ public class DiagramServiceImpl implements DiagramService {
             .build();
 
         Diagram persistedDiagram = repository.save(diagram);
-        Project persistedProject = projectService.addDiagram(project, persistedDiagram);
+        createAndSaveDiagramToFilesystem(project, persistedDiagram);
 
-        createAndSaveDiagramToFilesystem(persistedProject, persistedDiagram);
+        return persistedDiagram;
+    }
+
+    @Override
+    public void delete(Long id) {
+        repository.deleteById(id);
     }
 
     private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
         final String nomnoml = DiagrammerUtils.generateNomnoml(
-            sessionStorage.get(project.getProjectId()),
+            sessionStorage.get(project.getId()),
             diagram.getDiagramStylingConfiguration(),
             diagram.getDomainModelVisibility());
 

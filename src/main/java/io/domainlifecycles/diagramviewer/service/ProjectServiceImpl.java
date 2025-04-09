@@ -32,6 +32,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final SessionStorage sessionStorage;
     private final AuthenticatedUserService authenticatedUserService;
     private final TemporaryUserService temporaryUserService;
+    private final DiagramService diagramService;
     private final ProjectRepository repository;
     private final String targetsDirectory;
 
@@ -39,12 +40,13 @@ public class ProjectServiceImpl implements ProjectService {
         @Value("${targets.location}") String defaultTargetsDirectory,
         SessionStorage sessionStorage,
         AuthenticatedUserService authenticatedUserService,
-        TemporaryUserService temporaryUserService, ProjectRepository repository) {
+        TemporaryUserService temporaryUserService, DiagramService diagramService, ProjectRepository repository) {
 
         this.targetsDirectory = defaultTargetsDirectory;
         this.sessionStorage = sessionStorage;
         this.authenticatedUserService = authenticatedUserService;
         this.temporaryUserService = temporaryUserService;
+        this.diagramService = diagramService;
         this.repository = repository;
         initializeAllDomainModels();
     }
@@ -53,7 +55,7 @@ public class ProjectServiceImpl implements ProjectService {
     public Stream<Project> getAll(Path targetDirectory, AuthenticatedUser authenticatedUser) {
         return getAll(targetDirectory)
             .filter(project -> project.getAssignedAuthenticatedUsers().stream()
-                .anyMatch(assignedUser -> Objects.equals(assignedUser.getAuthenticatedUserId(), authenticatedUser.getAuthenticatedUserId())));
+                .anyMatch(assignedUser -> Objects.equals(assignedUser.getId(), authenticatedUser.getId())));
     }
 
     private Stream<Project> getAll(Path targetDirectory) {
@@ -80,16 +82,15 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project addDiagram(Project project, Diagram diagramToAdd) {
-        project.addDiagram(diagramToAdd);
+    public Project addDiagram(Project project, Diagram diagram) {
+        project.addDiagram(diagram);
         return repository.save(project);
     }
 
     @Override
     public void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages) {
-        final Project project = mapProject(targetsLocation, fileName, boundedContextPackages);
+        final Project project = mapProject(targetsLocation, fileName, boundedContextPackages, sessionStorage.getAuthenticatedUser());
         Project persistedProject = save(project);
-        authenticatedUserService.addProject(sessionStorage.getAuthenticatedUser(), persistedProject);
 
         try {
             FileIOUtils.saveFile(targetsLocation, fileName, fileContents);
@@ -109,7 +110,7 @@ public class ProjectServiceImpl implements ProjectService {
         boolean userIsSignedUp = authenticatedUserService.userKnown(emailAddress);
         final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.getOrCreate(emailAddress);
 
-        final Project fetchedProject = repository.findById(project.getProjectId()).get();
+        final Project fetchedProject = repository.findById(project.getId()).get();
         fetchedProject.assignUser(user);
         Project updatedProject = save(fetchedProject);
 
@@ -122,9 +123,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void unassignUser(Project project, User user) {
-        if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getAuthenticatedUserId(), ((AuthenticatedUser) user).getAuthenticatedUserId())) return;
+        if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getId(), ((AuthenticatedUser) user).getId())) return;
 
-        final Project fetchedProject = repository.findById(project.getProjectId()).get();
+        final Project fetchedProject = repository.findById(project.getId()).get();
         fetchedProject.unassignUser(user);
         Project updatedProject = save(fetchedProject);
 
@@ -138,13 +139,15 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void delete(Project project) {
-        repository.delete(project);
+        Project fetchedProject = getByProjectNameClean(project.getProjectNameClean());
+        fetchedProject.getAssignedTemporaryUsers().clear();
+        fetchedProject.getAssignedAuthenticatedUsers().clear();
+        repository.delete(fetchedProject);
     }
 
-    private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages) {
+    private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages, AuthenticatedUser authenticatedUser) {
         Path filePath = Path.of(targetsLocation);
         List<String> boundedContexts = Arrays.stream(boundedContextPackages.split(",")).toList();
-        AuthenticatedUser authenticatedUser = sessionStorage.getAuthenticatedUser();
 
         return Project.builder()
             .projectNameFull(fileName)

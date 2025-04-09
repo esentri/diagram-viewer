@@ -48,7 +48,7 @@ public class SessionStorage {
         final DomainModel domainModel = DomainModelUtils.initializeDomainModelFromJar(pathToTarget,
             project.getBoundedContextPackages().toArray(new String[0]));
 
-        domainModelStore.put(project.getProjectId(), domainModel);
+        domainModelStore.put(project.getId(), domainModel);
         return domainModel;
     }
 

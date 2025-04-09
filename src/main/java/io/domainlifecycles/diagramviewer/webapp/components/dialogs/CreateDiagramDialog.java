@@ -9,20 +9,24 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import io.domainlifecycles.diagramviewer.kroki.FileType;
+import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 
 public class CreateDiagramDialog extends Dialog {
 
+    private final ProjectService projectService;
     private final DiagramService diagramService;
-    private final Project project;
 
+    private Project project;
     private String fileName;
     private String packageName;
     private FileType fileType;
 
-    public CreateDiagramDialog(Project project, DiagramService diagramService) {
+    public CreateDiagramDialog(ProjectService projectService, Project project, DiagramService diagramService) {
+        this.projectService = projectService;
         this.diagramService = diagramService;
         this.project = project;
 
@@ -37,7 +41,8 @@ public class CreateDiagramDialog extends Dialog {
         Button createButton = new Button("Create");
 
         createButton.addClickListener(e -> {
-            diagramService.save(project, fileName, packageName, fileType);
+            Diagram persistedDiagram = diagramService.save(project, fileName, packageName, fileType);
+            project = projectService.addDiagram(project, persistedDiagram);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });

@@ -42,7 +42,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     }
 
     private void createAccordion() {
-        Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = sessionStorage.get(project.getProjectId())
+        Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = sessionStorage.get(project.getId())
             .allTypeMirrors()
             .values()
             .stream()

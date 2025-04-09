@@ -17,20 +17,15 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.service.TemporaryUserService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ManageUsersDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramCardGridContainer;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEventListener;
-import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
@@ -101,7 +96,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getCreateDiagramButton() {
-        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(project, diagramService);
+        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(projectService, project, diagramService);
 
         Button createDiagramButton = new Button("Create new Diagram", new Icon("vaadin:plus"));
         createDiagramButton.addClickListener(e -> {
@@ -123,7 +118,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project, projectService);
 
         Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
-        manageUsersButton.setEnabled(Objects.equals(project.getCreator().getAuthenticatedUserId(), sessionStorage.getAuthenticatedUser().getAuthenticatedUserId()));
+        manageUsersButton.setEnabled(Objects.equals(project.getCreator().getId(), sessionStorage.getAuthenticatedUser().getId()));
         manageUsersButton.addClickListener(e -> manageUsersDialog.open());
         return manageUsersButton;
     }
@@ -149,7 +144,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         deleteProjectButton.getElement().getStyle().set("margin-left", "auto");
         deleteProjectButton.getElement().getStyle().set("margin-right", "1rem");
         deleteProjectButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getAuthenticatedUserId(), sessionStorage.getAuthenticatedUser().getAuthenticatedUserId()));
+        deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), sessionStorage.getAuthenticatedUser().getId()));
         deleteProjectButton.addClickListener(e -> confirmDialog.open());
         return deleteProjectButton;
     }

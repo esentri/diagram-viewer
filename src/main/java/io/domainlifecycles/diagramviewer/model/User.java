@@ -1,20 +1,15 @@
 package io.domainlifecycles.diagramviewer.model;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Data
@@ -35,6 +30,6 @@ public abstract class User {
     }
 
     public void removeAssignedProject(Project project) {
-        assignedProjects.removeIf(p -> Objects.equals(p.getProjectId(), project.getProjectId()));
+        assignedProjects.removeIf(p -> Objects.equals(p.getId(), project.getId()));
     }
 }

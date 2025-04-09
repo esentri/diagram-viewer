@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Cascade;
 
 @Entity
 @Data
@@ -31,7 +30,7 @@ public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long projectId;
+    private Long id;
     private String projectNameFull;
     private String projectNameClean; // Project name escaping special characters like '.'
 
@@ -41,13 +40,13 @@ public class Project {
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default private List<Diagram> diagrams = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @Builder.Default private List<AuthenticatedUser> assignedAuthenticatedUsers = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @Builder.Default private List<TemporaryUser> assignedTemporaryUsers = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -59,9 +58,9 @@ public class Project {
 
     public void unassignUser(User user) {
         if(user instanceof AuthenticatedUser) {
-            assignedAuthenticatedUsers.removeIf(u -> Objects.equals(((AuthenticatedUser) user).getAuthenticatedUserId(), u.getAuthenticatedUserId()));
+            assignedAuthenticatedUsers.removeIf(u -> Objects.equals(((AuthenticatedUser) user).getId(), u.getId()));
         } else {
-            assignedTemporaryUsers.removeIf(u -> Objects.equals(((TemporaryUser) user).getTemporaryUserId(), u.getTemporaryUserId()));
+            assignedTemporaryUsers.removeIf(u -> Objects.equals(((TemporaryUser) user).getId(), u.getId()));
         }
     }
 

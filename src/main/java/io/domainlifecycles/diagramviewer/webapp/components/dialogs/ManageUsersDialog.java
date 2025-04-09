@@ -21,7 +21,6 @@ import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEventListener;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -114,8 +113,8 @@ public class ManageUsersDialog extends Dialog {
 
     private Button createAndGetUnassignButtonWithConfirmDialog(final User user) {
         if((user instanceof AuthenticatedUser)
-            && Objects.equals(((AuthenticatedUser) user).getAuthenticatedUserId(),
-                project.getCreator().getAuthenticatedUserId())) {
+            && Objects.equals(((AuthenticatedUser) user).getId(),
+                project.getCreator().getId())) {
             return null;
         }
 

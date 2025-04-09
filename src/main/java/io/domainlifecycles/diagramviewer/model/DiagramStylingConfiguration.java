@@ -25,7 +25,7 @@ public class DiagramStylingConfiguration {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long diagramStylingConfigurationId;
+    private Long id;
 
     private String contextPackageName;
 
@@ -301,12 +301,12 @@ public class DiagramStylingConfiguration {
     @Builder.Default private boolean fieldStereotypes = true;
 
 
-    public void setDiagramStylingConfigurationId(Long diagramConfigurationId) {
-        this.diagramStylingConfigurationId = diagramConfigurationId;
+    public void setId(Long diagramConfigurationId) {
+        this.id = diagramConfigurationId;
     }
 
-    public Long getDiagramStylingConfigurationId() {
-        return diagramStylingConfigurationId;
+    public Long getId() {
+        return id;
     }
 
     public String getContextPackageName() {

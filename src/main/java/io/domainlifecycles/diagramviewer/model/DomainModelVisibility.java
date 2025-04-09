@@ -20,7 +20,7 @@ public class DomainModelVisibility {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long domainModelVisibilityId;
+    private Long id;
 
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> seedClassNames = new ArrayList<>();

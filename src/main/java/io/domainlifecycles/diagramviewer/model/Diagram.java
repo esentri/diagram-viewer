@@ -27,7 +27,7 @@ public class Diagram {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long diagramId;
+    private Long id;
 
     private String fileName;
     private FileType fileType;

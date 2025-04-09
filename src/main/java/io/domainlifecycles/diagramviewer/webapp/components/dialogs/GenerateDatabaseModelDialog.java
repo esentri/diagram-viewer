@@ -98,7 +98,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
 
     private InputStream getStream() {
         final String ddl = sqlDDLGeneratorService.generateSQL(
-            sessionStorage.get(sessionStorage.getSelectedProject().getProjectId()),
+            sessionStorage.get(sessionStorage.getSelectedProject().getId()),
             bcPackageInput.getValue(), bcSchemaInput.getValue(), sqlDialectSelect.getValue(), auditModelCheckbox.getValue());
 
         return new ByteArrayInputStream(ddl.getBytes(StandardCharsets.UTF_8));
