@@ -23,6 +23,7 @@ import com.vaadin.flow.component.popover.PopoverPosition;
 import com.vaadin.flow.component.popover.PopoverVariant;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.dom.Style.Position;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.shared.Registration;
@@ -30,6 +31,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
+import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
@@ -39,6 +41,7 @@ import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,6 +135,7 @@ public class MainLayout extends AppLayout {
 
     private SideNavItem[] createSideNavLinks() {
         return projectService.getAll(buildPath(sessionStorage.getTargetsLocation()), sessionStorage.getAuthenticatedUser())
+            .sorted(Comparator.comparing(Project::getCreatedAt))
             .map(project -> {
                 SideNavItem parentSideNavItem = new SideNavItem(project.getProjectNameFull(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
                 parentSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
@@ -179,7 +183,10 @@ public class MainLayout extends AppLayout {
 
     private Component getDlcLogo() {
         Image dlcLogo = new Image(DLC_LOGO_LOCATION, "DLC Logo");
-        dlcLogo.setMaxHeight("60px");
+        dlcLogo.setMaxHeight("45px");
+        dlcLogo.getStyle().setPosition(Position.ABSOLUTE);
+        dlcLogo.getStyle().setTop("50%");
+        dlcLogo.getStyle().setTransform("translateY(-50%)");
 
         return new Anchor("/", dlcLogo);
     }

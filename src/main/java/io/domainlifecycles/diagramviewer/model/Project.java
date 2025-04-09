@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Data
@@ -56,6 +58,9 @@ public class Project {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="authenticated_user_id", nullable=false)
     private AuthenticatedUser creator;
+
+    @CreationTimestamp
+    private Instant createdAt;
 
     public void addDiagram(Diagram diagram) {
         diagrams.add(diagram);

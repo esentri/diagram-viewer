@@ -4,9 +4,11 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.RouteParameters;
+import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
+import java.util.Comparator;
 import java.util.Map;
 
 public class DiagramCardGrid extends FormLayout {
@@ -28,16 +30,21 @@ public class DiagramCardGrid extends FormLayout {
     }
 
     private void buildGrid() {
-        project.getDiagrams().forEach(diagram -> {
-            DiagramCard diagramCard = new DiagramCard(diagram.getFileName(), DiagramFileUtils.assembleDiagramUrl(project.getProjectNameClean(), diagram.getFileName()));
+        project.getDiagrams()
+            .stream()
+            .sorted(Comparator.comparing(Diagram::getCreatedAt))
+            .forEach(diagram -> {
+                DiagramCard diagramCard = new DiagramCard(diagram.getFileName(),
+                    DiagramFileUtils.assembleDiagramUrl(project.getProjectNameClean(), diagram.getFileName()));
 
-            Div diagramCardLinkWrapper = new Div(diagramCard);
-            diagramCardLinkWrapper.addClickListener(event -> UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
-                Map.of("projectName", project.getProjectNameClean(), "diagramName",
-                    diagram.getFileName()))));
-            diagramCardLinkWrapper.getStyle().set("cursor", "pointer");
+                Div diagramCardLinkWrapper = new Div(diagramCard);
+                diagramCardLinkWrapper.addClickListener(
+                    event -> UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
+                        Map.of("projectName", project.getProjectNameClean(), "diagramName",
+                            diagram.getFileName()))));
+                diagramCardLinkWrapper.getStyle().set("cursor", "pointer");
 
-            add(diagramCardLinkWrapper);
-        });
+                add(diagramCardLinkWrapper);
+            });
     }
 }

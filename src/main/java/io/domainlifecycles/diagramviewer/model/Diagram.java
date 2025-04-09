@@ -11,11 +11,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "Diagram")
@@ -37,6 +39,9 @@ public class Diagram {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="project_id", nullable=false)
     private Project project;
+
+    @CreationTimestamp
+    private Instant createdAt;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Builder.Default private DiagramStylingConfiguration diagramStylingConfiguration = new DiagramStylingConfiguration();

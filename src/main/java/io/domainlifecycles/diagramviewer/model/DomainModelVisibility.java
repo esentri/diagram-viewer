@@ -7,10 +7,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "DomainModelVisibility")
@@ -27,6 +29,9 @@ public class DomainModelVisibility {
 
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> blacklistedClassNames = new ArrayList<>();
+
+    @CreationTimestamp
+    private Instant createdAt;
 
     public DomainModelVisibility(List<String> seedClassNames, List<String> blacklistedClassNames) {
         this.seedClassNames = seedClassNames == null ? new ArrayList<>() : seedClassNames;
@@ -47,5 +52,9 @@ public class DomainModelVisibility {
 
     public List<String> getBlacklistedClassNames() {
         return blacklistedClassNames;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 }

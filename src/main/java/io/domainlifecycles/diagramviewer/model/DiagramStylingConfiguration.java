@@ -11,10 +11,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "DiagramStylingConfiguration")
@@ -300,6 +302,8 @@ public class DiagramStylingConfiguration {
      */
     @Builder.Default private boolean fieldStereotypes = true;
 
+    @CreationTimestamp
+    private Instant createdAt;
 
     public void setId(Long diagramConfigurationId) {
         this.id = diagramConfigurationId;
@@ -795,5 +799,9 @@ public class DiagramStylingConfiguration {
 
     public void setFieldStereotypes(boolean fieldStereotypes) {
         this.fieldStereotypes = fieldStereotypes;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 }
