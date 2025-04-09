@@ -8,6 +8,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -22,7 +24,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@Table(name = "PROJECT")
+@Table(name = "Project")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -40,16 +42,19 @@ public class Project {
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
     @Builder.Default private List<Diagram> diagrams = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "project_authenticated_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "authenticated_user_id"))
     @Builder.Default private List<AuthenticatedUser> assignedAuthenticatedUsers = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "project_temporary_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "temporary_user_id"))
     @Builder.Default private List<TemporaryUser> assignedTemporaryUsers = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="authenticated_user_id", nullable=false)
     private AuthenticatedUser creator;
 
     public void addDiagram(Diagram diagram) {

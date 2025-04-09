@@ -32,7 +32,6 @@ public class ProjectServiceImpl implements ProjectService {
     private final SessionStorage sessionStorage;
     private final AuthenticatedUserService authenticatedUserService;
     private final TemporaryUserService temporaryUserService;
-    private final DiagramService diagramService;
     private final ProjectRepository repository;
     private final String targetsDirectory;
 
@@ -40,13 +39,12 @@ public class ProjectServiceImpl implements ProjectService {
         @Value("${targets.location}") String defaultTargetsDirectory,
         SessionStorage sessionStorage,
         AuthenticatedUserService authenticatedUserService,
-        TemporaryUserService temporaryUserService, DiagramService diagramService, ProjectRepository repository) {
+        TemporaryUserService temporaryUserService, ProjectRepository repository) {
 
         this.targetsDirectory = defaultTargetsDirectory;
         this.sessionStorage = sessionStorage;
         this.authenticatedUserService = authenticatedUserService;
         this.temporaryUserService = temporaryUserService;
-        this.diagramService = diagramService;
         this.repository = repository;
         initializeAllDomainModels();
     }

@@ -20,17 +20,19 @@ import org.springframework.stereotype.Service;
 public class DiagramServiceImpl implements DiagramService {
 
     private final String diagramsLocation;
+    private final ProjectService projectService;
     private final DiagramRepository repository;
     private final SessionStorage sessionStorage;
     private final KrokiClient krokiClient;
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
-        DiagramRepository repository,
+        ProjectService projectService, DiagramRepository repository,
         SessionStorage sessionStorage,
         KrokiClient krokiClient) {
 
         this.diagramsLocation = diagramsLocation;
+        this.projectService = projectService;
         this.repository = repository;
         this.sessionStorage = sessionStorage;
         this.krokiClient = krokiClient;
@@ -45,11 +47,13 @@ public class DiagramServiceImpl implements DiagramService {
     @Override
     public Diagram save(Project project, String fileName, String contextPackageName, FileType fileType) {
         Path diagramPath = Path.of(diagramsLocation, project.getProjectNameClean(), fileName + fileType.getFileSuffix());
+        Project fetchedProject = projectService.getByProjectNameClean(project.getProjectNameClean());
 
         Diagram diagram = Diagram.builder()
             .fileName(diagramPath.getFileName().toString())
             .fullAbsoluteLocationPath(diagramPath.toAbsolutePath().toString())
             .fileType(fileType)
+            .project(fetchedProject)
             .diagramStylingConfiguration(
                 DiagramStylingConfiguration.builder()
                     .contextPackageName(contextPackageName)

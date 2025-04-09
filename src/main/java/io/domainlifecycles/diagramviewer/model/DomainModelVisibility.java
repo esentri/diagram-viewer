@@ -13,7 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "DOMAIN_MODEL_VISIBILITY")
+@Table(name = "DomainModelVisibility")
 @AllArgsConstructor
 @NoArgsConstructor
 public class DomainModelVisibility {

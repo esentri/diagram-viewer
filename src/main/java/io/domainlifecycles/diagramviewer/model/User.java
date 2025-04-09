@@ -22,14 +22,6 @@ public abstract class User {
     private String emailAddress;
     private String fullName;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @Builder.Default private List<Project> assignedProjects = new ArrayList<>();
-
-    public void addAssignedProject(final Project project) {
-        assignedProjects.add(project);
-    }
-
-    public void removeAssignedProject(Project project) {
-        assignedProjects.removeIf(p -> Objects.equals(p.getId(), project.getId()));
-    }
+    public abstract void addAssignedProject(final Project project);
+    public abstract void removeAssignedProject(Project project);
 }

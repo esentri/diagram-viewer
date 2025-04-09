@@ -41,8 +41,7 @@ public class CreateDiagramDialog extends Dialog {
         Button createButton = new Button("Create");
 
         createButton.addClickListener(e -> {
-            Diagram persistedDiagram = diagramService.save(project, fileName, packageName, fileType);
-            project = projectService.addDiagram(project, persistedDiagram);
+            diagramService.save(project, fileName, packageName, fileType);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });

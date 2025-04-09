@@ -17,7 +17,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "DIAGRAM_STYLING_CONFIGURATION")
+@Table(name = "DiagramStylingConfiguration")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
