@@ -41,7 +41,7 @@ public class Project {
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Builder.Default private List<Diagram> diagrams = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
