@@ -83,6 +83,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private void refreshDiagramCardGrid() {
+        setProject();
         diagramCardGridContainer.reloadDiagramCardGrid(project);
     }
 
@@ -96,7 +97,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getCreateDiagramButton() {
-        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(projectService, project, diagramService);
+        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(project, diagramService);
 
         Button createDiagramButton = new Button("Create new Diagram", new Icon("vaadin:plus"));
         createDiagramButton.addClickListener(e -> {
@@ -135,9 +136,9 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         confirmDialog.setConfirmButtonTheme("error primary");
         confirmDialog.addConfirmListener(event -> {
             projectService.delete(project);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
-            UI.getCurrent().navigate(DefaultView.class);
             confirmDialog.close();
+            UI.getCurrent().navigate(DefaultView.class);
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 
         Button deleteProjectButton = new Button("Delete", new Icon("vaadin:trash"));

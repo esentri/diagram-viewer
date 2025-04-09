@@ -13,6 +13,7 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,19 +21,17 @@ import org.springframework.stereotype.Service;
 public class DiagramServiceImpl implements DiagramService {
 
     private final String diagramsLocation;
-    private final ProjectService projectService;
     private final DiagramRepository repository;
     private final SessionStorage sessionStorage;
     private final KrokiClient krokiClient;
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
-        ProjectService projectService, DiagramRepository repository,
+        DiagramRepository repository,
         SessionStorage sessionStorage,
         KrokiClient krokiClient) {
 
         this.diagramsLocation = diagramsLocation;
-        this.projectService = projectService;
         this.repository = repository;
         this.sessionStorage = sessionStorage;
         this.krokiClient = krokiClient;
@@ -47,13 +46,12 @@ public class DiagramServiceImpl implements DiagramService {
     @Override
     public Diagram save(Project project, String fileName, String contextPackageName, FileType fileType) {
         Path diagramPath = Path.of(diagramsLocation, project.getProjectNameClean(), fileName + fileType.getFileSuffix());
-        Project fetchedProject = projectService.getByProjectNameClean(project.getProjectNameClean());
 
         Diagram diagram = Diagram.builder()
             .fileName(diagramPath.getFileName().toString())
             .fullAbsoluteLocationPath(diagramPath.toAbsolutePath().toString())
             .fileType(fileType)
-            .project(fetchedProject)
+            .project(project)
             .diagramStylingConfiguration(
                 DiagramStylingConfiguration.builder()
                     .contextPackageName(contextPackageName)
@@ -68,7 +66,28 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public void delete(Long id) {
-        repository.deleteById(id);
+        Optional<Diagram> diagram = repository.findById(id);
+
+        if(diagram.isEmpty()) return;
+
+        repository.delete(diagram.get());
+
+        try {
+            FileIOUtils.deleteFileByAbsolutePath(diagram.get().getFullAbsoluteLocationPath());
+        } catch (IOException e) {
+            throw DiagramViewerException.fail("Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
+        }
+    }
+
+    @Override
+    public void deleteFilesFromFilesystem(String projectNameClean) {
+        Path projectDiagramsDirectory = Path.of(diagramsLocation, projectNameClean);
+
+        try {
+            FileIOUtils.deleteDirectoryRecursively(projectDiagramsDirectory);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {

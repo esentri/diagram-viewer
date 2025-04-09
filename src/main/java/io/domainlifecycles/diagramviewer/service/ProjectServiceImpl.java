@@ -30,6 +30,7 @@ public class ProjectServiceImpl implements ProjectService {
     private static final Logger log = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
     private final SessionStorage sessionStorage;
+    private final DiagramService diagramService;
     private final AuthenticatedUserService authenticatedUserService;
     private final TemporaryUserService temporaryUserService;
     private final ProjectRepository repository;
@@ -38,11 +39,14 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectServiceImpl(
         @Value("${targets.location}") String defaultTargetsDirectory,
         SessionStorage sessionStorage,
+        DiagramService diagramService,
         AuthenticatedUserService authenticatedUserService,
-        TemporaryUserService temporaryUserService, ProjectRepository repository) {
+        TemporaryUserService temporaryUserService,
+        ProjectRepository repository) {
 
         this.targetsDirectory = defaultTargetsDirectory;
         this.sessionStorage = sessionStorage;
+        this.diagramService = diagramService;
         this.authenticatedUserService = authenticatedUserService;
         this.temporaryUserService = temporaryUserService;
         this.repository = repository;
@@ -137,10 +141,20 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void delete(Project project) {
-        Project fetchedProject = getByProjectNameClean(project.getProjectNameClean());
+        String projectNameClean = project.getProjectNameClean();
+        Project fetchedProject = getByProjectNameClean(projectNameClean);
+        String absolutePathToTarget = fetchedProject.getAbsolutePathToTarget();
+
         fetchedProject.getAssignedTemporaryUsers().clear();
         fetchedProject.getAssignedAuthenticatedUsers().clear();
         repository.delete(fetchedProject);
+
+        try {
+            FileIOUtils.deleteFileByAbsolutePath(absolutePathToTarget);
+            diagramService.deleteFilesFromFilesystem(projectNameClean);
+        } catch (IOException e) {
+            throw DiagramViewerException.fail("Couldn't finalize deleting project because some files couldn't be deleted from the filesystem.", e);
+        }
     }
 
     private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages, AuthenticatedUser authenticatedUser) {

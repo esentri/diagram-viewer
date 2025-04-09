@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,7 +20,7 @@ public class FileIOUtils {
     public static Set<File> getFilesInDirectory(Path directory) {
         File directoryFile = new File(directory.toUri());
 
-        if(!directoryFile.isDirectory() ||  directoryFile.listFiles() == null) {
+        if (!directoryFile.isDirectory() || directoryFile.listFiles() == null) {
             return Collections.emptySet();
         }
 
@@ -49,6 +50,29 @@ public class FileIOUtils {
             return Files.readAllBytes(path);
         } catch (IOException e) {
             throw DiagramViewerException.fail(String.format("Could not read file at '%s'.", absoluteLocationPath), e);
+        }
+    }
+
+    public static void deleteDirectoryRecursively(Path directoryPath) throws IOException {
+        if (Files.notExists(directoryPath)) return;
+
+        Files.walk(directoryPath)
+            .sorted(Comparator.reverseOrder())
+            .forEach(path -> {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    throw DiagramViewerException.fail(String.format("Failed to delete directory '%s'.", path), e);
+                }
+            });
+    }
+
+    public static void deleteFileByAbsolutePath(String absolutePath) throws IOException {
+        Path path = Paths.get(absolutePath);
+        if (Files.exists(path) && Files.isRegularFile(path)) {
+            Files.delete(path);
+        } else {
+            throw DiagramViewerException.fail(String.format("File not found or not a regular file '%s'.", absolutePath));
         }
     }
 }

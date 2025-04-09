@@ -17,7 +17,6 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChanged
 
 public class CreateDiagramDialog extends Dialog {
 
-    private final ProjectService projectService;
     private final DiagramService diagramService;
 
     private Project project;
@@ -25,8 +24,7 @@ public class CreateDiagramDialog extends Dialog {
     private String packageName;
     private FileType fileType;
 
-    public CreateDiagramDialog(ProjectService projectService, Project project, DiagramService diagramService) {
-        this.projectService = projectService;
+    public CreateDiagramDialog(Project project, DiagramService diagramService) {
         this.diagramService = diagramService;
         this.project = project;
 
