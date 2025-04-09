@@ -14,10 +14,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "DIAGRAM")
 @Data
+@ToString(exclude = "project")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -31,7 +33,7 @@ public class Diagram {
     private FileType fileType;
     private String fullAbsoluteLocationPath;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     private Project project;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -39,9 +41,4 @@ public class Diagram {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Builder.Default private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null);
-
-    public void setProject(Project project) {
-        this.project = project;
-        project.getDiagrams().add(this);
-    }
 }

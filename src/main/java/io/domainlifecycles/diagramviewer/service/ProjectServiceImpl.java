@@ -132,15 +132,15 @@ public class ProjectServiceImpl implements ProjectService {
     private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages) {
         Path filePath = Path.of(targetsLocation);
         List<String> boundedContexts = Arrays.stream(boundedContextPackages.split(",")).toList();
-        AuthenticatedUser authenticatedAuthenticatedUser = sessionStorage.getAuthenticatedUser();
+        AuthenticatedUser authenticatedUser = sessionStorage.getAuthenticatedUser();
 
         return Project.builder()
             .projectNameFull(fileName)
             .projectNameClean(buildCleanFileName(fileName))
             .absolutePathToTarget(filePath.toAbsolutePath() + "/" + fileName)
             .boundedContextPackages(boundedContexts)
-            .creator(authenticatedAuthenticatedUser)
-            .assignedAuthenticatedUsers(List.of(authenticatedAuthenticatedUser))
+            .creator(authenticatedUser)
+            .assignedAuthenticatedUsers(List.of(authenticatedUser))
             .build();
     }
 

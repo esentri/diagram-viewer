@@ -140,6 +140,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         confirmDialog.setConfirmButtonTheme("error primary");
         confirmDialog.addConfirmListener(event -> {
             projectService.delete(project);
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             UI.getCurrent().navigate(DefaultView.class);
             confirmDialog.close();
         });
