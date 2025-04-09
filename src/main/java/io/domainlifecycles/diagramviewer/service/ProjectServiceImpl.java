@@ -107,20 +107,33 @@ public class ProjectServiceImpl implements ProjectService {
             .anyMatch(user -> Objects.equals(user.getEmailAddress(), emailAddress))) return;
 
         boolean userIsSignedUp = authenticatedUserService.userKnown(emailAddress);
+        final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.getOrCreate(emailAddress);
 
-        final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.create(emailAddress);
-        project.assignUser(user);
-        save(project);
+        final Project fetchedProject = repository.findById(project.getProjectId()).get();
+        fetchedProject.assignUser(user);
+        Project updatedProject = save(fetchedProject);
+
+        if(user instanceof AuthenticatedUser) {
+            authenticatedUserService.addProject((AuthenticatedUser) user, updatedProject);
+        } else {
+            temporaryUserService.addProject((TemporaryUser) user, updatedProject);
+        }
     }
 
     @Override
     public void unassignUser(Project project, User user) {
         if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getAuthenticatedUserId(), ((AuthenticatedUser) user).getAuthenticatedUserId())) return;
 
-        project.unassignUser(user);
-        save(project);
+        final Project fetchedProject = repository.findById(project.getProjectId()).get();
+        fetchedProject.unassignUser(user);
+        Project updatedProject = save(fetchedProject);
 
-        if(user instanceof TemporaryUser && user.getAssignedProjects().isEmpty()) temporaryUserService.delete((TemporaryUser) user);
+        if(user instanceof AuthenticatedUser) {
+            authenticatedUserService.removeProject((AuthenticatedUser) user, updatedProject);
+        } else {
+            TemporaryUser updatedUser = temporaryUserService.removeProject((TemporaryUser) user, updatedProject);
+            if(updatedUser.getAssignedProjects().isEmpty()) temporaryUserService.delete(updatedUser);
+        }
     }
 
     @Override

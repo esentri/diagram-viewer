@@ -29,8 +29,8 @@ import java.util.stream.Stream;
 
 public class ManageUsersDialog extends Dialog {
 
-    private final Project project;
     private final ProjectService projectService;
+    private Project project;
     private Grid<User> userGrid;
     private Registration registration;
 
@@ -72,6 +72,7 @@ public class ManageUsersDialog extends Dialog {
     }
 
     private List<User> getAuthenticatedAndTemporaryUsersForProject() {
+        project = projectService.getByProjectNameClean(project.getProjectNameClean());
         List<AuthenticatedUser> assignedAuthenticatedUsers = project.getAssignedAuthenticatedUsers();
         List<TemporaryUser> assignedTemporaryUsers = project.getAssignedTemporaryUsers();
 

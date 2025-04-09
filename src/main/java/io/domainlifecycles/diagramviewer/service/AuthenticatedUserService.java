@@ -8,6 +8,7 @@ public interface AuthenticatedUserService {
     boolean userKnown(final String userEmailAddress);
     AuthenticatedUser get(final String userEmailAddress);
     AuthenticatedUser acknowledgeUserAuthentication(String userEmailAddress, String fullName);
-    void addProject(AuthenticatedUser authenticatedUser, Project project);
+    AuthenticatedUser addProject(AuthenticatedUser authenticatedUser, Project project);
+    AuthenticatedUser removeProject(AuthenticatedUser authenticatedUser, Project project);
     boolean checkAccess(String projectNameClean, AuthenticatedUser authenticatedUser);
 }

@@ -8,6 +8,7 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -34,6 +35,6 @@ public abstract class User {
     }
 
     public void removeAssignedProject(Project project) {
-        assignedProjects.remove(project);
+        assignedProjects.removeIf(p -> Objects.equals(p.getProjectId(), project.getProjectId()));
     }
 }

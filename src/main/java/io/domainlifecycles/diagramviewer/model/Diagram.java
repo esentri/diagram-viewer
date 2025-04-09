@@ -33,7 +33,7 @@ public class Diagram {
     private FileType fileType;
     private String fullAbsoluteLocationPath;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     private Project project;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

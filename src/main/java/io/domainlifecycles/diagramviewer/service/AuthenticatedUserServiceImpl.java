@@ -38,9 +38,15 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
     }
 
     @Override
-    public void addProject(AuthenticatedUser authenticatedUser, Project project) {
+    public AuthenticatedUser addProject(AuthenticatedUser authenticatedUser, Project project) {
         authenticatedUser.addAssignedProject(project);
-        repository.save(authenticatedUser);
+        return repository.save(authenticatedUser);
+    }
+
+    @Override
+    public AuthenticatedUser removeProject(AuthenticatedUser authenticatedUser, Project project) {
+        authenticatedUser.removeAssignedProject(project);
+        return repository.save(authenticatedUser);
     }
 
     @Override

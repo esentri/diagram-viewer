@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -58,9 +59,9 @@ public class Project {
 
     public void unassignUser(User user) {
         if(user instanceof AuthenticatedUser) {
-            assignedAuthenticatedUsers.remove((AuthenticatedUser) user);
+            assignedAuthenticatedUsers.removeIf(u -> Objects.equals(((AuthenticatedUser) user).getAuthenticatedUserId(), u.getAuthenticatedUserId()));
         } else {
-            assignedTemporaryUsers.remove((TemporaryUser) user);
+            assignedTemporaryUsers.removeIf(u -> Objects.equals(((TemporaryUser) user).getTemporaryUserId(), u.getTemporaryUserId()));
         }
     }
 

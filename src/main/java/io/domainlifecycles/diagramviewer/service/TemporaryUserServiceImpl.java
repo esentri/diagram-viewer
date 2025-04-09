@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
@@ -24,7 +25,9 @@ public class TemporaryUserServiceImpl implements TemporaryUserService {
     }
 
     @Override
-    public TemporaryUser create(String userEmailAddress) {
+    public TemporaryUser getOrCreate(String userEmailAddress) {
+        if(userKnown(userEmailAddress)) return get(userEmailAddress);
+
         TemporaryUser temporaryUser = TemporaryUser.builder()
             .emailAddress(userEmailAddress)
             .assignedProjects(new ArrayList<>())
@@ -37,6 +40,18 @@ public class TemporaryUserServiceImpl implements TemporaryUserService {
     public TemporaryUser get(String userEmailAddress) {
         return repository.findByEmailAddress(userEmailAddress).orElseThrow(() ->
             DiagramViewerException.fail(String.format("No Temporary User found with E-Mail address '%s'.", userEmailAddress)));
+    }
+
+    @Override
+    public TemporaryUser addProject(TemporaryUser temporaryUser, Project project) {
+        temporaryUser.addAssignedProject(project);
+        return repository.save(temporaryUser);
+    }
+
+    @Override
+    public TemporaryUser removeProject(TemporaryUser temporaryUser, Project project) {
+        temporaryUser.removeAssignedProject(project);
+        return repository.save(temporaryUser);
     }
 
     @Override
