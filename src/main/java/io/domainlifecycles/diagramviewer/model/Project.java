@@ -40,7 +40,7 @@ public class Project {
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @OneToMany(fetch = FetchType.EAGER)
     @Builder.Default private List<Diagram> diagrams = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -58,25 +58,17 @@ public class Project {
 
     public void unassignUser(User user) {
         if(user instanceof AuthenticatedUser) {
-            List<AuthenticatedUser> currentAssignedAuthenticatedUsers = new ArrayList<>(assignedAuthenticatedUsers);
-            currentAssignedAuthenticatedUsers.remove((AuthenticatedUser) user);
-            assignedAuthenticatedUsers = currentAssignedAuthenticatedUsers;
+            assignedAuthenticatedUsers.remove((AuthenticatedUser) user);
         } else {
-            List<TemporaryUser> currentAssignedTemporaryUsers = new ArrayList<>(assignedTemporaryUsers);
-            currentAssignedTemporaryUsers.remove((TemporaryUser) user);
-            assignedTemporaryUsers = currentAssignedTemporaryUsers;
+            assignedTemporaryUsers.remove((TemporaryUser) user);
         }
     }
 
     public void assignUser(User user) {
         if(user instanceof AuthenticatedUser) {
-            List<AuthenticatedUser> currentAssignedAuthenticatedUsers = new ArrayList<>(assignedAuthenticatedUsers);
-            currentAssignedAuthenticatedUsers.add((AuthenticatedUser) user);
-            assignedAuthenticatedUsers = currentAssignedAuthenticatedUsers;
+            assignedAuthenticatedUsers.add((AuthenticatedUser) user);
         } else {
-            List<TemporaryUser> currentAssignedTemporaryUsers = new ArrayList<>(assignedTemporaryUsers);
-            currentAssignedTemporaryUsers.add((TemporaryUser) user);
-            assignedTemporaryUsers = currentAssignedTemporaryUsers;
+            assignedTemporaryUsers.add((TemporaryUser) user);
         }
     }
 }

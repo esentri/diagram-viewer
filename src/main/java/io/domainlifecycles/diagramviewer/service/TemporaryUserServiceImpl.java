@@ -4,6 +4,7 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class TemporaryUserServiceImpl implements TemporaryUserService {
     public TemporaryUser create(String userEmailAddress) {
         TemporaryUser temporaryUser = TemporaryUser.builder()
             .emailAddress(userEmailAddress)
+            .assignedProjects(new ArrayList<>())
             .build();
 
         return repository.save(temporaryUser);

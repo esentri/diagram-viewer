@@ -52,7 +52,6 @@ public class DiagramServiceImpl implements DiagramService {
         Diagram diagram = Diagram.builder()
             .fileName(diagramPath.getFileName().toString())
             .fullAbsoluteLocationPath(diagramPath.toAbsolutePath().toString())
-            .project(project)
             .fileType(fileType)
             .diagramStylingConfiguration(
                 DiagramStylingConfiguration.builder()

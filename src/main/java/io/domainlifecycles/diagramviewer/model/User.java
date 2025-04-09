@@ -30,14 +30,10 @@ public abstract class User {
     @Builder.Default private List<Project> assignedProjects = new ArrayList<>();
 
     public void addAssignedProject(final Project project) {
-        List<Project> currentProjects = new ArrayList<>(assignedProjects);
-        currentProjects.add(project);
-        assignedProjects = currentProjects;
+        assignedProjects.add(project);
     }
 
     public void removeAssignedProject(Project project) {
-        List<Project> currentProjects = new ArrayList<>(assignedProjects);
-        currentProjects.remove(project);
-        assignedProjects = currentProjects;
+        assignedProjects.remove(project);
     }
 }

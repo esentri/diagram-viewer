@@ -76,9 +76,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project save(Project project) {
-        Project persistedProject = repository.save(project);
-        authenticatedUserService.addProject(sessionStorage.getAuthenticatedUser(), persistedProject);
-        return persistedProject;
+        return repository.save(project);
     }
 
     @Override
@@ -91,6 +89,7 @@ public class ProjectServiceImpl implements ProjectService {
     public void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages) {
         final Project project = mapProject(targetsLocation, fileName, boundedContextPackages);
         Project persistedProject = save(project);
+        authenticatedUserService.addProject(sessionStorage.getAuthenticatedUser(), persistedProject);
 
         try {
             FileIOUtils.saveFile(targetsLocation, fileName, fileContents);

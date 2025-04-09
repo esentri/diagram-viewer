@@ -1,10 +1,5 @@
 import { injectGlobalWebcomponentCss } from 'Frontend/generated/jar-resources/theme-util.js';
 
-import { injectGlobalCss } from 'Frontend/generated/jar-resources/theme-util.js';
-
-import { css, unsafeCSS, registerStyles } from '@vaadin/vaadin-themable-mixin';
-import $cssFromFile_0 from 'Frontend/styles/diagram-viewer-styles.css?inline';
-import $cssFromFile_1 from 'Frontend/styles/google-styles.css?inline';
 import 'Frontend/generated/jar-resources/zoomist/fc-zoomist.ts';
 import '@vaadin/field-highlighter/theme/lumo/vaadin-field-highlighter.js';
 import '@vaadin/common-frontend/ConnectionIndicator.js';
@@ -92,12 +87,6 @@ import '@vaadin/vaadin-lumo-styles/spacing.js';
 import '@vaadin/vaadin-lumo-styles/style.js';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/card/theme/lumo/vaadin-card.js';
-
-injectGlobalCss($cssFromFile_0.toString(), 'CSSImport end', document);
-injectGlobalWebcomponentCss($cssFromFile_0.toString());
-
-injectGlobalCss($cssFromFile_1.toString(), 'CSSImport end', document);
-injectGlobalWebcomponentCss($cssFromFile_1.toString());
 const loadOnDemand = (key) => { return Promise.resolve(0); }
 window.Vaadin = window.Vaadin || {};
 window.Vaadin.Flow = window.Vaadin.Flow || {};

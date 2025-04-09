@@ -65,7 +65,7 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
         final AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
             .emailAddress(userEmailAddress)
             .fullName(fullName)
-            .assignedProjects(Collections.emptyList())
+            .assignedProjects(new ArrayList<>())
             .build();
 
         return repository.save(authenticatedUser);
