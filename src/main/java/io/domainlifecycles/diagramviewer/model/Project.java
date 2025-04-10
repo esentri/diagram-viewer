@@ -68,6 +68,11 @@ public class Project {
         diagrams.add(diagram);
     }
 
+    public void removeDiagram(Diagram diagram) {
+        diagrams.remove(diagram);
+        diagram.setProject(null);
+    }
+
     public void unassignUser(User user) {
         if(user instanceof AuthenticatedUser) {
             assignedAuthenticatedUsers.removeIf(u -> Objects.equals(((AuthenticatedUser) user).getId(), u.getId()));

@@ -1,9 +1,9 @@
 package io.domainlifecycles.diagramviewer.session;
 
 import com.vaadin.flow.spring.annotation.SpringComponent;
+import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
 import java.nio.file.Path;
@@ -55,6 +55,10 @@ public class SessionStorage {
     public void setNoneSelected() {
         selectedProject = null;
         selectedDiagram = null;
+    }
+
+    public void setNoDiagramSelected() {
+        selectedProject = null;
     }
 
     public Project getSelectedProject() {

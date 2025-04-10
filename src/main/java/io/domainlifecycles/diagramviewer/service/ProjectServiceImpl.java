@@ -90,6 +90,21 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public Project removeDiagram(Project project, Diagram diagram) {
+        final String diagramPath = diagram.getFullAbsoluteLocationPath();
+
+        project.getDiagrams().remove(diagram);
+        Project persistedProject = repository.save(project);
+
+        try {
+            FileIOUtils.deleteFileByAbsolutePath(diagramPath);
+            return persistedProject;
+        } catch (IOException e) {
+            throw DiagramViewerException.fail("Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
+        }
+    }
+
+    @Override
     public void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages) {
         final Project project = mapProject(targetsLocation, fileName, boundedContextPackages, sessionStorage.getAuthenticatedUser());
         Project persistedProject = save(project);

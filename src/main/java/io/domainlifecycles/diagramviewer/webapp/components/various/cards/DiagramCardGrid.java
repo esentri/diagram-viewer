@@ -18,8 +18,8 @@ public class DiagramCardGrid extends FormLayout {
     public DiagramCardGrid(Project project) {
         this.project = project;
 
-        setClassName("diagram-card-grid");
         setSizeFull();
+        getStyle().setMarginTop("2rem");
         setResponsiveSteps(
             new ResponsiveStep("300px", 2),
             new ResponsiveStep("600px", 3),
@@ -34,7 +34,7 @@ public class DiagramCardGrid extends FormLayout {
             .stream()
             .sorted(Comparator.comparing(Diagram::getCreatedAt))
             .forEach(diagram -> {
-                DiagramCard diagramCard = new DiagramCard(diagram.getFileName(),
+                DiagramCard diagramCard = new DiagramCard(diagram,
                     DiagramFileUtils.assembleDiagramUrl(project.getProjectNameClean(), diagram.getFileName()));
 
                 Div diagramCardLinkWrapper = new Div(diagramCard);

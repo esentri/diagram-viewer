@@ -1,13 +1,10 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 @Service

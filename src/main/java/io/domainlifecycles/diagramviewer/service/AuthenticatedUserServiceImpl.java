@@ -5,7 +5,6 @@ import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.repository.UserRepository;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
 

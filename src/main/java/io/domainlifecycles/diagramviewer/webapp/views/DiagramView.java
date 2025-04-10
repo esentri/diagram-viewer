@@ -3,15 +3,20 @@ package io.domainlifecycles.diagramviewer.webapp.views;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
@@ -25,12 +30,12 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfig
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEventListener;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +45,7 @@ import org.slf4j.LoggerFactory;
 @PermitAll
 public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
-    private final static Logger log = LoggerFactory.getLogger(DiagramView.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(DiagramView.class);
 
     private final ProjectService projectService;
     private final DiagramService diagramService;
@@ -58,7 +63,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         this.diagramService = diagramService;
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
-        setClassName("diagram-viewer");
+        setId("diagram-viewer");
     }
 
     @Override
@@ -84,7 +89,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private void addPageContents() {
-        add(getDiagramDownloadButton());
+        add(createAndGetButtonBar());
 
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
@@ -95,6 +100,16 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         add(diagramViewerAndStylingContainer);
     }
 
+    private HorizontalLayout createAndGetButtonBar() {
+        HorizontalLayout buttonBar = new HorizontalLayout();
+        buttonBar.setId("diagram-view-button-bar");
+        buttonBar.getStyle().setMarginTop("2rem");
+
+        buttonBar.add(getDiagramDownloadButton(), getDeleteDiagramButton());
+
+        return buttonBar;
+    }
+
     private FlexLayout createDiagramZoomComponentContainer() {
         zoomComponentContainer = new DiagramZoomComponentContainer();
         return zoomComponentContainer;
@@ -102,12 +117,42 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     private Anchor getDiagramDownloadButton() {
         Anchor downloadAnchor = new Anchor(buildDiagramDownloadStreamResource(), "Download Diagram");
+        downloadAnchor.getStyle().set("cursor", "pointer");
         downloadAnchor.setId("diagramDownloadButton");
         downloadAnchor.getElement().setAttribute("download", true);
+        downloadAnchor.getStyle().setMarginLeft("3.5rem");
         downloadAnchor.removeAll();
         downloadAnchor.add(new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD_ALT)));
 
         return downloadAnchor;
+    }
+
+    private Button getDeleteDiagramButton() {
+        ConfirmDialog confirmDialog = new ConfirmDialog();
+        confirmDialog.setHeader("Delete Diagram");
+        confirmDialog.setText(String.format(
+            "Are you sure you want to delete diagram '%s' from your project?", diagram.getFileName()));
+
+        confirmDialog.setCancelable(true);
+
+        confirmDialog.setConfirmText("Delete");
+        confirmDialog.setConfirmButtonTheme("error primary");
+        confirmDialog.addConfirmListener(event -> {
+            projectService.removeDiagram(project, diagram);
+            sessionStorage.setNoDiagramSelected();
+            confirmDialog.close();
+            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
+        });
+
+        Button deleteDiagramButton = new Button("Delete", new Icon("vaadin:trash"));
+        deleteDiagramButton.getStyle().set("cursor", "pointer");
+        deleteDiagramButton.getElement().getStyle().set("margin-left", "auto");
+        deleteDiagramButton.getElement().getStyle().set("margin-right", "1rem");
+        deleteDiagramButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deleteDiagramButton.setEnabled(Objects.equals(project.getCreator().getId(), sessionStorage.getAuthenticatedUser().getId()));
+        deleteDiagramButton.addClickListener(e -> confirmDialog.open());
+        return deleteDiagramButton;
     }
 
     private StreamResource buildDiagramDownloadStreamResource() {

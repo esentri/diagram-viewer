@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 @PermitAll
 public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
-    private final static Logger log = LoggerFactory.getLogger(DiagramView.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(ProjectView.class);
 
     private final SQLDDLGeneratorService sqlddlGeneratorService;
     private final ProjectService projectService;
@@ -58,7 +58,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
-        setClassName("project-viewer");
+        setId("project-viewer");
     }
 
     @Override
@@ -92,7 +92,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private HorizontalLayout createAndGetButtonBar() {
         HorizontalLayout buttonBar = new HorizontalLayout();
-        buttonBar.setId("project-view-button-bar");
+        buttonBar.getStyle().setMarginTop("2rem");
 
         buttonBar.add(getCreateDiagramButton(), getDatabaseButton(), getManageUsersButton(), getDeleteProjectButton());
 
@@ -103,6 +103,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(project, diagramService);
 
         Button createDiagramButton = new Button("Create new Diagram", new Icon("vaadin:plus"));
+        createDiagramButton.getStyle().set("cursor", "pointer");
+
         createDiagramButton.addClickListener(e -> {
             sessionStorage.setSelectedProject(project);
             createDiagramDialog.open();
@@ -114,6 +116,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         GenerateDatabaseModelDialog databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, sessionStorage);
 
         Button databaseButton = new Button("Download DDL-SQL-Script", new Icon("vaadin:database"));
+        databaseButton.getStyle().set("cursor", "pointer");
         databaseButton.addClickListener(e -> databaseModelDialog.open());
         return databaseButton;
     }
@@ -122,6 +125,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project, projectService);
 
         Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
+        manageUsersButton.getStyle().set("cursor", "pointer");
         manageUsersButton.setEnabled(Objects.equals(project.getCreator().getId(), sessionStorage.getAuthenticatedUser().getId()));
         manageUsersButton.addClickListener(e -> manageUsersDialog.open());
         return manageUsersButton;
@@ -139,12 +143,14 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         confirmDialog.setConfirmButtonTheme("error primary");
         confirmDialog.addConfirmListener(event -> {
             projectService.delete(project);
+            sessionStorage.setNoneSelected();
             confirmDialog.close();
             UI.getCurrent().navigate(DefaultView.class);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 
         Button deleteProjectButton = new Button("Delete", new Icon("vaadin:trash"));
+        deleteProjectButton.getStyle().set("cursor", "pointer");
         deleteProjectButton.getElement().getStyle().set("margin-left", "auto");
         deleteProjectButton.getElement().getStyle().set("margin-right", "1rem");
         deleteProjectButton.addThemeVariants(ButtonVariant.LUMO_ERROR);

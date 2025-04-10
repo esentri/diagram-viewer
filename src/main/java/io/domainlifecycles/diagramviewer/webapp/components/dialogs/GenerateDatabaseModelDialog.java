@@ -77,7 +77,8 @@ public class GenerateDatabaseModelDialog extends Dialog {
         StreamResource streamResource = new StreamResource(buildScriptFilename(), this::getStream);
         Anchor generateLink = new Anchor(streamResource, "Download SQL-Script");
         generateLink.getElement().setAttribute("download", true);
-        generateLink.setId("sql-generate-link");
+        generateLink.getStyle().setTextDecoration("none");
+        generateLink.getStyle().setColor("white");
 
         generateButton = new Button(generateLink);
         generateButton.setEnabled(binder.isValid());

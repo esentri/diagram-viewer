@@ -13,7 +13,6 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -62,21 +61,6 @@ public class DiagramServiceImpl implements DiagramService {
         createAndSaveDiagramToFilesystem(project, persistedDiagram);
 
         return persistedDiagram;
-    }
-
-    @Override
-    public void delete(Long id) {
-        Optional<Diagram> diagram = repository.findById(id);
-
-        if(diagram.isEmpty()) return;
-
-        repository.delete(diagram.get());
-
-        try {
-            FileIOUtils.deleteFileByAbsolutePath(diagram.get().getFullAbsoluteLocationPath());
-        } catch (IOException e) {
-            throw DiagramViewerException.fail("Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
-        }
     }
 
     @Override

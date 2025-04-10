@@ -120,6 +120,14 @@ public class ManageUsersDialog extends Dialog {
             return null;
         }
 
+        ConfirmDialog confirmDialog = getUnassignConfirmDialog(user);
+
+        Button unassignButton = new Button(new Icon("vaadin:trash"), e -> confirmDialog.open());
+        unassignButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        return unassignButton;
+    }
+
+    private ConfirmDialog getUnassignConfirmDialog(User user) {
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Unassign User");
         confirmDialog.setText(String.format(
@@ -133,10 +141,7 @@ public class ManageUsersDialog extends Dialog {
             ComponentUtil.fireEvent(UI.getCurrent(), new ProjectUsersChangedEvent(this, false));
             confirmDialog.close();
         });
-
-        Button unassignButton = new Button(new Icon("vaadin:trash"), e -> confirmDialog.open());
-        unassignButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        return unassignButton;
+        return confirmDialog;
     }
 
     @Override

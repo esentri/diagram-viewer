@@ -1,48 +1,17 @@
-.diagram-viewer {
+#diagram-viewer {
     box-sizing: border-box;
     overflow: hidden;
     padding: 1rem
+}
+
+#project-viewer {
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 2rem
 }
 
 #diagram-viewer-and-styling-container {
     margin-top: 1rem;
     box-sizing: border-box;
     overflow: hidden;
-}
-
-.project-viewer {
-    box-sizing: border-box;
-    overflow: hidden;
-    padding: 2rem
-}
-
-.diagram-card-grid {
-    margin-top: 2rem;
-}
-
-.outer-zoomist-container {
-    margin: 0 1rem 0;
-    overflow: hidden;
-}
-
-#project-view-button-bar {
-    margin-top: 2rem;
-}
-
-#databaseButton {
-    margin-right: 2rem;
-}
-
-#diagramDownloadButton {
-    margin-left: 3.5rem;
-}
-
-#userButton {
-    margin-left: auto;
-    margin-right: 1rem;
-}
-
-#sql-generate-link {
-    text-decoration: none;
-    color: white;
 }

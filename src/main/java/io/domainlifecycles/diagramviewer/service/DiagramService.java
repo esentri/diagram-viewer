@@ -8,6 +8,5 @@ public interface DiagramService {
 
     void save(Diagram diagram);
     Diagram save(Project project, String fileName, String contextPackageName, FileType fileType);
-    void delete(Long id);
     void deleteFilesFromFilesystem(String projectNameClean);
 }

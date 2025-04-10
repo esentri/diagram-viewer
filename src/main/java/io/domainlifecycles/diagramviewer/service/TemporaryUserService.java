@@ -1,6 +1,5 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 
