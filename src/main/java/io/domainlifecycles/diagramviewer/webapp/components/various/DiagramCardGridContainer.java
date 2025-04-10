@@ -9,9 +9,8 @@ public class DiagramCardGridContainer extends FlexLayout {
     private DiagramCardGrid diagramCardGrid;
 
     public DiagramCardGridContainer() {
-        setMinHeight("100%");
-        setMaxHeight("100%");
-        setSizeFull();
+        setSizeUndefined();
+        setWidthFull();
     }
 
     public void reloadDiagramCardGrid(final Project project) {

@@ -21,6 +21,8 @@ import lombok.Data;
 public class GenerateDatabaseModelDialog extends Dialog {
     private static final String[] SQL_DIALECT_SELECT_VALUES = {"Oracle", "Postgres"};
     private static final String SQL_DDL_SCRIPT_SUFFIX = "-ddl-script.sql";
+    private static final String APPLICATION_SQL_MIME_TYPE = "application/sql";
+
     private final Binder<GenerateDatabaseModelOptions> binder;
 
     private Button generateButton;
@@ -67,25 +69,33 @@ public class GenerateDatabaseModelDialog extends Dialog {
         binder.addStatusChangeListener(event -> generateButton.setEnabled(binder.isValid()));
 
         formLayout.addFormItem(bcPackageInput, "Bounded Context Package name");
-        formLayout.addFormItem(bcSchemaInput, "Bounded Context name");
+        formLayout.addFormItem(bcSchemaInput, "Bounded Context Schema name");
         formLayout.addFormItem(sqlDialectSelect,"SQL Dialect");
         formLayout.addFormItem(auditModelCheckbox, "Audit Model");
         return formLayout;
     }
 
-    private Button createGenerateButton() {
-        StreamResource streamResource = new StreamResource(buildScriptFilename(), this::getStream);
-        Anchor generateLink = new Anchor(streamResource, "Download SQL-Script");
-        generateLink.getElement().setAttribute("download", true);
-        generateLink.getStyle().setTextDecoration("none");
-        generateLink.getStyle().setColor("white");
+    private Anchor createGenerateButton() {
+        final String scriptFilename = buildScriptFilename();
+        StreamResource streamResource = new StreamResource(scriptFilename, this::getStream);
+        streamResource.setContentType(APPLICATION_SQL_MIME_TYPE);
+        streamResource.setCacheTime(0);
 
-        generateButton = new Button(generateLink);
+        Anchor downloadLink = new Anchor(streamResource, "");
+        downloadLink.removeAll();
+        downloadLink.getElement().setAttribute("download", true);
+        downloadLink.getStyle().setCursor("pointer");
+        downloadLink.getStyle().setColor("white");
+
+
+        generateButton = new Button("Download SQL-Script");
         generateButton.setEnabled(binder.isValid());
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         generateButton.addClickListener(event -> close());
 
-        return generateButton;
+        downloadLink.add(generateButton);
+
+        return downloadLink;
     }
 
     private String buildScriptFilename() {

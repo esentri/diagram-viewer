@@ -152,7 +152,6 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         Button deleteProjectButton = new Button("Delete", new Icon("vaadin:trash"));
         deleteProjectButton.getStyle().set("cursor", "pointer");
         deleteProjectButton.getElement().getStyle().set("margin-left", "auto");
-        deleteProjectButton.getElement().getStyle().set("margin-right", "1rem");
         deleteProjectButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
         deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), sessionStorage.getAuthenticatedUser().getId()));
         deleteProjectButton.addClickListener(e -> confirmDialog.open());

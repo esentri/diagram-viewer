@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")
-@CssImport("./styles/google-styles.css")
 public class MainLayout extends AppLayout {
 
     private final static Logger log = LoggerFactory.getLogger(MainLayout.class);

@@ -102,11 +102,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     private HorizontalLayout createAndGetButtonBar() {
         HorizontalLayout buttonBar = new HorizontalLayout();
-        buttonBar.setId("diagram-view-button-bar");
-        buttonBar.getStyle().setMarginTop("2rem");
-
         buttonBar.add(getDiagramDownloadButton(), getDeleteDiagramButton());
-
         return buttonBar;
     }
 
