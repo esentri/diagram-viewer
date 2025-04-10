@@ -30,7 +30,6 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.files.DirectoryWatcher;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
@@ -146,32 +145,11 @@ public class MainLayout extends AppLayout {
 
                         sideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
                         parentSideNavItem.addItem(sideNavItem);
-                        initWatcherService(diagram.getFullAbsoluteLocationPath());
                     });
 
                 return parentSideNavItem;
             })
             .toArray(SideNavItem[]::new);
-    }
-
-    /**
-     * Adding a watcher service on the diagram's directory allows an asynchronous refresh of the diagram zoom
-     * component as soon as a new diagram has been rendered, for example when some styling option has been changed
-     * in the UI.
-     *
-     * @param absolutePathToDiagram the absolute path to the diagram's directory
-     */
-    private void initWatcherService(final String absolutePathToDiagram) {
-        Path directoryToWatch;
-
-        directoryToWatch = buildPath(absolutePathToDiagram);
-
-        DirectoryWatcher.onDirectoryChange(directoryToWatch,
-            (evt) -> {
-                log.debug(String.format("Noticed change in watched diagram's directory '%s'. Refreshing Sidenav.", directoryToWatch));
-                this.getUI().ifPresent(ui -> ui.access(this::refreshSideNavLinks));
-            }
-        );
     }
 
     private void refreshSideNavLinks() {
