@@ -78,8 +78,7 @@ public class ProjectServiceImpl implements ProjectService {
                 projectNameClean)));
     }
 
-    @Override
-    public Project save(Project project) {
+    private Project create(Project project) {
         String projectNameClean = project.getProjectNameClean();
         Optional<Project> fetchedProject = repository.findByProjectNameClean(projectNameClean);
 
@@ -91,9 +90,7 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.save(project);
     }
 
-    @Override
-    public Project addDiagram(Project project, Diagram diagram) {
-        project.addDiagram(diagram);
+    private Project update(Project project) {
         return repository.save(project);
     }
 
@@ -115,7 +112,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages) {
         final Project project = mapProject(targetsLocation, fileName, boundedContextPackages, sessionStorage.getAuthenticatedUser());
-        Project persistedProject = save(project);
+        Project persistedProject = create(project);
 
         try {
             FileIOUtils.saveFile(targetsLocation, fileName, fileContents);
@@ -137,7 +134,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         final Project fetchedProject = repository.findById(project.getId()).get();
         fetchedProject.assignUser(user);
-        Project updatedProject = save(fetchedProject);
+        Project updatedProject = update(fetchedProject);
 
         if(user instanceof AuthenticatedUser) {
             authenticatedUserService.addProject((AuthenticatedUser) user, updatedProject);
@@ -152,7 +149,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         final Project fetchedProject = repository.findById(project.getId()).get();
         fetchedProject.unassignUser(user);
-        Project updatedProject = save(fetchedProject);
+        Project updatedProject = update(fetchedProject);
 
         if(user instanceof AuthenticatedUser) {
             authenticatedUserService.removeProject((AuthenticatedUser) user, updatedProject);

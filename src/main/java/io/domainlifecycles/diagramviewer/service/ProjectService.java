@@ -12,8 +12,6 @@ public interface ProjectService {
 
     Stream<Project> getAll(Path targetDirectory, AuthenticatedUser authenticatedUser);
     Project getByProjectNameClean(final String projectNameClean);
-    Project save(Project project);
-    Project addDiagram(Project project, Diagram diagram);
     Project removeDiagram(Project project, Diagram diagram);
     void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages);
     void assignUser(Project project, String emailAddress);
