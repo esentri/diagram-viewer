@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.session;
 
-import com.vaadin.flow.spring.annotation.SpringComponent;
+import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 /**
  * Holds session values about the initialized Domain models.
  */
-@SpringComponent
+@VaadinSessionScope
 public class SessionStorage {
 
     private static final Logger log = LoggerFactory.getLogger(SessionStorage.class);

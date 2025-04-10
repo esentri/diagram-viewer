@@ -1,11 +1,9 @@
 package io.domainlifecycles.diagramviewer.webapp.error;
 
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.server.ErrorEvent;
 import com.vaadin.flow.server.ErrorHandler;
-import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

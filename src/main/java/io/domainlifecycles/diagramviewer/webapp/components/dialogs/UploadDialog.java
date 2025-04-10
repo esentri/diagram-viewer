@@ -75,7 +75,7 @@ public class UploadDialog extends Dialog {
         MultiFileMemoryBuffer uploadBuffer = new MultiFileMemoryBuffer();
         Upload upload = new Upload(uploadBuffer);
 
-        upload.setMaxFileSize(50000000); // 50MB
+        upload.setMaxFileSize(100000000); // 100MB
         //upload.setAcceptedFileTypes("jar");
 
         upload.addSucceededListener(event -> {
