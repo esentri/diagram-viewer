@@ -14,6 +14,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -28,6 +29,7 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @Data
 @Table(name = "TemporaryUser")
+@ToString(exclude = "assignedProjects")
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 public class TemporaryUser extends User {

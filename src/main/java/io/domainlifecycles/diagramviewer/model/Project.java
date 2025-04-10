@@ -22,11 +22,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Data
 @Table(name = "Project")
+@ToString(exclude = "diagrams")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

@@ -14,12 +14,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Data
 @Table(name = "AuthenticatedUser")
+@ToString(exclude = "assignedProjects")
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 public class AuthenticatedUser extends User {

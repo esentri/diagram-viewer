@@ -183,7 +183,7 @@ public class MainLayout extends AppLayout {
 
     private Component getDlcLogo() {
         Image dlcLogo = new Image(DLC_LOGO_LOCATION, "DLC Logo");
-        dlcLogo.setMaxHeight("45px");
+        dlcLogo.setMaxHeight("35px");
         dlcLogo.getStyle().setPosition(Position.ABSOLUTE);
         dlcLogo.getStyle().setTop("50%");
         dlcLogo.getStyle().setTransform("translateY(-50%)");

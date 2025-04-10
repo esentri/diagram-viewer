@@ -64,6 +64,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     public void beforeEnter(BeforeEnterEvent event) {
         projectNameClean = event.getRouteParameters().get("projectName").get();
 
+        removeAll();
         setProject();
         addPageContents();
         refreshDiagramCardGrid();
