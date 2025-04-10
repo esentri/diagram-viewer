@@ -52,12 +52,14 @@ public class ManageUsersDialog extends Dialog {
 
     private VerticalLayout createDialogLayout() {
         VerticalLayout dialogLayout = new VerticalLayout();
+        dialogLayout.setSizeFull();
 
         AddUserDialog addUserDialog = new AddUserDialog(project, projectService);
         dialogLayout.add(new Button("Add User...", new Icon("vaadin:plus"), e -> addUserDialog.open()));
 
         userGrid = new Grid<>();
         userGrid.setWidthFull();
+        userGrid.setAllRowsVisible(true);
         userGrid.setSelectionMode(Grid.SelectionMode.NONE);
         userGrid.getStyle().setBorder("none");
         userGrid.getStyle().setBoxShadow("none");

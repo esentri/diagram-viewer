@@ -11,6 +11,7 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -80,7 +81,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         add(createAndGetButtonBar());
 
         diagramCardGridContainer = new DiagramCardGridContainer();
-        add(diagramCardGridContainer);
+        Scroller scroller = new Scroller(diagramCardGridContainer);
+        add(scroller);
     }
 
     private void refreshDiagramCardGrid() {

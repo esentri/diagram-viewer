@@ -13,7 +13,7 @@
 .project-viewer {
     box-sizing: border-box;
     overflow: hidden;
-    /*padding: 2rem*/
+    padding: 2rem
 }
 
 .diagram-card-grid {
