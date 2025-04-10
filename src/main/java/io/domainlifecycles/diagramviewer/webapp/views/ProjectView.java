@@ -122,7 +122,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getManageUsersButton() {
-        ManageUsersDialog manageUsersDialog = new ManageUsersDialog(project, projectService);
+        ManageUsersDialog manageUsersDialog = new ManageUsersDialog(projectService, sessionStorage, project);
 
         Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
         manageUsersButton.getStyle().set("cursor", "pointer");
@@ -164,7 +164,10 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         registration = ComponentUtil.addListener(
                 attachEvent.getUI(),
                 DiagramsOrProjectsChangedEvent.class,
-                event -> refreshDiagramCardGrid()
+                event -> {
+                    refreshDiagramCardGrid();
+                    sessionStorage.refreshAuthenticatedUser();
+                }
         );
     }
 

@@ -4,6 +4,7 @@ import com.vaadin.flow.spring.annotation.SpringComponent;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
 import java.nio.file.Path;
@@ -20,23 +21,29 @@ public class SessionStorage {
 
     private static final Logger log = LoggerFactory.getLogger(SessionStorage.class);
 
-    private AuthenticatedUser authenticatedAuthenticatedUser;
+    private final AuthenticatedUserService authenticatedUserService;
+    private AuthenticatedUser authenticatedUser;
     private Project selectedProject;
     private Diagram selectedDiagram;
     private final String targetsLocation;
     private final HashMap<Long, DomainModel> domainModelStore;
 
-    public SessionStorage(@Value("${targets.location}") String targetsLocation) {
+    public SessionStorage(AuthenticatedUserService authenticatedUserService, @Value("${targets.location}") String targetsLocation) {
+        this.authenticatedUserService = authenticatedUserService;
         domainModelStore = new HashMap<>();
         this.targetsLocation = targetsLocation;
     }
 
     public AuthenticatedUser getAuthenticatedUser() {
-        return authenticatedAuthenticatedUser;
+        return authenticatedUser;
     }
 
     public void setAuthenticatedUser(AuthenticatedUser authenticatedAuthenticatedUser) {
-        this.authenticatedAuthenticatedUser = authenticatedAuthenticatedUser;
+        this.authenticatedUser = authenticatedAuthenticatedUser;
+    }
+
+    public void refreshAuthenticatedUser() {
+        authenticatedUser = authenticatedUserService.get(authenticatedUser.getEmailAddress());
     }
 
     public DomainModel get(Long projectId) {
@@ -84,5 +91,4 @@ public class SessionStorage {
     public boolean isDiagramSelected() {
         return selectedDiagram != null;
     }
-
 }

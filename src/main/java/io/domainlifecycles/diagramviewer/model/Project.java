@@ -37,7 +37,11 @@ public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    @Column(nullable = false)
     private String projectNameFull;
+
+    @Column(nullable = false)
     private String projectNameClean; // Project name escaping special characters like '.'
 
     @Column(unique=true)

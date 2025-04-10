@@ -20,6 +20,7 @@ import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
 import java.util.List;
 import java.util.Objects;
@@ -29,13 +30,15 @@ import java.util.stream.Stream;
 public class ManageUsersDialog extends Dialog {
 
     private final ProjectService projectService;
+    private final SessionStorage sessionStorage;
     private Project project;
     private Grid<User> userGrid;
     private Registration registration;
 
-    public ManageUsersDialog(Project project, ProjectService projectService) {
+    public ManageUsersDialog(ProjectService projectService, SessionStorage sessionStorage, Project project) {
         this.project = project;
         this.projectService = projectService;
+        this.sessionStorage = sessionStorage;
 
         setHeaderTitle("Manage Users");
 
@@ -151,7 +154,10 @@ public class ManageUsersDialog extends Dialog {
             ComponentUtil.addListener(
                 attachEvent.getUI(),
                 ProjectUsersChangedEvent.class,
-                event -> refreshUsers()
+                event -> {
+                    refreshUsers();
+                    sessionStorage.refreshAuthenticatedUser();
+                }
             );
     }
 

@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
-import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -26,8 +26,7 @@ public class DefaultView extends FlexLayout {
     private VerticalLayout getPageContents() {
         VerticalLayout layout = new VerticalLayout();
 
-        layout.add(new H3("Please select a diagram on the left."));
-        layout.add(new H3("You can upload a new .jar-file in the bottom left corner and create a new diagram by clicking on the + icon right next to your .jar-file"));
+        layout.add(new H2("Select a Project/Diagram on the left or upload something new in the bottom left corner!"));
 
         layout.setAlignItems(Alignment.CENTER);
         return layout;

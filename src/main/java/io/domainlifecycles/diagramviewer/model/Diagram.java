@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.model;
 
 import io.domainlifecycles.diagramviewer.kroki.FileType;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -32,8 +33,13 @@ public class Diagram {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(nullable = false)
     private String fileName;
+
+    @Column(nullable = false)
     private FileType fileType;
+
+    @Column(nullable = false)
     private String fullAbsoluteLocationPath;
 
     @ManyToOne(fetch = FetchType.EAGER)

@@ -185,7 +185,10 @@ public class MainLayout extends AppLayout {
             ComponentUtil.addListener(
                 attachEvent.getUI(),
                 DiagramsOrProjectsChangedEvent.class,
-                event -> refreshSideNavLinks()
+                event -> {
+                    refreshSideNavLinks();
+                    sessionStorage.refreshAuthenticatedUser();
+                }
             );
     }
 

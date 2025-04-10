@@ -1,13 +1,11 @@
 package io.domainlifecycles.diagramviewer;
 
 import com.vaadin.flow.component.page.AppShellConfigurator;
-import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.server.AppShellSettings;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@Push // Enable Vaadin Push to allow server side updates
 public class DiagramViewerApplication implements AppShellConfigurator {
 
     public static void main(String[] args) {

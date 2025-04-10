@@ -80,6 +80,14 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project save(Project project) {
+        String projectNameClean = project.getProjectNameClean();
+        Optional<Project> fetchedProject = repository.findByProjectNameClean(projectNameClean);
+
+        if(fetchedProject.isPresent()) {
+            throw DiagramViewerException.fail(String.format("Project with name '%s' already exists. Please choose a different filename.",
+                projectNameClean));
+        }
+
         return repository.save(project);
     }
 
