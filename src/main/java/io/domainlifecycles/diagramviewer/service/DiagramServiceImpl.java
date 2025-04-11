@@ -7,9 +7,9 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.mirror.api.DomainModel;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -21,29 +21,26 @@ public class DiagramServiceImpl implements DiagramService {
 
     private final String diagramsLocation;
     private final DiagramRepository repository;
-    private final SessionStorage sessionStorage;
     private final KrokiClient krokiClient;
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
         DiagramRepository repository,
-        SessionStorage sessionStorage,
         KrokiClient krokiClient) {
 
         this.diagramsLocation = diagramsLocation;
         this.repository = repository;
-        this.sessionStorage = sessionStorage;
         this.krokiClient = krokiClient;
     }
 
     @Override
-    public void save(Diagram diagram) {
+    public void save(Diagram diagram, DomainModel domainModel) {
         Diagram persistedDiagram = repository.save(diagram);
-        createAndSaveDiagramToFilesystem(persistedDiagram.getProject(), persistedDiagram);
+        createAndSaveDiagramToFilesystem(domainModel, persistedDiagram);
     }
 
     @Override
-    public Diagram save(Project project, String fileName, String contextPackageName, FileType fileType) {
+    public Diagram save(Project project, DomainModel domainModel, String fileName, String contextPackageName, FileType fileType) {
         Path diagramPath = Path.of(diagramsLocation, project.getProjectNameClean(), fileName + fileType.getFileSuffix());
 
         Diagram diagram = Diagram.builder()
@@ -58,7 +55,7 @@ public class DiagramServiceImpl implements DiagramService {
             .build();
 
         Diagram persistedDiagram = repository.save(diagram);
-        createAndSaveDiagramToFilesystem(project, persistedDiagram);
+        createAndSaveDiagramToFilesystem(domainModel, persistedDiagram);
 
         return persistedDiagram;
     }
@@ -74,9 +71,9 @@ public class DiagramServiceImpl implements DiagramService {
         }
     }
 
-    private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
+    private void createAndSaveDiagramToFilesystem(DomainModel domainModel, Diagram diagram) {
         final String nomnoml = DiagrammerUtils.generateNomnoml(
-            sessionStorage.get(project.getId()),
+            domainModel,
             diagram.getDiagramStylingConfiguration(),
             diagram.getDomainModelVisibility());
 

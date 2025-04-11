@@ -12,7 +12,9 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.ColorPickerComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Styling;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
@@ -27,14 +29,18 @@ import java.util.regex.Pattern;
  */
 public class StylingConfigurationDialog extends Dialog {
 
+    private final Project project;
     private final Diagram diagram;
     private final DiagramService diagramService;
+    private final SessionStorage sessionStorage;
     private final Binder<DiagramStylingConfiguration> binder;
 
 
-    public StylingConfigurationDialog(Diagram diagram, DiagramService diagramService) {
+    public StylingConfigurationDialog(Project project, Diagram diagram, DiagramService diagramService, SessionStorage sessionStorage) {
+        this.project = project;
         this.diagram = diagram;
         this.diagramService = diagramService;
+        this.sessionStorage = sessionStorage;
         this.binder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Styling");
@@ -55,7 +61,7 @@ public class StylingConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             binder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
-            diagramService.save(diagram);
+            diagramService.save(diagram, sessionStorage.get(project.getId()));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });

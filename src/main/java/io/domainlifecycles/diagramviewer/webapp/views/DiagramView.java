@@ -93,7 +93,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
-        diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(diagram, diagramService));
+        diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(project, diagram, diagramService, sessionStorage));
         diagramViewerAndStylingContainer.add(createDiagramZoomComponentContainer());
         diagramViewerAndStylingContainer.add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService));
 

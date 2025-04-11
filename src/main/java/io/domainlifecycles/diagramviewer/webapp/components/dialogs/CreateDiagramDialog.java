@@ -11,19 +11,21 @@ import com.vaadin.flow.component.textfield.TextField;
 import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 
 public class CreateDiagramDialog extends Dialog {
 
     private final DiagramService diagramService;
-
-    private Project project;
+    private final SessionStorage sessionStorage;
+    private final Project project;
     private String fileName;
     private String packageName;
     private FileType fileType;
 
-    public CreateDiagramDialog(Project project, DiagramService diagramService) {
+    public CreateDiagramDialog(DiagramService diagramService, SessionStorage sessionStorage, Project project) {
         this.diagramService = diagramService;
+        this.sessionStorage = sessionStorage;
         this.project = project;
 
         setHeaderTitle("Create Diagram");
@@ -37,7 +39,7 @@ public class CreateDiagramDialog extends Dialog {
         Button createButton = new Button("Create");
 
         createButton.addClickListener(e -> {
-            diagramService.save(project, fileName, packageName, fileType);
+            diagramService.save(project, sessionStorage.get(project.getId()), fileName, packageName, fileType);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });

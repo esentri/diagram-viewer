@@ -1,37 +1,51 @@
 package io.domainlifecycles.diagramviewer.session;
 
-import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
+import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.stereotype.Component;
 
 /**
  * Holds session values about the initialized Domain models.
  */
-@VaadinSessionScope
+@Component("sessionStorage")
+@Scope(scopeName = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class SessionStorage {
 
-    private static final Logger log = LoggerFactory.getLogger(SessionStorage.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionStorage.class);
 
     private final AuthenticatedUserService authenticatedUserService;
+    private final ProjectService projectService;
+    private final String targetsDirectory;
+    private final HashMap<Long, DomainModel> domainModelStore;
+
     private AuthenticatedUser authenticatedUser;
     private Project selectedProject;
     private Diagram selectedDiagram;
-    private final String targetsLocation;
-    private final HashMap<Long, DomainModel> domainModelStore;
 
-    public SessionStorage(AuthenticatedUserService authenticatedUserService, @Value("${targets.location}") String targetsLocation) {
+
+    public SessionStorage(
+        @Value("${targets.location}") String targetsDirectory,
+        AuthenticatedUserService authenticatedUserService, ProjectService projectService) {
+
+        this.targetsDirectory = targetsDirectory;
         this.authenticatedUserService = authenticatedUserService;
+        this.projectService = projectService;
         domainModelStore = new HashMap<>();
-        this.targetsLocation = targetsLocation;
+
+        initializeAllDomainModels();
     }
 
     public AuthenticatedUser getAuthenticatedUser() {
@@ -85,10 +99,20 @@ public class SessionStorage {
     }
 
     public String getTargetsLocation() {
-        return targetsLocation;
+        return targetsDirectory;
     }
 
     public boolean isDiagramSelected() {
         return selectedDiagram != null;
+    }
+
+    private void initializeAllDomainModels(){
+        if (targetsDirectory != null) {
+            File dir = new File(targetsDirectory);
+
+            if(dir.exists()) {
+                projectService.getAll(dir.toPath(), authenticatedUser).forEach(this::add);
+            }
+        }
     }
 }

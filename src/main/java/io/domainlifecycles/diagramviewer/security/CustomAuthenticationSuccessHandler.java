@@ -9,6 +9,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -16,7 +19,8 @@ import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("customAuthenticationSuccessHandler")
+@Scope(scopeName = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomAuthenticationSuccessHandler.class);
@@ -24,7 +28,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     private final AuthenticatedUserService authenticatedUserService;
     private final SessionStorage sessionStorage;
 
-    public CustomAuthenticationSuccessHandler(AuthenticatedUserService authenticatedUserService, SessionStorage sessionStorage) {
+    public CustomAuthenticationSuccessHandler(AuthenticatedUserService authenticatedUserService,
+                                              @Qualifier("sessionStorage") SessionStorage sessionStorage) {
         this.authenticatedUserService = authenticatedUserService;
         this.sessionStorage = sessionStorage;
     }

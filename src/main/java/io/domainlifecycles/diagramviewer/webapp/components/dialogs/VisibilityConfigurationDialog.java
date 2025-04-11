@@ -12,13 +12,17 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 
 public class VisibilityConfigurationDialog extends Dialog {
 
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
+    private final SessionStorage sessionStorage;
     private final DiagramService diagramService;
+    private final Project project;
     private final Diagram diagram;
 
     private Checkbox showAllFieldsCheckbox;
@@ -43,9 +47,11 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showUnspecifiedServiceKindMethodsCheckbox;
 
 
-    public VisibilityConfigurationDialog(Diagram diagram, DiagramService diagramService) {
-        this.diagram = diagram;
+    public VisibilityConfigurationDialog(SessionStorage sessionStorage, DiagramService diagramService, Project project, Diagram diagram) {
+        this.sessionStorage = sessionStorage;
         this.diagramService = diagramService;
+        this.project = project;
+        this.diagram = diagram;
         diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Visibility");
@@ -65,7 +71,7 @@ public class VisibilityConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
-            diagramService.save(diagram);
+            diagramService.save(diagram, sessionStorage.get(project.getId()));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });

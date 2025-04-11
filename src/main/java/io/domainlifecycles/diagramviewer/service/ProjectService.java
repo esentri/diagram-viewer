@@ -13,7 +13,7 @@ public interface ProjectService {
     Stream<Project> getAll(Path targetDirectory, AuthenticatedUser authenticatedUser);
     Project getByProjectNameClean(final String projectNameClean);
     Project removeDiagram(Project project, Diagram diagram);
-    void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages);
+    Project save(AuthenticatedUser authenticatedUser, String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages);
     void assignUser(Project project, String emailAddress);
     void unassignUser(Project project, User user);
     void delete(Project project);

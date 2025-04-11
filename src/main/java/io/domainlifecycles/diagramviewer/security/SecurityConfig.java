@@ -1,12 +1,15 @@
 package io.domainlifecycles.diagramviewer.security;
 
+import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.spring.security.NavigationAccessControlConfigurer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
@@ -14,10 +17,11 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final CustomAuthenticationSuccessHandler successHandler;
-    private final ProjectAndDiagramNavigationAccessChecker navigationAccessChecker;
+    private final AuthenticationSuccessHandler successHandler;
+    private final NavigationAccessChecker navigationAccessChecker;
 
-    public SecurityConfig(CustomAuthenticationSuccessHandler successHandler, ProjectAndDiagramNavigationAccessChecker navigationAccessChecker) {
+    public SecurityConfig(@Qualifier("customAuthenticationSuccessHandler") AuthenticationSuccessHandler successHandler,
+                          @Qualifier("projectAndDiagramNavigationAccessChecker") NavigationAccessChecker navigationAccessChecker) {
         this.successHandler = successHandler;
         this.navigationAccessChecker = navigationAccessChecker;
     }

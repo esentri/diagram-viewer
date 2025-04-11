@@ -100,7 +100,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getCreateDiagramButton() {
-        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(project, diagramService);
+        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(diagramService, sessionStorage, project);
 
         Button createDiagramButton = new Button("Create new Diagram", new Icon("vaadin:plus"));
         createDiagramButton.getStyle().set("cursor", "pointer");

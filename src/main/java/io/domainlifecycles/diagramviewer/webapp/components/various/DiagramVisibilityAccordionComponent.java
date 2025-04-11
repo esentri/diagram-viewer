@@ -33,7 +33,6 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
 
     public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, SessionStorage sessionStorage, DiagramService diagramService) {
         this.setWidth("30%");
-        this.setClassName("visibility-accordion");
         this.sessionStorage = sessionStorage;
         this.diagramService = diagramService;
         this.project = project;
@@ -85,7 +84,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                             }
 
                             diagram.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(blackListedClassNames));
-                            diagramService.save(diagram);
+                            diagramService.save(diagram, sessionStorage.get(project.getId()));
                             ComponentUtil.fireEvent(
                                 UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
                         });
@@ -115,7 +114,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                                 }
 
                                 diagram.setDomainModelVisibility(visibility.replaceSeedClassNames(seed));
-                                diagramService.save(diagram);
+                                diagramService.save(diagram, sessionStorage.get(project.getId()));
                                 ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
                             });
                         }

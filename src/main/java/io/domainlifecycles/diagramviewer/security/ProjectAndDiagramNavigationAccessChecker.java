@@ -7,15 +7,20 @@ import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
-import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component("projectAndDiagramNavigationAccessChecker")
+@Scope(scopeName = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class ProjectAndDiagramNavigationAccessChecker implements NavigationAccessChecker {
 
     private final AuthenticatedUserService authenticatedUserService;
     private final SessionStorage sessionStorage;
 
-    public ProjectAndDiagramNavigationAccessChecker(AuthenticatedUserService authenticatedUserService, SessionStorage sessionStorage) {
+    public ProjectAndDiagramNavigationAccessChecker(AuthenticatedUserService authenticatedUserService,
+                                                    @Qualifier("sessionStorage") SessionStorage sessionStorage) {
         this.authenticatedUserService = authenticatedUserService;
         this.sessionStorage = sessionStorage;
     }

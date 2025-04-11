@@ -10,6 +10,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
@@ -44,7 +45,9 @@ public class UploadDialog extends Dialog {
                 throw DiagramViewerException.fail("No upload location for targets specified.");
             }
 
-            projectService.save(targetsLocation, fileInputStream, fileName, boundedContextPackages);
+            Project persistedProject = projectService.save(sessionStorage.getAuthenticatedUser(), targetsLocation, fileInputStream,
+                fileName, boundedContextPackages);
+            sessionStorage.add(persistedProject);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
 
             log.info(String.format("Successfully uploaded file '%s' to '%s'.", fileName, targetsLocation));

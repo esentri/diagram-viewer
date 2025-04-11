@@ -7,7 +7,6 @@ import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.File;
 import java.io.IOException;
@@ -21,36 +20,28 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProjectServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
-    private final SessionStorage sessionStorage;
     private final DiagramService diagramService;
     private final AuthenticatedUserService authenticatedUserService;
     private final TemporaryUserService temporaryUserService;
     private final ProjectRepository repository;
-    private final String targetsDirectory;
 
     public ProjectServiceImpl(
-        @Value("${targets.location}") String defaultTargetsDirectory,
-        SessionStorage sessionStorage,
         DiagramService diagramService,
         AuthenticatedUserService authenticatedUserService,
         TemporaryUserService temporaryUserService,
         ProjectRepository repository) {
 
-        this.targetsDirectory = defaultTargetsDirectory;
-        this.sessionStorage = sessionStorage;
         this.diagramService = diagramService;
         this.authenticatedUserService = authenticatedUserService;
         this.temporaryUserService = temporaryUserService;
         this.repository = repository;
-        initializeAllDomainModels();
     }
 
     @Override
@@ -110,8 +101,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void save(String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages) {
-        final Project project = mapProject(targetsLocation, fileName, boundedContextPackages, sessionStorage.getAuthenticatedUser());
+    public Project save(AuthenticatedUser authenticatedUser, String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages) {
+        final Project project = mapProject(targetsLocation, fileName, boundedContextPackages, authenticatedUser);
         Project persistedProject = create(project);
 
         try {
@@ -121,7 +112,7 @@ public class ProjectServiceImpl implements ProjectService {
                 targetsLocation), e);
         }
 
-        sessionStorage.add(persistedProject);
+        return persistedProject;
     }
 
     @Override
@@ -193,15 +184,5 @@ public class ProjectServiceImpl implements ProjectService {
 
     private String buildCleanFileName(final String fileName) {
         return fileName == null || fileName.isBlank() ? fileName : fileName.replaceAll("[.-]", "_");
-    }
-
-    private void initializeAllDomainModels(){
-        if (targetsDirectory != null) {
-            File dir = new File(targetsDirectory);
-
-            if(dir.exists()) {
-                getAll(dir.toPath()).forEach(sessionStorage::add);
-            }
-        }
     }
 }
