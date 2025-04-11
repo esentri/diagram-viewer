@@ -23,22 +23,19 @@ import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.EditProjectDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ManageUsersDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ShareProjectDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramCardGridContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Route(value = "/:projectName", layout = MainLayout.class)
 @PageTitle("DLC | Project Viewer")
 @PermitAll
 public class ProjectView extends FlexLayout implements BeforeEnterObserver {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(ProjectView.class);
 
     private final SQLDDLGeneratorService sqlddlGeneratorService;
     private final ProjectService projectService;
@@ -47,7 +44,6 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private Project project;
     private String projectNameClean;
-    private DiagramCardGridContainer diagramCardGridContainer;
     private Registration registration;
 
     public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
@@ -63,12 +59,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        projectNameClean = event.getRouteParameters().get("projectName").get();
-
-        removeAll();
-        setProject();
-        addPageContents();
-        refreshDiagramCardGrid();
+        projectNameClean = event.getRouteParameters().get("projectName").orElseThrow();
+        refreshPage();
     }
 
     private void setProject() {
@@ -77,17 +69,26 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private void addPageContents() {
-        add(new H2(projectNameClean));
-        add(createAndGetButtonBar());
-
-        diagramCardGridContainer = new DiagramCardGridContainer();
-        Scroller scroller = new Scroller(diagramCardGridContainer);
+        add(createAndGetNameAndEditButtonLayout(), createAndGetButtonBar());
+        Scroller scroller = new Scroller(new DiagramCardGridContainer(project));
         add(scroller);
     }
 
-    private void refreshDiagramCardGrid() {
+    private HorizontalLayout createAndGetNameAndEditButtonLayout() {
+        EditProjectDialog editProjectDialog = new EditProjectDialog(project, projectService, sessionStorage);
+
+        HorizontalLayout horizontalNameAndEditButtonLayout = new HorizontalLayout();
+        Button editProjectButton = new Button(new Icon("vaadin:pencil"), e -> editProjectDialog.open());
+        editProjectButton.addThemeName("icon");
+        horizontalNameAndEditButtonLayout.add(new H2(project.getDisplayName()), editProjectButton);
+
+        return horizontalNameAndEditButtonLayout;
+    }
+
+    private void refreshPage() {
         setProject();
-        diagramCardGridContainer.reloadDiagramCardGrid(project);
+        removeAll();
+        addPageContents();
     }
 
     private HorizontalLayout createAndGetButtonBar() {
@@ -122,13 +123,13 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getManageUsersButton() {
-        ManageUsersDialog manageUsersDialog = new ManageUsersDialog(projectService, sessionStorage, project);
+        ShareProjectDialog shareProjectDialog = new ShareProjectDialog(projectService, sessionStorage, project);
 
-        Button manageUsersButton = new Button("Manage Users", new Icon("vaadin:tools"));
-        manageUsersButton.getStyle().set("cursor", "pointer");
-        manageUsersButton.setEnabled(Objects.equals(project.getCreator().getId(), sessionStorage.getAuthenticatedUser().getId()));
-        manageUsersButton.addClickListener(e -> manageUsersDialog.open());
-        return manageUsersButton;
+        Button shareProjectButton = new Button("Share Project", new Icon("vaadin:tools"));
+        shareProjectButton.getStyle().set("cursor", "pointer");
+        shareProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), sessionStorage.getAuthenticatedUser().getId()));
+        shareProjectButton.addClickListener(e -> shareProjectDialog.open());
+        return shareProjectButton;
     }
 
     private Button getDeleteProjectButton() {
@@ -165,7 +166,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
                 attachEvent.getUI(),
                 DiagramsOrProjectsChangedEvent.class,
                 event -> {
-                    refreshDiagramCardGrid();
+                    refreshPage();
                     sessionStorage.refreshAuthenticatedUser();
                 }
         );

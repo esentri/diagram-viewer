@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ManageUsersDialog extends Dialog {
+public class ShareProjectDialog extends Dialog {
 
     private final ProjectService projectService;
     private final SessionStorage sessionStorage;
@@ -35,12 +35,12 @@ public class ManageUsersDialog extends Dialog {
     private Grid<User> userGrid;
     private Registration registration;
 
-    public ManageUsersDialog(ProjectService projectService, SessionStorage sessionStorage, Project project) {
+    public ShareProjectDialog(ProjectService projectService, SessionStorage sessionStorage, Project project) {
         this.project = project;
         this.projectService = projectService;
         this.sessionStorage = sessionStorage;
 
-        setHeaderTitle("Manage Users");
+        setHeaderTitle("Share Project");
 
         setWidth("40%");
         setHeight("60%");

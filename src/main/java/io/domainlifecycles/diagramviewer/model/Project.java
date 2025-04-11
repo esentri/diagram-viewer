@@ -41,8 +41,10 @@ public class Project {
     @Column(nullable = false)
     private String projectNameFull;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String projectNameClean; // Project name escaping special characters like '.'
+
+    private String displayName;
 
     @Column(unique=true)
     private String absolutePathToTarget;

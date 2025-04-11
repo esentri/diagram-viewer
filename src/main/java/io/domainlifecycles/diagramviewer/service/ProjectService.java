@@ -11,10 +11,19 @@ import java.util.stream.Stream;
 public interface ProjectService {
 
     Stream<Project> getAll(Path targetDirectory, AuthenticatedUser authenticatedUser);
+
     Project getByProjectNameClean(final String projectNameClean);
+
+    Project update(Project project);
+
     Project removeDiagram(Project project, Diagram diagram);
-    Project save(AuthenticatedUser authenticatedUser, String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages);
+
+    Project save(AuthenticatedUser authenticatedUser, String targetsLocation, InputStream fileContents,
+                 String fileName, String boundedContextPackages);
+
     void assignUser(Project project, String emailAddress);
+
     void unassignUser(Project project, User user);
+
     void delete(Project project);
 }

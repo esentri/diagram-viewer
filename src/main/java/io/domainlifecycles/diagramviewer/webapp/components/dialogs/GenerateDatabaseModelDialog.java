@@ -100,7 +100,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
 
     private String buildScriptFilename() {
         Project project = sessionStorage.getSelectedProject();
-        return project == null ? "dlc-project" + SQL_DDL_SCRIPT_SUFFIX : project.getProjectNameClean() + SQL_DDL_SCRIPT_SUFFIX;
+        return project == null ? "dlc-project" + SQL_DDL_SCRIPT_SUFFIX : project.getDisplayName() + SQL_DDL_SCRIPT_SUFFIX;
     }
 
     private Button createCloseButton() {

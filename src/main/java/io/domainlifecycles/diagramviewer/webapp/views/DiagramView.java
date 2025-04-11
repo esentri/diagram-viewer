@@ -37,15 +37,11 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Route(value = "/:projectName/:diagramName", layout = MainLayout.class)
 @PageTitle("DLC | Diagram Viewer")
 @PermitAll
 public class DiagramView extends FlexLayout implements BeforeEnterObserver {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(DiagramView.class);
 
     private final ProjectService projectService;
     private final DiagramService diagramService;
@@ -54,7 +50,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private String diagramName;
     private Project project;
     private Diagram diagram;
-    private DiagramZoomComponentContainer zoomComponentContainer;
     private Registration registration;
 
     public DiagramView(SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
@@ -68,13 +63,16 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        projectNameClean = event.getRouteParameters().get("projectName").get();
-        diagramName = event.getRouteParameters().get("diagramName").get();
+        projectNameClean = event.getRouteParameters().get("projectName").orElseThrow();
+        diagramName = event.getRouteParameters().get("diagramName").orElseThrow();
 
+        refreshPage();
+    }
+
+    private void refreshPage() {
         removeAll();
         setProjectAndDiagram();
         addPageContents();
-        zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName);
     }
 
     private void setProjectAndDiagram() {
@@ -94,7 +92,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
         diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(project, diagram, diagramService, sessionStorage));
-        diagramViewerAndStylingContainer.add(createDiagramZoomComponentContainer());
+        diagramViewerAndStylingContainer.add(new DiagramZoomComponentContainer(projectNameClean, diagramName));
         diagramViewerAndStylingContainer.add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService));
 
         add(diagramViewerAndStylingContainer);
@@ -104,11 +102,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.add(getDiagramDownloadButton(), getDeleteDiagramButton());
         return buttonBar;
-    }
-
-    private FlexLayout createDiagramZoomComponentContainer() {
-        zoomComponentContainer = new DiagramZoomComponentContainer();
-        return zoomComponentContainer;
     }
 
     private Anchor getDiagramDownloadButton() {
@@ -172,7 +165,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             ComponentUtil.addListener(
                 attachEvent.getUI(),
                 DiagramStylingChangedEvent.class,
-                event -> zoomComponentContainer.reloadZoomComponent(projectNameClean, diagramName)
+                event -> refreshPage()
             );
     }
 

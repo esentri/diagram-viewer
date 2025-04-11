@@ -6,19 +6,10 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.cards.Diagram
 
 public class DiagramCardGridContainer extends FlexLayout {
 
-    private DiagramCardGrid diagramCardGrid;
-
-    public DiagramCardGridContainer() {
+    public DiagramCardGridContainer(final Project project) {
         setSizeUndefined();
         setWidthFull();
-    }
 
-    public void reloadDiagramCardGrid(final Project project) {
-        if(diagramCardGrid != null) {
-            removeAll();
-        }
-
-        diagramCardGrid = new DiagramCardGrid(project);
-        add(diagramCardGrid);
+        add(new DiagramCardGrid(project));
     }
 }

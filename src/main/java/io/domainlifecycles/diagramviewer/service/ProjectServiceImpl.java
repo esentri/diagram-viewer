@@ -69,19 +69,13 @@ public class ProjectServiceImpl implements ProjectService {
                 projectNameClean)));
     }
 
-    private Project create(Project project) {
-        String projectNameClean = project.getProjectNameClean();
-        Optional<Project> fetchedProject = repository.findByProjectNameClean(projectNameClean);
+    @Override
+    public Project update(Project project) {
 
-        if(fetchedProject.isPresent()) {
-            throw DiagramViewerException.fail(String.format("Project with name '%s' already exists. Please choose a different filename.",
-                projectNameClean));
-        }
+        // Ensure Project Name Clean still meets the requirements
+        project.setDisplayName(buildCleanFileName(project.getDisplayName()));
+        checkProjectValueRequirements(project);
 
-        return repository.save(project);
-    }
-
-    private Project update(Project project) {
         return repository.save(project);
     }
 
@@ -102,7 +96,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project save(AuthenticatedUser authenticatedUser, String targetsLocation, InputStream fileContents, String fileName, String boundedContextPackages) {
-        final Project project = mapProject(targetsLocation, fileName, boundedContextPackages, authenticatedUser);
+        final Project project = mapNewProject(targetsLocation, fileName, boundedContextPackages, authenticatedUser);
+        checkProjectValueRequirements(project);
         Project persistedProject = create(project);
 
         try {
@@ -168,18 +163,42 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
-    private Project mapProject(String targetsLocation, String fileName, String boundedContextPackages, AuthenticatedUser authenticatedUser) {
-        Path filePath = Path.of(targetsLocation);
-        List<String> boundedContexts = Arrays.stream(boundedContextPackages.split(",")).toList();
+    private Project create(Project project) {
+        String projectNameClean = project.getProjectNameClean();
+        Optional<Project> fetchedProject = repository.findByProjectNameClean(projectNameClean);
+
+        if(fetchedProject.isPresent()) {
+            throw DiagramViewerException.fail(String.format("Project with name '%s' already exists. Please choose a different filename.",
+                projectNameClean));
+        }
+
+        return repository.save(project);
+    }
+
+    private Project mapNewProject(String targetsLocation, String fileName, String boundedContextPackages, AuthenticatedUser authenticatedUser) {
+        final Path filePath = Path.of(targetsLocation);
+        final List<String> boundedContexts = Arrays.stream(boundedContextPackages.split(",")).toList();
+        final String projectNameClean = buildCleanFileName(fileName);
 
         return Project.builder()
             .projectNameFull(fileName)
-            .projectNameClean(buildCleanFileName(fileName))
+            .projectNameClean(projectNameClean)
+            .displayName(projectNameClean)
             .absolutePathToTarget(filePath.toAbsolutePath() + "/" + fileName)
             .boundedContextPackages(boundedContexts)
             .creator(authenticatedUser)
             .assignedAuthenticatedUsers(List.of(authenticatedUser))
             .build();
+    }
+
+    private void checkProjectValueRequirements(Project project) {
+        if(project.getDisplayName() == null || project.getDisplayName().isBlank()) {
+            throw DiagramViewerException.fail("Project name may not be empty.");
+        }
+
+        if(project.getBoundedContextPackages().isEmpty() || project.getBoundedContextPackages().get(0).isBlank()) {
+            throw DiagramViewerException.fail("Project has to have at least one bounded context package");
+        }
     }
 
     private String buildCleanFileName(final String fileName) {

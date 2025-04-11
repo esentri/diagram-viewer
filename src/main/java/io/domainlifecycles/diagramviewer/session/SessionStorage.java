@@ -44,8 +44,6 @@ public class SessionStorage {
         this.authenticatedUserService = authenticatedUserService;
         this.projectService = projectService;
         domainModelStore = new HashMap<>();
-
-        initializeAllDomainModels();
     }
 
     public AuthenticatedUser getAuthenticatedUser() {
@@ -54,6 +52,7 @@ public class SessionStorage {
 
     public void setAuthenticatedUser(AuthenticatedUser authenticatedAuthenticatedUser) {
         this.authenticatedUser = authenticatedAuthenticatedUser;
+        initializeAllDomainModels();
     }
 
     public void refreshAuthenticatedUser() {
@@ -104,6 +103,12 @@ public class SessionStorage {
 
     public boolean isDiagramSelected() {
         return selectedDiagram != null;
+    }
+
+    public void reloadProject(Project persistedProject) {
+        setSelectedProject(persistedProject);
+        refreshAuthenticatedUser();
+        initializeAllDomainModels();
     }
 
     private void initializeAllDomainModels(){

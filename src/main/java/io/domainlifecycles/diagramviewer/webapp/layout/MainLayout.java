@@ -134,7 +134,7 @@ public class MainLayout extends AppLayout {
         return projectService.getAll(buildPath(sessionStorage.getTargetsLocation()), sessionStorage.getAuthenticatedUser())
             .sorted(Comparator.comparing(Project::getCreatedAt))
             .map(project -> {
-                SideNavItem parentSideNavItem = new SideNavItem(project.getProjectNameFull(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
+                SideNavItem parentSideNavItem = new SideNavItem(project.getDisplayName(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
                 parentSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
 
                 project.getDiagrams()
