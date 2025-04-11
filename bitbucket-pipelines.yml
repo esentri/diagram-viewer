@@ -60,7 +60,7 @@ pipelines:
             - zip
           script:
             - gradle clean build -Pvaadin.productionMode -x test 
-            - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar .platform
+            - zip -r application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar .platform
           artifacts:
             - application.zip
       - step:
