@@ -16,7 +16,7 @@ public interface ProjectService {
 
     Project update(Project project);
 
-    Project deleteDiagram(Project project, Diagram diagram);
+    void deleteDiagram(Project project, Diagram diagram);
 
     Project save(AuthenticatedUser authenticatedUser, String targetsLocation, InputStream fileContents,
                  String fileName, String boundedContextPackages);

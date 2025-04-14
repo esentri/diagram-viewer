@@ -23,6 +23,7 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
@@ -55,15 +56,21 @@ public class Project {
     @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
-    @Builder.Default private Set<Diagram> diagrams = new HashSet<>();
+    @Builder.Default
+    @EqualsAndHashCode.Exclude
+    private Set<Diagram> diagrams = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_authenticated_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "authenticated_user_id"))
-    @Builder.Default private Set<AuthenticatedUser> assignedAuthenticatedUsers = new HashSet<>();
+    @Builder.Default
+    @EqualsAndHashCode.Exclude
+    private Set<AuthenticatedUser> assignedAuthenticatedUsers = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_temporary_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "temporary_user_id"))
-    @Builder.Default private Set<TemporaryUser> assignedTemporaryUsers = new HashSet<>();
+    @Builder.Default
+    @EqualsAndHashCode.Exclude
+    private Set<TemporaryUser> assignedTemporaryUsers = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="authenticated_user_id", nullable=false)

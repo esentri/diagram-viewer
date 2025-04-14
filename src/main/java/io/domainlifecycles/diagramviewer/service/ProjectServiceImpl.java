@@ -79,7 +79,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project deleteDiagram(Project project, Diagram diagram) {
+    public void deleteDiagram(Project project, Diagram diagram) {
         final String diagramPath = diagram.getFullAbsoluteLocationPath();
 
         project.getDiagrams().remove(diagram);
@@ -87,7 +87,6 @@ public class ProjectServiceImpl implements ProjectService {
 
         try {
             FileIOUtils.deleteFileByAbsolutePath(diagramPath);
-            return persistedProject;
         } catch (IOException e) {
             throw DiagramViewerException.fail("Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
         }
@@ -117,11 +116,14 @@ public class ProjectServiceImpl implements ProjectService {
         boolean userIsSignedUp = authenticatedUserService.userKnown(emailAddress);
         final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.getOrCreate(emailAddress);
 
+        if(userIsAlreadyAssignedToProject(project, user)) {
+            throw DiagramViewerException.fail(String.format("User '%s' is already assigned to project.", emailAddress));
+        }
+
         final Project fetchedProject = repository.findById(project.getId()).orElseThrow();
         fetchedProject.assignUser(user);
         update(fetchedProject);
     }
-
     @Override
     public Project unassignUser(Project project, User user) {
         if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getId(), ((AuthenticatedUser) user).getId())) return project;
@@ -169,18 +171,27 @@ public class ProjectServiceImpl implements ProjectService {
     private Project mapNewProject(String targetsLocation, String fileName, String boundedContextPackages, AuthenticatedUser authenticatedUser) {
         final Path filePath = Path.of(targetsLocation);
         final List<String> boundedContexts = Arrays.stream(boundedContextPackages.split(",")).toList();
-        final String projectNameClean = buildCleanFileName(fileName);
 
         return Project.builder()
             .projectNameFull(fileName)
-            .projectNameClean(projectNameClean)
-            .displayName(projectNameClean)
+            .projectNameClean(buildCleanFileName(fileName))
+            .displayName(fileName)
             .absolutePathToTarget(filePath.toAbsolutePath() + "/" + fileName)
             .boundedContextPackages(boundedContexts)
             .creator(authenticatedUser)
             .assignedAuthenticatedUsers(Set.of(authenticatedUser))
             .build();
     }
+
+    private boolean userIsAlreadyAssignedToProject(Project project, User user) {
+        return user instanceof TemporaryUser && project.getAssignedTemporaryUsers().stream().anyMatch(
+            temporaryUser -> Objects.equals(
+                ((TemporaryUser) user).getId(),
+                temporaryUser.getId())) || user instanceof AuthenticatedUser && project.getAssignedAuthenticatedUsers().stream().anyMatch(
+            authenticatedUser -> Objects.equals(
+                ((AuthenticatedUser) user).getId(), authenticatedUser.getId()));
+    }
+
 
     private void checkProjectValueRequirements(Project project) {
         if(project.getDisplayName() == null || project.getDisplayName().isBlank()) {

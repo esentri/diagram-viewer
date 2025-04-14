@@ -1,7 +1,6 @@
-import {LitElement} from 'lit';
-import {Product} from './License';
-import {ConnectionStatus} from './connection';
-
+import { LitElement } from 'lit';
+import { Product } from './License';
+import { ConnectionStatus } from './connection';
 /**
  * Plugin API for the dev tools window.
  */

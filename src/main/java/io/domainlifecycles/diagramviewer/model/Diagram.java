@@ -50,8 +50,10 @@ public class Diagram {
     private Instant createdAt;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @Builder.Default private DiagramStylingConfiguration diagramStylingConfiguration = new DiagramStylingConfiguration();
+    @Builder.Default
+    private DiagramStylingConfiguration diagramStylingConfiguration = new DiagramStylingConfiguration();
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @Builder.Default private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null);
+    @Builder.Default
+    private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null);
 }

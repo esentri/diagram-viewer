@@ -39,7 +39,9 @@ public class TemporaryUser extends User {
     private Long id;
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedTemporaryUsers")
-    @Builder.Default private Set<Project> assignedProjects = new HashSet<>();
+    @Builder.Default
+    @EqualsAndHashCode.Exclude
+    private Set<Project> assignedProjects = new HashSet<>();
 
     @Override
     public void addAssignedProject(Project project) {

@@ -8,6 +8,8 @@ import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -112,7 +114,10 @@ class SecurityService_ITest {
         assertThat(authenticatedUser.getFullName()).isEqualTo(TEMPORARY_USER_FULL_NAME);
         assertThat(authenticatedUser.getAssignedProjects()).anySatisfy(projectToAssert -> {
             assertThat(projectToAssert.getId()).isEqualTo(project.getId());
-            assertThat(projectToAssert.getAssignedAuthenticatedUsers().get(0).getId()).isEqualTo(project.getAssignedAuthenticatedUsers().get(0).getId());
+
+            assertThat(projectToAssert.getAssignedAuthenticatedUsers().size()).isEqualTo(1);
+            assertThat(projectToAssert.getAssignedAuthenticatedUsers()).anySatisfy(user -> Objects.equals(user.getId(), authenticatedUser.getId()));
+
             assertThat(projectToAssert.getAssignedTemporaryUsers()).isEmpty();
             assertThat(projectToAssert.getCreator().getId()).isEqualTo(project.getCreator().getId());
         });
@@ -126,7 +131,7 @@ class SecurityService_ITest {
             .displayName("project-1.0.0.jar")
             .absolutePathToTarget("target/project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
-            .assignedAuthenticatedUsers(List.of(authenticatedUser))
+            .assignedAuthenticatedUsers(Set.of(authenticatedUser))
             .creator(authenticatedUser)
             .build();
 
