@@ -71,7 +71,6 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project update(Project project) {
-
         // Ensure Project Name Clean still meets the requirements
         project.setDisplayName(buildCleanFileName(project.getDisplayName()));
         checkProjectValueRequirements(project);
@@ -80,7 +79,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project removeDiagram(Project project, Diagram diagram) {
+    public Project deleteDiagram(Project project, Diagram diagram) {
         final String diagramPath = diagram.getFullAbsoluteLocationPath();
 
         project.getDiagrams().remove(diagram);
@@ -118,41 +117,33 @@ public class ProjectServiceImpl implements ProjectService {
         boolean userIsSignedUp = authenticatedUserService.userKnown(emailAddress);
         final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.getOrCreate(emailAddress);
 
-        final Project fetchedProject = repository.findById(project.getId()).get();
+        final Project fetchedProject = repository.findById(project.getId()).orElseThrow();
         fetchedProject.assignUser(user);
-        Project updatedProject = update(fetchedProject);
-
-        if(user instanceof AuthenticatedUser) {
-            authenticatedUserService.addProject((AuthenticatedUser) user, updatedProject);
-        } else {
-            temporaryUserService.addProject((TemporaryUser) user, updatedProject);
-        }
+        update(fetchedProject);
     }
 
     @Override
-    public void unassignUser(Project project, User user) {
-        if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getId(), ((AuthenticatedUser) user).getId())) return;
+    public Project unassignUser(Project project, User user) {
+        if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getId(), ((AuthenticatedUser) user).getId())) return project;
 
-        final Project fetchedProject = repository.findById(project.getId()).get();
+        final Project fetchedProject = repository.findById(project.getId()).orElseThrow();
         fetchedProject.unassignUser(user);
         Project updatedProject = update(fetchedProject);
 
-        if(user instanceof AuthenticatedUser) {
-            authenticatedUserService.removeProject((AuthenticatedUser) user, updatedProject);
-        } else {
-            TemporaryUser updatedUser = temporaryUserService.removeProject((TemporaryUser) user, updatedProject);
-            if(updatedUser.getAssignedProjects().isEmpty()) temporaryUserService.delete(updatedUser);
+        if(user instanceof TemporaryUser && temporaryUserService.checkForRemoval((TemporaryUser) user)) {
+            temporaryUserService.delete((TemporaryUser) user);
         }
+
+        return updatedProject;
     }
 
     @Override
     public void delete(Project project) {
-        String projectNameClean = project.getProjectNameClean();
-        Project fetchedProject = getByProjectNameClean(projectNameClean);
-        String absolutePathToTarget = fetchedProject.getAbsolutePathToTarget();
+        final String projectNameClean = project.getProjectNameClean();
+        final String absolutePathToTarget = project.getAbsolutePathToTarget();
 
-        fetchedProject.getAssignedTemporaryUsers().clear();
-        fetchedProject.getAssignedAuthenticatedUsers().clear();
+        Project fetchedProject = getByProjectNameClean(projectNameClean);
+        fetchedProject.unassignAllUsers();
         repository.delete(fetchedProject);
 
         try {
@@ -187,7 +178,7 @@ public class ProjectServiceImpl implements ProjectService {
             .absolutePathToTarget(filePath.toAbsolutePath() + "/" + fileName)
             .boundedContextPackages(boundedContexts)
             .creator(authenticatedUser)
-            .assignedAuthenticatedUsers(List.of(authenticatedUser))
+            .assignedAuthenticatedUsers(Set.of(authenticatedUser))
             .build();
     }
 

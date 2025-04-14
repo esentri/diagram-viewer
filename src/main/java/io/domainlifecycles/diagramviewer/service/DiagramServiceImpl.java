@@ -34,13 +34,13 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public void save(Diagram diagram, DomainModel domainModel) {
+    public void update(Diagram diagram, DomainModel domainModel) {
         Diagram persistedDiagram = repository.save(diagram);
         createAndSaveDiagramToFilesystem(domainModel, persistedDiagram);
     }
 
     @Override
-    public Diagram save(Project project, DomainModel domainModel, String fileName, String contextPackageName, FileType fileType) {
+    public Diagram create(Project project, DomainModel domainModel, String fileName, String contextPackageName, FileType fileType) {
         Path diagramPath = Path.of(diagramsLocation, project.getProjectNameClean(), fileName + fileType.getFileSuffix());
 
         Diagram diagram = Diagram.builder()

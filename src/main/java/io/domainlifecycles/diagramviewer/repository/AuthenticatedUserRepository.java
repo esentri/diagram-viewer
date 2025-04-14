@@ -6,7 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends CrudRepository<AuthenticatedUser, Long> {
+public interface AuthenticatedUserRepository extends CrudRepository<AuthenticatedUser, Long> {
 
     Optional<AuthenticatedUser> findByEmailAddress(final String emailAddress);
     AuthenticatedUser getByEmailAddress(final String emailAddress);

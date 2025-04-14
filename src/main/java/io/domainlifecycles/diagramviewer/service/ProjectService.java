@@ -16,14 +16,14 @@ public interface ProjectService {
 
     Project update(Project project);
 
-    Project removeDiagram(Project project, Diagram diagram);
+    Project deleteDiagram(Project project, Diagram diagram);
 
     Project save(AuthenticatedUser authenticatedUser, String targetsLocation, InputStream fileContents,
                  String fileName, String boundedContextPackages);
 
     void assignUser(Project project, String emailAddress);
 
-    void unassignUser(Project project, User user);
+    Project unassignUser(Project project, User user);
 
     void delete(Project project);
 }

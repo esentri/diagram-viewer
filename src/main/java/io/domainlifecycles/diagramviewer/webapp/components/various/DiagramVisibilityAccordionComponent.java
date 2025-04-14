@@ -84,7 +84,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                             }
 
                             diagram.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(blackListedClassNames));
-                            diagramService.save(diagram, sessionStorage.get(project.getId()));
+                            diagramService.update(diagram, sessionStorage.get(project.getId()));
                             ComponentUtil.fireEvent(
                                 UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
                         });
@@ -114,7 +114,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                                 }
 
                                 diagram.setDomainModelVisibility(visibility.replaceSeedClassNames(seed));
-                                diagramService.save(diagram, sessionStorage.get(project.getId()));
+                                diagramService.update(diagram, sessionStorage.get(project.getId()));
                                 ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
                             });
                         }

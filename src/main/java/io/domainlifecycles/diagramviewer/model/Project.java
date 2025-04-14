@@ -16,8 +16,10 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -53,15 +55,15 @@ public class Project {
     @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
-    @Builder.Default private List<Diagram> diagrams = new ArrayList<>();
+    @Builder.Default private Set<Diagram> diagrams = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_authenticated_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "authenticated_user_id"))
-    @Builder.Default private List<AuthenticatedUser> assignedAuthenticatedUsers = new ArrayList<>();
+    @Builder.Default private Set<AuthenticatedUser> assignedAuthenticatedUsers = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_temporary_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "temporary_user_id"))
-    @Builder.Default private List<TemporaryUser> assignedTemporaryUsers = new ArrayList<>();
+    @Builder.Default private Set<TemporaryUser> assignedTemporaryUsers = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="authenticated_user_id", nullable=false)
@@ -70,21 +72,13 @@ public class Project {
     @CreationTimestamp
     private Instant createdAt;
 
-    public void addDiagram(Diagram diagram) {
-        diagrams.add(diagram);
-    }
-
-    public void removeDiagram(Diagram diagram) {
-        diagrams.remove(diagram);
-        diagram.setProject(null);
-    }
-
     public void unassignUser(User user) {
         if(user instanceof AuthenticatedUser) {
             assignedAuthenticatedUsers.removeIf(u -> Objects.equals(((AuthenticatedUser) user).getId(), u.getId()));
         } else {
             assignedTemporaryUsers.removeIf(u -> Objects.equals(((TemporaryUser) user).getId(), u.getId()));
         }
+        user.removeAssignedProject(this);
     }
 
     public void assignUser(User user) {
@@ -93,5 +87,11 @@ public class Project {
         } else {
             assignedTemporaryUsers.add((TemporaryUser) user);
         }
+        user.addAssignedProject(this);
+    }
+
+    public void unassignAllUsers() {
+        new HashSet<>(assignedAuthenticatedUsers).forEach(this::unassignUser);
+        new HashSet<>(assignedTemporaryUsers).forEach(this::unassignUser);
     }
 }

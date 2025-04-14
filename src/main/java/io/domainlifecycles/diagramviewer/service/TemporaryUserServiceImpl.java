@@ -1,10 +1,8 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
-import java.util.ArrayList;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,7 +25,6 @@ public class TemporaryUserServiceImpl implements TemporaryUserService {
 
         TemporaryUser temporaryUser = TemporaryUser.builder()
             .emailAddress(userEmailAddress)
-            .assignedProjects(new ArrayList<>())
             .build();
 
         return repository.save(temporaryUser);
@@ -40,21 +37,15 @@ public class TemporaryUserServiceImpl implements TemporaryUserService {
     }
 
     @Override
-    public TemporaryUser addProject(TemporaryUser temporaryUser, Project project) {
-        temporaryUser.addAssignedProject(project);
-        return repository.save(temporaryUser);
-    }
-
-    @Override
-    public TemporaryUser removeProject(TemporaryUser temporaryUser, Project project) {
-        temporaryUser.removeAssignedProject(project);
-        return repository.save(temporaryUser);
-    }
-
-    @Override
     public void delete(TemporaryUser temporaryUser) {
         TemporaryUser fetchedTemporaryUser = get(temporaryUser.getEmailAddress());
-        fetchedTemporaryUser.getAssignedProjects().clear();
-        repository.delete(temporaryUser);
+        fetchedTemporaryUser.getAssignedProjects().forEach(project -> project.unassignUser(temporaryUser));
+        repository.delete(fetchedTemporaryUser);
+    }
+
+    @Override
+    public boolean checkForRemoval(TemporaryUser temporaryUser) {
+        TemporaryUser fetchedTemporaryUser = repository.findById(temporaryUser.getId()).orElseThrow();
+        return fetchedTemporaryUser.getAssignedProjects().isEmpty();
     }
 }

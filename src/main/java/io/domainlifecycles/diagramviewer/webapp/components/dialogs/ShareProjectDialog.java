@@ -24,6 +24,7 @@ import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,8 +78,8 @@ public class ShareProjectDialog extends Dialog {
 
     private List<User> getAuthenticatedAndTemporaryUsersForProject() {
         project = projectService.getByProjectNameClean(project.getProjectNameClean());
-        List<AuthenticatedUser> assignedAuthenticatedUsers = project.getAssignedAuthenticatedUsers();
-        List<TemporaryUser> assignedTemporaryUsers = project.getAssignedTemporaryUsers();
+        Set<AuthenticatedUser> assignedAuthenticatedUsers = project.getAssignedAuthenticatedUsers();
+        Set<TemporaryUser> assignedTemporaryUsers = project.getAssignedTemporaryUsers();
 
         return Stream.concat(assignedAuthenticatedUsers.stream(), assignedTemporaryUsers.stream())
             .collect(Collectors.toList());

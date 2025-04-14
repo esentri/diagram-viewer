@@ -39,7 +39,7 @@ public class CreateDiagramDialog extends Dialog {
         Button createButton = new Button("Create");
 
         createButton.addClickListener(e -> {
-            diagramService.save(project, sessionStorage.get(project.getId()), fileName, packageName, fileType);
+            diagramService.create(project, sessionStorage.get(project.getId()), fileName, packageName, fileType);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });

@@ -127,7 +127,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         confirmDialog.setConfirmText("Delete");
         confirmDialog.setConfirmButtonTheme("error primary");
         confirmDialog.addConfirmListener(event -> {
-            projectService.removeDiagram(project, diagram);
+            projectService.deleteDiagram(project, diagram);
             sessionStorage.setNoDiagramSelected();
             confirmDialog.close();
             UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));

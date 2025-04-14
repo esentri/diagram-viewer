@@ -1,6 +1,4 @@
-import { injectGlobalCss } from 'Frontend/generated/jar-resources/theme-util.js';
-
-import { css, unsafeCSS, registerStyles } from '@vaadin/vaadin-themable-mixin';
+import {injectGlobalCss} from 'Frontend/generated/jar-resources/theme-util.js';
 import $cssFromFile_0 from 'Frontend/styles/diagram-viewer-styles.css?inline';
 import 'Frontend/generated/jar-resources/zoomist/fc-zoomist.ts';
 import '@vaadin/field-highlighter/theme/lumo/vaadin-field-highlighter.js';
