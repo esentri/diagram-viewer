@@ -12,6 +12,9 @@ image: gradle:8.10.1-jdk17
 definitions:
   caches:
     zip: /usr/bin
+    
+options:
+  docker: true
 
 pipelines:    
   branches:
@@ -29,17 +32,6 @@ pipelines:
             - cd ..
       - parallel:
         - step:
-            name: Check
-            script:
-              - gradle check
-            caches:
-              - maven
-              - gradle
-            after-script:
-              - pipe: atlassian/checkstyle-report:0.3.0
-                variables:
-                  DEBUG: "true"
-        - step:
             name: Security Scan
             script:
               # Run a security scan for sensitive data.
@@ -53,15 +45,22 @@ pipelines:
               - apt-get update
               - apt-get install -y zip
       - step:
-          name: Build
+          name: Build & Test
           caches:
             - maven
             - gradle
             - zip
           script:
-            - gradle clean build -Pvaadin.productionMode -x test 
+            - docker run --rm mcr.microsoft.com/dotnet/sdk:8.0 bash -c "
+                export TESTCONTAINERS_RYUK_DISABLED=true;
+                dotnet test"
+            - gradle clean build -Pvaadin.productionMode
             - zip -r application.zip .platform
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
+          after-script:
+              - pipe: atlassian/checkstyle-report:0.3.0
+                variables:
+                  DEBUG: "true"
           artifacts:
             - application.zip
       - step:
