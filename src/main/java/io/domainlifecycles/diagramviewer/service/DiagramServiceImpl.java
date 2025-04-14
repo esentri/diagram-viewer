@@ -34,9 +34,10 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public void update(Diagram diagram, DomainModel domainModel) {
+    public Diagram update(Diagram diagram, DomainModel domainModel) {
         Diagram persistedDiagram = repository.save(diagram);
         createAndSaveDiagramToFilesystem(domainModel, persistedDiagram);
+        return persistedDiagram;
     }
 
     @Override

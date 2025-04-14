@@ -3,7 +3,9 @@ package io.domainlifecycles.diagramviewer.service;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,8 +34,8 @@ public class SecurityServiceImpl implements SecurityService {
 
         final TemporaryUser temporaryUser = temporaryUserService.get(userEmailAddress);
 
-        Set<Project> projectsWithUserUnassigned = new HashSet<>(temporaryUser.getAssignedProjects()).stream().map(
-            project -> projectService.unassignUser(project, temporaryUser)).collect(Collectors.toSet());
+        List<Project> projectsWithUserUnassigned = new ArrayList<>(temporaryUser.getAssignedProjects()).stream().map(
+            project -> projectService.unassignUser(project, temporaryUser)).toList();
         return authenticatedUserService.createUser(userEmailAddress, fullName, projectsWithUserUnassigned);
     }
 

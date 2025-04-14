@@ -57,20 +57,17 @@ public class Project {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
     @Builder.Default
-    @EqualsAndHashCode.Exclude
-    private Set<Diagram> diagrams = new HashSet<>();
+    private List<Diagram> diagrams = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_authenticated_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "authenticated_user_id"))
     @Builder.Default
-    @EqualsAndHashCode.Exclude
-    private Set<AuthenticatedUser> assignedAuthenticatedUsers = new HashSet<>();
+    private List<AuthenticatedUser> assignedAuthenticatedUsers = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_temporary_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "temporary_user_id"))
     @Builder.Default
-    @EqualsAndHashCode.Exclude
-    private Set<TemporaryUser> assignedTemporaryUsers = new HashSet<>();
+    private List<TemporaryUser> assignedTemporaryUsers = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="authenticated_user_id", nullable=false)

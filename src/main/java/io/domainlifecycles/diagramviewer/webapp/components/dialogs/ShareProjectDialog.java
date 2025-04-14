@@ -78,8 +78,8 @@ public class ShareProjectDialog extends Dialog {
 
     private List<User> getAuthenticatedAndTemporaryUsersForProject() {
         project = projectService.getByProjectNameClean(project.getProjectNameClean());
-        Set<AuthenticatedUser> assignedAuthenticatedUsers = project.getAssignedAuthenticatedUsers();
-        Set<TemporaryUser> assignedTemporaryUsers = project.getAssignedTemporaryUsers();
+        List<AuthenticatedUser> assignedAuthenticatedUsers = project.getAssignedAuthenticatedUsers();
+        List<TemporaryUser> assignedTemporaryUsers = project.getAssignedTemporaryUsers();
 
         return Stream.concat(assignedAuthenticatedUsers.stream(), assignedTemporaryUsers.stream())
             .collect(Collectors.toList());

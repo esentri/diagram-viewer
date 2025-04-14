@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
+import java.util.List;
 import java.util.Set;
 
 public interface AuthenticatedUserService {
@@ -12,5 +13,5 @@ public interface AuthenticatedUserService {
 
     AuthenticatedUser createUser(String userEmailAddress, String fullName);
 
-    AuthenticatedUser createUser(String userEmailAddress, String fullName, Set<Project> projects);
+    AuthenticatedUser createUser(String userEmailAddress, String fullName, List<Project> projects);
 }

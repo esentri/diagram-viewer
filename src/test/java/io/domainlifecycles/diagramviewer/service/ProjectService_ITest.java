@@ -1,20 +1,25 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
+import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
+import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
+import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,9 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@Transactional
 @ExtendWith(TestContainersInitializer.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(initializers = TestContainersInitializer.class)
@@ -48,6 +55,9 @@ class ProjectService_ITest {
     @Autowired
     TemporaryUserRepository temporaryUserRepository;
 
+    @Autowired
+    DiagramRepository diagramRepository;
+
     private AuthenticatedUser authenticatedUser;
 
     @BeforeEach
@@ -58,6 +68,13 @@ class ProjectService_ITest {
             .build();
 
         authenticatedUserRepository.save(authenticatedUser);
+    }
+
+    @AfterEach
+    void tearDown() {
+        projectRepository.deleteAll();
+        authenticatedUserRepository.deleteAll();
+        temporaryUserRepository.deleteAll();
     }
 
     @Test
@@ -133,7 +150,7 @@ class ProjectService_ITest {
         // given
         Project project = setUpProject();
         AuthenticatedUser anotherAuthenticatedUser = setUpAuthenticatedUser();
-        Set<AuthenticatedUser> updatedAuthenticatedUsers = new HashSet<>(project.getAssignedAuthenticatedUsers());
+        List<AuthenticatedUser> updatedAuthenticatedUsers = new ArrayList<>(project.getAssignedAuthenticatedUsers());
         updatedAuthenticatedUsers.add(anotherAuthenticatedUser);
 
         project.setAssignedAuthenticatedUsers(updatedAuthenticatedUsers);
@@ -157,7 +174,7 @@ class ProjectService_ITest {
         // given
         Project project = setUpProject();
         TemporaryUser temporaryUser = setUpTemporaryUser();
-        Set<TemporaryUser> updatedTemporaryUsers = new HashSet<>(project.getAssignedTemporaryUsers());
+        List<TemporaryUser> updatedTemporaryUsers = new ArrayList<>(project.getAssignedTemporaryUsers());
         updatedTemporaryUsers.add(temporaryUser);
 
         project.setAssignedTemporaryUsers(updatedTemporaryUsers);
@@ -173,6 +190,29 @@ class ProjectService_ITest {
         assertThat(updatedProject.getAssignedAuthenticatedUsers())
             .anySatisfy(authenticatedUser -> assertThat(authenticatedUser.getEmailAddress())
                 .isEqualTo(TEST_USER_MAIL_ADDRESS));
+    }
+
+    @Test
+    void Should_DeleteDiagramFromProject_When_DiagramExists() throws IOException {
+
+        // given
+        Project project = setUpProject();
+        Diagram diagram = Diagram.builder()
+            .fileName("diagram")
+            .fileType(FileType.SVG)
+            .fullAbsoluteLocationPath("/tmp/diagram-viewer/diagram.svg")
+            .project(project)
+            .build();
+        diagramRepository.save(diagram);
+        FileIOUtils.saveFile("/tmp/diagram-viewer/diagram.svg", new ByteArrayInputStream("test".getBytes(
+            StandardCharsets.UTF_8)));
+
+        // when
+        Project updatedProject = service.deleteDiagram(project, diagram);
+
+        // then
+        assertThat(updatedProject).isNotNull();
+        assertThat(updatedProject.getDiagrams()).isEmpty();
     }
 
     private AuthenticatedUser setUpAuthenticatedUser() {
@@ -200,7 +240,7 @@ class ProjectService_ITest {
             .displayName("project-1.0.0.jar")
             .absolutePathToTarget("target/project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
-            .assignedAuthenticatedUsers(Set.of(authenticatedUser))
+            .assignedAuthenticatedUsers(List.of(authenticatedUser))
             .creator(authenticatedUser)
             .build();
 

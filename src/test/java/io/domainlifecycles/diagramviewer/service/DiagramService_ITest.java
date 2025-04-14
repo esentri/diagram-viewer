@@ -1,13 +1,20 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
+import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
+import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
+import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
+import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,26 +25,38 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
 @ExtendWith(TestContainersInitializer.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(initializers = TestContainersInitializer.class)
-class AuthenticatedUserService_ITest {
+class DiagramService_ITest {
 
     private static final String TEST_USER_MAIL_ADDRESS = "test-user@gmail.com";
     private static final String TEST_USER_FULL_NAME = "Max Mustermann";
 
     @Autowired
-    private AuthenticatedUserService service;
+    DiagramService service;
 
     @Autowired
-    private AuthenticatedUserRepository authenticatedUserRepository;
+    ProjectRepository projectRepository;
+
+    @Autowired
+    AuthenticatedUserRepository authenticatedUserRepository;
+
+    @Autowired
+    TemporaryUserRepository temporaryUserRepository;
+
+    @Autowired
+    DiagramRepository diagramRepository;
+
+    private AuthenticatedUser authenticatedUser;
 
     @BeforeEach
     void setUp() {
-        AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
+        authenticatedUser = AuthenticatedUser.builder()
             .fullName(TEST_USER_FULL_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
             .build();
@@ -47,26 +66,22 @@ class AuthenticatedUserService_ITest {
 
     @AfterEach
     void tearDown() {
+        projectRepository.deleteAll();
         authenticatedUserRepository.deleteAll();
+        temporaryUserRepository.deleteAll();
     }
 
-    @Test
-    void Should_KnowUser_When_UserIsInDatabase() {
+    private Project setUpProject() {
+        Project project = Project.builder()
+            .projectNameClean("project_1_0_0_jar")
+            .projectNameFull("project-1.0.0.jar")
+            .displayName("project-1.0.0.jar")
+            .absolutePathToTarget("target/project-1.0.0.jar")
+            .boundedContextPackages(List.of("io.esentri.domain"))
+            .assignedAuthenticatedUsers(List.of(authenticatedUser))
+            .creator(authenticatedUser)
+            .build();
 
-        // when
-        boolean result = service.userKnown(TEST_USER_MAIL_ADDRESS);
-
-        // then
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void Should_NotKnowUser_When_NoSuchUserIsInDatabase() {
-
-        // when
-        boolean result = service.userKnown("unknown@gmail.com");
-
-        // then
-        assertThat(result).isFalse();
+        return projectRepository.save(project);
     }
 }

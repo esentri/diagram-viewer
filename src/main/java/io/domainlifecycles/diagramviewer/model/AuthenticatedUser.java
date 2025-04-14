@@ -7,7 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import lombok.Builder;
@@ -32,8 +34,7 @@ public class AuthenticatedUser extends User {
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedAuthenticatedUsers")
     @Builder.Default
-    @EqualsAndHashCode.Exclude
-    private Set<Project> assignedProjects = new HashSet<>();
+    private List<Project> assignedProjects = new ArrayList<>();
 
     @Override
     public void addAssignedProject(Project project) {

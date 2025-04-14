@@ -18,9 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@Transactional
 @ExtendWith(TestContainersInitializer.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(initializers = TestContainersInitializer.class)
@@ -131,7 +133,7 @@ class SecurityService_ITest {
             .displayName("project-1.0.0.jar")
             .absolutePathToTarget("target/project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
-            .assignedAuthenticatedUsers(Set.of(authenticatedUser))
+            .assignedAuthenticatedUsers(List.of(authenticatedUser))
             .creator(authenticatedUser)
             .build();
 

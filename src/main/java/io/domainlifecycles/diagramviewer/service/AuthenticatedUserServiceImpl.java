@@ -3,6 +3,7 @@ package io.domainlifecycles.diagramviewer.service;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
+import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,7 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
     }
 
     @Override
-    public AuthenticatedUser createUser(String userEmailAddress, String fullName, Set<Project> projects) {
+    public AuthenticatedUser createUser(String userEmailAddress, String fullName, List<Project> projects) {
         final AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
             .emailAddress(userEmailAddress)
             .fullName(fullName)

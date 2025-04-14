@@ -79,7 +79,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void deleteDiagram(Project project, Diagram diagram) {
+    public Project deleteDiagram(Project project, Diagram diagram) {
         final String diagramPath = diagram.getFullAbsoluteLocationPath();
 
         project.getDiagrams().remove(diagram);
@@ -87,6 +87,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         try {
             FileIOUtils.deleteFileByAbsolutePath(diagramPath);
+            return persistedProject;
         } catch (IOException e) {
             throw DiagramViewerException.fail("Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
         }
@@ -109,9 +110,9 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void assignUser(Project project, String emailAddress) {
+    public Project assignUser(Project project, String emailAddress) {
         if(project.getAssignedAuthenticatedUsers().stream()
-            .anyMatch(user -> Objects.equals(user.getEmailAddress(), emailAddress))) return;
+            .anyMatch(user -> Objects.equals(user.getEmailAddress(), emailAddress))) return project;
 
         boolean userIsSignedUp = authenticatedUserService.userKnown(emailAddress);
         final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.getOrCreate(emailAddress);
@@ -122,7 +123,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         final Project fetchedProject = repository.findById(project.getId()).orElseThrow();
         fetchedProject.assignUser(user);
-        update(fetchedProject);
+        return update(fetchedProject);
     }
     @Override
     public Project unassignUser(Project project, User user) {
@@ -179,7 +180,7 @@ public class ProjectServiceImpl implements ProjectService {
             .absolutePathToTarget(filePath.toAbsolutePath() + "/" + fileName)
             .boundedContextPackages(boundedContexts)
             .creator(authenticatedUser)
-            .assignedAuthenticatedUsers(Set.of(authenticatedUser))
+            .assignedAuthenticatedUsers(List.of(authenticatedUser))
             .build();
     }
 
