@@ -125,6 +125,7 @@ public class ProjectServiceImpl implements ProjectService {
         fetchedProject.assignUser(user);
         return update(fetchedProject);
     }
+
     @Override
     public Project unassignUser(Project project, User user) {
         if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getId(), ((AuthenticatedUser) user).getId())) return project;

@@ -3,7 +3,6 @@ package io.domainlifecycles.diagramviewer.service;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import java.util.List;
-import java.util.Set;
 
 public interface AuthenticatedUserService {
 
