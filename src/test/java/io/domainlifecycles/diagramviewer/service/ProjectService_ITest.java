@@ -38,11 +38,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ContextConfiguration(initializers = TestContainersInitializer.class)
 class ProjectService_ITest {
 
-    private static final String TEST_USER_MAIL_ADDRESS = "test-user@gmail.com";
     private static final String TEST_USER_FULL_NAME = "Max Mustermann";
+    private static final String TEST_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
 
-    private static final String TEMPORARY_USER_FULL_NAME = "Temporary Mustermann";
-    private static final String TEMPORARY_USER_MAIL_ADDRESS = "temporary@gmail.com";
+    private static final String TEMPORARY_USER_FULL_NAME = "Moritz Mustermann";
+    private static final String TEMPORARY_USER_MAIL_ADDRESS = "moritz.mustermann@gmail.com";
 
     @Autowired
     ProjectService service;
@@ -109,10 +109,9 @@ class ProjectService_ITest {
         Project project = setUpProject();
 
         // when
-        service.assignUser(project, TEMPORARY_USER_MAIL_ADDRESS);
+        Project updatedProject = service.assignUser(project, TEMPORARY_USER_MAIL_ADDRESS);
 
         // then
-        Project updatedProject = projectRepository.findById(project.getId()).orElseThrow();
         assertThat(updatedProject).isNotNull();
         assertThat(updatedProject.getAssignedTemporaryUsers())
             .anySatisfy(temporaryUser -> assertThat(temporaryUser.getEmailAddress())
@@ -130,10 +129,9 @@ class ProjectService_ITest {
         AuthenticatedUser anotherAuthenticatedUser = setUpAuthenticatedUser();
 
         // when
-        service.assignUser(project, anotherAuthenticatedUser.getEmailAddress());
+        Project updatedProject = service.assignUser(project, anotherAuthenticatedUser.getEmailAddress());
 
         // then
-        Project updatedProject = projectRepository.findById(project.getId()).orElseThrow();
         assertThat(updatedProject).isNotNull();
         assertThat(updatedProject.getAssignedTemporaryUsers()).isEmpty();
         assertThat(updatedProject.getAssignedAuthenticatedUsers().size()).isEqualTo(2);
@@ -218,8 +216,8 @@ class ProjectService_ITest {
 
     private AuthenticatedUser setUpAuthenticatedUser() {
         AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
-            .fullName("Moritz Mustermann")
-            .emailAddress("moritz.mustermann@gmail.com")
+            .fullName(TEST_USER_FULL_NAME + " (2)")
+            .emailAddress(TEST_USER_MAIL_ADDRESS + " (2)")
             .build();
 
         return authenticatedUserRepository.save(authenticatedUser);
@@ -227,8 +225,8 @@ class ProjectService_ITest {
 
     private TemporaryUser setUpTemporaryUser() {
         TemporaryUser temporaryUser = TemporaryUser.builder()
-            .fullName("Moritz Mustermann")
-            .emailAddress("moritz.mustermann@gmail.com")
+            .fullName(TEMPORARY_USER_FULL_NAME)
+            .emailAddress(TEMPORARY_USER_MAIL_ADDRESS)
             .build();
 
         return temporaryUserRepository.save(temporaryUser);
