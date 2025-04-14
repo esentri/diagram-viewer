@@ -91,13 +91,13 @@ class SecurityService_ITest {
     void Should_ReturnExistingAuthenticatedUser_When_UserSignsUpAndAlreadyHasAuthenticatedUser() {
 
         // when
-        AuthenticatedUser authenticatedUser = service.acknowledgeUserAuthentication(TEMPORARY_USER_MAIL_ADDRESS,
+        AuthenticatedUser newAuthenticatedUser = service.acknowledgeUserAuthentication(TEMPORARY_USER_MAIL_ADDRESS,
             TEMPORARY_USER_FULL_NAME);
 
         // then
-        assertThat(authenticatedUser).isNotNull();
-        assertThat(authenticatedUser.getEmailAddress()).isEqualTo(TEMPORARY_USER_MAIL_ADDRESS);
-        assertThat(authenticatedUser.getFullName()).isEqualTo(TEMPORARY_USER_FULL_NAME);
+        assertThat(newAuthenticatedUser).isNotNull();
+        assertThat(newAuthenticatedUser.getEmailAddress()).isEqualTo(TEMPORARY_USER_MAIL_ADDRESS);
+        assertThat(newAuthenticatedUser.getFullName()).isEqualTo(TEMPORARY_USER_FULL_NAME);
     }
 
     @Test
@@ -108,18 +108,17 @@ class SecurityService_ITest {
         setUpTemporaryUser(project);
 
         // when
-        AuthenticatedUser authenticatedUser = service.acknowledgeUserAuthentication(TEMPORARY_USER_MAIL_ADDRESS,
+        AuthenticatedUser newAuthenticatedUser = service.acknowledgeUserAuthentication(TEMPORARY_USER_MAIL_ADDRESS,
             TEMPORARY_USER_FULL_NAME);
 
         // then
-        assertThat(authenticatedUser).isNotNull();
-        assertThat(authenticatedUser.getEmailAddress()).isEqualTo(TEMPORARY_USER_MAIL_ADDRESS);
-        assertThat(authenticatedUser.getFullName()).isEqualTo(TEMPORARY_USER_FULL_NAME);
-        assertThat(authenticatedUser.getAssignedProjects().get(0).getId()).isEqualTo(project.getId());
-        assertThat(authenticatedUser.getAssignedProjects().get(0).getAssignedAuthenticatedUsers().size()).isEqualTo(1);
-        assertThat(authenticatedUser.getAssignedProjects().get(0).getAssignedAuthenticatedUsers().get(0).getId()).isEqualTo(authenticatedUser.getId());
-        assertThat(authenticatedUser.getAssignedProjects().get(0).getAssignedTemporaryUsers().isEmpty()).isTrue();
-        assertThat(authenticatedUser.getAssignedProjects().get(0).getCreator().getId()).isEqualTo(project.getCreator().getId());
+        assertThat(newAuthenticatedUser).isNotNull();
+        assertThat(newAuthenticatedUser.getEmailAddress()).isEqualTo(TEMPORARY_USER_MAIL_ADDRESS);
+        assertThat(newAuthenticatedUser.getFullName()).isEqualTo(TEMPORARY_USER_FULL_NAME);
+        assertThat(newAuthenticatedUser.getAssignedProjects().get(0).getId()).isEqualTo(project.getId());
+        assertThat(newAuthenticatedUser.getAssignedProjects().get(0).getAssignedAuthenticatedUsers().size()).isEqualTo(2);
+        assertThat(newAuthenticatedUser.getAssignedProjects().get(0).getAssignedTemporaryUsers()).isEmpty();
+        assertThat(newAuthenticatedUser.getAssignedProjects().get(0).getCreator().getId()).isEqualTo(project.getCreator().getId());
 
         assertThat(temporaryUserRepository.findByEmailAddress(TEMPORARY_USER_MAIL_ADDRESS)).isEmpty();
     }

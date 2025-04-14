@@ -23,6 +23,8 @@ public interface ProjectService {
 
     Project assignUser(Project project, String emailAddress);
 
+    Project assignUser(Project project, User user);
+
     Project unassignUser(Project project, User user);
 
     void delete(Project project);

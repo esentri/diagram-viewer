@@ -116,29 +116,27 @@ public class ProjectServiceImpl implements ProjectService {
 
         boolean userIsSignedUp = authenticatedUserService.userKnown(emailAddress);
         final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.getOrCreate(emailAddress);
+        final Project fetchedProject = repository.findById(project.getId()).orElseThrow();
 
+        return assignUser(fetchedProject, user);
+    }
+
+    @Override
+    public Project assignUser(Project project, User user) {
         if(userIsAlreadyAssignedToProject(project, user)) {
-            throw DiagramViewerException.fail(String.format("User '%s' is already assigned to project.", emailAddress));
+            throw DiagramViewerException.fail(String.format("User '%s' is already assigned to project.", user.getEmailAddress()));
         }
 
-        final Project fetchedProject = repository.findById(project.getId()).orElseThrow();
-        fetchedProject.assignUser(user);
-        return update(fetchedProject);
+        project.assignUser(user);
+        return update(project);
     }
 
     @Override
     public Project unassignUser(Project project, User user) {
         if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getId(), ((AuthenticatedUser) user).getId())) return project;
 
-        final Project fetchedProject = repository.findById(project.getId()).orElseThrow();
-        fetchedProject.unassignUser(user);
-        Project updatedProject = update(fetchedProject);
-
-        if(user instanceof TemporaryUser && temporaryUserService.checkForRemoval((TemporaryUser) user)) {
-            temporaryUserService.delete((TemporaryUser) user);
-        }
-
-        return updatedProject;
+        project.unassignUser(user);
+        return update(project);
     }
 
     @Override

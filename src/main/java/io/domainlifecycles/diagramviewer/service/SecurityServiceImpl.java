@@ -30,10 +30,18 @@ public class SecurityServiceImpl implements SecurityService {
         }
 
         final TemporaryUser temporaryUser = temporaryUserService.get(userEmailAddress);
+        List<Project> projectsWithUserAssigned = new ArrayList<>(temporaryUser.getAssignedProjects());
 
-        List<Project> projectsWithUserUnassigned = new ArrayList<>(temporaryUser.getAssignedProjects()).stream().map(
-            project -> projectService.unassignUser(project, temporaryUser)).toList();
-        return authenticatedUserService.createUser(userEmailAddress, fullName, projectsWithUserUnassigned);
+        AuthenticatedUser newAuthenticatedUser = authenticatedUserService.createUser(userEmailAddress, fullName);
+
+        projectsWithUserAssigned.forEach(project -> {
+            projectService.unassignUser(project, temporaryUser);
+            projectService.assignUser(project, newAuthenticatedUser);
+        });
+
+        if(temporaryUserService.checkForRemoval(temporaryUser)) temporaryUserService.delete(temporaryUser);
+
+        return newAuthenticatedUser;
     }
 
     @Override
