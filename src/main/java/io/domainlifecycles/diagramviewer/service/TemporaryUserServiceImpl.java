@@ -53,6 +53,8 @@ public class TemporaryUserServiceImpl implements TemporaryUserService {
 
     @Override
     public void delete(TemporaryUser temporaryUser) {
+        TemporaryUser fetchedTemporaryUser = get(temporaryUser.getEmailAddress());
+        fetchedTemporaryUser.getAssignedProjects().clear();
         repository.delete(temporaryUser);
     }
 }

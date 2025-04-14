@@ -63,22 +63,12 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
 
     private AuthenticatedUser createNewUserAndRemoveTemporaryUser(TemporaryUser temporaryUser, String fullName) {
         temporaryUserService.delete(temporaryUser);
-        return addUser(temporaryUser, fullName);
+        return addUser(temporaryUser.getEmailAddress(), fullName);
     }
 
     private AuthenticatedUser addUser(String userEmailAddress, String fullName) {
         final AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
             .emailAddress(userEmailAddress)
-            .fullName(fullName)
-            .assignedProjects(new ArrayList<>())
-            .build();
-
-        return repository.save(authenticatedUser);
-    }
-
-    private AuthenticatedUser addUser(TemporaryUser temporaryUser, String fullName) {
-        final AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
-            .emailAddress(temporaryUser.getEmailAddress())
             .fullName(fullName)
             .assignedProjects(new ArrayList<>())
             .build();
