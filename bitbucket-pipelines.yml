@@ -12,9 +12,9 @@ image: gradle:8.10.1-jdk17
 definitions:
   caches:
     zip: /usr/bin
-    
-options:
-  docker: true
+  services:
+    docker:
+      memory: 2048
 
 pipelines:    
   branches:
@@ -50,10 +50,10 @@ pipelines:
             - maven
             - gradle
             - zip
+          services:
+            - docker
           script:
-            - docker run --rm mcr.microsoft.com/dotnet/sdk:8.0 bash -c "
-                export TESTCONTAINERS_RYUK_DISABLED=true;
-                dotnet test"
+            - export TESTCONTAINERS_RYUK_DISABLED=true
             - gradle clean build -Pvaadin.productionMode
             - zip -r application.zip .platform
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
