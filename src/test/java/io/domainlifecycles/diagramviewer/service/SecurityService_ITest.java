@@ -37,7 +37,7 @@ class SecurityService_ITest {
 
 
     @Autowired
-    SecurityService service;
+    private SecurityService service;
 
     @Autowired
     private ProjectService projectService;
@@ -146,5 +146,4 @@ class SecurityService_ITest {
         temporaryUserRepository.save(temporaryUser);
         projectService.assignUser(project, TEMPORARY_USER_MAIL_ADDRESS);
     }
-
 }

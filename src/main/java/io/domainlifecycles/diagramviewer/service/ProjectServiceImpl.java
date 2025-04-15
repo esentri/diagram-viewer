@@ -72,8 +72,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public Project update(Project project) {
         // Ensure Project Name Clean still meets the requirements
-        project.setDisplayName(buildCleanFileName(project.getDisplayName()));
         checkProjectValueRequirements(project);
+        project.setDisplayName(buildCleanFileName(project.getDisplayName()));
 
         return repository.save(project);
     }

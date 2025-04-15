@@ -9,12 +9,14 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
+import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import java.io.InputStream;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,13 +26,18 @@ public class UploadDialog extends Dialog {
 
     private final ProjectService projectService;
     private final SessionStorage sessionStorage;
-    private String boundedContextPackages;
+    private final Binder<UploadOptions> binder;
+
+    private Button uploadButton;
+    private TextField boundedContextPackagesTextField;
     private InputStream fileInputStream;
     private String fileName;
 
     public UploadDialog(ProjectService projectService, SessionStorage sessionStorage) {
         this.projectService = projectService;
         this.sessionStorage = sessionStorage;
+        this.binder = new Binder<>();
+
         add(createDialogLayout());
         getFooter().add(createUploadButton());
         getFooter().add(createCancelButton());
@@ -38,7 +45,8 @@ public class UploadDialog extends Dialog {
 
     private Button createUploadButton() {
         final String targetsLocation = sessionStorage.getTargetsLocation();
-        Button uploadButton = new Button("Upload");
+        uploadButton = new Button("Upload");
+        uploadButton.setEnabled(binder.isValid());
 
         uploadButton.addClickListener(e -> {
             if(targetsLocation == null || targetsLocation.isBlank()) {
@@ -46,7 +54,7 @@ public class UploadDialog extends Dialog {
             }
 
             Project persistedProject = projectService.save(sessionStorage.getAuthenticatedUser(), targetsLocation, fileInputStream,
-                fileName, boundedContextPackages);
+                fileName, boundedContextPackagesTextField.getValue());
             sessionStorage.add(persistedProject);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
 
@@ -67,8 +75,12 @@ public class UploadDialog extends Dialog {
 
         formLayout.addFormItem(getUpload(), "File");
 
-        TextField boundedContextPackagesTextField = new TextField();
-        boundedContextPackagesTextField.addValueChangeListener(e -> boundedContextPackages = boundedContextPackagesTextField.getValue());
+        boundedContextPackagesTextField = new TextField();
+        binder.forField(boundedContextPackagesTextField)
+            .asRequired("Bounded Contexts may not be empty")
+            .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
+        binder.addStatusChangeListener(event -> uploadButton.setEnabled(binder.isValid()));
+
         formLayout.addFormItem(boundedContextPackagesTextField, "Bounded Context Packages (comma separated)");
 
         return formLayout;
@@ -78,13 +90,18 @@ public class UploadDialog extends Dialog {
         MultiFileMemoryBuffer uploadBuffer = new MultiFileMemoryBuffer();
         Upload upload = new Upload(uploadBuffer);
 
-        upload.setMaxFileSize(100000000); // 100MB
-        //upload.setAcceptedFileTypes("jar");
+        upload.setMaxFileSize(500000000); // 500MB
+        upload.setAcceptedFileTypes("application/java-archive");
 
         upload.addSucceededListener(event -> {
             fileName = event.getFileName();
             fileInputStream = uploadBuffer.getInputStream(fileName);
         });
         return upload;
+    }
+
+    @Data
+    private static class UploadOptions {
+        private String boundedContextPackages;
     }
 }

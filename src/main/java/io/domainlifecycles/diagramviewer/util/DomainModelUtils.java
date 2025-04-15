@@ -15,23 +15,23 @@ import org.slf4j.LoggerFactory;
 
 public class DomainModelUtils {
 
-    private final static Logger log = LoggerFactory.getLogger(DomainModelUtils.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(DomainModelUtils.class);
 
     public static DomainModel initializeDomainModelFromJar(Path path, String... boundedContextPackages){
         URL url = null;
         try{
             url = path.toUri().toURL();
         } catch (MalformedURLException e) {
-            log.error(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
         }
         if(url != null) {
             var cl = subClassLoader(List.of(url));
             if (cl.isPresent()) {
-                log.info("Classes loaded - Initializing domain model");
+                LOGGER.info("Classes loaded - Initializing domain model");
                 final ReflectiveDomainModelFactory domainModelFactory = new ReflectiveDomainModelFactory(cl.get(), new TypeMetaResolver(), boundedContextPackages);
                 var dm = domainModelFactory.initializeDomainModel();
-                log.info("Domain model initialized");
-                log.info("Mirrored types count = " + dm.allTypeMirrors().size());
+                LOGGER.info("Domain model initialized");
+                LOGGER.debug("Mirrored types count = " + dm.allTypeMirrors().size());
                 return dm;
             }
         }
@@ -44,7 +44,7 @@ public class DomainModelUtils {
             URLClassLoader childClassLoader = new URLClassLoader(filesToAddToClasspath.toArray(URL[]::new), DomainModelUtils.class.getClassLoader());
             return Optional.of(childClassLoader);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
             return Optional.empty();
         }
     }
