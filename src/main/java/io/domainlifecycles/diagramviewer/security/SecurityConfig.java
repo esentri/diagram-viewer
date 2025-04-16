@@ -33,7 +33,7 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(request -> {
-                request.requestMatchers(mvc.servletPath("/").pattern("/actuator/**")).permitAll();
+                request.requestMatchers(mvc.pattern("/actuator/**")).permitAll();
                 request.anyRequest().authenticated();
             })
             .oauth2Login((login) -> login.successHandler(successHandler));
