@@ -12,5 +12,5 @@ public interface AuthenticatedUserService {
 
     AuthenticatedUser createUser(String userEmailAddress, String fullName);
 
-    AuthenticatedUser createUser(String userEmailAddress, String fullName, List<Project> projects);
+    void generateApiKeyForUser(AuthenticatedUser authenticatedUser);
 }

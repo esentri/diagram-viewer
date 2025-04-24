@@ -30,6 +30,8 @@ public class AuthenticatedUser extends User {
     @GeneratedValue
     private UUID id;
 
+    private UUID apiKey;
+
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedAuthenticatedUsers")
     @Builder.Default
     private List<Project> assignedProjects = new ArrayList<>();
@@ -42,5 +44,9 @@ public class AuthenticatedUser extends User {
     @Override
     public void removeAssignedProject(Project project) {
         assignedProjects.removeIf(p -> Objects.equals(p.getId(), project.getId()));
+    }
+
+    public boolean hasApiKey() {
+        return apiKey != null;
     }
 }

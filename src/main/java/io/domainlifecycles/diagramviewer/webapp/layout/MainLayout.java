@@ -13,7 +13,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -30,6 +32,7 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
@@ -50,44 +53,54 @@ public class MainLayout extends AppLayout {
 
     private final ProjectService projectService;
     private final SecurityService securityService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final UploadDialog uploadDialog;
     private SideNav sideNav;
     private Registration registration;
+    private Popover userInfoPopover;
 
     public MainLayout(ProjectService projectService,
-                      SecurityService securityService) {
+                      SecurityService securityService, AuthenticatedUserService authenticatedUserService) {
 
         this.projectService = projectService;
         this.securityService = securityService;
+        this.authenticatedUserService = authenticatedUserService;
         this.uploadDialog = new UploadDialog(projectService, securityService);
 
         addToNavbar(new DrawerToggle(), getDlcLogo());
-        createAndAddUserInfoPopover();
+        createAndAddUserInfoPopoverWithButton();
         buildDrawerContent();
     }
 
-    private void createAndAddUserInfoPopover() {
-        Avatar avatar = new Avatar();
-        avatar.setName(securityService.getAuthenticatedUser().getFullName());
-        avatar.getStyle().set("display", "block");
-        avatar.getStyle().set("cursor", "pointer");
-        avatar.getElement().setAttribute("tabindex", "-1");
+    private void refreshPopover() {
+        userInfoPopover.removeAll();
+        addPopoverContents();
+    }
 
-        Button button = new Button(avatar);
-        button.addThemeVariants(ButtonVariant.LUMO_ICON,
-            ButtonVariant.LUMO_TERTIARY_INLINE);
-        button.getStyle().set("margin", "var(--lumo-space-s)");
-        button.getStyle().set("margin-inline-start", "auto");
-        button.getStyle().set("border-radius", "50%");
+    private void createAndAddUserInfoPopoverWithButton() {
+        Button userInfoPopoverButton = createAndGetUserInfoPopoverButton();
+        userInfoPopover = createAndGetUserInfoPopover(userInfoPopoverButton);
+        addPopoverContents();
+        addToNavbar(userInfoPopoverButton, userInfoPopover);
+    }
 
+    private Popover createAndGetUserInfoPopover(Button popOverButton) {
         Popover popover = new Popover();
         popover.setModal(true);
         popover.setOverlayRole("menu");
         popover.setAriaLabel("User menu");
-        popover.setTarget(button);
+        popover.setTarget(popOverButton);
         popover.setPosition(PopoverPosition.BOTTOM_END);
         popover.addThemeVariants(PopoverVariant.LUMO_NO_PADDING);
 
+        return popover;
+    }
+
+    private void addPopoverContents() {
+        userInfoPopover.add(createAndGetPopoverUserInfoLayout(), new Hr(), createAndGetPopoverApiKeyLayout());
+    }
+
+    private HorizontalLayout createAndGetPopoverUserInfoLayout() {
         HorizontalLayout userInfo = new HorizontalLayout();
         userInfo.getStyle().setPadding("0rem 1rem 0rem");
         userInfo.getThemeList().remove("spacing");
@@ -106,9 +119,50 @@ public class MainLayout extends AppLayout {
         nameLayout.add(fullName, nickName);
 
         userInfo.add(popoverAvatar, nameLayout);
-        popover.add(userInfo);
+        return userInfo;
+    }
 
-        addToNavbar(button, popover);
+    private VerticalLayout createAndGetPopoverApiKeyLayout() {
+        VerticalLayout apiKeyLayout = new VerticalLayout();
+        apiKeyLayout.getThemeList().remove("spacing");
+        apiKeyLayout.getStyle().setPadding("0 --var(--lumo-space-m)");
+
+        if(securityService.getAuthenticatedUser().hasApiKey()) {
+            Paragraph apiKeyParagraph = new Paragraph("API-Key:");
+            apiKeyParagraph.getStyle().setMargin("0");
+            apiKeyParagraph.getStyle().setFontWeight("bold");
+
+            Paragraph apiKeyValueParagraph = new Paragraph(securityService.getAuthenticatedUser().getApiKey().toString());
+            apiKeyValueParagraph.getStyle().setMargin("0");
+
+            apiKeyLayout.add(apiKeyParagraph, apiKeyValueParagraph);
+        } else {
+            Button generateApiKeyButton = new Button("Generate API-Key", e -> {
+                authenticatedUserService.generateApiKeyForUser(securityService.getAuthenticatedUser());
+                refreshPopover();
+            });
+
+            generateApiKeyButton.setPrefixComponent(new Icon("vaadin:key-o"));
+            generateApiKeyButton.setWidthFull();
+            apiKeyLayout.add(generateApiKeyButton);
+        }
+        return apiKeyLayout;
+    }
+
+    private Button createAndGetUserInfoPopoverButton() {
+        Avatar avatar = new Avatar();
+        avatar.setName(securityService.getAuthenticatedUser().getFullName());
+        avatar.getStyle().set("display", "block");
+        avatar.getStyle().set("cursor", "pointer");
+        avatar.getElement().setAttribute("tabindex", "-1");
+
+        Button button = new Button(avatar);
+        button.addThemeVariants(ButtonVariant.LUMO_ICON,
+            ButtonVariant.LUMO_TERTIARY_INLINE);
+        button.getStyle().set("margin", "var(--lumo-space-s)");
+        button.getStyle().set("margin-inline-start", "auto");
+        button.getStyle().set("border-radius", "50%");
+        return button;
     }
 
     private void buildDrawerContent() {

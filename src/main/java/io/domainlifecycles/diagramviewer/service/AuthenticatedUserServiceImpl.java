@@ -4,6 +4,7 @@ import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -36,13 +37,8 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
     }
 
     @Override
-    public AuthenticatedUser createUser(String userEmailAddress, String fullName, List<Project> projects) {
-        final AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
-            .emailAddress(userEmailAddress)
-            .fullName(fullName)
-            .assignedProjects(projects)
-            .build();
-
-        return repository.save(authenticatedUser);
+    public void generateApiKeyForUser(AuthenticatedUser authenticatedUser) {
+        authenticatedUser.setApiKey(UUID.randomUUID());
+        repository.save(authenticatedUser);
     }
 }
