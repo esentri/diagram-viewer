@@ -4,6 +4,7 @@ import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,11 @@ public class AuthenticatedUserServiceImpl implements AuthenticatedUserService {
     @Override
     public AuthenticatedUser get(final String userEmailAddress) {
         return repository.getByEmailAddress(userEmailAddress);
+    }
+
+    @Override
+    public Optional<AuthenticatedUser> findByApiKey(String apiKey) {
+        return repository.findByApiKey(UUID.fromString(apiKey));
     }
 
     @Override

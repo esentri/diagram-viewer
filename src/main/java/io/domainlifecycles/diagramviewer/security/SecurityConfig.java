@@ -6,6 +6,8 @@ import io.domainlifecycles.diagramviewer.rest.DomainModelController;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -13,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
@@ -30,27 +33,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain apiSecurity(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter) throws Exception {
-        http
-            .securityMatcher(DomainModelController.DOMAIN_MODEL_API_PATH)
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-            .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> {
-                auth.requestMatchers("/actuator/**").permitAll();
-                auth.requestMatchers(DomainModelController.DOMAIN_MODEL_API_PATH + "/**").permitAll();
-                auth.anyRequest().authenticated();
-            })
-            .oauth2Login((login) -> login.successHandler(successHandler));
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/api/domain-model/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2Login((login) -> login.successHandler(successHandler))
+            .addFilterAfter(apiKeyAuthFilter, BasicAuthenticationFilter.class);
 
         return http.build();
     }

@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -142,6 +143,22 @@ public class ProjectServiceImpl implements ProjectService {
         repository.save(project);
     }
 
+    @Override
+    public void createOrUpdateDomainModel(String projectName, DomainModel domainModel) {
+        Optional<Project> foundProject = repository.findByName(projectName);
+
+        if(foundProject.isPresent()) {
+            Project project = foundProject.get();
+            project.setDomainModel(domainModel);
+            repository.save(project);
+            return;
+        }
+
+        Project project = mapProject(projectName, domainModel,
+            (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        repository.save(project);
+    }
+
     private String buildProjectFilename(Project project) {
         return project.getId() + ".jar";
     }
@@ -205,6 +222,15 @@ public class ProjectServiceImpl implements ProjectService {
         return Project.builder()
             .name(buildCleanFileName(fileName))
             .boundedContextPackages(boundedContexts)
+            .creator(authenticatedUser)
+            .assignedAuthenticatedUsers(new ArrayList<>(List.of(authenticatedUser)))
+            .build();
+    }
+
+    private Project mapProject(String projectName, DomainModel domainModel, AuthenticatedUser authenticatedUser) {
+        return Project.builder()
+            .name(projectName)
+            .domainModel(domainModel)
             .creator(authenticatedUser)
             .assignedAuthenticatedUsers(new ArrayList<>(List.of(authenticatedUser)))
             .build();

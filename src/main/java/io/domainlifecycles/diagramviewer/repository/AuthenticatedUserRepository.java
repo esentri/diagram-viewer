@@ -10,5 +10,8 @@ import org.springframework.stereotype.Repository;
 public interface AuthenticatedUserRepository extends CrudRepository<AuthenticatedUser, UUID> {
 
     Optional<AuthenticatedUser> findByEmailAddress(final String emailAddress);
+
+    Optional<AuthenticatedUser> findByApiKey(final UUID apiKey);
+
     AuthenticatedUser getByEmailAddress(final String emailAddress);
 }
