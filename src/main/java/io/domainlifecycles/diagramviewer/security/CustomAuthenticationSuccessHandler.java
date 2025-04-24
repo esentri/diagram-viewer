@@ -1,15 +1,12 @@
 package io.domainlifecycles.diagramviewer.security;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.core.Authentication;
@@ -26,12 +23,9 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomAuthenticationSuccessHandler.class);
 
     private final SecurityService securityService;
-    private final SessionStorage sessionStorage;
 
-    public CustomAuthenticationSuccessHandler(SecurityService securityService,
-                                              @Qualifier("sessionStorage") SessionStorage sessionStorage) {
+    public CustomAuthenticationSuccessHandler(SecurityService securityService) {
         this.securityService = securityService;
-        this.sessionStorage = sessionStorage;
     }
 
     @Override
@@ -51,8 +45,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         final String fullName = oAuth2User.getAttribute("name");
 
-        AuthenticatedUser authenticatedUser = securityService.acknowledgeUserAuthentication(email, fullName);
-        sessionStorage.setAuthenticatedUser(authenticatedUser);
+        securityService.acknowledgeUserAuthentication(email, fullName);
 
         SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
         response.sendRedirect(savedRequest.getRedirectUrl());

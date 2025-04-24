@@ -15,7 +15,6 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -26,14 +25,12 @@ import static java.util.stream.Collectors.groupingBy;
 
 public class DiagramVisibilityAccordionComponent extends Accordion {
 
-    private final SessionStorage sessionStorage;
     private final DiagramService diagramService;
     private final Project project;
     private final Diagram diagram;
 
-    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, SessionStorage sessionStorage, DiagramService diagramService) {
+    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DiagramService diagramService) {
         this.setWidth("30%");
-        this.sessionStorage = sessionStorage;
         this.diagramService = diagramService;
         this.project = project;
         this.diagram = diagram;
@@ -41,7 +38,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     }
 
     private void createAccordion() {
-        Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = sessionStorage.get(project.getId())
+        Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = project.getDomainModel()
             .allTypeMirrors()
             .values()
             .stream()
@@ -84,7 +81,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                             }
 
                             diagram.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(blackListedClassNames));
-                            diagramService.update(diagram, sessionStorage.get(project.getId()));
+                            diagramService.update(diagram, project);
                             ComponentUtil.fireEvent(
                                 UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
                         });
@@ -114,7 +111,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                                 }
 
                                 diagram.setDomainModelVisibility(visibility.replaceSeedClassNames(seed));
-                                diagramService.update(diagram, sessionStorage.get(project.getId()));
+                                diagramService.update(diagram, project);
                                 ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
                             });
                         }

@@ -5,27 +5,28 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.User;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.stream.Stream;
 
 public interface ProjectService {
 
-    Stream<Project> getAll(Path targetDirectory, AuthenticatedUser authenticatedUser);
+    Stream<Project> getAll(AuthenticatedUser authenticatedUser);
 
-    Project getByProjectNameClean(final String projectNameClean);
+    Project getByName(final String projectName);
 
-    Project update(Project project);
+    void update(Project project);
 
-    Project deleteDiagram(Project project, Diagram diagram);
+    void deleteDiagram(Project project, Diagram diagram);
 
-    Project save(AuthenticatedUser authenticatedUser, String targetsLocation, InputStream fileContents,
+    Project save(AuthenticatedUser authenticatedUser, InputStream fileContents,
                  String fileName, String boundedContextPackages);
 
-    Project assignUser(Project project, String emailAddress);
+    void updateTargetFile(Project project, InputStream fileContents, String filename, String boundedContextPackages);
 
-    Project assignUser(Project project, User user);
+    void assignUser(Project project, String emailAddress);
 
-    Project unassignUser(Project project, User user);
+    void assignUser(Project project, User user);
+
+    void unassignUser(Project project, User user);
 
     void delete(Project project);
 }

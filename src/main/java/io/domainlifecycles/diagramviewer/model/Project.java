@@ -1,12 +1,14 @@
 package io.domainlifecycles.diagramviewer.model;
 
+import io.domainlifecycles.diagramviewer.model.converter.DomainModelConverter;
+import io.domainlifecycles.mirror.api.DomainModel;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -14,11 +16,13 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,19 +40,11 @@ import org.hibernate.annotations.CreationTimestamp;
 public class Project {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    @Column(nullable = false)
-    private String projectNameFull;
+    @GeneratedValue
+    private UUID id;
 
     @Column(nullable = false, unique = true)
-    private String projectNameClean; // Project name escaping special characters like '.'
-
-    private String displayName;
-
-    @Column(unique=true)
-    private String absolutePathToTarget;
+    private String name;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
@@ -56,6 +52,10 @@ public class Project {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
     @Builder.Default
     private List<Diagram> diagrams = new ArrayList<>();
+
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = DomainModelConverter.class)
+    private DomainModel domainModel;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_authenticated_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "authenticated_user_id"))

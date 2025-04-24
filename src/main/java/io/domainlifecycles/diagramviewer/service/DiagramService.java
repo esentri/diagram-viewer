@@ -7,10 +7,10 @@ import io.domainlifecycles.mirror.api.DomainModel;
 
 public interface DiagramService {
 
-    Diagram update(Diagram diagram, DomainModel domainModel);
+    Diagram update(Diagram diagram, Project project);
 
-    Diagram create(Project project, DomainModel domainModel, String fileName, String contextPackageName,
+    Diagram create(Project project, String fileName, String contextPackageName,
                    FileType fileType);
 
-    void deleteFilesFromFilesystem(String projectNameClean);
+    void deleteFilesFromFilesystem(String projectId);
 }

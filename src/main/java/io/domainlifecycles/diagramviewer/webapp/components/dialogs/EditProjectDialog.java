@@ -8,24 +8,24 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.router.RouteParameters;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class EditProjectDialog extends Dialog {
 
     private final Project project;
     private final ProjectService projectService;
-    private final SessionStorage sessionStorage;
     private final Binder<Project> projectConfigurationBinder;
 
-    public EditProjectDialog(Project project, ProjectService projectService, SessionStorage sessionStorage) {
+    public EditProjectDialog(Project project, ProjectService projectService) {
         this.project = project;
         this.projectService = projectService;
-        this.sessionStorage = sessionStorage;
         this.projectConfigurationBinder = new Binder<>(Project.class);
 
         setHeaderTitle("Edit Project");
@@ -44,9 +44,9 @@ public class EditProjectDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             projectConfigurationBinder.writeBeanIfValid(project);
-            Project persistedProject = projectService.update(project);
-            sessionStorage.reloadProject(persistedProject);
+            projectService.update(project);
             close();
+            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 
@@ -64,8 +64,8 @@ public class EditProjectDialog extends Dialog {
 
         TextField projectNameTextField = new TextField();
         projectNameTextField.setWidthFull();
-        formLayout.addFormItem(projectNameTextField, "Display name");
-        projectConfigurationBinder.forField(projectNameTextField).bind(Project::getDisplayName, Project::setDisplayName);
+        formLayout.addFormItem(projectNameTextField, "Name");
+        projectConfigurationBinder.forField(projectNameTextField).bind(Project::getName, Project::setName);
 
         TextField boundedContextPackagesTextField = new TextField();
         boundedContextPackagesTextField.setWidthFull();

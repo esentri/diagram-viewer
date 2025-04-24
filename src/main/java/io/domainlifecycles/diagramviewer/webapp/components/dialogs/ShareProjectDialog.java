@@ -20,7 +20,6 @@ import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
 import java.util.List;
 import java.util.Objects;
@@ -30,15 +29,13 @@ import java.util.stream.Stream;
 public class ShareProjectDialog extends Dialog {
 
     private final ProjectService projectService;
-    private final SessionStorage sessionStorage;
     private Project project;
     private Grid<User> userGrid;
     private Registration registration;
 
-    public ShareProjectDialog(ProjectService projectService, SessionStorage sessionStorage, Project project) {
+    public ShareProjectDialog(ProjectService projectService, Project project) {
         this.project = project;
         this.projectService = projectService;
-        this.sessionStorage = sessionStorage;
 
         setHeaderTitle("Share Project");
 
@@ -76,7 +73,7 @@ public class ShareProjectDialog extends Dialog {
     }
 
     private List<User> getAuthenticatedAndTemporaryUsersForProject() {
-        project = projectService.getByProjectNameClean(project.getProjectNameClean());
+        project = projectService.getByName(project.getName());
         List<AuthenticatedUser> assignedAuthenticatedUsers = project.getAssignedAuthenticatedUsers();
         List<TemporaryUser> assignedTemporaryUsers = project.getAssignedTemporaryUsers();
 
@@ -154,10 +151,7 @@ public class ShareProjectDialog extends Dialog {
             ComponentUtil.addListener(
                 attachEvent.getUI(),
                 ProjectUsersChangedEvent.class,
-                event -> {
-                    refreshUsers();
-                    sessionStorage.refreshAuthenticatedUser();
-                }
+                event -> refreshUsers()
             );
     }
 

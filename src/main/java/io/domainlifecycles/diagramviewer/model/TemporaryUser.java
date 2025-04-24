@@ -3,13 +3,13 @@ package io.domainlifecycles.diagramviewer.model;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,8 +35,8 @@ import lombok.experimental.SuperBuilder;
 public class TemporaryUser extends User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedTemporaryUsers")
     @Builder.Default

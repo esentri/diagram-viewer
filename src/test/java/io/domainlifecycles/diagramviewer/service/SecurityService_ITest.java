@@ -7,6 +7,7 @@ import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -125,12 +126,9 @@ class SecurityService_ITest {
 
     private Project setUpProject() {
         Project project = Project.builder()
-            .projectNameClean("project_1_0_0_jar")
-            .projectNameFull("project-1.0.0.jar")
-            .displayName("project-1.0.0.jar")
-            .absolutePathToTarget("target/project-1.0.0.jar")
+            .name("project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
-            .assignedAuthenticatedUsers(List.of(authenticatedUser))
+            .assignedAuthenticatedUsers(new ArrayList<>(List.of(authenticatedUser)))
             .creator(authenticatedUser)
             .build();
 

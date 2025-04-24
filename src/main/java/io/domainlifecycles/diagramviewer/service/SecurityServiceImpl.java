@@ -1,11 +1,15 @@
 package io.domainlifecycles.diagramviewer.service;
 
+import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.TemporaryUser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +23,24 @@ public class SecurityServiceImpl implements SecurityService {
         this.authenticatedUserService = authenticatedUserService;
         this.temporaryUserService = temporaryUserService;
         this.projectService = projectService;
+    }
+
+    @Override
+    public AuthenticatedUser getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+        String email = oAuth2User.getAttribute("email");
+
+        if (email == null) {
+            email = oAuth2User.getAttribute("preferred_username");
+        }
+
+        if (email == null) {
+            throw DiagramViewerException.fail("Email or username not found in OAuth2 response.");
+        }
+
+        return authenticatedUserService.get(email);
     }
 
     @Override
@@ -45,10 +67,10 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public boolean checkAccess(String projectNameClean, AuthenticatedUser authenticatedUser) {
+    public boolean checkAccess(String projectName, AuthenticatedUser authenticatedUser) {
         if(authenticatedUser == null || authenticatedUser.getAssignedProjects() == null) return false;
 
         return authenticatedUser.getAssignedProjects().stream()
-            .anyMatch(project -> Objects.equals(project.getProjectNameClean(), projectNameClean));
+            .anyMatch(project -> Objects.equals(project.getName(), projectName));
     }
 }

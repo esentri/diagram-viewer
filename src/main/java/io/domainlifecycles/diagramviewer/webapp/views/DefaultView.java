@@ -5,7 +5,6 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 
@@ -14,13 +13,11 @@ import jakarta.annotation.security.PermitAll;
 @PermitAll
 public class DefaultView extends FlexLayout {
 
-    public DefaultView(SessionStorage sessionStorage) {
+    public DefaultView() {
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
         setAlignItems(Alignment.CENTER);
         add(getPageContents());
-
-        sessionStorage.setNoneSelected();
     }
 
     private VerticalLayout getPageContents() {

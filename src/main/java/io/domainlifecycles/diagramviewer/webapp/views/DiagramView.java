@@ -24,7 +24,7 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
+import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
@@ -35,27 +35,34 @@ import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Value;
 
 @Route(value = "/:projectName/:diagramName", layout = MainLayout.class)
 @PageTitle("DLC | Diagram Viewer")
 @PermitAll
 public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
+    private final String diagramsLocation;
     private final ProjectService projectService;
     private final DiagramService diagramService;
-    private final SessionStorage sessionStorage;
-    private String projectNameClean;
+    private final SecurityService securityService;
+    private String projectName;
     private String diagramName;
     private Project project;
     private Diagram diagram;
     private Registration registration;
 
-    public DiagramView(SessionStorage sessionStorage, ProjectService projectService, DiagramService diagramService) {
-        this.sessionStorage = sessionStorage;
+    public DiagramView(
+        @Value("${diagrams.location}") String diagramsLocation,
+        ProjectService projectService, DiagramService diagramService, SecurityService securityService) {
+        this.diagramsLocation = diagramsLocation;
         this.projectService = projectService;
         this.diagramService = diagramService;
+        this.securityService = securityService;
+
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
         setId("diagram-viewer");
@@ -63,7 +70,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        projectNameClean = event.getRouteParameters().get("projectName").orElseThrow();
+        projectName = event.getRouteParameters().get("projectName").orElseThrow();
         diagramName = event.getRouteParameters().get("diagramName").orElseThrow();
 
         refreshPage();
@@ -76,14 +83,11 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private void setProjectAndDiagram() {
-        project = projectService.getByProjectNameClean(projectNameClean);
+        project = projectService.getByName(projectName);
         diagram = project.getDiagrams().stream().filter(foundDiagram ->
             Objects.equals(foundDiagram.getFileName(), diagramName))
             .findAny()
             .orElseThrow(() -> DiagramViewerException.fail(String.format("No diagram found with name '%s' .", diagramName)));
-
-        sessionStorage.setSelectedProject(project);
-        sessionStorage.setSelectedDiagram(diagram);
     }
 
     private void addPageContents() {
@@ -91,9 +95,9 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
-        diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(project, diagram, diagramService, sessionStorage));
-        diagramViewerAndStylingContainer.add(new DiagramZoomComponentContainer(projectNameClean, diagramName));
-        diagramViewerAndStylingContainer.add(new DiagramVisibilityAccordionComponent(project, diagram, sessionStorage, diagramService));
+        diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(project, diagram, diagramService));
+        diagramViewerAndStylingContainer.add(new DiagramZoomComponentContainer(project.getId().toString(), diagramName));
+        diagramViewerAndStylingContainer.add(new DiagramVisibilityAccordionComponent(project, diagram, diagramService));
 
         add(diagramViewerAndStylingContainer);
     }
@@ -128,9 +132,8 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         confirmDialog.setConfirmButtonTheme("error primary");
         confirmDialog.addConfirmListener(event -> {
             projectService.deleteDiagram(project, diagram);
-            sessionStorage.setNoDiagramSelected();
             confirmDialog.close();
-            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
+            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 
@@ -139,18 +142,14 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         deleteDiagramButton.getElement().getStyle().set("margin-left", "auto");
         deleteDiagramButton.getElement().getStyle().set("margin-right", "1rem");
         deleteDiagramButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        deleteDiagramButton.setEnabled(Objects.equals(project.getCreator().getId(), sessionStorage.getAuthenticatedUser().getId()));
+        deleteDiagramButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getAuthenticatedUser().getId()));
         deleteDiagramButton.addClickListener(e -> confirmDialog.open());
         return deleteDiagramButton;
     }
 
     private StreamResource buildDiagramDownloadStreamResource() {
-        if(!sessionStorage.isDiagramSelected()) {
-            return null;
-        }
-
-        final Diagram selectedDiagram = sessionStorage.getSelectedDiagram();
-        return new StreamResource(selectedDiagram.getFileName(), () -> getDiagramFileStream(selectedDiagram.getFullAbsoluteLocationPath()));
+        return new StreamResource(diagram.getFileName(), () -> getDiagramFileStream(
+            Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName()).toAbsolutePath().toString()));
     }
 
     private InputStream getDiagramFileStream(final String diagramLocation) {

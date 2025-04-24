@@ -29,9 +29,10 @@ public class FileIOUtils {
             .collect(Collectors.toSet());
     }
 
-    public static void saveFile(String locationPath, String filenameIncludingSuffix, InputStream inputStream) throws IOException {
+    public static Path saveFile(String locationPath, String filenameIncludingSuffix, InputStream inputStream) throws IOException {
         final Path filePath = Path.of(locationPath, filenameIncludingSuffix);
         saveFile(filePath, inputStream);
+        return filePath;
     }
 
     public static void saveFile(String path, InputStream inputStream) throws IOException {

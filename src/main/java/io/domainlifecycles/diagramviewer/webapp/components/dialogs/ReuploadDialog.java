@@ -10,33 +10,33 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.router.RouteParameters;
+import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.io.InputStream;
+import java.util.Map;
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class UploadDialog extends Dialog {
-
-    private final static Logger log = LoggerFactory.getLogger(UploadDialog.class);
+public class ReuploadDialog extends Dialog {
 
     private final ProjectService projectService;
-    private final SecurityService securityService;
     private final Binder<UploadOptions> binder;
+    private final Project project;
 
     private Button uploadButton;
     private TextField projectNameTextField;
     private TextField boundedContextPackagesTextField;
     private InputStream fileInputStream;
+    private String fileName;
 
-    public UploadDialog(ProjectService projectService, SecurityService securityService) {
+    public ReuploadDialog(Project project, ProjectService projectService) {
+        this.project = project;
         this.projectService = projectService;
-        this.securityService = securityService;
         this.binder = new Binder<>();
 
-        setHeaderTitle("Upload Project");
+        setHeaderTitle("Reupload Project");
         setWidth("40%");
         setHeight("60%");
 
@@ -50,10 +50,9 @@ public class UploadDialog extends Dialog {
         uploadButton.setEnabled(binder.isValid());
 
         uploadButton.addClickListener(e -> {
-            projectService.save(securityService.getAuthenticatedUser(), fileInputStream,
-                projectNameTextField.getValue(), boundedContextPackagesTextField.getValue());
+            projectService.updateTargetFile(project, fileInputStream, projectNameTextField.getValue(), boundedContextPackagesTextField.getValue());
+            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
-
             close();
         });
 
@@ -96,7 +95,10 @@ public class UploadDialog extends Dialog {
         upload.setMaxFileSize(500000000); // 500MB
         upload.setAcceptedFileTypes("application/java-archive");
 
-        upload.addSucceededListener(event -> fileInputStream = uploadBuffer.getInputStream(event.getFileName()));
+        upload.addSucceededListener(event -> {
+            fileName = event.getFileName();
+            fileInputStream = uploadBuffer.getInputStream(fileName);
+        });
         return upload;
     }
 

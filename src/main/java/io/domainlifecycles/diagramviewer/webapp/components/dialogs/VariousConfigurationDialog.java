@@ -12,7 +12,6 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycler;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
@@ -24,14 +23,12 @@ public class VariousConfigurationDialog extends Dialog {
     private final Diagram diagram;
     private final Project project;
     private final DiagramService diagramService;
-    private final SessionStorage sessionStorage;
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
 
-    public VariousConfigurationDialog(Diagram diagram, Project project, DiagramService diagramService, SessionStorage sessionStorage) {
+    public VariousConfigurationDialog(Diagram diagram, Project project, DiagramService diagramService) {
         this.diagram = diagram;
         this.project = project;
         this.diagramService = diagramService;
-        this.sessionStorage = sessionStorage;
         this.diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Various");
@@ -50,7 +47,7 @@ public class VariousConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
-            diagramService.update(diagram, sessionStorage.get(project.getId()));
+            diagramService.update(diagram, project);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });

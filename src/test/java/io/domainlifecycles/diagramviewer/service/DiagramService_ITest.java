@@ -13,6 +13,7 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
@@ -74,12 +75,9 @@ class DiagramService_ITest {
 
     private Project setUpProject() {
         Project project = Project.builder()
-            .projectNameClean("project_1_0_0_jar")
-            .projectNameFull("project-1.0.0.jar")
-            .displayName("project-1.0.0.jar")
-            .absolutePathToTarget("target/project-1.0.0.jar")
+            .name("project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
-            .assignedAuthenticatedUsers(List.of(authenticatedUser))
+            .assignedAuthenticatedUsers(new ArrayList<>(List.of(authenticatedUser)))
             .creator(authenticatedUser)
             .build();
 

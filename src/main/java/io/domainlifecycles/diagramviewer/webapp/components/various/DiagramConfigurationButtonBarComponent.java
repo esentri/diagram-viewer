@@ -8,7 +8,6 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.StylingConfigurationDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.VariousConfigurationDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.VisibilityConfigurationDialog;
@@ -18,16 +17,16 @@ import java.util.stream.Stream;
 
 public class DiagramConfigurationButtonBarComponent extends FlexLayout {
 
-    public DiagramConfigurationButtonBarComponent(Project project, Diagram diagram, DiagramService diagramService, SessionStorage sessionStorage) {
+    public DiagramConfigurationButtonBarComponent(Project project, Diagram diagram, DiagramService diagramService) {
         setJustifyContentMode(JustifyContentMode.CENTER);
         setFlexDirection(FlexDirection.COLUMN);
-        add(createAndGetConfigurationButtonsAndDialogs(project, diagram, diagramService, sessionStorage));
+        add(createAndGetConfigurationButtonsAndDialogs(project, diagram, diagramService));
     }
 
-    private List<Component> createAndGetConfigurationButtonsAndDialogs(Project project, Diagram diagram, DiagramService diagramService, SessionStorage sessionStorage) {
-        List<Component> stylingConfigurationButtonAndDialog = getStylingConfigurationButtonAndDialog(project, diagram, diagramService, sessionStorage);
-        List<Component> visibilityConfigurationButtonAndDialog = getVisibilityConfigurationButtonAndDialog(project, diagram, diagramService, sessionStorage);
-        List<Component> variousConfigurationButtonAndDialog = getVariousConfigurationButtonAndDialog(project, diagram, diagramService, sessionStorage);
+    private List<Component> createAndGetConfigurationButtonsAndDialogs(Project project, Diagram diagram, DiagramService diagramService) {
+        List<Component> stylingConfigurationButtonAndDialog = getStylingConfigurationButtonAndDialog(project, diagram, diagramService);
+        List<Component> visibilityConfigurationButtonAndDialog = getVisibilityConfigurationButtonAndDialog(project, diagram, diagramService);
+        List<Component> variousConfigurationButtonAndDialog = getVariousConfigurationButtonAndDialog(project, diagram, diagramService);
         return Stream.of(
                 stylingConfigurationButtonAndDialog,
                 visibilityConfigurationButtonAndDialog,
@@ -36,19 +35,18 @@ public class DiagramConfigurationButtonBarComponent extends FlexLayout {
             .collect(Collectors.toList());
     }
 
-    private List<Component> getStylingConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService, SessionStorage sessionStorage) {
-        Dialog stylingConfigurationDialog = new StylingConfigurationDialog(project, diagram, diagramService, sessionStorage);
+    private List<Component> getStylingConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService) {
+        Dialog stylingConfigurationDialog = new StylingConfigurationDialog(project, diagram, diagramService);
         return List.of(new Button(new Icon("vaadin:paintbrush"), e -> stylingConfigurationDialog.open()), stylingConfigurationDialog);
     }
 
-    private List<Component> getVisibilityConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService, SessionStorage sessionStorage) {
-        Dialog visibilityConfigurationDialog = new VisibilityConfigurationDialog(sessionStorage, diagramService,
-            project, diagram);
+    private List<Component> getVisibilityConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService) {
+        Dialog visibilityConfigurationDialog = new VisibilityConfigurationDialog(diagramService, project, diagram);
         return List.of(new Button(new Icon("vaadin:eye"), e -> visibilityConfigurationDialog.open()), visibilityConfigurationDialog);
     }
 
-    private List<Component> getVariousConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService, SessionStorage sessionStorage) {
-        Dialog variousConfigurationDialog = new VariousConfigurationDialog(diagram, project, diagramService, sessionStorage);
+    private List<Component> getVariousConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService) {
+        Dialog variousConfigurationDialog = new VariousConfigurationDialog(diagram, project, diagramService);
         return List.of(new Button(new Icon("vaadin:cogs"), e -> variousConfigurationDialog.open()), variousConfigurationDialog);
     }
 }

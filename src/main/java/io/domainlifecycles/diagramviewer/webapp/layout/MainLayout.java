@@ -29,16 +29,13 @@ import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
-import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
+import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -52,17 +49,17 @@ public class MainLayout extends AppLayout {
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
 
     private final ProjectService projectService;
-    private final SessionStorage sessionStorage;
+    private final SecurityService securityService;
     private final UploadDialog uploadDialog;
     private SideNav sideNav;
     private Registration registration;
 
     public MainLayout(ProjectService projectService,
-                      SessionStorage sessionStorage) {
+                      SecurityService securityService) {
 
         this.projectService = projectService;
-        this.sessionStorage = sessionStorage;
-        this.uploadDialog = new UploadDialog(projectService, sessionStorage);
+        this.securityService = securityService;
+        this.uploadDialog = new UploadDialog(projectService, securityService);
 
         addToNavbar(new DrawerToggle(), getDlcLogo());
         createAndAddUserInfoPopover();
@@ -71,7 +68,7 @@ public class MainLayout extends AppLayout {
 
     private void createAndAddUserInfoPopover() {
         Avatar avatar = new Avatar();
-        avatar.setName(sessionStorage.getAuthenticatedUser().getFullName());
+        avatar.setName(securityService.getAuthenticatedUser().getFullName());
         avatar.getStyle().set("display", "block");
         avatar.getStyle().set("cursor", "pointer");
         avatar.getElement().setAttribute("tabindex", "-1");
@@ -96,16 +93,16 @@ public class MainLayout extends AppLayout {
         userInfo.getThemeList().remove("spacing");
 
         Avatar popoverAvatar = new Avatar();
-        popoverAvatar.setName(sessionStorage.getAuthenticatedUser().getFullName());
+        popoverAvatar.setName(securityService.getAuthenticatedUser().getFullName());
         popoverAvatar.getStyle().set("margin", "auto");
         popoverAvatar.getElement().setAttribute("tabindex", "-1");
         popoverAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
 
         VerticalLayout nameLayout = new VerticalLayout();
         nameLayout.getThemeList().remove("spacing");
-        Div fullName = new Div(sessionStorage.getAuthenticatedUser().getFullName());
+        Div fullName = new Div(securityService.getAuthenticatedUser().getFullName());
         fullName.getStyle().set("font-weight", "bold");
-        Div nickName = new Div(sessionStorage.getAuthenticatedUser().getEmailAddress());
+        Div nickName = new Div(securityService.getAuthenticatedUser().getEmailAddress());
         nameLayout.add(fullName, nickName);
 
         userInfo.add(popoverAvatar, nameLayout);
@@ -131,16 +128,16 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem[] createSideNavLinks() {
-        return projectService.getAll(buildPath(sessionStorage.getTargetsLocation()), sessionStorage.getAuthenticatedUser())
+        return projectService.getAll(securityService.getAuthenticatedUser())
             .sorted(Comparator.comparing(Project::getCreatedAt))
             .map(project -> {
-                SideNavItem parentSideNavItem = new SideNavItem(project.getDisplayName(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getProjectNameClean())));
+                SideNavItem parentSideNavItem = new SideNavItem(project.getName(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
                 parentSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
 
                 project.getDiagrams()
                     .forEach(diagram -> {
                         SideNavItem sideNavItem = new SideNavItem(diagram.getFileName(), DiagramView.class,
-                            new RouteParameters(Map.of("projectName", project.getProjectNameClean(), "diagramName",
+                            new RouteParameters(Map.of("projectName", project.getName(), "diagramName",
                                 diagram.getFileName())));
 
                         sideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
@@ -167,17 +164,6 @@ public class MainLayout extends AppLayout {
         return new Anchor("/", dlcLogo);
     }
 
-    private static Path buildPath(String absolutePath) {
-        Path directoryToWatch;
-        try {
-            directoryToWatch = Path.of(absolutePath);
-        } catch (InvalidPathException e) {
-            throw DiagramViewerException.fail(
-                String.format("Specified path '%s' is not a directory.", absolutePath), e);
-        }
-        return directoryToWatch;
-    }
-
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
@@ -187,7 +173,6 @@ public class MainLayout extends AppLayout {
                 DiagramsOrProjectsChangedEvent.class,
                 event -> {
                     refreshSideNavLinks();
-                    sessionStorage.refreshAuthenticatedUser();
                 }
             );
     }

@@ -11,7 +11,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.server.StreamResource;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.session.SessionStorage;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -24,6 +23,8 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private static final String APPLICATION_SQL_MIME_TYPE = "application/sql";
 
     private final Binder<GenerateDatabaseModelOptions> binder;
+    private final SQLDDLGeneratorService sqlDDLGeneratorService;
+    private final Project project;
 
     private Button generateButton;
     private Checkbox auditModelCheckbox;
@@ -31,12 +32,10 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private TextField bcPackageInput;
     private TextField bcSchemaInput;
 
-    private final SQLDDLGeneratorService sqlDDLGeneratorService;
-    private final SessionStorage sessionStorage;
 
-    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, SessionStorage sessionStorage) {
+    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, Project project) {
         this.sqlDDLGeneratorService = sqlDDLGeneratorService;
-        this.sessionStorage = sessionStorage;
+        this.project = project;
         this.binder = new Binder<>();
 
         setHeaderTitle("Download SQL-DDL-Model");
@@ -99,8 +98,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
     }
 
     private String buildScriptFilename() {
-        Project project = sessionStorage.getSelectedProject();
-        return project == null ? "dlc-project" + SQL_DDL_SCRIPT_SUFFIX : project.getDisplayName() + SQL_DDL_SCRIPT_SUFFIX;
+        return project == null ? "dlc-project" + SQL_DDL_SCRIPT_SUFFIX : project.getName() + SQL_DDL_SCRIPT_SUFFIX;
     }
 
     private Button createCloseButton() {
@@ -109,7 +107,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
 
     private InputStream getStream() {
         final String ddl = sqlDDLGeneratorService.generateSQL(
-            sessionStorage.get(sessionStorage.getSelectedProject().getId()),
+            project.getDomainModel(),
             bcPackageInput.getValue(), bcSchemaInput.getValue(), sqlDialectSelect.getValue(), auditModelCheckbox.getValue());
 
         return new ByteArrayInputStream(ddl.getBytes(StandardCharsets.UTF_8));

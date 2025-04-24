@@ -34,19 +34,18 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public Diagram update(Diagram diagram, DomainModel domainModel) {
+    public Diagram update(Diagram diagram, Project project) {
         Diagram persistedDiagram = repository.save(diagram);
-        createAndSaveDiagramToFilesystem(domainModel, persistedDiagram);
+        createAndSaveDiagramToFilesystem(project, persistedDiagram);
         return persistedDiagram;
     }
 
     @Override
-    public Diagram create(Project project, DomainModel domainModel, String fileName, String contextPackageName, FileType fileType) {
-        Path diagramPath = Path.of(diagramsLocation, project.getProjectNameClean(), fileName + fileType.getFileSuffix());
+    public Diagram create(Project project, String fileName, String contextPackageName, FileType fileType) {
+        Path diagramPath = Path.of(diagramsLocation, project.getName(), fileName + fileType.getFileSuffix());
 
         Diagram diagram = Diagram.builder()
             .fileName(diagramPath.getFileName().toString())
-            .fullAbsoluteLocationPath(diagramPath.toAbsolutePath().toString())
             .fileType(fileType)
             .project(project)
             .diagramStylingConfiguration(
@@ -56,32 +55,34 @@ public class DiagramServiceImpl implements DiagramService {
             .build();
 
         Diagram persistedDiagram = repository.save(diagram);
-        createAndSaveDiagramToFilesystem(domainModel, persistedDiagram);
+        createAndSaveDiagramToFilesystem(project, persistedDiagram);
 
         return persistedDiagram;
     }
 
     @Override
-    public void deleteFilesFromFilesystem(String projectNameClean) {
-        Path projectDiagramsDirectory = Path.of(diagramsLocation, projectNameClean);
+    public void deleteFilesFromFilesystem(String projectId) {
+        Path projectDiagramsDirectory = Path.of(diagramsLocation, projectId);
 
         try {
             FileIOUtils.deleteDirectoryRecursively(projectDiagramsDirectory);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw DiagramViewerException.fail(String.format("Could not delete diagrams of project '%s'.", e),
+                projectId);
         }
     }
 
-    private void createAndSaveDiagramToFilesystem(DomainModel domainModel, Diagram diagram) {
+    private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
         final String nomnoml = DiagrammerUtils.generateNomnoml(
-            domainModel,
+            project.getDomainModel(),
             diagram.getDiagramStylingConfiguration(),
             diagram.getDomainModelVisibility());
 
         byte[] diagramFileContents = krokiClient.convertTo(nomnoml, diagram.getFileType());
 
+        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
         try {
-            FileIOUtils.saveFile(diagram.getFullAbsoluteLocationPath(), new ByteArrayInputStream(diagramFileContents));
+            FileIOUtils.saveFile(diagramPath.toAbsolutePath(), new ByteArrayInputStream(diagramFileContents));
         } catch (IOException e) {
             throw DiagramViewerException.fail(String.format("Could not save diagram to '%s'.", diagramsLocation), e);
         }

@@ -8,11 +8,11 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -26,8 +26,8 @@ import org.hibernate.annotations.CreationTimestamp;
 public class DiagramStylingConfiguration {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
 
     private String contextPackageName;
 
@@ -305,11 +305,11 @@ public class DiagramStylingConfiguration {
     @CreationTimestamp
     private Instant createdAt;
 
-    public void setId(Long diagramConfigurationId) {
+    public void setId(UUID diagramConfigurationId) {
         this.id = diagramConfigurationId;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 

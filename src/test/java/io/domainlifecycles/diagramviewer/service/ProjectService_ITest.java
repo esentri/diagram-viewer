@@ -14,21 +14,19 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -59,6 +57,10 @@ class ProjectService_ITest {
     @Autowired
     DiagramRepository diagramRepository;
 
+    @Value("${targets.location}") String targetsDirectory;
+
+    @Value("${diagrams.location}") String diagramsLocation;
+
     private AuthenticatedUser authenticatedUser;
 
     @BeforeEach
@@ -82,24 +84,21 @@ class ProjectService_ITest {
     void Should_CreateProject_When_AllValuesAreValid() throws IOException {
 
         // when
-        Project project = service.save(authenticatedUser, "/tmp/diagram-viewer",
+        Project project = service.save(authenticatedUser,
             new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", "com.esentri");
 
         // then
         assertThat(project).isNotNull();
-        assertThat(project.getProjectNameFull()).isEqualTo("test-project-1.0.0-ÄÖÜ.txt");
-        assertThat(project.getProjectNameClean()).isEqualTo("test_project_1_0_0_ÄÖÜ_txt");
-        assertThat(project.getDisplayName()).isEqualTo("test-project-1.0.0-ÄÖÜ.txt");
-        assertThat(project.getCreator()).isEqualTo(authenticatedUser);
+        assertThat(project.getName()).isEqualTo("test_project_1_0_0_ÄÖÜ_txt");
+        assertThat(project.getCreator().getId()).isEqualTo(authenticatedUser.getId());
         assertThat(project.getAssignedAuthenticatedUsers().size()).isEqualTo(1);
-        assertThat(project.getAssignedAuthenticatedUsers()).contains(authenticatedUser);
-        assertThat(project.getCreator()).isEqualTo(authenticatedUser);
+        assertThat(project.getAssignedAuthenticatedUsers().get(0).getId()).isEqualTo(authenticatedUser.getId());
+        assertThat(project.getCreator().getId()).isEqualTo(authenticatedUser.getId());
         assertThat(project.getAssignedTemporaryUsers()).isEmpty();
-        assertThat(project.getAbsolutePathToTarget()).isNotBlank();
         assertThat(project.getBoundedContextPackages().size()).isEqualTo(1);
         assertThat(project.getBoundedContextPackages().get(0)).isEqualTo("com.esentri");
 
-        FileIOUtils.deleteFileByAbsolutePath("/tmp/diagram-viewer/test-project-1.0.0-ÄÖÜ.txt");
+        FileIOUtils.deleteDirectoryRecursively(Path.of(targetsDirectory));
     }
 
     @Test
@@ -109,14 +108,13 @@ class ProjectService_ITest {
         Project project = setUpProject();
 
         // when
-        Project updatedProject = service.assignUser(project, TEMPORARY_USER_MAIL_ADDRESS);
+        service.assignUser(project, TEMPORARY_USER_MAIL_ADDRESS);
 
         // then
-        assertThat(updatedProject).isNotNull();
-        assertThat(updatedProject.getAssignedTemporaryUsers())
+        assertThat(project.getAssignedTemporaryUsers())
             .anySatisfy(temporaryUser -> assertThat(temporaryUser.getEmailAddress())
                 .isEqualTo(TEMPORARY_USER_MAIL_ADDRESS));
-        assertThat(updatedProject.getAssignedAuthenticatedUsers())
+        assertThat(project.getAssignedAuthenticatedUsers())
             .anySatisfy(authenticatedUser -> assertThat(authenticatedUser.getEmailAddress())
                 .isEqualTo(TEST_USER_MAIL_ADDRESS));
     }
@@ -129,16 +127,16 @@ class ProjectService_ITest {
         AuthenticatedUser anotherAuthenticatedUser = setUpAuthenticatedUser();
 
         // when
-        Project updatedProject = service.assignUser(project, anotherAuthenticatedUser.getEmailAddress());
+        service.assignUser(project, anotherAuthenticatedUser.getEmailAddress());
 
         // then
-        assertThat(updatedProject).isNotNull();
-        assertThat(updatedProject.getAssignedTemporaryUsers()).isEmpty();
-        assertThat(updatedProject.getAssignedAuthenticatedUsers().size()).isEqualTo(2);
-        assertThat(updatedProject.getAssignedAuthenticatedUsers())
+        assertThat(project).isNotNull();
+        assertThat(project.getAssignedTemporaryUsers()).isEmpty();
+        assertThat(project.getAssignedAuthenticatedUsers().size()).isEqualTo(2);
+        assertThat(project.getAssignedAuthenticatedUsers())
             .anySatisfy(authenticatedUser -> assertThat(authenticatedUser.getEmailAddress())
                 .isEqualTo(TEST_USER_MAIL_ADDRESS));
-        assertThat(updatedProject.getAssignedAuthenticatedUsers())
+        assertThat(project.getAssignedAuthenticatedUsers())
             .anySatisfy(authenticatedUser -> assertThat(authenticatedUser.getEmailAddress())
                 .isEqualTo(anotherAuthenticatedUser.getEmailAddress()));
     }
@@ -156,13 +154,13 @@ class ProjectService_ITest {
         projectRepository.save(project);
 
         // when
-        Project updatedProject = service.unassignUser(project, anotherAuthenticatedUser);
+        service.unassignUser(project, anotherAuthenticatedUser);
 
         // then
-        assertThat(updatedProject).isNotNull();
-        assertThat(updatedProject.getAssignedTemporaryUsers()).isEmpty();
-        assertThat(updatedProject.getAssignedAuthenticatedUsers().size()).isEqualTo(1);
-        assertThat(updatedProject.getAssignedAuthenticatedUsers())
+        assertThat(project).isNotNull();
+        assertThat(project.getAssignedTemporaryUsers()).isEmpty();
+        assertThat(project.getAssignedAuthenticatedUsers().size()).isEqualTo(1);
+        assertThat(project.getAssignedAuthenticatedUsers())
             .anySatisfy(authenticatedUser -> assertThat(authenticatedUser.getEmailAddress())
                 .isEqualTo(TEST_USER_MAIL_ADDRESS));
     }
@@ -180,13 +178,13 @@ class ProjectService_ITest {
         projectRepository.save(project);
 
         // when
-        Project updatedProject = service.unassignUser(project, temporaryUser);
+        service.unassignUser(project, temporaryUser);
 
         // then
-        assertThat(updatedProject).isNotNull();
-        assertThat(updatedProject.getAssignedTemporaryUsers()).isEmpty();
-        assertThat(updatedProject.getAssignedAuthenticatedUsers().size()).isEqualTo(1);
-        assertThat(updatedProject.getAssignedAuthenticatedUsers())
+        assertThat(project).isNotNull();
+        assertThat(project.getAssignedTemporaryUsers()).isEmpty();
+        assertThat(project.getAssignedAuthenticatedUsers().size()).isEqualTo(1);
+        assertThat(project.getAssignedAuthenticatedUsers())
             .anySatisfy(authenticatedUser -> assertThat(authenticatedUser.getEmailAddress())
                 .isEqualTo(TEST_USER_MAIL_ADDRESS));
     }
@@ -197,21 +195,19 @@ class ProjectService_ITest {
         // given
         Project project = setUpProject();
         Diagram diagram = Diagram.builder()
-            .fileName("diagram")
+            .fileName("diagram.svg")
             .fileType(FileType.SVG)
-            .fullAbsoluteLocationPath("/tmp/diagram-viewer/diagram.svg")
             .project(project)
             .build();
         diagramRepository.save(diagram);
-        FileIOUtils.saveFile("/tmp/diagram-viewer/diagram.svg", new ByteArrayInputStream("test".getBytes(
+        FileIOUtils.saveFile(Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName()), new ByteArrayInputStream("test".getBytes(
             StandardCharsets.UTF_8)));
 
         // when
-        Project updatedProject = service.deleteDiagram(project, diagram);
+        service.deleteDiagram(project, diagram);
 
         // then
-        assertThat(updatedProject).isNotNull();
-        assertThat(updatedProject.getDiagrams()).isEmpty();
+        assertThat(project.getDiagrams()).isEmpty();
     }
 
     private AuthenticatedUser setUpAuthenticatedUser() {
@@ -234,12 +230,9 @@ class ProjectService_ITest {
 
     private Project setUpProject() {
         Project project = Project.builder()
-            .projectNameClean("project_1_0_0_jar")
-            .projectNameFull("project-1.0.0.jar")
-            .displayName("project-1.0.0.jar")
-            .absolutePathToTarget("target/project-1.0.0.jar")
+            .name("project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
-            .assignedAuthenticatedUsers(List.of(authenticatedUser))
+            .assignedAuthenticatedUsers(new ArrayList<>(List.of(authenticatedUser)))
             .creator(authenticatedUser)
             .build();
 
