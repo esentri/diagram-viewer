@@ -26,7 +26,7 @@ public class ProjectAndDiagramNavigationAccessChecker implements NavigationAcces
             if (context.getParameters().getParameterNames().contains("projectName")) {
                 String projectName = context.getParameters().get("projectName").orElseThrow();
                 result = securityService.checkAccess(projectName,
-                    securityService.getRegisteredUser()) ? AccessCheckResult.allow() : AccessCheckResult.reject(
+                    securityService.getCurrentlySignedInUser()) ? AccessCheckResult.allow() : AccessCheckResult.reject(
                     "User has no access to this resource.");
             } else {
                 result = AccessCheckResult.reject("Project name not specified");

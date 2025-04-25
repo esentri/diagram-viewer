@@ -26,7 +26,7 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public RegisteredUser getRegisteredUser() {
+    public RegisteredUser getCurrentlySignedInUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
@@ -61,7 +61,7 @@ public class SecurityServiceImpl implements SecurityService {
             projectService.assignUser(project, newRegisteredUser);
         });
 
-        invitedUserService.delete(invitedUser);
+        if(invitedUserService.checkForRemoval(invitedUser)) invitedUserService.delete(invitedUser);
 
         return newRegisteredUser;
     }

@@ -4,7 +4,7 @@ import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 
 public interface SecurityService {
 
-    RegisteredUser getRegisteredUser();
+    RegisteredUser getCurrentlySignedInUser();
 
     RegisteredUser acknowledgeUserAuthentication(String userEmailAddress, String fullName);
 

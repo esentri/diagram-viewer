@@ -74,14 +74,14 @@ public class MainLayout extends AppLayout {
     }
 
     private void refreshPopover() {
-        final RegisteredUser registeredUser = securityService.getRegisteredUser();
+        final RegisteredUser registeredUser = securityService.getCurrentlySignedInUser();
 
         userInfoPopover.removeAll();
         addPopoverContents(registeredUser);
     }
 
     private void createAndAddUserInfoPopoverWithButton() {
-        final RegisteredUser registeredUser = securityService.getRegisteredUser();
+        final RegisteredUser registeredUser = securityService.getCurrentlySignedInUser();
 
         Button userInfoPopoverButton = createAndGetUserInfoPopoverButton(registeredUser);
         userInfoPopover = createAndGetUserInfoPopover(userInfoPopoverButton);
@@ -189,7 +189,7 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem[] createSideNavLinks() {
-        return projectService.getAll(securityService.getRegisteredUser())
+        return projectService.getAll(securityService.getCurrentlySignedInUser())
             .sorted(Comparator.comparing(Project::getCreatedAt))
             .map(project -> {
                 SideNavItem parentSideNavItem = new SideNavItem(project.getName(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));

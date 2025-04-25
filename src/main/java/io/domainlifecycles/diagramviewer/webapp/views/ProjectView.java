@@ -132,7 +132,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         Button shareProjectButton = new Button("Share Project", new Icon("vaadin:tools"));
         shareProjectButton.getStyle().set("cursor", "pointer");
-        shareProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getRegisteredUser().getId()));
+        shareProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
         shareProjectButton.addClickListener(e -> shareProjectDialog.open());
         return shareProjectButton;
     }
@@ -158,7 +158,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         deleteProjectButton.getStyle().set("cursor", "pointer");
         deleteProjectButton.getElement().getStyle().set("margin-left", "auto");
         deleteProjectButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getRegisteredUser().getId()));
+        deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
         deleteProjectButton.addClickListener(e -> confirmDialog.open());
         return deleteProjectButton;
     }
