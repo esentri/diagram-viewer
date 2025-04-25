@@ -1,6 +1,6 @@
-import { noChange } from 'lit';
-import { directive, PartType } from 'lit/directive.js';
-import { AsyncDirective } from 'lit/async-directive.js';
+import {noChange} from 'lit';
+import {directive, PartType} from 'lit/directive.js';
+import {AsyncDirective} from 'lit/async-directive.js';
 
 class FlowComponentDirective extends AsyncDirective {
   constructor(partInfo) {

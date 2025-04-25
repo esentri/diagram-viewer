@@ -1,16 +1,14 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
+import io.domainlifecycles.diagramviewer.model.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.TemporaryUser;
-import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
+import io.domainlifecycles.diagramviewer.model.RegisteredUser;
+import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
+import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +18,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -30,11 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ContextConfiguration(initializers = TestContainersInitializer.class)
 class SecurityService_ITest {
 
-    private static final String TEST_USER_FULL_NAME = "Max Mustermann";
-    private static final String TEST_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
+    private static final String REGISTERED_USER_FULL_NAME = "Max Mustermann";
+    private static final String REGISTERED_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
 
-    private static final String TEMPORARY_USER_FULL_NAME = "Moritz Mustermann";
-    private static final String TEMPORARY_USER_MAIL_ADDRESS = "moritz.mustermann@gmail.com";
+    private static final String INVITED_USER_FULL_NAME = "Moritz Mustermann";
+    private static final String INVITED_USER_MAIL_ADDRESS = "moritz.mustermann@gmail.com";
 
 
     @Autowired
@@ -44,104 +41,104 @@ class SecurityService_ITest {
     private ProjectService projectService;
 
     @Autowired
-    private AuthenticatedUserRepository authenticatedUserRepository;
+    private RegisteredUserRepository registeredUserRepository;
 
     @Autowired
-    private TemporaryUserRepository temporaryUserRepository;
+    private InvitedUserRepository invitedUserRepository;
 
     @Autowired
     private ProjectRepository projectRepository;
 
-    private AuthenticatedUser authenticatedUser;
+    private RegisteredUser registeredUser;
 
     @BeforeEach
     void setUp() {
-        authenticatedUser = AuthenticatedUser.builder()
-            .fullName(TEST_USER_FULL_NAME)
-            .emailAddress(TEST_USER_MAIL_ADDRESS)
+        registeredUser = RegisteredUser.builder()
+            .fullName(REGISTERED_USER_FULL_NAME)
+            .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
             .build();
 
-        authenticatedUserRepository.save(authenticatedUser);
+        registeredUserRepository.save(registeredUser);
     }
 
     @AfterEach
     void tearDown() {
         projectRepository.deleteAll();
-        authenticatedUserRepository.deleteAll();
-        temporaryUserRepository.deleteAll();
+        registeredUserRepository.deleteAll();
+        invitedUserRepository.deleteAll();
     }
 
     @Test
-    void Should_CreateNewAuthenticatedUser_When_UserSignsUpAndHasNoTemporaryUser() {
+    void Should_CreateNewRegisteredUser_When_UserSignsUpAndHasNoInvitedUser() {
 
         // given
         final String newUserMailAddress = "mika.mustermann@gmail.com";
         final String newUserFullName = "Mika Mustermann";
 
         // when
-        AuthenticatedUser newAuthenticatedUser = service.acknowledgeUserAuthentication(newUserMailAddress,
+        RegisteredUser newRegisteredUser = service.acknowledgeUserAuthentication(newUserMailAddress,
             newUserFullName);
 
         // then
-        assertThat(newAuthenticatedUser).isNotNull();
-        assertThat(newAuthenticatedUser.getEmailAddress()).isEqualTo(newUserMailAddress);
-        assertThat(newAuthenticatedUser.getFullName()).isEqualTo(newUserFullName);
+        assertThat(newRegisteredUser).isNotNull();
+        assertThat(newRegisteredUser.getEmailAddress()).isEqualTo(newUserMailAddress);
+        assertThat(newRegisteredUser.getFullName()).isEqualTo(newUserFullName);
     }
 
     @Test
-    void Should_ReturnExistingAuthenticatedUser_When_UserSignsUpAndAlreadyHasAuthenticatedUser() {
+    void Should_ReturnExistingRegisteredUser_When_UserSignsUpAndAlreadyHasRegisteredUser() {
 
         // when
-        AuthenticatedUser newAuthenticatedUser = service.acknowledgeUserAuthentication(TEMPORARY_USER_MAIL_ADDRESS,
-            TEMPORARY_USER_FULL_NAME);
+        RegisteredUser newRegisteredUser = service.acknowledgeUserAuthentication(INVITED_USER_MAIL_ADDRESS,
+            INVITED_USER_FULL_NAME);
 
         // then
-        assertThat(newAuthenticatedUser).isNotNull();
-        assertThat(newAuthenticatedUser.getEmailAddress()).isEqualTo(TEMPORARY_USER_MAIL_ADDRESS);
-        assertThat(newAuthenticatedUser.getFullName()).isEqualTo(TEMPORARY_USER_FULL_NAME);
+        assertThat(newRegisteredUser).isNotNull();
+        assertThat(newRegisteredUser.getEmailAddress()).isEqualTo(INVITED_USER_MAIL_ADDRESS);
+        assertThat(newRegisteredUser.getFullName()).isEqualTo(INVITED_USER_FULL_NAME);
     }
 
     @Test
-    void Should_ReturnNewAuthenticatedUserAndRemoveTemporaryUser_When_UserSignsUpAndAlreadyHasTemporaryUser() {
+    void Should_ReturnNewRegisteredUserAndRemoveInvitedUser_When_UserSignsUpAndAlreadyHasInvitedUser() {
 
         // given
         Project project = setUpProject();
-        setUpTemporaryUser(project);
+        setUpInvitedUser(project);
 
         // when
-        AuthenticatedUser newAuthenticatedUser = service.acknowledgeUserAuthentication(TEMPORARY_USER_MAIL_ADDRESS,
-            TEMPORARY_USER_FULL_NAME);
+        RegisteredUser newRegisteredUser = service.acknowledgeUserAuthentication(INVITED_USER_MAIL_ADDRESS,
+            INVITED_USER_FULL_NAME);
 
         // then
-        assertThat(newAuthenticatedUser).isNotNull();
-        assertThat(newAuthenticatedUser.getEmailAddress()).isEqualTo(TEMPORARY_USER_MAIL_ADDRESS);
-        assertThat(newAuthenticatedUser.getFullName()).isEqualTo(TEMPORARY_USER_FULL_NAME);
-        assertThat(newAuthenticatedUser.getAssignedProjects().get(0).getId()).isEqualTo(project.getId());
-        assertThat(newAuthenticatedUser.getAssignedProjects().get(0).getAssignedAuthenticatedUsers().size()).isEqualTo(2);
-        assertThat(newAuthenticatedUser.getAssignedProjects().get(0).getAssignedTemporaryUsers()).isEmpty();
-        assertThat(newAuthenticatedUser.getAssignedProjects().get(0).getCreator().getId()).isEqualTo(project.getCreator().getId());
+        assertThat(newRegisteredUser).isNotNull();
+        assertThat(newRegisteredUser.getEmailAddress()).isEqualTo(INVITED_USER_MAIL_ADDRESS);
+        assertThat(newRegisteredUser.getFullName()).isEqualTo(INVITED_USER_FULL_NAME);
+        assertThat(newRegisteredUser.getAssignedProjects().get(0).getId()).isEqualTo(project.getId());
+        assertThat(newRegisteredUser.getAssignedProjects().get(0).getAssignedRegisteredUsers().size()).isEqualTo(2);
+        assertThat(newRegisteredUser.getAssignedProjects().get(0).getAssignedInvitedUsers()).isEmpty();
+        assertThat(newRegisteredUser.getAssignedProjects().get(0).getCreator().getId()).isEqualTo(project.getCreator().getId());
 
-        assertThat(temporaryUserRepository.findByEmailAddress(TEMPORARY_USER_MAIL_ADDRESS)).isEmpty();
+        assertThat(invitedUserRepository.findByEmailAddress(INVITED_USER_MAIL_ADDRESS)).isEmpty();
     }
 
     private Project setUpProject() {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
-            .assignedAuthenticatedUsers(new ArrayList<>(List.of(authenticatedUser)))
-            .creator(authenticatedUser)
+            .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
+            .creator(registeredUser)
             .build();
 
         return projectRepository.save(project);
     }
 
-    private void setUpTemporaryUser(Project project) {
-        TemporaryUser temporaryUser = TemporaryUser.builder()
-            .fullName(TEMPORARY_USER_FULL_NAME)
-            .emailAddress(TEMPORARY_USER_MAIL_ADDRESS)
+    private void setUpInvitedUser(Project project) {
+        InvitedUser invitedUser = InvitedUser.builder()
+            .fullName(INVITED_USER_FULL_NAME)
+            .emailAddress(INVITED_USER_MAIL_ADDRESS)
             .build();
 
-        temporaryUserRepository.save(temporaryUser);
-        projectService.assignUser(project, TEMPORARY_USER_MAIL_ADDRESS);
+        invitedUserRepository.save(invitedUser);
+        projectService.assignUser(project, INVITED_USER_MAIL_ADDRESS);
     }
 }

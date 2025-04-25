@@ -1,8 +1,8 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.mirror.api.DomainModel;
 import java.io.InputStream;
@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 public interface ProjectService {
 
-    Stream<Project> getAll(AuthenticatedUser authenticatedUser);
+    Stream<Project> getAll(RegisteredUser registeredUser);
 
     Project getByName(final String projectName);
 
@@ -18,7 +18,7 @@ public interface ProjectService {
 
     void deleteDiagram(Project project, Diagram diagram);
 
-    Project save(AuthenticatedUser authenticatedUser, InputStream fileContents,
+    Project save(RegisteredUser registeredUser, InputStream fileContents,
                  String fileName, String boundedContextPackages);
 
     void updateTargetFile(Project project, InputStream fileContents, String filename, String boundedContextPackages);

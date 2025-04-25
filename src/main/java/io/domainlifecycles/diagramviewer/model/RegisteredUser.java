@@ -20,11 +20,11 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Data
-@Table(name = "AuthenticatedUser")
+@Table(name = "RegisteredUser")
 @ToString(exclude = "assignedProjects")
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
-public class AuthenticatedUser extends User {
+public class RegisteredUser extends User {
 
     @Id
     @GeneratedValue
@@ -32,7 +32,7 @@ public class AuthenticatedUser extends User {
 
     private UUID apiKey;
 
-    @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedAuthenticatedUsers")
+    @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedRegisteredUsers")
     @Builder.Default
     private List<Project> assignedProjects = new ArrayList<>();
 

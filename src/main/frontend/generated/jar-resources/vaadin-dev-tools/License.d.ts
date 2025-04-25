@@ -1,4 +1,5 @@
-import { ServerMessage } from "./vaadin-dev-tools";
+import {ServerMessage} from "./vaadin-dev-tools";
+
 export interface Product {
     name: string;
     version: string;

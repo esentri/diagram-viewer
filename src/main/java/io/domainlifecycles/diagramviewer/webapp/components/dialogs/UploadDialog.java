@@ -50,7 +50,7 @@ public class UploadDialog extends Dialog {
         uploadButton.setEnabled(binder.isValid());
 
         uploadButton.addClickListener(e -> {
-            projectService.save(securityService.getAuthenticatedUser(), fileInputStream,
+            projectService.save(securityService.getRegisteredUser(), fileInputStream,
                 projectNameTextField.getValue(), boundedContextPackagesTextField.getValue());
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
 

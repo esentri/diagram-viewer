@@ -1,4 +1,5 @@
-import { Connection } from './connection';
+import {Connection} from './connection';
+
 export declare class WebSocketConnection extends Connection {
     static HEARTBEAT_INTERVAL: number;
     socket?: any;

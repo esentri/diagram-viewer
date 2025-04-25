@@ -16,7 +16,6 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -58,42 +57,42 @@ public class Project {
     private DomainModel domainModel;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "project_authenticated_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "authenticated_user_id"))
+    @JoinTable(name = "project_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "registered_user_id"))
     @Builder.Default
-    private List<AuthenticatedUser> assignedAuthenticatedUsers = new ArrayList<>();
+    private List<RegisteredUser> assignedRegisteredUsers = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "project_temporary_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "temporary_user_id"))
+    @JoinTable(name = "project_invited_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "invited_user_id"))
     @Builder.Default
-    private List<TemporaryUser> assignedTemporaryUsers = new ArrayList<>();
+    private List<InvitedUser> assignedInvitedUsers = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="authenticated_user_id", nullable=false)
-    private AuthenticatedUser creator;
+    @JoinColumn(name="creator_user_id", nullable=false)
+    private RegisteredUser creator;
 
     @CreationTimestamp
     private Instant createdAt;
 
     public void unassignUser(User user) {
-        if(user instanceof AuthenticatedUser) {
-            assignedAuthenticatedUsers.removeIf(u -> Objects.equals(((AuthenticatedUser) user).getId(), u.getId()));
+        if(user instanceof RegisteredUser) {
+            assignedRegisteredUsers.removeIf(u -> Objects.equals(((RegisteredUser) user).getId(), u.getId()));
         } else {
-            assignedTemporaryUsers.removeIf(u -> Objects.equals(((TemporaryUser) user).getId(), u.getId()));
+            assignedInvitedUsers.removeIf(u -> Objects.equals(((InvitedUser) user).getId(), u.getId()));
         }
         user.removeAssignedProject(this);
     }
 
     public void assignUser(User user) {
-        if(user instanceof AuthenticatedUser) {
-            assignedAuthenticatedUsers.add((AuthenticatedUser) user);
+        if(user instanceof RegisteredUser) {
+            assignedRegisteredUsers.add((RegisteredUser) user);
         } else {
-            assignedTemporaryUsers.add((TemporaryUser) user);
+            assignedInvitedUsers.add((InvitedUser) user);
         }
         user.addAssignedProject(this);
     }
 
     public void unassignAllUsers() {
-        new HashSet<>(assignedAuthenticatedUsers).forEach(this::unassignUser);
-        new HashSet<>(assignedTemporaryUsers).forEach(this::unassignUser);
+        new HashSet<>(assignedRegisteredUsers).forEach(this::unassignUser);
+        new HashSet<>(assignedInvitedUsers).forEach(this::unassignUser);
     }
 }

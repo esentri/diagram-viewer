@@ -1,4 +1,4 @@
-import { Popover } from '@vaadin/popover/src/vaadin-popover.js';
+import {Popover} from '@vaadin/popover/src/vaadin-popover.js';
 
 const _window = window as any;
 _window.Vaadin ||= {};

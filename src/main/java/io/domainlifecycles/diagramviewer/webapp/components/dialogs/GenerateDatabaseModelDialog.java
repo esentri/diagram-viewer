@@ -1,5 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -32,7 +33,6 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private TextField bcPackageInput;
     private TextField bcSchemaInput;
 
-
     public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, Project project) {
         this.sqlDDLGeneratorService = sqlDDLGeneratorService;
         this.project = project;
@@ -57,12 +57,12 @@ public class GenerateDatabaseModelDialog extends Dialog {
 
         bcPackageInput = new TextField();
         binder.forField(bcPackageInput)
-            .asRequired("Package may not be empty")
+            .asRequired("Package may not be empty.")
             .bind(GenerateDatabaseModelOptions::getBoundedContextPackageName, GenerateDatabaseModelOptions::setBoundedContextPackageName);
 
         bcSchemaInput = new TextField();
         binder.forField(bcSchemaInput)
-            .asRequired("Schema may not be empty")
+            .asRequired("Schema may not be empty.")
             .bind(GenerateDatabaseModelOptions::getBoundedContextPackageSchemaName, GenerateDatabaseModelOptions::setBoundedContextPackageSchemaName);
 
         binder.addStatusChangeListener(event -> generateButton.setEnabled(binder.isValid()));
@@ -74,27 +74,32 @@ public class GenerateDatabaseModelDialog extends Dialog {
         return formLayout;
     }
 
-    private Anchor createGenerateButton() {
-        final String scriptFilename = buildScriptFilename();
-        StreamResource streamResource = new StreamResource(scriptFilename, this::getStream);
-        streamResource.setContentType(APPLICATION_SQL_MIME_TYPE);
-        streamResource.setCacheTime(0);
-
-        Anchor downloadLink = new Anchor(streamResource, "");
-        downloadLink.removeAll();
-        downloadLink.getElement().setAttribute("download", true);
-        downloadLink.getStyle().setCursor("pointer");
-        downloadLink.getStyle().setColor("white");
-
-
+    private Button createGenerateButton() {
         generateButton = new Button("Download SQL-Script");
         generateButton.setEnabled(binder.isValid());
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        generateButton.addClickListener(event -> close());
 
-        downloadLink.add(generateButton);
+        generateButton.addClickListener(event -> {
+            // Create a new StreamResource right before download
+            String scriptFilename = buildScriptFilename();
+            StreamResource streamResource = new StreamResource(scriptFilename, this::getStream);
+            streamResource.setContentType(APPLICATION_SQL_MIME_TYPE);
+            streamResource.setCacheTime(0);
 
-        return downloadLink;
+            Anchor tempLink = new Anchor(streamResource, "");
+            tempLink.removeAll();
+            tempLink.getElement().setAttribute("download", true);
+            tempLink.getElement().setAttribute("hidden", true);
+            tempLink.getStyle().setCursor("pointer");
+            tempLink.getStyle().setColor("white");
+
+            UI.getCurrent().getElement().appendChild(tempLink.getElement());
+            tempLink.getElement().callJsFunction("click");
+
+            close();
+        });
+
+        return generateButton;
     }
 
     private String buildScriptFilename() {

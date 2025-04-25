@@ -62,7 +62,7 @@ public class CreateDiagramDialog extends Dialog {
 
         Select<FileType> formatSelect = new Select<>();
         formatSelect.setItems(FileType.values());
-        formatSelect.setItemLabelGenerator(FileType::getDisplayValue);
+        formatSelect.setItemEnabledProvider(item -> item.equals(FileType.SVG));
         formatSelect.addValueChangeListener(e -> fileType = e.getValue());
         formLayout.addFormItem(formatSelect,"Format");
 

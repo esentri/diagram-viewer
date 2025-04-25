@@ -1,16 +1,15 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.TemporaryUser;
+import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
-import io.netty.handler.codec.mqtt.MqttReasonCodes.Auth;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,31 +36,31 @@ public class ProjectServiceImpl implements ProjectService {
     private final String targetsDirectory;
     private final String diagramsLocation;
     private final DiagramService diagramService;
-    private final AuthenticatedUserService authenticatedUserService;
-    private final TemporaryUserService temporaryUserService;
+    private final RegisteredUserService registeredUserService;
+    private final InvitedUserService invitedUserService;
     private final ProjectRepository repository;
 
     public ProjectServiceImpl(
         @Value("${targets.location}") String targetsDirectory,
         @Value("${diagrams.location}") String diagramsLocation,
         DiagramService diagramService,
-        AuthenticatedUserService authenticatedUserService,
-        TemporaryUserService temporaryUserService,
+        RegisteredUserService registeredUserService,
+        InvitedUserService invitedUserService,
         ProjectRepository repository) {
 
         this.targetsDirectory = targetsDirectory;
         this.diagramsLocation = diagramsLocation;
         this.diagramService = diagramService;
-        this.authenticatedUserService = authenticatedUserService;
-        this.temporaryUserService = temporaryUserService;
+        this.registeredUserService = registeredUserService;
+        this.invitedUserService = invitedUserService;
         this.repository = repository;
     }
 
     @Override
-    public Stream<Project> getAll(AuthenticatedUser authenticatedUser) {
+    public Stream<Project> getAll(RegisteredUser registeredUser) {
         return getAll()
-            .filter(project -> project.getAssignedAuthenticatedUsers().stream()
-                .anyMatch(assignedUser -> Objects.equals(assignedUser.getId(), authenticatedUser.getId())));
+            .filter(project -> project.getAssignedRegisteredUsers().stream()
+                .anyMatch(assignedUser -> Objects.equals(assignedUser.getId(), registeredUser.getId())));
     }
 
     private Stream<Project> getAll() {
@@ -76,13 +75,6 @@ public class ProjectServiceImpl implements ProjectService {
             .filter(Objects::nonNull);
     }
 
-    private UUID buildProjectIdFromFilename(String filename) {
-        if (filename == null || filename.lastIndexOf('.') == -1) {
-            return null;
-        }
-        return UUID.fromString(filename.substring(0, filename.lastIndexOf('.')));
-    }
-
     @Override
     public Project getByName(final String projectName) {
         return repository.findByName(projectName)
@@ -94,7 +86,7 @@ public class ProjectServiceImpl implements ProjectService {
     public void update(Project project) {
         project.setName(buildCleanFileName(project.getName()));
         checkProjectValueRequirements(project);
-        repository.save(project);
+        insert(project);
     }
 
     @Override
@@ -113,11 +105,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project save(AuthenticatedUser authenticatedUser, InputStream fileContents, String fileName, String boundedContextPackages) {
+    public Project save(RegisteredUser registeredUser, InputStream fileContents, String fileName, String boundedContextPackages) {
 
         // persist project without domain model to obtain UUID
         String[] boundedContexts = boundedContextPackages.split(",");
-        final Project mappedProject = create(mapProject(fileName, boundedContexts, authenticatedUser));
+        final Project mappedProject = insert(mapProject(fileName, boundedContexts, registeredUser));
 
         Path projectFilePath = saveTargetFile(targetsDirectory, fileContents,
             buildProjectFilename(mappedProject));
@@ -155,21 +147,17 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         Project project = mapProject(projectName, domainModel,
-            (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+            (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         repository.save(project);
-    }
-
-    private String buildProjectFilename(Project project) {
-        return project.getId() + ".jar";
     }
 
     @Override
     public void assignUser(Project project, String emailAddress) {
-        if(project.getAssignedAuthenticatedUsers().stream()
+        if(project.getAssignedRegisteredUsers().stream()
             .anyMatch(user -> Objects.equals(user.getEmailAddress(), emailAddress))) return;
 
-        boolean userIsSignedUp = authenticatedUserService.userKnown(emailAddress);
-        final User user = userIsSignedUp ? authenticatedUserService.get(emailAddress) : temporaryUserService.getOrCreate(emailAddress);
+        boolean userIsSignedUp = registeredUserService.userKnown(emailAddress);
+        final User user = userIsSignedUp ? registeredUserService.get(emailAddress) : invitedUserService.getOrCreate(emailAddress);
 
         assignUser(project, user);
     }
@@ -186,10 +174,13 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void unassignUser(Project project, User user) {
-        if(user instanceof AuthenticatedUser && Objects.equals(project.getCreator().getId(), ((AuthenticatedUser) user).getId())) return;
+        if(user instanceof RegisteredUser && Objects.equals(project.getCreator().getId(), ((RegisteredUser) user).getId())) return;
 
         project.unassignUser(user);
         update(project);
+
+        if(user instanceof InvitedUser && invitedUserService.checkForRemoval((InvitedUser) user))
+            invitedUserService.delete((InvitedUser) user);
     }
 
     @Override
@@ -204,7 +195,7 @@ public class ProjectServiceImpl implements ProjectService {
         diagramService.deleteFilesFromFilesystem(project.getId().toString());
     }
 
-    private Project create(Project project) {
+    private Project insert(Project project) {
         String projectName = project.getName();
         Optional<Project> fetchedProject = repository.findByName(projectName);
 
@@ -216,24 +207,31 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.save(project);
     }
 
-    private Project mapProject(String fileName, String[] boundedContextPackages, AuthenticatedUser authenticatedUser) {
+    private Project mapProject(String fileName, String[] boundedContextPackages, RegisteredUser registeredUser) {
         final List<String> boundedContexts = Arrays.stream(boundedContextPackages).toList();
 
         return Project.builder()
             .name(buildCleanFileName(fileName))
             .boundedContextPackages(boundedContexts)
-            .creator(authenticatedUser)
-            .assignedAuthenticatedUsers(new ArrayList<>(List.of(authenticatedUser)))
+            .creator(registeredUser)
+            .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
             .build();
     }
 
-    private Project mapProject(String projectName, DomainModel domainModel, AuthenticatedUser authenticatedUser) {
+    private Project mapProject(String projectName, DomainModel domainModel, RegisteredUser registeredUser) {
         return Project.builder()
             .name(projectName)
             .domainModel(domainModel)
-            .creator(authenticatedUser)
-            .assignedAuthenticatedUsers(new ArrayList<>(List.of(authenticatedUser)))
+            .creator(registeredUser)
+            .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
             .build();
+    }
+
+    private UUID buildProjectIdFromFilename(String filename) {
+        if (filename == null || filename.lastIndexOf('.') == -1) {
+            return null;
+        }
+        return UUID.fromString(filename.substring(0, filename.lastIndexOf('.')));
     }
 
     private Path saveTargetFile(String targetsLocation, InputStream fileContents, String fileName) {
@@ -256,13 +254,16 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
+    private String buildProjectFilename(Project project) {
+        return project.getId() + ".jar";
+    }
+
     private boolean userIsAlreadyAssignedToProject(Project project, User user) {
-        return user instanceof TemporaryUser && project.getAssignedTemporaryUsers().stream().anyMatch(
-            temporaryUser -> Objects.equals(
-                ((TemporaryUser) user).getId(),
-                temporaryUser.getId())) || user instanceof AuthenticatedUser && project.getAssignedAuthenticatedUsers().stream().anyMatch(
-            authenticatedUser -> Objects.equals(
-                ((AuthenticatedUser) user).getId(), authenticatedUser.getId()));
+        return user instanceof InvitedUser && project.getAssignedInvitedUsers().stream().anyMatch(
+            invitedUser -> Objects.equals(((InvitedUser) user).getId(), invitedUser.getId()))
+            || user instanceof RegisteredUser && project.getAssignedRegisteredUsers().stream().anyMatch(
+            registeredUser -> Objects.equals(
+                ((RegisteredUser) user).getId(), registeredUser.getId()));
     }
 
 
@@ -272,7 +273,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         if(project.getBoundedContextPackages().isEmpty() || project.getBoundedContextPackages().get(0).isBlank()) {
-            throw DiagramViewerException.fail("Project has to have at least one bounded context package");
+            throw DiagramViewerException.fail("Project has to have at least one bounded context package.");
         }
     }
 

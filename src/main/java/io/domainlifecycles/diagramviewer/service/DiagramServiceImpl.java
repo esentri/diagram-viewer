@@ -9,7 +9,6 @@ import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.mirror.api.DomainModel;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;

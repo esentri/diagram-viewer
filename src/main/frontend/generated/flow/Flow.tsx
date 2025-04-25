@@ -14,10 +14,10 @@
  * the License.
  */
 /// <reference lib="es2018" />
-import { Flow as _Flow } from 'Frontend/generated/jar-resources/Flow.js';
-import React, { useCallback, useEffect, useReducer, useRef, useState, type ReactNode } from 'react';
-import { matchRoutes, useBlocker, useLocation, useNavigate, type NavigateOptions, useHref } from 'react-router';
-import { createPortal } from 'react-dom';
+import {Flow as _Flow} from 'Frontend/generated/jar-resources/Flow.js';
+import React, {type ReactNode, useCallback, useEffect, useReducer, useRef, useState} from 'react';
+import {matchRoutes, type NavigateOptions, useBlocker, useHref, useLocation, useNavigate} from 'react-router';
+import {createPortal} from 'react-dom';
 
 const flow = new _Flow({
     imports: () => import('Frontend/generated/flow/generated-flow-imports.js')

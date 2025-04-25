@@ -6,8 +6,6 @@ import com.vaadin.flow.server.auth.NavigationContext;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -28,7 +26,7 @@ public class ProjectAndDiagramNavigationAccessChecker implements NavigationAcces
             if (context.getParameters().getParameterNames().contains("projectName")) {
                 String projectName = context.getParameters().get("projectName").orElseThrow();
                 result = securityService.checkAccess(projectName,
-                    securityService.getAuthenticatedUser()) ? AccessCheckResult.allow() : AccessCheckResult.reject(
+                    securityService.getRegisteredUser()) ? AccessCheckResult.allow() : AccessCheckResult.reject(
                     "User has no access to this resource.");
             } else {
                 result = AccessCheckResult.reject("Project name not specified");

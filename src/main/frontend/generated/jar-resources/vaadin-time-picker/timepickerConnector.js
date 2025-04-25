@@ -1,14 +1,14 @@
 import {
-  TEST_PM_TIME,
   formatMilliseconds,
-  parseMillisecondsIntoInteger,
-  parseDigitsIntoInteger,
   getAmString,
   getPmString,
   getSeparator,
-  searchAmOrPmToken
+  parseDigitsIntoInteger,
+  parseMillisecondsIntoInteger,
+  searchAmOrPmToken,
+  TEST_PM_TIME
 } from './helpers.js';
-import { parseISOTime } from '@vaadin/time-picker/src/vaadin-time-picker-helper.js';
+import {parseISOTime} from '@vaadin/time-picker/src/vaadin-time-picker-helper.js';
 
 // Execute callback when predicate returns true.
 // Try again later if predicate returns false.

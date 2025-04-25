@@ -4,7 +4,7 @@ import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.mirror.api.DomainModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,7 +21,7 @@ public class DomainModelController {
         this.projectService = projectService;
     }
 
-    @PostMapping("/{projectName}")
+    @PutMapping("/{projectName}")
     public ResponseEntity<String> createOrUpdateDomainModel(@PathVariable String projectName, @RequestBody DomainModel domainModel) {
         projectService.createOrUpdateDomainModel(projectName, domainModel);
         return ResponseEntity.ok().build();

@@ -1,15 +1,4 @@
 import 'Frontend/generated/jar-resources/copilot.js';
-// @ts-ignore
-if (import.meta.hot) {
-  // @ts-ignore
-  import.meta.hot.on('vite:afterUpdate', () => {
-    const eventbus = (window as any).Vaadin.copilot.eventbus;
-    if (eventbus) {
-      eventbus.emit('vite-after-update',{});
-    }
-  });
-}
-
 import '@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js';
 import '@vaadin/horizontal-layout/theme/lumo/vaadin-horizontal-layout.js';
 import '@vaadin/context-menu/theme/lumo/vaadin-context-menu.js';
@@ -37,7 +26,18 @@ import './index';
 import './vaadin-react.js';
 import 'Frontend/generated/jar-resources/vaadin-dev-tools/vaadin-dev-tools.js';
 
-import { Outlet } from 'react-router';
+import {Outlet} from 'react-router';
+// @ts-ignore
+if (import.meta.hot) {
+  // @ts-ignore
+  import.meta.hot.on('vite:afterUpdate', () => {
+    const eventbus = (window as any).Vaadin.copilot.eventbus;
+    if (eventbus) {
+      eventbus.emit('vite-after-update',{});
+    }
+  });
+}
+
 (window as any).Vaadin ??= {};
 (window as any).Vaadin.copilot ??= {};
 (window as any).Vaadin.copilot._ref ??= {};

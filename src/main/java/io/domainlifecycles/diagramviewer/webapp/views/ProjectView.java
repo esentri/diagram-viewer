@@ -82,9 +82,11 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         Button editProjectButton = new Button(new Icon("vaadin:pencil"), e -> editProjectDialog.open());
         editProjectButton.addThemeName("icon");
+        editProjectButton.getStyle().set("cursor", "pointer");
 
         Button reuploadProjectButton = new Button(new Icon("vaadin:cloud-upload-o"), e -> reuploadDialog.open());
         reuploadProjectButton.addThemeName("icon");
+        editProjectButton.getStyle().set("cursor", "pointer");
 
         horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(project.getName()), editProjectButton, reuploadProjectButton);
 
@@ -130,7 +132,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         Button shareProjectButton = new Button("Share Project", new Icon("vaadin:tools"));
         shareProjectButton.getStyle().set("cursor", "pointer");
-        shareProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getAuthenticatedUser().getId()));
+        shareProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getRegisteredUser().getId()));
         shareProjectButton.addClickListener(e -> shareProjectDialog.open());
         return shareProjectButton;
     }
@@ -156,7 +158,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         deleteProjectButton.getStyle().set("cursor", "pointer");
         deleteProjectButton.getElement().getStyle().set("margin-left", "auto");
         deleteProjectButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getAuthenticatedUser().getId()));
+        deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getRegisteredUser().getId()));
         deleteProjectButton.addClickListener(e -> confirmDialog.open());
         return deleteProjectButton;
     }

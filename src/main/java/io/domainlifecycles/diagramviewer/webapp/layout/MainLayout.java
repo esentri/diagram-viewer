@@ -31,16 +31,15 @@ import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
+import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
-import io.netty.handler.codec.mqtt.MqttReasonCodes.Auth;
 import java.util.Comparator;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -55,18 +54,18 @@ public class MainLayout extends AppLayout {
 
     private final ProjectService projectService;
     private final SecurityService securityService;
-    private final AuthenticatedUserService authenticatedUserService;
+    private final RegisteredUserService registeredUserService;
     private final UploadDialog uploadDialog;
     private SideNav sideNav;
     private Registration registration;
     private Popover userInfoPopover;
 
     public MainLayout(ProjectService projectService,
-                      SecurityService securityService, AuthenticatedUserService authenticatedUserService) {
+                      SecurityService securityService, RegisteredUserService registeredUserService) {
 
         this.projectService = projectService;
         this.securityService = securityService;
-        this.authenticatedUserService = authenticatedUserService;
+        this.registeredUserService = registeredUserService;
         this.uploadDialog = new UploadDialog(projectService, securityService);
 
         addToNavbar(new DrawerToggle(), getDlcLogo());
@@ -75,18 +74,18 @@ public class MainLayout extends AppLayout {
     }
 
     private void refreshPopover() {
-        final AuthenticatedUser authenticatedUser = securityService.getAuthenticatedUser();
+        final RegisteredUser registeredUser = securityService.getRegisteredUser();
 
         userInfoPopover.removeAll();
-        addPopoverContents(authenticatedUser);
+        addPopoverContents(registeredUser);
     }
 
     private void createAndAddUserInfoPopoverWithButton() {
-        final AuthenticatedUser authenticatedUser = securityService.getAuthenticatedUser();
+        final RegisteredUser registeredUser = securityService.getRegisteredUser();
 
-        Button userInfoPopoverButton = createAndGetUserInfoPopoverButton(authenticatedUser);
+        Button userInfoPopoverButton = createAndGetUserInfoPopoverButton(registeredUser);
         userInfoPopover = createAndGetUserInfoPopover(userInfoPopoverButton);
-        addPopoverContents(authenticatedUser);
+        addPopoverContents(registeredUser);
         addToNavbar(userInfoPopoverButton, userInfoPopover);
     }
 
@@ -102,50 +101,50 @@ public class MainLayout extends AppLayout {
         return popover;
     }
 
-    private void addPopoverContents(AuthenticatedUser authenticatedUser) {
-        userInfoPopover.add(createAndGetPopoverUserInfoLayout(authenticatedUser), new Hr(),
-            createAndGetPopoverApiKeyLayout(authenticatedUser));
+    private void addPopoverContents(RegisteredUser registeredUser) {
+        userInfoPopover.add(createAndGetPopoverUserInfoLayout(registeredUser), new Hr(),
+            createAndGetPopoverApiKeyLayout(registeredUser));
     }
 
-    private HorizontalLayout createAndGetPopoverUserInfoLayout(AuthenticatedUser authenticatedUser) {
+    private HorizontalLayout createAndGetPopoverUserInfoLayout(RegisteredUser registeredUser) {
         HorizontalLayout userInfo = new HorizontalLayout();
         userInfo.getStyle().setPadding("0rem 1rem 0rem");
         userInfo.getThemeList().remove("spacing");
 
         Avatar popoverAvatar = new Avatar();
-        popoverAvatar.setName(authenticatedUser.getFullName());
+        popoverAvatar.setName(registeredUser.getFullName());
         popoverAvatar.getStyle().set("margin", "auto");
         popoverAvatar.getElement().setAttribute("tabindex", "-1");
         popoverAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
 
         VerticalLayout nameLayout = new VerticalLayout();
         nameLayout.getThemeList().remove("spacing");
-        Div fullName = new Div(authenticatedUser.getFullName());
+        Div fullName = new Div(registeredUser.getFullName());
         fullName.getStyle().set("font-weight", "bold");
-        Div nickName = new Div(authenticatedUser.getEmailAddress());
+        Div nickName = new Div(registeredUser.getEmailAddress());
         nameLayout.add(fullName, nickName);
 
         userInfo.add(popoverAvatar, nameLayout);
         return userInfo;
     }
 
-    private VerticalLayout createAndGetPopoverApiKeyLayout(AuthenticatedUser authenticatedUser) {
+    private VerticalLayout createAndGetPopoverApiKeyLayout(RegisteredUser registeredUser) {
         VerticalLayout apiKeyLayout = new VerticalLayout();
         apiKeyLayout.getThemeList().remove("spacing");
         apiKeyLayout.getStyle().setPadding("0 --var(--lumo-space-m)");
 
-        if(authenticatedUser.hasApiKey()) {
+        if(registeredUser.hasApiKey()) {
             Paragraph apiKeyParagraph = new Paragraph("API-Key:");
             apiKeyParagraph.getStyle().setMargin("0");
             apiKeyParagraph.getStyle().setFontWeight("bold");
 
-            Paragraph apiKeyValueParagraph = new Paragraph(authenticatedUser.getApiKey().toString());
+            Paragraph apiKeyValueParagraph = new Paragraph(registeredUser.getApiKey().toString());
             apiKeyValueParagraph.getStyle().setMargin("0");
 
             apiKeyLayout.add(apiKeyParagraph, apiKeyValueParagraph);
         } else {
             Button generateApiKeyButton = new Button("Generate API-Key", e -> {
-                authenticatedUserService.generateApiKeyForUser(authenticatedUser);
+                registeredUserService.generateApiKeyForUser(registeredUser);
                 refreshPopover();
             });
 
@@ -156,9 +155,9 @@ public class MainLayout extends AppLayout {
         return apiKeyLayout;
     }
 
-    private Button createAndGetUserInfoPopoverButton(AuthenticatedUser authenticatedUser) {
+    private Button createAndGetUserInfoPopoverButton(RegisteredUser registeredUser) {
         Avatar avatar = new Avatar();
-        avatar.setName(authenticatedUser.getFullName());
+        avatar.setName(registeredUser.getFullName());
         avatar.getStyle().set("display", "block");
         avatar.getStyle().set("cursor", "pointer");
         avatar.getElement().setAttribute("tabindex", "-1");
@@ -178,6 +177,7 @@ public class MainLayout extends AppLayout {
 
         Button uploadButton = new Button("Upload", new Icon("vaadin:cloud-upload-o"));
         uploadButton.addClickListener(e -> uploadDialog.open());
+        uploadButton.getStyle().set("cursor", "pointer");
 
         addToDrawer(scroller, uploadButton);
     }
@@ -189,7 +189,7 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem[] createSideNavLinks() {
-        return projectService.getAll(securityService.getAuthenticatedUser())
+        return projectService.getAll(securityService.getRegisteredUser())
             .sorted(Comparator.comparing(Project::getCreatedAt))
             .map(project -> {
                 SideNavItem parentSideNavItem = new SideNavItem(project.getName(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));

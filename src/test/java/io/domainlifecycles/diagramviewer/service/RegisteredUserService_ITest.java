@@ -1,13 +1,8 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
-import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.TemporaryUser;
-import io.domainlifecycles.diagramviewer.repository.AuthenticatedUserRepository;
-import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.repository.TemporaryUserRepository;
-import java.util.List;
+import io.domainlifecycles.diagramviewer.model.RegisteredUser;
+import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +12,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -25,30 +19,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(TestContainersInitializer.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(initializers = TestContainersInitializer.class)
-class AuthenticatedUserService_ITest {
+class RegisteredUserService_ITest {
 
     private static final String TEST_USER_MAIL_ADDRESS = "test-user@gmail.com";
     private static final String TEST_USER_FULL_NAME = "Max Mustermann";
 
     @Autowired
-    private AuthenticatedUserService service;
+    private RegisteredUserService service;
 
     @Autowired
-    private AuthenticatedUserRepository authenticatedUserRepository;
+    private RegisteredUserRepository registeredUserRepository;
 
     @BeforeEach
     void setUp() {
-        AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
+        RegisteredUser registeredUser = RegisteredUser.builder()
             .fullName(TEST_USER_FULL_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
             .build();
 
-        authenticatedUserRepository.save(authenticatedUser);
+        registeredUserRepository.save(registeredUser);
     }
 
     @AfterEach
     void tearDown() {
-        authenticatedUserRepository.deleteAll();
+        registeredUserRepository.deleteAll();
     }
 
     @Test

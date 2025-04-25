@@ -15,9 +15,9 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.shared.Registration;
-import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
+import io.domainlifecycles.diagramviewer.model.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.TemporaryUser;
+import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
@@ -63,7 +63,7 @@ public class ShareProjectDialog extends Dialog {
         userGrid.setSelectionMode(Grid.SelectionMode.NONE);
         userGrid.getStyle().setBorder("none");
         userGrid.getStyle().setBoxShadow("none");
-        userGrid.setItems(getAuthenticatedAndTemporaryUsersForProject());
+        userGrid.setItems(getRegisteredAndInvitedUsersForProject());
 
         userGrid.addColumn(createEmployeeRenderer());
         userGrid.addComponentColumn(this::createAndGetUnassignButtonWithConfirmDialog).setTextAlign(ColumnTextAlign.END);
@@ -72,17 +72,17 @@ public class ShareProjectDialog extends Dialog {
         return dialogLayout;
     }
 
-    private List<User> getAuthenticatedAndTemporaryUsersForProject() {
+    private List<User> getRegisteredAndInvitedUsersForProject() {
         project = projectService.getByName(project.getName());
-        List<AuthenticatedUser> assignedAuthenticatedUsers = project.getAssignedAuthenticatedUsers();
-        List<TemporaryUser> assignedTemporaryUsers = project.getAssignedTemporaryUsers();
+        List<RegisteredUser> assignedRegisteredUsers = project.getAssignedRegisteredUsers();
+        List<InvitedUser> assignedInvitedUsers = project.getAssignedInvitedUsers();
 
-        return Stream.concat(assignedAuthenticatedUsers.stream(), assignedTemporaryUsers.stream())
+        return Stream.concat(assignedRegisteredUsers.stream(), assignedInvitedUsers.stream())
             .collect(Collectors.toList());
     }
 
     private void refreshUsers() {
-        userGrid.setItems(getAuthenticatedAndTemporaryUsersForProject());
+        userGrid.setItems(getRegisteredAndInvitedUsersForProject());
     }
 
     /**
@@ -114,8 +114,8 @@ public class ShareProjectDialog extends Dialog {
     }
 
     private Button createAndGetUnassignButtonWithConfirmDialog(final User user) {
-        if((user instanceof AuthenticatedUser)
-            && Objects.equals(((AuthenticatedUser) user).getId(),
+        if((user instanceof RegisteredUser)
+            && Objects.equals(((RegisteredUser) user).getId(),
                 project.getCreator().getId())) {
             return null;
         }
