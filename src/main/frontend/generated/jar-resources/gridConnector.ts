@@ -1,9 +1,9 @@
 // @ts-nocheck
-import {Debouncer} from '@polymer/polymer/lib/utils/debounce.js';
-import {animationFrame, timeOut} from '@polymer/polymer/lib/utils/async.js';
-import {Grid} from '@vaadin/grid/src/vaadin-grid.js';
-import {isFocusable} from '@vaadin/grid/src/vaadin-grid-active-item-mixin.js';
-import {GridFlowSelectionColumn} from './vaadin-grid-flow-selection-column.js';
+import { Debouncer } from '@polymer/polymer/lib/utils/debounce.js';
+import { timeOut, animationFrame } from '@polymer/polymer/lib/utils/async.js';
+import { Grid } from '@vaadin/grid/src/vaadin-grid.js';
+import { isFocusable } from '@vaadin/grid/src/vaadin-grid-active-item-mixin.js';
+import { GridFlowSelectionColumn } from './vaadin-grid-flow-selection-column.js';
 
 window.Vaadin.Flow.gridConnector = {};
 window.Vaadin.Flow.gridConnector.initLazy = (grid) => {

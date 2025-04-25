@@ -22,11 +22,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -58,21 +60,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Stream<Project> getAll(RegisteredUser registeredUser) {
-        return getAll()
+        return StreamSupport.stream(repository.findAll().spliterator(), false)
             .filter(project -> project.getAssignedRegisteredUsers().stream()
                 .anyMatch(assignedUser -> Objects.equals(assignedUser.getId(), registeredUser.getId())));
-    }
-
-    private Stream<Project> getAll() {
-        Set<File> allFilesInDirectory = FileIOUtils.getFilesInDirectory(Path.of(targetsDirectory));
-
-        return allFilesInDirectory.stream()
-            .map(targetFile -> {
-                UUID projectId = buildProjectIdFromFilename(targetFile.getName());
-                Optional<Project> project = repository.findById(projectId);
-                return project.orElse(null);
-            })
-            .filter(Objects::nonNull);
     }
 
     @Override
@@ -190,7 +180,9 @@ public class ProjectServiceImpl implements ProjectService {
         fetchedProject.unassignAllUsers();
         repository.delete(fetchedProject);
 
-        deleteTargetFile(project);
+        if(!project.isApiUpload()) {
+            deleteTargetFile(project);
+        }
 
         diagramService.deleteFilesFromFilesystem(project.getId().toString());
     }
@@ -213,6 +205,7 @@ public class ProjectServiceImpl implements ProjectService {
         return Project.builder()
             .name(buildCleanFileName(fileName))
             .boundedContextPackages(boundedContexts)
+            .apiUpload(false)
             .creator(registeredUser)
             .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
             .build();
@@ -222,16 +215,10 @@ public class ProjectServiceImpl implements ProjectService {
         return Project.builder()
             .name(projectName)
             .domainModel(domainModel)
+            .apiUpload(true)
             .creator(registeredUser)
             .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
             .build();
-    }
-
-    private UUID buildProjectIdFromFilename(String filename) {
-        if (filename == null || filename.lastIndexOf('.') == -1) {
-            return null;
-        }
-        return UUID.fromString(filename.substring(0, filename.lastIndexOf('.')));
     }
 
     private Path saveTargetFile(String targetsLocation, InputStream fileContents, String fileName) {

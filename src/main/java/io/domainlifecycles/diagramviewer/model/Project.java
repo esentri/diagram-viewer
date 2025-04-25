@@ -56,13 +56,16 @@ public class Project {
     @Convert(converter = DomainModelConverter.class)
     private DomainModel domainModel;
 
+    @Column(nullable = false, updatable = false)
+    private boolean apiUpload;
+
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "project_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "registered_user_id"))
+    @JoinTable(name = "project_assigned_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "registered_user_id"))
     @Builder.Default
     private List<RegisteredUser> assignedRegisteredUsers = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "project_invited_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "invited_user_id"))
+    @JoinTable(name = "project_assigned_invited_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "invited_user_id"))
     @Builder.Default
     private List<InvitedUser> assignedInvitedUsers = new ArrayList<>();
 

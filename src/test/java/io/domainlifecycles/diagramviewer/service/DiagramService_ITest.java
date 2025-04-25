@@ -66,6 +66,7 @@ class DiagramService_ITest {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
+            .apiUpload(false)
             .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
             .creator(registeredUser)
             .build();

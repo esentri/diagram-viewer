@@ -1,10 +1,10 @@
 import '@polymer/polymer/lib/elements/dom-if.js';
-import {html} from '@polymer/polymer/lib/utils/html-tag.js';
-import {Debouncer} from '@polymer/polymer/lib/utils/debounce.js';
-import {idlePeriod} from '@polymer/polymer/lib/utils/async.js';
-import {PolymerElement} from '@polymer/polymer/polymer-element.js';
-import {flowComponentDirective} from './flow-component-directive.js';
-import {html as litHtml, render} from 'lit';
+import { html } from '@polymer/polymer/lib/utils/html-tag.js';
+import { Debouncer } from '@polymer/polymer/lib/utils/debounce.js';
+import { idlePeriod } from '@polymer/polymer/lib/utils/async.js';
+import { PolymerElement } from '@polymer/polymer/polymer-element.js';
+import { flowComponentDirective } from './flow-component-directive.js';
+import { render, html as litHtml } from 'lit';
 
 /**
  * Returns the requested node in a form suitable for Lit template interpolation.

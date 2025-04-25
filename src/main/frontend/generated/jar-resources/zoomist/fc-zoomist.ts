@@ -17,8 +17,8 @@
  * limitations under the License.
  * #L%
  */
-import {css, html, LitElement} from "lit";
-import {property, query} from "lit/decorators.js";
+import { css, LitElement, html } from "lit";
+import { query, property } from "lit/decorators.js";
 import Zoomist from "zoomist";
 import zoomistStyles from "zoomist/dist/zoomist.min.css?inline";
 
