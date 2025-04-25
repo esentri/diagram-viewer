@@ -30,7 +30,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     private final Diagram diagram;
 
     public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DiagramService diagramService) {
-        this.setWidth("30%");
+        setWidthFull();
         this.diagramService = diagramService;
         this.project = project;
         this.diagram = diagram;

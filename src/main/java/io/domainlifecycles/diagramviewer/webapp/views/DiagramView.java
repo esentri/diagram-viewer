@@ -12,6 +12,8 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.orderedlayout.Scroller.ScrollDirection;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -97,7 +99,11 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
         diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(project, diagram, diagramService));
         diagramViewerAndStylingContainer.add(new DiagramZoomComponentContainer(project.getId().toString(), diagramName));
-        diagramViewerAndStylingContainer.add(new DiagramVisibilityAccordionComponent(project, diagram, diagramService));
+
+        Scroller scroller = new Scroller(new DiagramVisibilityAccordionComponent(project, diagram, diagramService));
+        scroller.setScrollDirection(ScrollDirection.BOTH);
+        scroller.setWidth("30%");
+        diagramViewerAndStylingContainer.add(scroller);
 
         add(diagramViewerAndStylingContainer);
     }
