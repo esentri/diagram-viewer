@@ -60,12 +60,12 @@ public class Project {
     private boolean apiUpload;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "project_assigned_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "registered_user_id"))
+    @JoinTable(name = "project_assigned_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     @Builder.Default
     private List<RegisteredUser> assignedRegisteredUsers = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "project_assigned_invited_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "invited_user_id"))
+    @JoinTable(name = "project_assigned_invited_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     @Builder.Default
     private List<InvitedUser> assignedInvitedUsers = new ArrayList<>();
 
@@ -78,9 +78,11 @@ public class Project {
 
     public void unassignUser(User user) {
         if(user instanceof RegisteredUser) {
-            assignedRegisteredUsers.removeIf(u -> Objects.equals(((RegisteredUser) user).getId(), u.getId()));
+            assignedRegisteredUsers.remove((RegisteredUser) user);
+            this.assignedRegisteredUsers = new ArrayList<>(assignedRegisteredUsers);
         } else {
-            assignedInvitedUsers.removeIf(u -> Objects.equals(((InvitedUser) user).getId(), u.getId()));
+            assignedInvitedUsers.remove((InvitedUser) user);
+            this.assignedInvitedUsers = new ArrayList<>(assignedInvitedUsers);
         }
         user.removeAssignedProject(this);
     }
@@ -88,8 +90,10 @@ public class Project {
     public void assignUser(User user) {
         if(user instanceof RegisteredUser) {
             assignedRegisteredUsers.add((RegisteredUser) user);
+            this.assignedRegisteredUsers = new ArrayList<>(assignedRegisteredUsers);
         } else {
             assignedInvitedUsers.add((InvitedUser) user);
+            this.assignedInvitedUsers = new ArrayList<>(assignedInvitedUsers);
         }
         user.addAssignedProject(this);
     }

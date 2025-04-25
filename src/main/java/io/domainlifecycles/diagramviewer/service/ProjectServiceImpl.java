@@ -159,7 +159,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         project.assignUser(user);
-        update(project);
+        repository.save(project);
     }
 
     @Override
@@ -167,7 +167,7 @@ public class ProjectServiceImpl implements ProjectService {
         if(user instanceof RegisteredUser && Objects.equals(project.getCreator().getId(), ((RegisteredUser) user).getId())) return;
 
         project.unassignUser(user);
-        update(project);
+        repository.save(project);
 
         if(user instanceof InvitedUser && invitedUserService.checkForRemoval((InvitedUser) user))
             invitedUserService.delete((InvitedUser) user);

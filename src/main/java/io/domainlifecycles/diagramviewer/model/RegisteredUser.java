@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, exclude = "assignedProjects")
 @Entity
 @Data
 @Table(name = "RegisteredUser")
@@ -39,11 +39,13 @@ public class RegisteredUser extends User {
     @Override
     public void addAssignedProject(Project project) {
         assignedProjects.add(project);
+        this.assignedProjects = new ArrayList<>(assignedProjects);
     }
 
     @Override
     public void removeAssignedProject(Project project) {
-        assignedProjects.removeIf(p -> Objects.equals(p.getId(), project.getId()));
+        assignedProjects.remove(project);
+        this.assignedProjects = new ArrayList<>(assignedProjects);
     }
 
     public boolean hasApiKey() {

@@ -38,14 +38,12 @@ public class InvitedUserServiceImpl implements InvitedUserService {
 
     @Override
     public void delete(InvitedUser invitedUser) {
-        InvitedUser fetchedInvitedUser = get(invitedUser.getEmailAddress());
-        fetchedInvitedUser.getAssignedProjects().forEach(project -> project.unassignUser(invitedUser));
-        repository.delete(fetchedInvitedUser);
+        invitedUser.getAssignedProjects().forEach(project -> project.unassignUser(invitedUser));
+        repository.delete(invitedUser);
     }
 
     @Override
     public boolean checkForRemoval(InvitedUser invitedUser) {
-        InvitedUser fetchedInvitedUser = repository.findById(invitedUser.getId()).orElseThrow();
-        return fetchedInvitedUser.getAssignedProjects().isEmpty();
+        return invitedUser.getAssignedProjects().isEmpty();
     }
 }

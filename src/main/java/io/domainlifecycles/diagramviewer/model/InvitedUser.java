@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
  *
  * @author leonvoellinger
  */
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, exclude = "assignedProjects")
 @Entity
 @Data
 @Table(name = "InvitedUser")
@@ -45,10 +45,12 @@ public class InvitedUser extends User {
     @Override
     public void addAssignedProject(Project project) {
         assignedProjects.add(project);
+        this.assignedProjects = new ArrayList<>(assignedProjects);
     }
 
     @Override
     public void removeAssignedProject(Project project) {
-        assignedProjects.removeIf(p -> Objects.equals(p.getId(), project.getId()));
+        assignedProjects.remove(project);
+        this.assignedProjects = new ArrayList<>(assignedProjects);
     }
 }

@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 public class ShareProjectDialog extends Dialog {
 
     private final ProjectService projectService;
-    private Project project;
+    private final Project project;
     private Grid<User> userGrid;
     private Registration registration;
 
@@ -73,7 +73,6 @@ public class ShareProjectDialog extends Dialog {
     }
 
     private List<User> getRegisteredAndInvitedUsersForProject() {
-        project = projectService.getByName(project.getName());
         List<RegisteredUser> assignedRegisteredUsers = project.getAssignedRegisteredUsers();
         List<InvitedUser> assignedInvitedUsers = project.getAssignedInvitedUsers();
 
