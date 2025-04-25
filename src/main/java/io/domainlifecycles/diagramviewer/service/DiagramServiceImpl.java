@@ -35,9 +35,8 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram update(Diagram diagram, Project project) {
-        Diagram persistedDiagram = repository.save(diagram);
-        createAndSaveDiagramToFilesystem(project, persistedDiagram);
-        return persistedDiagram;
+        createAndSaveDiagramToFilesystem(project, diagram);
+        return repository.save(diagram);
     }
 
     @Override
@@ -54,10 +53,8 @@ public class DiagramServiceImpl implements DiagramService {
                     .build())
             .build();
 
-        Diagram persistedDiagram = repository.save(diagram);
-        createAndSaveDiagramToFilesystem(project, persistedDiagram);
-
-        return persistedDiagram;
+        createAndSaveDiagramToFilesystem(project, diagram);
+        return repository.save(diagram);
     }
 
     @Override
