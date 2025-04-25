@@ -37,8 +37,8 @@ public class UploadDialog extends Dialog {
         this.binder = new Binder<>();
 
         setHeaderTitle("Upload Project");
-        setWidth("40%");
-        setHeight("60%");
+        setWidth("30%");
+        setHeight("50%");
 
         getFooter().add(createUploadButton());
         getFooter().add(createCancelButton());
@@ -67,10 +67,13 @@ public class UploadDialog extends Dialog {
 
     private FormLayout createDialogLayout() {
         FormLayout formLayout = new FormLayout();
+        formLayout.setWidthFull();
+        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
         formLayout.addFormItem(getUpload(), "File");
 
         projectNameTextField = new TextField();
+        projectNameTextField.setWidthFull();
         binder.forField(projectNameTextField)
             .asRequired("Project name may not be empty")
             .bind(UploadOptions::getProjectName, UploadOptions::setProjectName);
@@ -79,6 +82,7 @@ public class UploadDialog extends Dialog {
         formLayout.addFormItem(projectNameTextField, "Project Name");
 
         boundedContextPackagesTextField = new TextField();
+        boundedContextPackagesTextField.setWidthFull();
         binder.forField(boundedContextPackagesTextField)
             .asRequired("Bounded Contexts may not be empty")
             .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
@@ -92,6 +96,7 @@ public class UploadDialog extends Dialog {
     private Upload getUpload() {
         MultiFileMemoryBuffer uploadBuffer = new MultiFileMemoryBuffer();
         Upload upload = new Upload(uploadBuffer);
+        upload.setWidthFull();
 
         upload.setMaxFileSize(500000000); // 500MB
         upload.setAcceptedFileTypes("application/java-archive");

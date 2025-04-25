@@ -29,8 +29,8 @@ public class EditProjectDialog extends Dialog {
         this.projectConfigurationBinder = new Binder<>(Project.class);
 
         setHeaderTitle("Edit Project");
-        setWidth("40%");
-        setHeight("60%");
+        setWidth("30%");
+        setHeight("50%");
 
         add(createDialogLayout());
         projectConfigurationBinder.readBean(project);

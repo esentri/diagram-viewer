@@ -26,8 +26,8 @@ public class SecurityConfig {
     private final AuthenticationSuccessHandler successHandler;
     private final NavigationAccessChecker navigationAccessChecker;
 
-    public SecurityConfig(@Qualifier("customAuthenticationSuccessHandler") AuthenticationSuccessHandler successHandler,
-                          @Qualifier("projectAndDiagramNavigationAccessChecker") NavigationAccessChecker navigationAccessChecker) {
+    public SecurityConfig(CustomAuthenticationSuccessHandler successHandler,
+                          ProjectAndDiagramNavigationAccessChecker navigationAccessChecker) {
         this.successHandler = successHandler;
         this.navigationAccessChecker = navigationAccessChecker;
     }

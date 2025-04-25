@@ -10,8 +10,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 
-@Component("projectAndDiagramNavigationAccessChecker")
-@Scope(scopeName = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
+@Component
 public class ProjectAndDiagramNavigationAccessChecker implements NavigationAccessChecker {
 
     private final SecurityService securityService;

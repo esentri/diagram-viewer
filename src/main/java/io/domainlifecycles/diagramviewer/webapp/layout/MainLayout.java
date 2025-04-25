@@ -31,6 +31,7 @@ import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
+import io.domainlifecycles.diagramviewer.model.AuthenticatedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.AuthenticatedUserService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
@@ -39,6 +40,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
+import io.netty.handler.codec.mqtt.MqttReasonCodes.Auth;
 import java.util.Comparator;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -73,14 +75,18 @@ public class MainLayout extends AppLayout {
     }
 
     private void refreshPopover() {
+        final AuthenticatedUser authenticatedUser = securityService.getAuthenticatedUser();
+
         userInfoPopover.removeAll();
-        addPopoverContents();
+        addPopoverContents(authenticatedUser);
     }
 
     private void createAndAddUserInfoPopoverWithButton() {
-        Button userInfoPopoverButton = createAndGetUserInfoPopoverButton();
+        final AuthenticatedUser authenticatedUser = securityService.getAuthenticatedUser();
+
+        Button userInfoPopoverButton = createAndGetUserInfoPopoverButton(authenticatedUser);
         userInfoPopover = createAndGetUserInfoPopover(userInfoPopoverButton);
-        addPopoverContents();
+        addPopoverContents(authenticatedUser);
         addToNavbar(userInfoPopoverButton, userInfoPopover);
     }
 
@@ -96,49 +102,50 @@ public class MainLayout extends AppLayout {
         return popover;
     }
 
-    private void addPopoverContents() {
-        userInfoPopover.add(createAndGetPopoverUserInfoLayout(), new Hr(), createAndGetPopoverApiKeyLayout());
+    private void addPopoverContents(AuthenticatedUser authenticatedUser) {
+        userInfoPopover.add(createAndGetPopoverUserInfoLayout(authenticatedUser), new Hr(),
+            createAndGetPopoverApiKeyLayout(authenticatedUser));
     }
 
-    private HorizontalLayout createAndGetPopoverUserInfoLayout() {
+    private HorizontalLayout createAndGetPopoverUserInfoLayout(AuthenticatedUser authenticatedUser) {
         HorizontalLayout userInfo = new HorizontalLayout();
         userInfo.getStyle().setPadding("0rem 1rem 0rem");
         userInfo.getThemeList().remove("spacing");
 
         Avatar popoverAvatar = new Avatar();
-        popoverAvatar.setName(securityService.getAuthenticatedUser().getFullName());
+        popoverAvatar.setName(authenticatedUser.getFullName());
         popoverAvatar.getStyle().set("margin", "auto");
         popoverAvatar.getElement().setAttribute("tabindex", "-1");
         popoverAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
 
         VerticalLayout nameLayout = new VerticalLayout();
         nameLayout.getThemeList().remove("spacing");
-        Div fullName = new Div(securityService.getAuthenticatedUser().getFullName());
+        Div fullName = new Div(authenticatedUser.getFullName());
         fullName.getStyle().set("font-weight", "bold");
-        Div nickName = new Div(securityService.getAuthenticatedUser().getEmailAddress());
+        Div nickName = new Div(authenticatedUser.getEmailAddress());
         nameLayout.add(fullName, nickName);
 
         userInfo.add(popoverAvatar, nameLayout);
         return userInfo;
     }
 
-    private VerticalLayout createAndGetPopoverApiKeyLayout() {
+    private VerticalLayout createAndGetPopoverApiKeyLayout(AuthenticatedUser authenticatedUser) {
         VerticalLayout apiKeyLayout = new VerticalLayout();
         apiKeyLayout.getThemeList().remove("spacing");
         apiKeyLayout.getStyle().setPadding("0 --var(--lumo-space-m)");
 
-        if(securityService.getAuthenticatedUser().hasApiKey()) {
+        if(authenticatedUser.hasApiKey()) {
             Paragraph apiKeyParagraph = new Paragraph("API-Key:");
             apiKeyParagraph.getStyle().setMargin("0");
             apiKeyParagraph.getStyle().setFontWeight("bold");
 
-            Paragraph apiKeyValueParagraph = new Paragraph(securityService.getAuthenticatedUser().getApiKey().toString());
+            Paragraph apiKeyValueParagraph = new Paragraph(authenticatedUser.getApiKey().toString());
             apiKeyValueParagraph.getStyle().setMargin("0");
 
             apiKeyLayout.add(apiKeyParagraph, apiKeyValueParagraph);
         } else {
             Button generateApiKeyButton = new Button("Generate API-Key", e -> {
-                authenticatedUserService.generateApiKeyForUser(securityService.getAuthenticatedUser());
+                authenticatedUserService.generateApiKeyForUser(authenticatedUser);
                 refreshPopover();
             });
 
@@ -149,9 +156,9 @@ public class MainLayout extends AppLayout {
         return apiKeyLayout;
     }
 
-    private Button createAndGetUserInfoPopoverButton() {
+    private Button createAndGetUserInfoPopoverButton(AuthenticatedUser authenticatedUser) {
         Avatar avatar = new Avatar();
-        avatar.setName(securityService.getAuthenticatedUser().getFullName());
+        avatar.setName(authenticatedUser.getFullName());
         avatar.getStyle().set("display", "block");
         avatar.getStyle().set("cursor", "pointer");
         avatar.getElement().setAttribute("tabindex", "-1");

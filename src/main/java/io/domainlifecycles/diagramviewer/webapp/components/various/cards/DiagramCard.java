@@ -10,7 +10,7 @@ public class DiagramCard extends Card {
         getStyle().setMarginBottom("calc(var(--vaadin-form-layout-column-spacing))");
 
         Image image = new Image(diagramSrc, diagram.getFileName());
-        image.setMaxHeight("200px");
+        image.setHeight("200px");
         image.setWidth("95%");
         setMedia(image);
     }
