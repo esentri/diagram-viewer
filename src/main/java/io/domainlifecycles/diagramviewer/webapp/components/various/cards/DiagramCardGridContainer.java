@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.various;
+package io.domainlifecycles.diagramviewer.webapp.components.various.cards;
 
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import io.domainlifecycles.diagramviewer.model.Project;

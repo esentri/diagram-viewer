@@ -44,9 +44,6 @@ public class Project {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> boundedContextPackages;
-
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
     private Set<Diagram> diagrams;
 

@@ -8,15 +8,18 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.RouteParameters;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Set;
 import lombok.Data;
 
 public class ReuploadDialog extends Dialog {
@@ -27,9 +30,8 @@ public class ReuploadDialog extends Dialog {
 
     private Button uploadButton;
     private TextField projectNameTextField;
-    private TextField boundedContextPackagesTextField;
+    private PackageSelectChipField packageSelectChipField;
     private InputStream fileInputStream;
-    private String fileName;
 
     public ReuploadDialog(Project project, ProjectService projectService) {
         this.project = project;
@@ -50,7 +52,7 @@ public class ReuploadDialog extends Dialog {
         uploadButton.setEnabled(binder.isValid());
 
         uploadButton.addClickListener(e -> {
-            projectService.updateTargetFile(project, fileInputStream, projectNameTextField.getValue(), boundedContextPackagesTextField.getValue());
+            projectService.updateTargetFile(project, fileInputStream, projectNameTextField.getValue(), packageSelectChipField.getValue());
             UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
@@ -80,36 +82,34 @@ public class ReuploadDialog extends Dialog {
 
         formLayout.addFormItem(projectNameTextField, "Project Name");
 
-        boundedContextPackagesTextField = new TextField();
-        boundedContextPackagesTextField.setWidthFull();
-        binder.forField(boundedContextPackagesTextField)
+        packageSelectChipField = new PackageSelectChipField();
+        packageSelectChipField.setWidthFull();
+        binder.forField(packageSelectChipField)
             .asRequired("Bounded Contexts may not be empty")
             .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
         binder.addStatusChangeListener(event -> uploadButton.setEnabled(binder.isValid()));
 
-        formLayout.addFormItem(boundedContextPackagesTextField, "Bounded Context Packages (comma separated)");
+        formLayout.addFormItem(packageSelectChipField, "Context-Packages");
 
         return formLayout;
     }
 
     private Upload getUpload() {
-        MultiFileMemoryBuffer uploadBuffer = new MultiFileMemoryBuffer();
+        MemoryBuffer uploadBuffer = new MemoryBuffer();
         Upload upload = new Upload(uploadBuffer);
         upload.setWidthFull();
 
         upload.setMaxFileSize(500000000); // 500MB
         upload.setAcceptedFileTypes("application/java-archive");
 
-        upload.addSucceededListener(event -> {
-            fileName = event.getFileName();
-            fileInputStream = uploadBuffer.getInputStream(fileName);
-        });
+        upload.addSucceededListener(event -> fileInputStream = uploadBuffer.getInputStream());
+
         return upload;
     }
 
     @Data
     private static class UploadOptions {
         private String projectName;
-        private String boundedContextPackages;
+        private Set<String> boundedContextPackages;
     }
 }

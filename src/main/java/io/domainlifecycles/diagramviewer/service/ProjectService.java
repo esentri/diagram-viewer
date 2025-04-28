@@ -6,6 +6,7 @@ import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.mirror.api.DomainModel;
 import java.io.InputStream;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public interface ProjectService {
@@ -14,14 +15,14 @@ public interface ProjectService {
 
     Project getByName(final String projectName);
 
-    void update(Project project);
+    void update(Project project, String projectName, Set<String> boundedContextPackages);
 
     void deleteDiagram(Project project, Diagram diagram);
 
     Project save(RegisteredUser registeredUser, InputStream fileContents,
-                 String fileName, String boundedContextPackages);
+                 String fileName, Set<String> boundedContextPackages);
 
-    void updateTargetFile(Project project, InputStream fileContents, String filename, String boundedContextPackages);
+    void updateTargetFile(Project project, InputStream fileContents, String filename, Set<String> boundedContextPackages);
 
     void createOrUpdateDomainModel(String projectName, DomainModel domainModel);
 

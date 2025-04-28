@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.various;
+package io.domainlifecycles.diagramviewer.webapp.components.various.zoom;
 
 import com.flowingcode.vaadin.addons.zoomist.Zoomist;
 import com.vaadin.flow.dom.Style.Display;

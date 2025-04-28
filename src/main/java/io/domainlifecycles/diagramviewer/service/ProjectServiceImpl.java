@@ -13,9 +13,7 @@ import io.domainlifecycles.mirror.api.DomainModel;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -70,9 +68,17 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void update(Project project) {
-        project.setName(buildCleanFileName(project.getName()));
+    public void update(Project project, String projectName, Set<String> boundedContextPackages) {
+        project.setName(buildCleanFileName(projectName));
         checkProjectValueRequirements(project);
+
+        project.setDomainModel(generateDomainModel(boundedContextPackages, buildProjectFilePath(project)));
+
+        if(Objects.equals(project.getName(), projectName)) {
+            repository.save(project);
+            return;
+        }
+
         insert(project);
     }
 
@@ -92,32 +98,25 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project save(RegisteredUser registeredUser, InputStream fileContents, String fileName, String boundedContextPackages) {
+    public Project save(RegisteredUser registeredUser, InputStream fileContents, String fileName, Set<String> boundedContextPackages) {
 
         // persist project without domain model to obtain UUID
-        String[] boundedContexts = boundedContextPackages.split(",");
-        final Project mappedProject = insert(mapProject(fileName, boundedContexts, registeredUser));
+        final Project mappedProject = insert(mapProject(fileName, registeredUser));
 
         Path projectFilePath = saveTargetFile(targetsDirectory, fileContents,
             buildProjectFilename(mappedProject));
 
-        DomainModel domainModel = DomainModelUtils.initializeDomainModelFromJar(projectFilePath,
-            boundedContexts);
-        mappedProject.setDomainModel(domainModel);
+        mappedProject.setDomainModel(generateDomainModel(boundedContextPackages, projectFilePath));
 
         return repository.save(mappedProject);
     }
 
     @Override
-    public void updateTargetFile(Project project, InputStream fileContents, String filename, String boundedContextPackages) {
+    public void updateTargetFile(Project project, InputStream fileContents, String filename, Set<String> boundedContextPackages) {
         deleteTargetFile(project);
 
-        String[] boundedContexts = boundedContextPackages.split(",");
         Path projectFilePath = saveTargetFile(targetsDirectory, fileContents, buildProjectFilename(project));
-        DomainModel domainModel = DomainModelUtils.initializeDomainModelFromJar(projectFilePath,
-            boundedContexts);
-
-        project.setDomainModel(domainModel);
+        project.setDomainModel(generateDomainModel(boundedContextPackages, projectFilePath));
 
         repository.save(project);
     }
@@ -196,12 +195,9 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.save(project);
     }
 
-    private Project mapProject(String fileName, String[] boundedContextPackages, RegisteredUser registeredUser) {
-        final List<String> boundedContexts = Arrays.stream(boundedContextPackages).toList();
-
+    private Project mapProject(String fileName, RegisteredUser registeredUser) {
         return Project.builder()
             .name(buildCleanFileName(fileName))
-            .boundedContextPackages(boundedContexts)
             .apiUpload(false)
             .creator(registeredUser)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
@@ -218,6 +214,11 @@ public class ProjectServiceImpl implements ProjectService {
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
             .assignedInvitedUsers(new HashSet<>())
             .build();
+    }
+
+    private DomainModel generateDomainModel(Set<String> boundedContextPackages, Path projectFilePath) {
+        return DomainModelUtils.initializeDomainModelFromJar(projectFilePath,
+            boundedContextPackages.toArray(String[]::new));
     }
 
     private Path saveTargetFile(String targetsLocation, InputStream fileContents, String fileName) {
@@ -240,6 +241,10 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
+    private Path buildProjectFilePath(Project project) {
+        return Path.of(targetsDirectory, buildProjectFilename(project));
+    }
+
     private String buildProjectFilename(Project project) {
         return project.getId() + ".jar";
     }
@@ -256,10 +261,6 @@ public class ProjectServiceImpl implements ProjectService {
     private void checkProjectValueRequirements(Project project) {
         if(project.getName() == null || project.getName().isBlank()) {
             throw DiagramViewerException.fail("Project name may not be empty.");
-        }
-
-        if(project.getBoundedContextPackages().isEmpty() || project.getBoundedContextPackages().stream().findFirst().get().isBlank()) {
-            throw DiagramViewerException.fail("Project has to have at least one bounded context package.");
         }
     }
 

@@ -8,19 +8,17 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
+import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import java.io.InputStream;
+import java.util.Set;
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UploadDialog extends Dialog {
-
-    private final static Logger log = LoggerFactory.getLogger(UploadDialog.class);
 
     private final ProjectService projectService;
     private final SecurityService securityService;
@@ -28,7 +26,7 @@ public class UploadDialog extends Dialog {
 
     private Button uploadButton;
     private TextField projectNameTextField;
-    private TextField boundedContextPackagesTextField;
+    private PackageSelectChipField packageSelectChipField;
     private InputStream fileInputStream;
 
     public UploadDialog(ProjectService projectService, SecurityService securityService) {
@@ -51,9 +49,8 @@ public class UploadDialog extends Dialog {
 
         uploadButton.addClickListener(e -> {
             projectService.save(securityService.getCurrentlySignedInUser(), fileInputStream,
-                projectNameTextField.getValue(), boundedContextPackagesTextField.getValue());
+                projectNameTextField.getValue(), packageSelectChipField.getValue());
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
-
             close();
         });
 
@@ -81,33 +78,32 @@ public class UploadDialog extends Dialog {
 
         formLayout.addFormItem(projectNameTextField, "Project Name");
 
-        boundedContextPackagesTextField = new TextField();
-        boundedContextPackagesTextField.setWidthFull();
-        binder.forField(boundedContextPackagesTextField)
+        packageSelectChipField = new PackageSelectChipField();
+        packageSelectChipField.setWidthFull();
+        binder.forField(packageSelectChipField)
             .asRequired("Bounded Contexts may not be empty")
             .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
         binder.addStatusChangeListener(event -> uploadButton.setEnabled(binder.isValid()));
-
-        formLayout.addFormItem(boundedContextPackagesTextField, "Bounded Context Packages (comma separated)");
+        formLayout.addFormItem(packageSelectChipField, "Context-Packages");
 
         return formLayout;
     }
 
     private Upload getUpload() {
-        MultiFileMemoryBuffer uploadBuffer = new MultiFileMemoryBuffer();
+        MemoryBuffer uploadBuffer = new MemoryBuffer();
         Upload upload = new Upload(uploadBuffer);
         upload.setWidthFull();
 
         upload.setMaxFileSize(500000000); // 500MB
         upload.setAcceptedFileTypes("application/java-archive");
 
-        upload.addSucceededListener(event -> fileInputStream = uploadBuffer.getInputStream(event.getFileName()));
+        upload.addSucceededListener(event -> fileInputStream = uploadBuffer.getInputStream());
         return upload;
     }
 
     @Data
     private static class UploadOptions {
         private String projectName;
-        private String boundedContextPackages;
+        private Set<String> boundedContextPackages;
     }
 }

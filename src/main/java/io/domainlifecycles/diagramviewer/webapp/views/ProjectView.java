@@ -27,7 +27,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.EditProjectDi
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ReuploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ShareProjectDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramCardGridContainer;
+import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
