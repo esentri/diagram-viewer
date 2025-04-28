@@ -21,8 +21,8 @@ import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -72,12 +72,12 @@ public class ShareProjectDialog extends Dialog {
         return dialogLayout;
     }
 
-    private List<User> getRegisteredAndInvitedUsersForProject() {
-        List<RegisteredUser> assignedRegisteredUsers = project.getAssignedRegisteredUsers();
-        List<InvitedUser> assignedInvitedUsers = project.getAssignedInvitedUsers();
+    private Set<User> getRegisteredAndInvitedUsersForProject() {
+        Set<RegisteredUser> assignedRegisteredUsers = project.getAssignedRegisteredUsers();
+        Set<InvitedUser> assignedInvitedUsers = project.getAssignedInvitedUsers();
 
         return Stream.concat(assignedRegisteredUsers.stream(), assignedInvitedUsers.stream())
-            .collect(Collectors.toList());
+            .collect(Collectors.toSet());
     }
 
     private void refreshUsers() {

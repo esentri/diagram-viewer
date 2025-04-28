@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,6 +70,7 @@ class ProjectService_ITest {
         registeredUser = RegisteredUser.builder()
             .fullName(REGISTERED_USER_FULL_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
+            .assignedProjects(new HashSet<>())
             .build();
 
         registeredUserRepository.save(registeredUser);
@@ -92,7 +95,7 @@ class ProjectService_ITest {
         assertThat(project.getName()).isEqualTo("test_project_1_0_0_ÄÖÜ_txt");
         assertThat(project.getCreator().getId()).isEqualTo(registeredUser.getId());
         assertThat(project.getAssignedRegisteredUsers().size()).isEqualTo(1);
-        assertThat(project.getAssignedRegisteredUsers().get(0).getId()).isEqualTo(registeredUser.getId());
+        assertThat(project.getAssignedRegisteredUsers().stream().findFirst().orElseThrow().getId()).isEqualTo(registeredUser.getId());
         assertThat(project.getCreator().getId()).isEqualTo(registeredUser.getId());
         assertThat(project.getAssignedInvitedUsers()).isEmpty();
         assertThat(project.getBoundedContextPackages().size()).isEqualTo(1);
@@ -147,7 +150,7 @@ class ProjectService_ITest {
         // given
         Project project = setUpProject();
         RegisteredUser anotherRegisteredUser = setUpRegisteredUser();
-        List<RegisteredUser> updatedRegisteredUsers = new ArrayList<>(project.getAssignedRegisteredUsers());
+        Set<RegisteredUser> updatedRegisteredUsers = new HashSet<>(project.getAssignedRegisteredUsers());
         updatedRegisteredUsers.add(anotherRegisteredUser);
 
         project.setAssignedRegisteredUsers(updatedRegisteredUsers);
@@ -171,7 +174,7 @@ class ProjectService_ITest {
         // given
         Project project = setUpProject();
         InvitedUser invitedUser = setUpInvitedUser();
-        List<InvitedUser> updatedInvitedUsers = new ArrayList<>(project.getAssignedInvitedUsers());
+        Set<InvitedUser> updatedInvitedUsers = new HashSet<>(project.getAssignedInvitedUsers());
         updatedInvitedUsers.add(invitedUser);
 
         project.setAssignedInvitedUsers(updatedInvitedUsers);
@@ -214,6 +217,7 @@ class ProjectService_ITest {
         RegisteredUser registeredUser = RegisteredUser.builder()
             .fullName(REGISTERED_USER_FULL_NAME + " (2)")
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS + " (2)")
+            .assignedProjects(new HashSet<>())
             .build();
 
         return registeredUserRepository.save(registeredUser);
@@ -223,6 +227,7 @@ class ProjectService_ITest {
         InvitedUser invitedUser = InvitedUser.builder()
             .fullName(INVITED_USER_FULL_NAME)
             .emailAddress(INVITED_USER_MAIL_ADDRESS)
+            .assignedProjects(new HashSet<>())
             .build();
 
         return invitedUserRepository.save(invitedUser);
@@ -232,8 +237,10 @@ class ProjectService_ITest {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
+            .diagrams(new HashSet<>())
             .apiUpload(false)
-            .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
+            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
+            .assignedInvitedUsers(new HashSet<>())
             .creator(registeredUser)
             .build();
 

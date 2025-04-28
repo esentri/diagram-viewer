@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
         final RegisteredUser registeredUser = RegisteredUser.builder()
             .emailAddress(userEmailAddress)
             .fullName(fullName)
+            .assignedProjects(new HashSet<>())
             .build();
 
         return repository.save(registeredUser);

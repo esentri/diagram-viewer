@@ -10,17 +10,15 @@ import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.mirror.api.DomainModel;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
@@ -28,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -207,7 +204,8 @@ public class ProjectServiceImpl implements ProjectService {
             .boundedContextPackages(boundedContexts)
             .apiUpload(false)
             .creator(registeredUser)
-            .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
+            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
+            .assignedInvitedUsers(new HashSet<>())
             .build();
     }
 
@@ -217,7 +215,8 @@ public class ProjectServiceImpl implements ProjectService {
             .domainModel(domainModel)
             .apiUpload(true)
             .creator(registeredUser)
-            .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
+            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
+            .assignedInvitedUsers(new HashSet<>())
             .build();
     }
 
@@ -259,7 +258,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw DiagramViewerException.fail("Project name may not be empty.");
         }
 
-        if(project.getBoundedContextPackages().isEmpty() || project.getBoundedContextPackages().get(0).isBlank()) {
+        if(project.getBoundedContextPackages().isEmpty() || project.getBoundedContextPackages().stream().findFirst().get().isBlank()) {
             throw DiagramViewerException.fail("Project has to have at least one bounded context package.");
         }
     }

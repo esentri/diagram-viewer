@@ -8,7 +8,9 @@ import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +58,7 @@ class SecurityService_ITest {
         registeredUser = RegisteredUser.builder()
             .fullName(REGISTERED_USER_FULL_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
+            .assignedProjects(new HashSet<>())
             .build();
 
         registeredUserRepository.save(registeredUser);
@@ -113,10 +116,10 @@ class SecurityService_ITest {
         assertThat(newRegisteredUser).isNotNull();
         assertThat(newRegisteredUser.getEmailAddress()).isEqualTo(INVITED_USER_MAIL_ADDRESS);
         assertThat(newRegisteredUser.getFullName()).isEqualTo(INVITED_USER_FULL_NAME);
-        assertThat(newRegisteredUser.getAssignedProjects().get(0).getId()).isEqualTo(project.getId());
-        assertThat(newRegisteredUser.getAssignedProjects().get(0).getAssignedRegisteredUsers().size()).isEqualTo(2);
-        assertThat(newRegisteredUser.getAssignedProjects().get(0).getAssignedInvitedUsers()).isEmpty();
-        assertThat(newRegisteredUser.getAssignedProjects().get(0).getCreator().getId()).isEqualTo(project.getCreator().getId());
+        assertThat(newRegisteredUser.getAssignedProjects().stream().findFirst().orElseThrow().getId()).isEqualTo(project.getId());
+        assertThat(newRegisteredUser.getAssignedProjects().stream().findFirst().orElseThrow().getAssignedRegisteredUsers().size()).isEqualTo(2);
+        assertThat(newRegisteredUser.getAssignedProjects().stream().findFirst().orElseThrow().getAssignedInvitedUsers()).isEmpty();
+        assertThat(newRegisteredUser.getAssignedProjects().stream().findFirst().orElseThrow().getCreator().getId()).isEqualTo(project.getCreator().getId());
 
         assertThat(invitedUserRepository.findByEmailAddress(INVITED_USER_MAIL_ADDRESS)).isEmpty();
     }
@@ -126,7 +129,9 @@ class SecurityService_ITest {
             .name("project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
             .apiUpload(false)
-            .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
+            .diagrams(new HashSet<>())
+            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
+            .assignedInvitedUsers(new HashSet<>())
             .creator(registeredUser)
             .build();
 
@@ -137,6 +142,7 @@ class SecurityService_ITest {
         InvitedUser invitedUser = InvitedUser.builder()
             .fullName(INVITED_USER_FULL_NAME)
             .emailAddress(INVITED_USER_MAIL_ADDRESS)
+            .assignedProjects(new HashSet<>())
             .build();
 
         invitedUserRepository.save(invitedUser);

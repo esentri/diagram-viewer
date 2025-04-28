@@ -61,8 +61,6 @@ public class SecurityServiceImpl implements SecurityService {
             projectService.assignUser(project, newRegisteredUser);
         });
 
-        if(invitedUserService.checkForRemoval(invitedUser)) invitedUserService.delete(invitedUser);
-
         return newRegisteredUser;
     }
 

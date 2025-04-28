@@ -8,7 +8,9 @@ import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +52,7 @@ class DiagramService_ITest {
         registeredUser = RegisteredUser.builder()
             .fullName(TEST_USER_FULL_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
+            .assignedProjects(new HashSet<>())
             .build();
 
         registeredUserRepository.save(registeredUser);
@@ -67,7 +70,8 @@ class DiagramService_ITest {
             .name("project-1.0.0.jar")
             .boundedContextPackages(List.of("io.esentri.domain"))
             .apiUpload(false)
-            .assignedRegisteredUsers(new ArrayList<>(List.of(registeredUser)))
+            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
+            .assignedInvitedUsers(new HashSet<>())
             .creator(registeredUser)
             .build();
 

@@ -25,10 +25,10 @@ public class DomainModelVisibility {
     private UUID id;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> seedClassNames = new ArrayList<>();
+    private List<String> seedClassNames;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> blacklistedClassNames = new ArrayList<>();
+    private List<String> blacklistedClassNames;
 
     @CreationTimestamp
     private Instant createdAt;

@@ -6,13 +6,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
-import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
@@ -25,7 +22,6 @@ import lombok.experimental.SuperBuilder;
  *
  * @author leonvoellinger
  */
-@EqualsAndHashCode(callSuper = true, exclude = "assignedProjects")
 @Entity
 @Data
 @Table(name = "InvitedUser")
@@ -39,18 +35,29 @@ public class InvitedUser extends User {
     private UUID id;
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedInvitedUsers")
-    @Builder.Default
-    private List<Project> assignedProjects = new ArrayList<>();
+    private Set<Project> assignedProjects;
 
     @Override
     public void addAssignedProject(Project project) {
         assignedProjects.add(project);
-        this.assignedProjects = new ArrayList<>(assignedProjects);
+        this.assignedProjects = new HashSet<>(assignedProjects);
     }
 
     @Override
     public void removeAssignedProject(Project project) {
         assignedProjects.remove(project);
-        this.assignedProjects = new ArrayList<>(assignedProjects);
+        this.assignedProjects = new HashSet<>(assignedProjects);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof InvitedUser invitedUser)) return false;
+        return id != null && id.equals(invitedUser.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : super.hashCode();
     }
 }

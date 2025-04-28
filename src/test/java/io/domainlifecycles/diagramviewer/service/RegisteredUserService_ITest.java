@@ -3,6 +3,7 @@ package io.domainlifecycles.diagramviewer.service;
 import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
+import java.util.HashSet;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ class RegisteredUserService_ITest {
         RegisteredUser registeredUser = RegisteredUser.builder()
             .fullName(TEST_USER_FULL_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
+            .assignedProjects(new HashSet<>())
             .build();
 
         registeredUserRepository.save(registeredUser);

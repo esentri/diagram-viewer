@@ -17,10 +17,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,11 +45,10 @@ public class Project {
     private String name;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @Builder.Default private List<String> boundedContextPackages = new ArrayList<>();
+    private List<String> boundedContextPackages;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
-    @Builder.Default
-    private List<Diagram> diagrams = new ArrayList<>();
+    private Set<Diagram> diagrams;
 
     @Column(columnDefinition = "TEXT")
     @Convert(converter = DomainModelConverter.class)
@@ -61,13 +59,11 @@ public class Project {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_assigned_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    @Builder.Default
-    private List<RegisteredUser> assignedRegisteredUsers = new ArrayList<>();
+    private Set<RegisteredUser> assignedRegisteredUsers;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_assigned_invited_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    @Builder.Default
-    private List<InvitedUser> assignedInvitedUsers = new ArrayList<>();
+    private Set<InvitedUser> assignedInvitedUsers;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="creator_user_id", nullable=false)
@@ -79,10 +75,10 @@ public class Project {
     public void unassignUser(User user) {
         if(user instanceof RegisteredUser) {
             assignedRegisteredUsers.remove((RegisteredUser) user);
-            this.assignedRegisteredUsers = new ArrayList<>(assignedRegisteredUsers);
+            this.assignedRegisteredUsers = new HashSet<>(assignedRegisteredUsers);
         } else {
             assignedInvitedUsers.remove((InvitedUser) user);
-            this.assignedInvitedUsers = new ArrayList<>(assignedInvitedUsers);
+            this.assignedInvitedUsers = new HashSet<>(assignedInvitedUsers);
         }
         user.removeAssignedProject(this);
     }
@@ -90,10 +86,10 @@ public class Project {
     public void assignUser(User user) {
         if(user instanceof RegisteredUser) {
             assignedRegisteredUsers.add((RegisteredUser) user);
-            this.assignedRegisteredUsers = new ArrayList<>(assignedRegisteredUsers);
+            this.assignedRegisteredUsers = new HashSet<>(assignedRegisteredUsers);
         } else {
             assignedInvitedUsers.add((InvitedUser) user);
-            this.assignedInvitedUsers = new ArrayList<>(assignedInvitedUsers);
+            this.assignedInvitedUsers = new HashSet<>(assignedInvitedUsers);
         }
         user.addAssignedProject(this);
     }
@@ -101,5 +97,17 @@ public class Project {
     public void unassignAllUsers() {
         new HashSet<>(assignedRegisteredUsers).forEach(this::unassignUser);
         new HashSet<>(assignedInvitedUsers).forEach(this::unassignUser);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Project project)) return false;
+        return id != null && id.equals(project.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : super.hashCode();
     }
 }
