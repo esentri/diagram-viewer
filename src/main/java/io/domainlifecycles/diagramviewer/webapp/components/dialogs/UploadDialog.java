@@ -10,6 +10,8 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ErrorLevel;
+import com.vaadin.flow.data.binder.ValidationResult;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
@@ -23,10 +25,9 @@ public class UploadDialog extends Dialog {
     private final ProjectService projectService;
     private final SecurityService securityService;
     private final Binder<UploadOptions> binder;
+    private final UploadOptions uploadOptions;
 
     private Button uploadButton;
-    private TextField projectNameTextField;
-    private PackageSelectChipField packageSelectChipField;
     private InputStream fileInputStream;
 
     public UploadDialog(ProjectService projectService, SecurityService securityService) {
@@ -34,13 +35,17 @@ public class UploadDialog extends Dialog {
         this.securityService = securityService;
         this.binder = new Binder<>();
 
+        uploadOptions = new UploadOptions();
+
         setHeaderTitle("Upload Project");
         setWidth("30%");
         setHeight("50%");
 
         getFooter().add(createUploadButton());
         getFooter().add(createCancelButton());
+
         add(createDialogLayout());
+        binder.addStatusChangeListener(event -> uploadButton.setEnabled(binder.isValid()));
     }
 
     private Button createUploadButton() {
@@ -48,8 +53,9 @@ public class UploadDialog extends Dialog {
         uploadButton.setEnabled(binder.isValid());
 
         uploadButton.addClickListener(e -> {
+            binder.writeBeanIfValid(uploadOptions);
             projectService.save(securityService.getCurrentlySignedInUser(), fileInputStream,
-                projectNameTextField.getValue(), packageSelectChipField.getValue());
+                uploadOptions.getProjectName(), uploadOptions.getBoundedContextPackages());
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });
@@ -69,21 +75,20 @@ public class UploadDialog extends Dialog {
 
         formLayout.addFormItem(getUpload(), "File");
 
-        projectNameTextField = new TextField();
+        TextField projectNameTextField = new TextField();
         projectNameTextField.setWidthFull();
         binder.forField(projectNameTextField)
-            .asRequired("Project name may not be empty")
+            .asRequired("Project name is required.")
             .bind(UploadOptions::getProjectName, UploadOptions::setProjectName);
-        binder.addStatusChangeListener(event -> uploadButton.setEnabled(binder.isValid()));
 
         formLayout.addFormItem(projectNameTextField, "Project Name");
 
-        packageSelectChipField = new PackageSelectChipField();
+        PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
         packageSelectChipField.setWidthFull();
         binder.forField(packageSelectChipField)
-            .asRequired("Bounded Contexts may not be empty")
+            .asRequired("At least one Context-Package is required.")
             .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
-        binder.addStatusChangeListener(event -> uploadButton.setEnabled(binder.isValid()));
+
         formLayout.addFormItem(packageSelectChipField, "Context-Packages");
 
         return formLayout;

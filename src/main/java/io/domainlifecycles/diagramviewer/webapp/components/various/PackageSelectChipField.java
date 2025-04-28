@@ -68,6 +68,8 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
 
         Div tag = createTag(trimmedText);
         tagsLayout.add(tag);
+
+        updateValue();
     }
 
     private Div createTag(String tagName) {
@@ -89,6 +91,7 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
         Button removeButton = new Button("×", e -> {
             tags.remove(tagName);
             tagsLayout.remove(tag);
+            updateValue();
         });
         removeButton.getElement().getStyle().set("border", "none");
         removeButton.getElement().getStyle().set("background", "transparent");
@@ -107,7 +110,7 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
 
     @Override
     protected Set<String> generateModelValue() {
-        return tags;
+        return tags == null || tags.isEmpty() ? null : new LinkedHashSet<>(tags);
     }
 
     @Override
@@ -116,5 +119,10 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
         tags.addAll(selectedItems);
         tagsLayout.removeAll();
         selectedItems.forEach(tag -> tagsLayout.add(createTag(tag)));
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return tags == null || tags.isEmpty();
     }
 }

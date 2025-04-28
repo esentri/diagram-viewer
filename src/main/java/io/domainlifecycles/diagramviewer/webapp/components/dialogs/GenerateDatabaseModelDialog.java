@@ -8,14 +8,16 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.server.StreamResource;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
+import io.domainlifecycles.mirror.api.BoundedContextMirror;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Data;
 
 public class GenerateDatabaseModelDialog extends Dialog {
@@ -26,51 +28,46 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private final Binder<GenerateDatabaseModelOptions> binder;
     private final SQLDDLGeneratorService sqlDDLGeneratorService;
     private final Project project;
+    private final GenerateDatabaseModelOptions generateDatabaseModelOptions;
 
     private Button generateButton;
-    private Checkbox auditModelCheckbox;
-    private Select<String> sqlDialectSelect;
-    private TextField bcPackageInput;
-    private TextField bcSchemaInput;
 
     public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, Project project) {
         this.sqlDDLGeneratorService = sqlDDLGeneratorService;
         this.project = project;
         this.binder = new Binder<>();
 
+        generateDatabaseModelOptions = new GenerateDatabaseModelOptions();
+
         setHeaderTitle("Download SQL-DDL-Model");
-        add(createDialogLayout());
         getFooter().add(createGenerateButton());
         getFooter().add(createCloseButton());
+        add(createDialogLayout());
+
+        binder.addStatusChangeListener(event -> generateButton.setEnabled(binder.isValid()));
     }
 
     private FormLayout createDialogLayout() {
         FormLayout formLayout = new FormLayout();
 
-        auditModelCheckbox = new Checkbox();
-        binder.forField(auditModelCheckbox).bind(GenerateDatabaseModelOptions::isAuditModel, GenerateDatabaseModelOptions::setAuditModel);
-
-        sqlDialectSelect = new Select<>();
+        Select<String> sqlDialectSelect = new Select<>();
         sqlDialectSelect.setItems(SQL_DIALECT_SELECT_VALUES);
         sqlDialectSelect.setValue(SQL_DIALECT_SELECT_VALUES[0]);
-        binder.forField(sqlDialectSelect).bind(GenerateDatabaseModelOptions::getSelectedSqlDialect, GenerateDatabaseModelOptions::setSelectedSqlDialect);
+        binder.forField(sqlDialectSelect)
+            .bind(GenerateDatabaseModelOptions::getSelectedSqlDialect, GenerateDatabaseModelOptions::setSelectedSqlDialect);
+        formLayout.addFormItem(sqlDialectSelect, "SQL Dialect");
 
-        bcPackageInput = new TextField();
-        binder.forField(bcPackageInput)
-            .asRequired("Package may not be empty.")
-            .bind(GenerateDatabaseModelOptions::getBoundedContextPackageName, GenerateDatabaseModelOptions::setBoundedContextPackageName);
+        Select<String> boundedContextPackageSelect = new Select<>();
+        boundedContextPackageSelect.setItems(mapPackageNames());
+        binder.forField(boundedContextPackageSelect)
+            .asRequired("Context-Package is required.")
+            .bind(GenerateDatabaseModelOptions::getBoundedContextPackage, GenerateDatabaseModelOptions::setBoundedContextPackage);
+        formLayout.addFormItem(boundedContextPackageSelect, "Context-Package");
 
-        bcSchemaInput = new TextField();
-        binder.forField(bcSchemaInput)
-            .asRequired("Schema may not be empty.")
-            .bind(GenerateDatabaseModelOptions::getBoundedContextPackageSchemaName, GenerateDatabaseModelOptions::setBoundedContextPackageSchemaName);
-
-        binder.addStatusChangeListener(event -> generateButton.setEnabled(binder.isValid()));
-
-        formLayout.addFormItem(bcPackageInput, "Bounded Context Package name");
-        formLayout.addFormItem(bcSchemaInput, "Bounded Context Schema name");
-        formLayout.addFormItem(sqlDialectSelect,"SQL Dialect");
+        Checkbox auditModelCheckbox = new Checkbox();
+        binder.forField(auditModelCheckbox).bind(GenerateDatabaseModelOptions::isAuditModel, GenerateDatabaseModelOptions::setAuditModel);
         formLayout.addFormItem(auditModelCheckbox, "Audit Model");
+
         return formLayout;
     }
 
@@ -80,7 +77,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         generateButton.addClickListener(event -> {
-            // Create a new StreamResource right before download
+            binder.writeBeanIfValid(generateDatabaseModelOptions);
             String scriptFilename = buildScriptFilename();
             StreamResource streamResource = new StreamResource(scriptFilename, this::getStream);
             streamResource.setContentType(APPLICATION_SQL_MIME_TYPE);
@@ -102,6 +99,12 @@ public class GenerateDatabaseModelDialog extends Dialog {
         return generateButton;
     }
 
+    private Set<String> mapPackageNames() {
+        return project.getDomainModel().boundedContextMirrors().stream().map(
+            BoundedContextMirror::getPackageName).collect(
+            Collectors.toSet());
+    }
+
     private String buildScriptFilename() {
         return project == null ? "dlc-project" + SQL_DDL_SCRIPT_SUFFIX : project.getName() + SQL_DDL_SCRIPT_SUFFIX;
     }
@@ -113,15 +116,16 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private InputStream getStream() {
         final String ddl = sqlDDLGeneratorService.generateSQL(
             project.getDomainModel(),
-            bcPackageInput.getValue(), bcSchemaInput.getValue(), sqlDialectSelect.getValue(), auditModelCheckbox.getValue());
+            generateDatabaseModelOptions.getBoundedContextPackage(),
+            generateDatabaseModelOptions.getSelectedSqlDialect(),
+            generateDatabaseModelOptions.isAuditModel());
 
         return new ByteArrayInputStream(ddl.getBytes(StandardCharsets.UTF_8));
     }
 
     @Data
     private static class GenerateDatabaseModelOptions {
-        private String boundedContextPackageName;
-        private String boundedContextPackageSchemaName;
+        private String boundedContextPackage;
         private String selectedSqlDialect;
         private boolean auditModel;
     }

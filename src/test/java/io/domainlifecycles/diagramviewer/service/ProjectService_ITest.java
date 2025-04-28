@@ -88,7 +88,7 @@ class ProjectService_ITest {
 
         // when
         Project project = service.save(registeredUser,
-            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", "com.esentri");
+            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", Set.of("com.esentri"));
 
         // then
         assertThat(project).isNotNull();
@@ -98,8 +98,6 @@ class ProjectService_ITest {
         assertThat(project.getAssignedRegisteredUsers().stream().findFirst().orElseThrow().getId()).isEqualTo(registeredUser.getId());
         assertThat(project.getCreator().getId()).isEqualTo(registeredUser.getId());
         assertThat(project.getAssignedInvitedUsers()).isEmpty();
-        assertThat(project.getBoundedContextPackages().size()).isEqualTo(1);
-        assertThat(project.getBoundedContextPackages().get(0)).isEqualTo("com.esentri");
 
         FileIOUtils.deleteDirectoryRecursively(Path.of(targetsDirectory));
     }
@@ -236,7 +234,6 @@ class ProjectService_ITest {
     private Project setUpProject() {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
-            .boundedContextPackages(List.of("io.esentri.domain"))
             .diagrams(new HashSet<>())
             .apiUpload(false)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))

@@ -127,7 +127,6 @@ class SecurityService_ITest {
     private Project setUpProject() {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
-            .boundedContextPackages(List.of("io.esentri.domain"))
             .apiUpload(false)
             .diagrams(new HashSet<>())
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))

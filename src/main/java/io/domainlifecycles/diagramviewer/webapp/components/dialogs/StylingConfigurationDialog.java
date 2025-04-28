@@ -451,11 +451,10 @@ public class StylingConfigurationDialog extends Dialog {
 
         Matcher matcher = stylePattern.matcher(configuration);
         if (matcher.find()) {
-            // Trim the string and split by spaces to get individual styling options
             String styles = matcher.group().trim();
             return styles.split("\\s+");
         } else {
-            return new String[0]; // Return an empty array if no styling is found
+            return new String[0];
         }
     }
 
@@ -468,13 +467,10 @@ public class StylingConfigurationDialog extends Dialog {
     private String buildNewColorConfiguration(String oldConfiguration, String newColorHexString) {
         Pattern fillPattern = Pattern.compile("fill=#([A-Fa-f0-9]{6})");
 
-        // Replace the old color (if exists) with the new color
         Matcher matcher = fillPattern.matcher(oldConfiguration);
         if (matcher.find()) {
-            // Replace the old color with the new color in the configuration string
             return oldConfiguration.replaceFirst(matcher.group(), "fill=" + newColorHexString);
         } else {
-            // If no fill color found, we just return the old configuration as is
             return oldConfiguration;
         }
     }
@@ -505,22 +501,17 @@ public class StylingConfigurationDialog extends Dialog {
         Pattern colorPattern = Pattern.compile("fill=#[A-Fa-f0-9]{6}");
         Matcher colorMatcher = colorPattern.matcher(oldConfiguration);
 
-        // Check if the pattern matches and extract the color part
         String colorPart = "";
         if (colorMatcher.find()) {
-            colorPart = colorMatcher.group(); // Extract the fill color part, e.g. "fill=#FFFFCC"
+            colorPart = colorMatcher.group();
         }
 
-        // Build the new configuration string
-        StringBuilder newConfiguration = new StringBuilder(colorPart); // Start with the color part
+        StringBuilder newConfiguration = new StringBuilder(colorPart);
 
-        // Add all selected styling options to the new configuration string
         for (Styling style : selectedStylingOptions) {
-            // Ensure each style is added in lowercase
             newConfiguration.append(" ").append(style.getNomnomlValue());
         }
 
-        // Return the newly assembled configuration string
         return newConfiguration.toString();
     }
 }

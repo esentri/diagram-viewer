@@ -48,7 +48,9 @@ public class EditProjectDialog extends Dialog {
         getFooter().add(createSaveButton());
         getFooter().add(createCancelButton());
         add(createDialogLayout());
+
         binder.readBean(uploadOptions);
+        binder.addStatusChangeListener(event -> saveButton.setEnabled(binder.isValid()));
     }
 
     private Button createSaveButton() {
@@ -77,22 +79,15 @@ public class EditProjectDialog extends Dialog {
         TextField projectNameTextField = new TextField();
         projectNameTextField.setWidthFull();
         binder.forField(projectNameTextField)
-            .asRequired("Project name may not be empty")
+            .asRequired("Name is required.")
             .bind(UploadOptions::getProjectName, UploadOptions::setProjectName);
-        binder.addStatusChangeListener(event -> saveButton.setEnabled(binder.isValid()));
-
         formLayout.addFormItem(projectNameTextField, "Name");
 
         PackageSelectChipField packageSelectChipField = new PackageSelectChipField(mapPackageNames());
         packageSelectChipField.setWidthFull();
         binder.forField(packageSelectChipField)
-            .asRequired((value, context) -> {
-                if (value == null || value.isEmpty())
-                    return ValidationResult.create("Bounded Contexts may not be empty", ErrorLevel.ERROR);
-                return ValidationResult.ok();
-            })
+            .asRequired("At least one Context-Package is required.")
             .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
-        binder.addStatusChangeListener(event -> saveButton.setEnabled(binder.isValid()));
         formLayout.addFormItem(packageSelectChipField, "Context-Packages");
 
         return formLayout;
