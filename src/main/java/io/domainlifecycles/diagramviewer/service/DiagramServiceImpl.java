@@ -12,6 +12,7 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -34,8 +35,10 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram update(Diagram diagram, Project project) {
-        createAndSaveDiagramToFilesystem(project, diagram);
-        return repository.save(diagram);
+        final Diagram updatedDiagram = insert(diagram);
+        createAndSaveDiagramToFilesystem(project, updatedDiagram);
+
+        return updatedDiagram;
     }
 
     @Override
@@ -52,7 +55,21 @@ public class DiagramServiceImpl implements DiagramService {
                     .build())
             .build();
 
-        createAndSaveDiagramToFilesystem(project, diagram);
+        final Diagram updatedDiagram = insert(diagram);
+        createAndSaveDiagramToFilesystem(project, updatedDiagram);
+
+        return updatedDiagram;
+    }
+
+    private Diagram insert(Diagram diagram) {
+        final String fileName = diagram.getFileName();
+        Optional<Diagram> fetchedDiagram = repository.findByFileName(fileName);
+
+        if(fetchedDiagram.isPresent()) {
+            throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
+                fileName));
+        }
+
         return repository.save(diagram);
     }
 
