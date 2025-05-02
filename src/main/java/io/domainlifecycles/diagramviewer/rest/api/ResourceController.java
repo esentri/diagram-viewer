@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.rest;
+package io.domainlifecycles.diagramviewer.rest.api;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import java.io.File;

@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.rest.jackson;
+package io.domainlifecycles.diagramviewer.rest.api.jackson;
 
 import io.domainlifecycles.mirror.api.DomainModel;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;

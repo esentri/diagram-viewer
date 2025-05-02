@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.kroki;
+package io.domainlifecycles.diagramviewer.rest.kroki;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 

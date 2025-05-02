@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.security;
 
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
-import io.domainlifecycles.diagramviewer.rest.DomainModelController;
+import io.domainlifecycles.diagramviewer.rest.api.DomainModelController;
 import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.model;
 
-import io.domainlifecycles.diagramviewer.kroki.FileType;
+import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

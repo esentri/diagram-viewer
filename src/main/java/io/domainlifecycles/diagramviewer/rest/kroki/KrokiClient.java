@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.kroki;
+package io.domainlifecycles.diagramviewer.rest.kroki;
 
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
@@ -10,7 +10,6 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,11 +18,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class KrokiClient {
 
-    private static final Logger log = LoggerFactory.getLogger(KrokiClient.class);
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(KrokiClient.class);
     private static final String KROKI_NOMNOML_SVG_PATH = "/nomnoml/svg";
-    private static final Integer MAX_RETRIES = 5;
-    private static final Integer WAIT_TIMEOUT_MS = 500;
 
     private final String krokiContainerUrl;
 
@@ -37,7 +33,7 @@ public class KrokiClient {
     }
 
     private byte[] convert(String rawInputDiagramContent, String path) {
-        log.info("Converting Nomnoml diagram to specified format via Kroki Docker container.");
+        LOGGER.info("Converting Nomnoml diagram to specified format via Kroki Docker container.");
 
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(krokiContainerUrl + path))
@@ -49,34 +45,33 @@ public class KrokiClient {
     }
 
     private byte[] sendWithRetries(final HttpRequest httpRequest) {
+        try {
+            LOGGER.debug(String.format("Sending HTTP request '%s' to Kroki Docker container.",
+                httpRequest.bodyPublisher().orElseGet(() -> BodyPublishers.ofString("Request body empty!"))));
+            final HttpResponse<byte[]> response = HttpClient.newHttpClient().send(httpRequest,
+                BodyHandlers.ofByteArray());
 
-        for(int retryCounter = 0; retryCounter < MAX_RETRIES; retryCounter++) {
-            try {
-                log.debug(String.format("Sending HTTP request to Kroki Docker container. Retry: %s", retryCounter + 1));
-                final HttpResponse<byte[]> response = HttpClient.newHttpClient().send(httpRequest, BodyHandlers.ofByteArray());
-
-                if (response.statusCode() < 400) {
-                    log.debug("HTTP request to Kroki Docker container has been successful.");
-                    return response.body();
-                }
-                if (response.statusCode() >= 400) {
-                    throw DiagramViewerException.fail(String.format("Kroki Docker container returned error for conversion: %s",
-                        new String(response.body(), StandardCharsets.UTF_8)));
-                }
-            } catch (IOException | InterruptedException e) {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(WAIT_TIMEOUT_MS);
-                } catch (InterruptedException ignored) { }
+            if (response.statusCode() < 400) {
+                LOGGER.debug("HTTP request to Kroki Docker container has been successful.");
+                return response.body();
             }
+            if (response.statusCode() >= 400) {
+                throw DiagramViewerException.fail(
+                    String.format("Kroki Docker container returned error for conversion: %s",
+                        new String(response.body(), StandardCharsets.UTF_8)));
+            }
+        } catch (IOException | InterruptedException e) {
+            throw DiagramViewerException.fail("Nomnoml conversion with Kroki Server failed.", e);
         }
-        throw DiagramViewerException.fail(String.format("Kroki server couldn't be reached in specified retry limit (Retries: %s, Timeout: %s)", MAX_RETRIES, WAIT_TIMEOUT_MS));
+        throw DiagramViewerException.fail("Kroki server couldn't be reached.");
     }
 
     private String getKrokiPath(final FileType fileType) {
         String krokiPath;
         switch (fileType) {
             case SVG -> krokiPath = KROKI_NOMNOML_SVG_PATH;
-            default -> throw DiagramViewerException.fail(String.format("Filetype '%s' not allowed for Kroki conversion.", fileType));
+            default -> throw DiagramViewerException.fail(
+                String.format("Filetype '%s' not allowed for Kroki conversion.", fileType));
         }
         return krokiPath;
     }

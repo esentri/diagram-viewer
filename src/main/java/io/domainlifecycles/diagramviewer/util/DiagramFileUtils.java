@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.util;
 
-import io.domainlifecycles.diagramviewer.rest.ResourceController;
+import io.domainlifecycles.diagramviewer.rest.api.ResourceController;
 import java.time.LocalDateTime;
 
 public class DiagramFileUtils {

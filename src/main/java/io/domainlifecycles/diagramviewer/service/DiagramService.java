@@ -1,8 +1,8 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.kroki.FileType;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 
 public interface DiagramService {
 

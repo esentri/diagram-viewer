@@ -1,12 +1,12 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.kroki.FileType;
-import io.domainlifecycles.diagramviewer.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
+import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
+import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
@@ -69,7 +69,6 @@ public class DiagramServiceImpl implements DiagramService {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
                 fileName));
         }
-
         return repository.save(diagram);
     }
 
