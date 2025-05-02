@@ -4,18 +4,30 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.server.StreamResource;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.DomainTypeMirrorMultiSelect;
 import io.domainlifecycles.mirror.api.BoundedContextMirror;
+import io.domainlifecycles.mirror.api.DomainModel;
+import io.domainlifecycles.mirror.api.DomainType;
+import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Data;
@@ -63,6 +75,9 @@ public class GenerateDatabaseModelDialog extends Dialog {
             .asRequired("Context-Package is required.")
             .bind(GenerateDatabaseModelOptions::getBoundedContextPackage, GenerateDatabaseModelOptions::setBoundedContextPackage);
         formLayout.addFormItem(boundedContextPackageSelect, "Context-Package");
+
+        DomainTypeMirrorMultiSelect domainTypeMirrorMultiSelect = new DomainTypeMirrorMultiSelect(project);
+        formLayout.addFormItem(domainTypeMirrorMultiSelect, "Domain Type Mirrors");
 
         Checkbox auditModelCheckbox = new Checkbox();
         binder.forField(auditModelCheckbox).bind(GenerateDatabaseModelOptions::isAuditModel, GenerateDatabaseModelOptions::setAuditModel);

@@ -16,3 +16,9 @@
     overflow: hidden;
     height: 100%;
 }
+
+:host([theme~="wide-overlay"])::part(content) {
+    min-width: 20em;
+    width: max-content;
+    max-width: 50em;
+}
