@@ -7,10 +7,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -24,37 +25,42 @@ public class DomainModelVisibility {
     @GeneratedValue
     private UUID id;
 
+    @Getter
     @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> seedClassNames;
+    private Set<String> filteredPackageNames;
 
+    @Getter
     @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> blacklistedClassNames;
+    private Set<String> seedClassNames;
 
+    @Getter
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> blacklistedClassNames;
+
+    @Getter
     @CreationTimestamp
     private Instant createdAt;
 
-    public DomainModelVisibility(List<String> seedClassNames, List<String> blacklistedClassNames) {
-        this.seedClassNames = seedClassNames == null ? new ArrayList<>() : seedClassNames;
-        this.blacklistedClassNames = blacklistedClassNames == null ? new ArrayList<>() : blacklistedClassNames;
+    public DomainModelVisibility(
+            Set<String> filteredPackageNames,
+            Set<String> seedClassNames,
+            Set<String> blacklistedClassNames
+    ) {
+        this.filteredPackageNames = filteredPackageNames == null ? new HashSet<>() : filteredPackageNames;
+        this.seedClassNames = seedClassNames == null ? new HashSet<>() : seedClassNames;
+        this.blacklistedClassNames = blacklistedClassNames == null ? new HashSet<>() : blacklistedClassNames;
     }
 
-    public DomainModelVisibility replaceBlacklistedClassNames(List<String> blacklistedClassNames) {
-        return new DomainModelVisibility(seedClassNames, blacklistedClassNames);
+    public DomainModelVisibility replaceBlacklistedClassNames(Set<String> blacklistedClassNames) {
+        return new DomainModelVisibility(filteredPackageNames, seedClassNames, blacklistedClassNames);
     }
 
-    public DomainModelVisibility replaceSeedClassNames(List<String> seedClassNames) {
-        return new DomainModelVisibility(seedClassNames, blacklistedClassNames);
+    public DomainModelVisibility replaceSeedClassNames(Set<String> seedClassNames) {
+        return new DomainModelVisibility(filteredPackageNames, seedClassNames, blacklistedClassNames);
     }
 
-    public List<String> getSeedClassNames() {
-        return seedClassNames;
+    public DomainModelVisibility replaceFilteredPackageNames(Set<String> filteredPackageNames) {
+        return new DomainModelVisibility(filteredPackageNames, seedClassNames, blacklistedClassNames);
     }
 
-    public List<String> getBlacklistedClassNames() {
-        return blacklistedClassNames;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
 }

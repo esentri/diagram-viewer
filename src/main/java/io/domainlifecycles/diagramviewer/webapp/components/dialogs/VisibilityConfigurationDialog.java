@@ -12,13 +12,16 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 
 public class VisibilityConfigurationDialog extends Dialog {
 
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
+    private final Binder<DomainModelVisibility> domainModelVisibilityBinder;
     private final DiagramService diagramService;
     private final Project project;
     private final Diagram diagram;
@@ -50,6 +53,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         this.project = project;
         this.diagram = diagram;
         diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
+        domainModelVisibilityBinder = new Binder<>(DomainModelVisibility.class);
 
         setHeaderTitle("Configuration | Visibility");
         setWidth("40%");
@@ -61,6 +65,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         getFooter().add(createCancelButton());
 
         diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
+        domainModelVisibilityBinder.readBean(diagram.getDomainModelVisibility());
     }
 
     private Button createSaveButton() {
@@ -68,6 +73,7 @@ public class VisibilityConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
+            domainModelVisibilityBinder.writeBeanIfValid(diagram.getDomainModelVisibility());
             diagramService.update(diagram, project);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
@@ -82,9 +88,11 @@ public class VisibilityConfigurationDialog extends Dialog {
     }
 
     private Accordion createDialogLayout() {
+
         Accordion accordion = new Accordion();
         accordion.setSizeFull();
 
+        accordion.add(createAndGetPackagesAccordionPanel());
         accordion.add(createAndGetGeneralAccordionPanel());
         accordion.add(createAndGetDomainEventAccordionPanel());
         accordion.add(createAndGetDomainCommandAccordionPanel());
@@ -99,12 +107,26 @@ public class VisibilityConfigurationDialog extends Dialog {
         return accordion;
     }
 
+    private AccordionPanel createAndGetPackagesAccordionPanel() {
+        AccordionPanel packagesPanel = new AccordionPanel();
+        packagesPanel.setSummaryText("Diagram packages");
+
+        FormLayout formLayout = new FormLayout();
+
+        PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
+        packageSelectChipField.setWidthFull();
+        domainModelVisibilityBinder.forField(packageSelectChipField)
+                .bind(DomainModelVisibility::getFilteredPackageNames, DomainModelVisibility::replaceFilteredPackageNames);
+        formLayout.addFormItem(packageSelectChipField, "Filtered packages");
+        packagesPanel.add(formLayout);
+        return packagesPanel;
+    }
+
     private AccordionPanel createAndGetGeneralAccordionPanel() {
         AccordionPanel generalPanel = new AccordionPanel();
         generalPanel.setSummaryText("General");
 
         FormLayout formLayout = new FormLayout();
-
         // general
         showAllFieldsCheckbox = new Checkbox();
         formLayout.addFormItem(showAllFieldsCheckbox,"Fields");
@@ -137,7 +159,6 @@ public class VisibilityConfigurationDialog extends Dialog {
         accordionPanel.setSummaryText("Domain Events");
 
         FormLayout domainEventDialogFormLayout = new FormLayout();
-
         // specific
         Checkbox showDomainEventsCheckbox = new Checkbox();
         diagramConfigurationBinder.bind(showDomainEventsCheckbox, DiagramStylingConfiguration::isShowDomainEvents, DiagramStylingConfiguration::setShowDomainEvents);

@@ -9,7 +9,7 @@ import io.domainlifecycles.kickstart.model.GenDomainModel;
 import io.domainlifecycles.kickstart.output.target.sql.OracleSQLPrinter;
 import io.domainlifecycles.kickstart.output.target.sql.PostgresSQLPrinter;
 import io.domainlifecycles.kickstart.output.target.sql.SQLPrinter;
-import io.domainlifecycles.mirror.api.DomainModel;
+import io.domainlifecycles.mirror.api.DomainMirror;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,11 +20,11 @@ public class SQLDDLGeneratorService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLDDLGeneratorService.class);
 
-    public String generateSQL(DomainModel domainModel, String boundedContextPackageName, String sqlDialect, boolean audit) {
+    public String generateSQL(DomainMirror domainMirror, String boundedContextPackageName, String sqlDialect, boolean audit) {
         LOGGER.info(String.format("Generating DDL for '%s'...", boundedContextPackageName));
 
         BoundedContextPackage packageDescription = new BoundedContextPackage(boundedContextPackageName, boundedContextPackageName);
-        GenDomainModel dm = MirrorMapper.mapDomain(domainModel, packageDescription);
+        GenDomainModel dm = MirrorMapper.mapDomain(domainMirror, packageDescription);
 
         SQLPrinter printer = getPrinterImplementation(boundedContextPackageName, sqlDialect, audit, dm);
 

@@ -19,8 +19,11 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEven
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import static java.util.stream.Collectors.groupingBy;
 
 public class DiagramVisibilityAccordionComponent extends Accordion {
@@ -38,9 +41,8 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     }
 
     private void createAccordion() {
-        Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = project.getDomainModel()
-            .allTypeMirrors()
-            .values()
+        Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = project.getDomainMirror()
+            .getAllDomainTypeMirrors()
             .stream()
             .collect(groupingBy(DomainTypeMirror::getDomainType));
 
@@ -70,7 +72,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                             String typeName = mirror.getTypeName();
                             boolean activated = diagram.getDomainModelVisibility().getBlacklistedClassNames().contains(typeName);
                             DomainModelVisibility visibility = diagram.getDomainModelVisibility();
-                            List<String> blackListedClassNames = new ArrayList<>(visibility.getBlacklistedClassNames());
+                            Set<String> blackListedClassNames = new HashSet<>(visibility.getBlacklistedClassNames());
 
                             if (activated) {
                                 blackListedClassNames.remove(mirror.getTypeName());
@@ -99,7 +101,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
                             seedButton.addClickListener(e -> {
                                 String typeName = mirror.getTypeName();
                                 DomainModelVisibility visibility = diagram.getDomainModelVisibility();
-                                List<String> seed = new ArrayList<>(visibility.getSeedClassNames());
+                                Set<String> seed = new HashSet<>(visibility.getSeedClassNames());
                                 boolean activated = seed.contains(typeName);
 
                                 if (activated) {

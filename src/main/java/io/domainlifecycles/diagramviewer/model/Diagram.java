@@ -3,6 +3,7 @@ package io.domainlifecycles.diagramviewer.model;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -12,10 +13,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
@@ -49,7 +52,7 @@ public class Diagram {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Builder.Default
-    private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null);
+    private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null, null);
 
     @CreationTimestamp
     private Instant createdAt;

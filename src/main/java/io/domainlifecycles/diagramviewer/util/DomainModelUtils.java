@@ -1,8 +1,8 @@
 package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.mirror.api.DomainModel;
-import io.domainlifecycles.mirror.reflect.ReflectiveDomainModelFactory;
+import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -10,6 +10,8 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +19,13 @@ public class DomainModelUtils {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DomainModelUtils.class);
 
-    public static DomainModel initializeDomainModelFromJar(Path path, String... boundedContextPackages){
+    public static DomainMirror initializeDomainMirrorFromJar(
+            Path path,
+            Set<String> domainModelPackages,
+            Set<String> boundedContextPackages){
+        if(domainModelPackages == null || domainModelPackages.isEmpty()) {
+            throw DiagramViewerException.fail("Domain model packages is null or empty!");
+        }
         URL url = null;
         try{
             url = path.toUri().toURL();
@@ -28,10 +36,16 @@ public class DomainModelUtils {
             var cl = subClassLoader(List.of(url));
             if (cl.isPresent()) {
                 LOGGER.info("Classes loaded - Initializing domain model");
-                final ReflectiveDomainModelFactory domainModelFactory = new ReflectiveDomainModelFactory(cl.get(), new TypeMetaResolver(), boundedContextPackages);
-                var dm = domainModelFactory.initializeDomainModel();
+                final ReflectiveDomainMirrorFactory domainModelFactory = new ReflectiveDomainMirrorFactory(domainModelPackages.toArray(String[]::new));
+                domainModelFactory.setGenericTypeResolver(new TypeMetaResolver());
+                domainModelFactory.setExternalClassLoader(cl.get());
+                if(boundedContextPackages != null && !boundedContextPackages.isEmpty()) {
+                    domainModelFactory.setBoundedContextPackages(boundedContextPackages.toArray(String[]::new));
+                }
+
+                var dm = domainModelFactory.initializeDomainMirror();
                 LOGGER.info("Domain model initialized");
-                LOGGER.debug("Mirrored types count = " + dm.allTypeMirrors().size());
+                LOGGER.debug("Mirrored types count = " + dm.getAllDomainTypeMirrors().size());
                 return dm;
             }
         }

@@ -1,10 +1,11 @@
 package io.domainlifecycles.diagramviewer.model;
 
 import io.domainlifecycles.diagramviewer.model.converter.DomainModelConverter;
-import io.domainlifecycles.mirror.api.DomainModel;
+import io.domainlifecycles.mirror.api.DomainMirror;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -22,6 +23,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
@@ -47,7 +49,11 @@ public class Project {
 
     @Column(columnDefinition = "TEXT")
     @Convert(converter = DomainModelConverter.class)
-    private DomainModel domainModel;
+    private DomainMirror domainMirror;
+
+    @Getter
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> domainModelPackages;
 
     @Column(nullable = false, updatable = false)
     private boolean apiUpload;

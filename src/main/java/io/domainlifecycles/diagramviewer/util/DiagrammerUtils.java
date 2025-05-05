@@ -4,17 +4,17 @@ import io.domainlifecycles.diagram.domain.DomainDiagramGenerator;
 import io.domainlifecycles.diagram.domain.config.DomainDiagramConfig;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
-import io.domainlifecycles.mirror.api.DomainModel;
+import io.domainlifecycles.mirror.api.DomainMirror;
 
 public class DiagrammerUtils {
 
     public static String generateNomnoml(
-        DomainModel domainModel,
-        DiagramStylingConfiguration diagramStylingConfiguration,
-        DomainModelVisibility domainModelVisibility) {
+            DomainMirror domainMirror,
+            DiagramStylingConfiguration diagramStylingConfiguration,
+            DomainModelVisibility domainModelVisibility) {
 
         DomainDiagramConfig diagramConfig = DomainDiagramConfig.builder()
-            .withContextPackageName(diagramStylingConfiguration.getContextPackageName())
+                .withFilteredPackageNames(domainModelVisibility.getFilteredPackageNames().stream().toList())
             .withAggregateRootStyle(diagramStylingConfiguration.getAggregateRootStyle())
             .withAggregateFrameStyle(diagramStylingConfiguration.getAggregateFrameStyle())
             .withEntityStyle(diagramStylingConfiguration.getEntityStyle())
@@ -75,11 +75,11 @@ public class DiagrammerUtils {
             .withShowObjectMembersInClasses(diagramStylingConfiguration.isShowObjectMembersInClasses())
             .withMultiplicityInLabel(diagramStylingConfiguration.isMultiplicityInLabel())
             .withFieldStereotypes(diagramStylingConfiguration.isFieldStereotypes())
-            .withTransitiveFilterSeedDomainServiceTypeNames(domainModelVisibility.getSeedClassNames())
-            .withClassesBlacklist(domainModelVisibility.getBlacklistedClassNames())
+            .withTransitiveFilterSeedDomainServiceTypeNames(domainModelVisibility.getSeedClassNames().stream().toList())
+            .withClassesBlacklist(domainModelVisibility.getBlacklistedClassNames().stream().toList())
                 .build();
 
-        DomainDiagramGenerator generator = new DomainDiagramGenerator(diagramConfig, domainModel);
+        DomainDiagramGenerator generator = new DomainDiagramGenerator(diagramConfig, domainMirror);
         return generator.generateDiagramText();
     }
 }

@@ -3,6 +3,7 @@ package io.domainlifecycles.diagramviewer.service;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
@@ -13,6 +14,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -42,17 +45,15 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public Diagram create(Project project, String fileName, String contextPackageName, FileType fileType) {
+    public Diagram create(Project project, String fileName, FileType fileType, Set<String> filteredPackages) {
         Path diagramPath = Path.of(diagramsLocation, project.getName(), fileName + fileType.getFileSuffix());
 
         Diagram diagram = Diagram.builder()
             .fileName(diagramPath.getFileName().toString())
             .fileType(fileType)
+                .domainModelVisibility(new DomainModelVisibility(filteredPackages, null, null))
+
             .project(project)
-            .diagramStylingConfiguration(
-                DiagramStylingConfiguration.builder()
-                    .contextPackageName(contextPackageName)
-                    .build())
             .build();
 
         final Diagram updatedDiagram = insert(diagram);
@@ -88,7 +89,7 @@ public class DiagramServiceImpl implements DiagramService {
         final String nomnoml;
         try {
             nomnoml = DiagrammerUtils.generateNomnoml(
-                project.getDomainModel(),
+                project.getDomainMirror(),
                 diagram.getDiagramStylingConfiguration(),
                 diagram.getDomainModelVisibility());
         } catch(IllegalStateException e) {

@@ -12,8 +12,10 @@ import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.mirror.api.BoundedContextMirror;
+
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Data;
@@ -50,8 +52,7 @@ public class CreateDiagramDialog extends Dialog {
 
         createButton.addClickListener(e -> {
             binder.writeBeanIfValid(createDiagramOptions);
-            diagramService.create(project, createDiagramOptions.getFileName(),
-                createDiagramOptions.getSelectedContextPackage(), createDiagramOptions.getFileType());
+            diagramService.create(project, createDiagramOptions.getFileName(), createDiagramOptions.getFileType(), createDiagramOptions.getFilteredPackages());
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });
@@ -73,12 +74,11 @@ public class CreateDiagramDialog extends Dialog {
             .bind(CreateDiagramOptions::getFileName, CreateDiagramOptions::setFileName);
         formLayout.addFormItem(diagramNameTextField, "File-Name");
 
-        Select<String> boundedContextPackageSelect = new Select<>();
-        boundedContextPackageSelect.setItems(mapPackageNames());
-        binder.forField(boundedContextPackageSelect)
-            .asRequired("Context-Package is required.")
-            .bind(CreateDiagramOptions::getSelectedContextPackage, CreateDiagramOptions::setSelectedContextPackage);
-        formLayout.addFormItem(boundedContextPackageSelect, "Context-Package");
+        PackageSelectChipField packageSelectChipField = new PackageSelectChipField(mapPackageNames());
+        packageSelectChipField.setWidthFull();
+        binder.forField(packageSelectChipField)
+                .bind(CreateDiagramDialog.CreateDiagramOptions::getFilteredPackages, CreateDiagramDialog.CreateDiagramOptions::setFilteredPackages);
+        formLayout.addFormItem(packageSelectChipField, "Filtered packages");
 
         Select<FileType> formatSelect = new Select<>();
         formatSelect.setItems(FileType.values());
@@ -92,7 +92,7 @@ public class CreateDiagramDialog extends Dialog {
     }
 
     private Set<String> mapPackageNames() {
-        return project.getDomainModel().boundedContextMirrors().stream().map(
+        return project.getDomainMirror().getAllBoundedContextMirrors().stream().map(
             BoundedContextMirror::getPackageName).collect(
             Collectors.toSet());
     }
@@ -102,6 +102,6 @@ public class CreateDiagramDialog extends Dialog {
     private static class CreateDiagramOptions {
         private String fileName;
         private FileType fileType;
-        private String selectedContextPackage;
+        private Set<String> filteredPackages;
     }
 }

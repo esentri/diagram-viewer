@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class DomainTypeMirrorMultiSelect extends MultiSelectComboBox<DomainTypeMirror> {
 
     public DomainTypeMirrorMultiSelect(Project project) {
-        Map<DomainType, List<DomainTypeMirror>> grouped = project.getDomainModel().allTypeMirrors().values().stream()
+        Map<DomainType, List<DomainTypeMirror>> grouped = project.getDomainMirror().getAllDomainTypeMirrors().stream()
             .collect(Collectors.groupingBy(DomainTypeMirror::getDomainType));
 
         List<DomainTypeMirror> displayItems = new ArrayList<>();

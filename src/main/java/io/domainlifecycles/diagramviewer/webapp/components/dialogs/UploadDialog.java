@@ -52,8 +52,13 @@ public class UploadDialog extends Dialog {
 
         uploadButton.addClickListener(e -> {
             binder.writeBeanIfValid(uploadOptions);
-            projectService.save(securityService.getCurrentlySignedInUser(), fileInputStream,
-                uploadOptions.getProjectName(), uploadOptions.getBoundedContextPackages());
+            projectService.save(
+                    securityService.getCurrentlySignedInUser(),
+                    fileInputStream,
+                    uploadOptions.getProjectName(),
+                    uploadOptions.getDomainModelPackages(),
+                    uploadOptions.getBoundedContextPackages()
+            );
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });
@@ -81,13 +86,20 @@ public class UploadDialog extends Dialog {
 
         formLayout.addFormItem(projectNameTextField, "Project Name");
 
-        PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
-        packageSelectChipField.setWidthFull();
-        binder.forField(packageSelectChipField)
-            .asRequired("At least one Context-Package is required.")
-            .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
+        PackageSelectChipField domainModelPackageSelectChipField = new PackageSelectChipField();
+        domainModelPackageSelectChipField.setWidthFull();
+        binder.forField(domainModelPackageSelectChipField)
+            .asRequired("At least one DomainModel package is required.")
+            .bind(UploadOptions::getDomainModelPackages, UploadOptions::setDomainModelPackages);
 
-        formLayout.addFormItem(packageSelectChipField, "Context-Packages");
+        formLayout.addFormItem(domainModelPackageSelectChipField, "Domain Model packages");
+
+        PackageSelectChipField boundedContextPackageSelectChipField = new PackageSelectChipField();
+        boundedContextPackageSelectChipField.setWidthFull();
+        binder.forField(boundedContextPackageSelectChipField)
+                .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
+
+        formLayout.addFormItem(boundedContextPackageSelectChipField, "Bounded Context packages");
 
         return formLayout;
     }
@@ -107,6 +119,7 @@ public class UploadDialog extends Dialog {
     @Data
     private static class UploadOptions {
         private String projectName;
+        private Set<String> domainModelPackages;
         private Set<String> boundedContextPackages;
     }
 }

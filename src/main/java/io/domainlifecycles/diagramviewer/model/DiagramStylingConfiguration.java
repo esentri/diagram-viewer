@@ -29,8 +29,6 @@ public class DiagramStylingConfiguration {
     @GeneratedValue
     private UUID id;
 
-    private String contextPackageName;
-
     /**
      * Style declaration for AggregateRoots (see Nomnoml style options)
      */
@@ -311,14 +309,6 @@ public class DiagramStylingConfiguration {
 
     public UUID getId() {
         return id;
-    }
-
-    public String getContextPackageName() {
-        return contextPackageName;
-    }
-
-    public void setContextPackageName(String contextPackageName) {
-        this.contextPackageName = contextPackageName;
     }
 
     public String getAggregateRootStyle() {
