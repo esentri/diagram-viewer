@@ -65,9 +65,9 @@ public class DiagramServiceImpl implements DiagramService {
 
     private Diagram insert(Diagram diagram) {
         final String fileName = diagram.getFileName();
-        Optional<Diagram> fetchedDiagram = repository.findByFileName(fileName);
 
-        if(fetchedDiagram.isPresent() && Objects.equals(diagram.getFileName(), fetchedDiagram.get().getFileName())) {
+
+        if(diagramNameHasChanged(diagram) && diagramWithNameExists(diagram)) {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
                 fileName));
         }
@@ -105,5 +105,16 @@ public class DiagramServiceImpl implements DiagramService {
         } catch (IOException e) {
             throw DiagramViewerException.fail(String.format("Could not save diagram to '%s'.", diagramsLocation), e);
         }
+    }
+
+    private boolean diagramWithNameExists(Diagram diagram) {
+        Optional<Diagram> diagramWithName = repository.findByFileName(diagram.getFileName());
+        return diagramWithName.isPresent() && Objects.equals(diagram.getFileName(), diagramWithName.get().getFileName());
+    }
+
+    private boolean diagramNameHasChanged(Diagram diagram) {
+        if(diagram.getId() == null) return false;
+        Optional<Diagram> oldDiagram = repository.findById(diagram.getId());
+        return oldDiagram.isPresent() && !Objects.equals(oldDiagram.get().getFileName(), diagram.getFileName());
     }
 }
