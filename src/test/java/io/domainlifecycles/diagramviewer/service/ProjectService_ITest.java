@@ -86,7 +86,7 @@ class ProjectService_ITest {
 
         // when
         Project project = service.save(registeredUser,
-            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", Set.of("com.esentri"));
+            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", Set.of("com.esentri"), Set.of("com.esentri"));
 
         // then
         assertThat(project).isNotNull();

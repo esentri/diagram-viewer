@@ -13,6 +13,7 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -66,7 +67,7 @@ public class DiagramServiceImpl implements DiagramService {
         final String fileName = diagram.getFileName();
         Optional<Diagram> fetchedDiagram = repository.findByFileName(fileName);
 
-        if(fetchedDiagram.isPresent()) {
+        if(fetchedDiagram.isPresent() && Objects.equals(diagram.getFileName(), fetchedDiagram.get().getFileName())) {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
                 fileName));
         }
