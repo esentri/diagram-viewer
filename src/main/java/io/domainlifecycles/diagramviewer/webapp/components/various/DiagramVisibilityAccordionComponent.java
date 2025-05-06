@@ -18,11 +18,15 @@ import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import org.apache.commons.text.diff.StringsComparator;
+
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -162,14 +166,10 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
         list.add(DomainType.DOMAIN_EVENT);
         list.add(DomainType.REPOSITORY);
         list.add(DomainType.AGGREGATE_ROOT);
-        list.add(DomainType.ENTITY);
-        list.add(DomainType.VALUE_OBJECT);
-        list.add(DomainType.ENUM);
         list.add(DomainType.QUERY_HANDLER);
         list.add(DomainType.READ_MODEL);
         list.add(DomainType.OUTBOUND_SERVICE);
         list.add(DomainType.SERVICE_KIND);
-        list.add(DomainType.IDENTITY);
         list.add(DomainType.NON_DOMAIN);
 
         return list;
@@ -179,8 +179,20 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
         List<DomainTypeMirror> list = new ArrayList<>();
 
         if(mirrors != null && mirrors.size() > 0) {
-            List<String> mirroredTypeNames = mirrors.stream().map(DomainTypeMirror::getTypeName).toList();
-            list.addAll(mirrors);
+            List<String> mirroredTypeNames = mirrors.stream().filter(m -> !m.getTypeName().startsWith("io.domainlifecycles"))
+                    .map(DomainTypeMirror::getTypeName).toList();
+            list.addAll(
+                    mirrors
+                    .stream()
+                    .filter(m -> !m.getTypeName().startsWith("io.domainlifecycles"))
+                    .filter(m ->
+                            !m.getDomainType().equals(DomainType.ENTITY) &&
+                            !m.getDomainType().equals(DomainType.VALUE_OBJECT) &&
+                            !m.getDomainType().equals(DomainType.ENUM) &&
+                            !m.getDomainType().equals(DomainType.IDENTITY)
+                    )
+                    .toList()
+            );
 
             for (DomainTypeMirror mirror : mirrors) {
                 for(String interfaceTypeName : mirror.getAllInterfaceTypeNames()){
@@ -191,6 +203,9 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
             }
         }
 
-        return list;
+        return list.stream().sorted(
+                (a,b)-> {
+                    return a.getTypeName().compareTo(b.getTypeName());
+                }).collect(Collectors.toList());
     }
 }
