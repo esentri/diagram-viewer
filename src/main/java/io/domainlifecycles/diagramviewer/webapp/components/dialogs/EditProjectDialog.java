@@ -62,7 +62,8 @@ public class EditProjectDialog extends Dialog {
                     uploadOptions.getProjectName(),
                     uploadOptions.getDomainModelPackages());
             close();
-            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
+            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of(
+                ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 
@@ -88,9 +89,9 @@ public class EditProjectDialog extends Dialog {
         PackageSelectChipField domainModelPackageSelectChipField = new PackageSelectChipField();
         domainModelPackageSelectChipField.setWidthFull();
         binder.forField(domainModelPackageSelectChipField)
-            .asRequired("At least one Domain Model package is required.")
+            .asRequired("At least one package is required.")
             .bind(UploadOptions::getDomainModelPackages, UploadOptions::setDomainModelPackages);
-        formLayout.addFormItem(domainModelPackageSelectChipField, "DomainModel packages");
+        formLayout.addFormItem(domainModelPackageSelectChipField, "Packages");
 
         return formLayout;
     }

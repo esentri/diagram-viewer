@@ -34,10 +34,12 @@ import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
 
-@Route(value = "/:projectName", layout = MainLayout.class)
+@Route(value = "/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Project Viewer")
 @PermitAll
 public class ProjectView extends FlexLayout implements BeforeEnterObserver {
+
+    public static final String PROJECT_NAME_ROUTE_PARAMETER = "projectName";
 
     private final SQLDDLGeneratorService sqlddlGeneratorService;
     private final SecurityService securityService;
@@ -68,7 +70,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        projectName = event.getRouteParameters().get("projectName").orElseThrow();
+        projectName = event.getRouteParameters().get(PROJECT_NAME_ROUTE_PARAMETER).orElseThrow();
         refreshPage();
     }
 

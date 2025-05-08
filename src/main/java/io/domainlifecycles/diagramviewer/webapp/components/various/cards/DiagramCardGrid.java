@@ -8,6 +8,7 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
+import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Comparator;
 import java.util.Map;
 
@@ -42,8 +43,8 @@ public class DiagramCardGrid extends FormLayout {
                 Div diagramCardLinkWrapper = new Div(diagramCard);
                 diagramCardLinkWrapper.addClickListener(
                     event -> UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
-                        Map.of("projectName", project.getName(), "diagramName",
-                            diagram.getFileName()))));
+                        Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(),
+                            DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, diagram.getFileName()))));
                 diagramCardLinkWrapper.getStyle().set("cursor", "pointer");
 
                 add(diagramCardLinkWrapper);

@@ -55,8 +55,7 @@ public class DiagramServiceImpl implements DiagramService {
         Diagram diagram = Diagram.builder()
             .fileName(diagramPath.getFileName().toString())
             .fileType(fileType)
-                .domainModelVisibility(new DomainModelVisibility(filteredPackages, null, null))
-
+            .domainModelVisibility(new DomainModelVisibility(filteredPackages, null, null))
             .project(project)
             .build();
 
@@ -69,8 +68,7 @@ public class DiagramServiceImpl implements DiagramService {
     private Diagram insert(Diagram diagram) {
         final String fileName = diagram.getFileName();
 
-
-        if(diagramNameHasChanged(diagram) && diagramWithNameExists(diagram)) {
+        if(diagramWithNameExists(diagram) && diagramNameHasChanged(diagram)) {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
                 fileName));
         }
@@ -118,7 +116,7 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private boolean diagramNameHasChanged(Diagram diagram) {
-        if(diagram.getId() == null) return false;
+        if(diagram.getId() == null) return true;
         Optional<Diagram> oldDiagram = repository.findById(diagram.getId());
         return oldDiagram.isPresent() && !Objects.equals(oldDiagram.get().getFileName(), diagram.getFileName());
     }

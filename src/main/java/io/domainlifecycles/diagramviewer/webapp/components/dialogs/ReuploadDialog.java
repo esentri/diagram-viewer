@@ -68,7 +68,7 @@ public class ReuploadDialog extends Dialog {
                     uploadOptions.getProjectName(),
                     uploadOptions.getDomainModelPackages()
             );
-            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
+            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });

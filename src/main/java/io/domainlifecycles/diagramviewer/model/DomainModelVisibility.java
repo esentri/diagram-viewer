@@ -67,5 +67,4 @@ public class DomainModelVisibility {
     public DomainModelVisibility replaceFilteredPackageNames(Set<String> filteredPackageNames) {
         return new DomainModelVisibility(filteredPackageNames, seedClassNames, blacklistedClassNames);
     }
-
 }

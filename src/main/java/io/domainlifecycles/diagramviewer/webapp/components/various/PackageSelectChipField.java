@@ -8,7 +8,9 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class PackageSelectChipField extends CustomField<Set<String>> {
@@ -50,7 +52,6 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
         tagsLayout.getStyle().set("gap", "2px");
 
         inputField.addKeyPressListener(Key.ENTER, e -> addTag(inputField.getValue()));
-        inputField.addKeyPressListener(Key.SPACE, e -> addTag(inputField.getValue()));
         return inputField;
     }
 
@@ -93,6 +94,7 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
             tagsLayout.remove(tag);
             updateValue();
         });
+
         removeButton.getElement().getStyle().set("border", "none");
         removeButton.getElement().getStyle().set("background", "transparent");
         removeButton.getElement().getStyle().set("cursor", "pointer");
@@ -110,7 +112,7 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
 
     @Override
     protected Set<String> generateModelValue() {
-        return tags == null || tags.isEmpty() ? null : new LinkedHashSet<>(tags);
+        return new LinkedHashSet<>(tags);
     }
 
     @Override
@@ -124,5 +126,10 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
     @Override
     public boolean isEmpty() {
         return tags == null || tags.isEmpty();
+    }
+
+    @Override
+    public Set<String> getEmptyValue() {
+        return Collections.emptySet();
     }
 }

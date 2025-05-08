@@ -30,7 +30,7 @@ public class DiagramPackageFilterAccordionComponent extends Accordion {
             new PackageSelectChipField(diagram.getDomainModelVisibility().getFilteredPackageNames());
         packageSelectChipField.setWidthFull();
         packageSelectChipField.addValueChangeListener(e -> {
-            diagram.getDomainModelVisibility().replaceFilteredPackageNames(e.getValue());
+            diagram.setDomainModelVisibility(diagram.getDomainModelVisibility().replaceFilteredPackageNames(e.getValue()));
             diagramService.update(diagram, project);
             ComponentUtil.fireEvent(
                 UI.getCurrent(), new DiagramStylingChangedEvent(this, false));

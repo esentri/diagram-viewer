@@ -31,6 +31,7 @@ import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
+import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
@@ -49,7 +50,6 @@ import org.slf4j.LoggerFactory;
 @CssImport("./styles/diagram-viewer-styles.css")
 public class MainLayout extends AppLayout {
 
-    private final static Logger log = LoggerFactory.getLogger(MainLayout.class);
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
 
     private final ProjectService projectService;
@@ -196,9 +196,10 @@ public class MainLayout extends AppLayout {
                 parentSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
 
                 project.getDiagrams()
+                    .stream().sorted(Comparator.comparing(Diagram::getCreatedAt))
                     .forEach(diagram -> {
                         SideNavItem sideNavItem = new SideNavItem(diagram.getFileName(), DiagramView.class,
-                            new RouteParameters(Map.of("projectName", project.getName(), "diagramName",
+                            new RouteParameters(Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(), "diagramName",
                                 diagram.getFileName())));
 
                         sideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
@@ -232,9 +233,7 @@ public class MainLayout extends AppLayout {
             ComponentUtil.addListener(
                 attachEvent.getUI(),
                 DiagramsOrProjectsChangedEvent.class,
-                event -> {
-                    refreshSideNavLinks();
-                }
+                event -> refreshSideNavLinks()
             );
     }
 

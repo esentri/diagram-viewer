@@ -7,6 +7,7 @@ import io.domainlifecycles.kickstart.configuration.target.base.TargetConfig.Targ
 import io.domainlifecycles.kickstart.map.BoundedContextPackage;
 import io.domainlifecycles.kickstart.map.MirrorMapper;
 import io.domainlifecycles.kickstart.model.AggregateRoot;
+import io.domainlifecycles.kickstart.model.DomainBaseObject;
 import io.domainlifecycles.kickstart.model.GenDomainModel;
 import io.domainlifecycles.kickstart.output.target.sql.OracleSQLPrinter;
 import io.domainlifecycles.kickstart.output.target.sql.PostgresSQLPrinter;
@@ -36,10 +37,17 @@ public class SQLDDLGeneratorService {
         DomainMirror domainMirror = projectDomainMirrorService.getByProjectId(projectId).getDomainMirror();
         GenDomainModel dm = MirrorMapper.mapDomain(domainMirror, new BoundedContextPackage("dummy", "dummy"));
 
+        String aggregateRootFullQualifiedTypeName = aggregateRootMirror.getTypeName();
+        String aggregateRootTypeName = aggregateRootFullQualifiedTypeName.contains(".")
+            ? aggregateRootFullQualifiedTypeName.substring(aggregateRootFullQualifiedTypeName.lastIndexOf('.') + 1)
+            : aggregateRootFullQualifiedTypeName;
+
+        DomainBaseObject baseObject = dm.findDomainBaseObjectByName(null, aggregateRootTypeName);
+
         SQLPrinter printer = getPrinterImplementation(sqlDialect, audit, dm);
 
         LOGGER.info("Generated DDL for '{}' successfully!", aggregateRootMirror);
-        return printer.sourceCodeFile(AggregateRoot.aggregateBuilder().build()).content();
+        return printer.sourceCodeFile((AggregateRoot) baseObject).content();
     }
 
     private SQLPrinter getPrinterImplementation(String sqlDialect, boolean audit, GenDomainModel dm) {

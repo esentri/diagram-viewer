@@ -3,6 +3,7 @@ package io.domainlifecycles.diagramviewer.security;
 import com.vaadin.flow.server.auth.AccessCheckResult;
 import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.server.auth.NavigationContext;
+import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
@@ -23,8 +24,8 @@ public class ProjectAndDiagramNavigationAccessChecker implements NavigationAcces
 
         if (ProjectView.class.equals(context.getNavigationTarget()) || DiagramView.class.equals(
             context.getNavigationTarget())) {
-            if (context.getParameters().getParameterNames().contains("projectName")) {
-                String projectName = context.getParameters().get("projectName").orElseThrow();
+            if (context.getParameters().getParameterNames().contains(ProjectView.PROJECT_NAME_ROUTE_PARAMETER)) {
+                String projectName = context.getParameters().get(ProjectView.PROJECT_NAME_ROUTE_PARAMETER).orElseThrow();
                 result = securityService.checkAccess(projectName,
                     securityService.getCurrentlySignedInUser()) ? AccessCheckResult.allow() : AccessCheckResult.reject(
                     "User has no access to this resource.");

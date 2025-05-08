@@ -46,10 +46,12 @@ import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
 
-@Route(value = "/:projectName/:diagramName", layout = MainLayout.class)
+@Route(value = "/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER + "/:" + DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Diagram Viewer")
 @PermitAll
 public class DiagramView extends FlexLayout implements BeforeEnterObserver {
+
+    public static final String DIAGRAM_NAME_ROUTE_PARAMETER = "diagramName";
 
     private final String diagramsLocation;
     private final ProjectService projectService;
@@ -82,8 +84,8 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        projectName = event.getRouteParameters().get("projectName").orElseThrow();
-        diagramName = event.getRouteParameters().get("diagramName").orElseThrow();
+        projectName = event.getRouteParameters().get(ProjectView.PROJECT_NAME_ROUTE_PARAMETER).orElseThrow();
+        diagramName = event.getRouteParameters().get(DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER).orElseThrow();
 
         refreshPage();
     }
@@ -156,7 +158,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         confirmDialog.addConfirmListener(event -> {
             projectService.deleteDiagram(project, diagram);
             confirmDialog.close();
-            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
+            UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 
