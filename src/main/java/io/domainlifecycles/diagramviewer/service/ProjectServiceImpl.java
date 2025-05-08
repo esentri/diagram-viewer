@@ -144,7 +144,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         Project project = mapProject(projectName,
-            domainMirrorUploadDto.domainPackages(),
+            domainMirrorUploadDto.domainModelPackages(),
             (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), true);
         Project persistedProject = repository.save(project);
         projectDomainMirrorService.createOrUpdate(persistedProject.getId(), domainMirrorUploadDto.domainMirror());

@@ -7,4 +7,4 @@ import lombok.RequiredArgsConstructor;
 
 @Builder
 @RequiredArgsConstructor
-public record DomainMirrorUploadDto(DomainMirror domainMirror, Set<String> domainPackages) { }
+public record DomainMirrorUploadDto(DomainMirror domainMirror, Set<String> domainModelPackages) { }
