@@ -43,8 +43,6 @@ import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Comparator;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")

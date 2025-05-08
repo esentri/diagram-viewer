@@ -3,7 +3,6 @@ package io.domainlifecycles.diagramviewer.security;
 import com.vaadin.flow.server.auth.AccessCheckResult;
 import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.server.auth.NavigationContext;
-import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;

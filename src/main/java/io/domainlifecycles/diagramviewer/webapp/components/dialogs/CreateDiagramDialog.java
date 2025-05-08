@@ -14,10 +14,7 @@ import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
-import io.domainlifecycles.mirror.api.BoundedContextMirror;
-
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

@@ -4,7 +4,7 @@ import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
-import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.diagramviewer.rest.api.model.DomainMirrorUploadDto;
 import java.io.InputStream;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -31,7 +31,7 @@ public interface ProjectService {
     void updateTargetFile(Project project, InputStream fileContents, String filename, Set<String> domainModelPackages);
 
     @Transactional
-    void createOrUpdateDomainMirror(String projectName, DomainMirror domainMirror);
+    void createOrUpdateDomainMirror(String projectName, DomainMirrorUploadDto domainMirrorUploadDto);
 
     @Transactional
     void delete(Project project);

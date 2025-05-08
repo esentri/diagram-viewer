@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.security;
 
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
-import io.domainlifecycles.diagramviewer.rest.api.DomainModelController;
+import io.domainlifecycles.diagramviewer.rest.api.DomainMirrorController;
 import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,7 +33,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        if (path.startsWith(DomainModelController.DOMAIN_MODEL_API_PATH)) {
+        if (path.startsWith(DomainMirrorController.DOMAIN_MIRROR_API_PATH)) {
             final String apiKey = request.getHeader(API_KEY_HEADER_NAME);
             final Optional<RegisteredUser> foundRegisteredUser = registeredUserService.findByApiKey(apiKey);
 

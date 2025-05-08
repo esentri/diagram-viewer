@@ -15,7 +15,6 @@ import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 
 public class VisibilityConfigurationDialog extends Dialog {

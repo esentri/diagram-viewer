@@ -1,6 +1,5 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
-import com.vaadin.flow.component.ItemLabelGenerator;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -14,15 +13,11 @@ import com.vaadin.flow.server.StreamResource;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
-import io.domainlifecycles.mirror.api.BoundedContextMirror;
-
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Data;
 
 public class GenerateDatabaseModelDialog extends Dialog {

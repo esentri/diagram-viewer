@@ -30,7 +30,6 @@ import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
-import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;

@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.rest.api;
 
+import io.domainlifecycles.diagramviewer.rest.api.model.DomainMirrorUploadDto;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.mirror.api.DomainMirror;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -10,20 +10,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(DomainModelController.DOMAIN_MODEL_API_PATH)
-public class DomainModelController {
+@RequestMapping(DomainMirrorController.DOMAIN_MIRROR_API_PATH)
+public class DomainMirrorController {
 
-    public static final String DOMAIN_MODEL_API_PATH = "/api/domain-model/";
+    public static final String DOMAIN_MIRROR_API_PATH = "/api/domain-mirror/";
 
     private final ProjectService projectService;
 
-    public DomainModelController(ProjectService projectService) {
+    public DomainMirrorController(ProjectService projectService) {
         this.projectService = projectService;
     }
 
     @PutMapping("/{projectName}")
-    public ResponseEntity<String> createOrUpdateDomainModel(@PathVariable String projectName, @RequestBody DomainMirror domainMirror) {
-        projectService.createOrUpdateDomainMirror(projectName, domainMirror);
+    public ResponseEntity<String> createOrUpdateDomainModel(
+        @PathVariable String projectName, @RequestBody DomainMirrorUploadDto domainMirrorUploadDto) {
+
+        projectService.createOrUpdateDomainMirror(projectName, domainMirrorUploadDto);
         return ResponseEntity.ok().build();
     }
 }

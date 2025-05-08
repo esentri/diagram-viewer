@@ -7,11 +7,8 @@ import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
+import io.domainlifecycles.diagramviewer.rest.api.model.DomainMirrorUploadDto;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.mirror.api.BoundedContextMirror;
-import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.exception.MirrorException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -19,7 +16,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
@@ -132,7 +128,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void createOrUpdateDomainMirror(
             String projectName,
-            DomainMirror domainMirror) {
+            DomainMirrorUploadDto domainMirrorUploadDto) {
 
         Optional<Project> foundProject = repository.findByName(projectName);
 
@@ -143,15 +139,15 @@ public class ProjectServiceImpl implements ProjectService {
                 deleteTargetFile(project);
             }
 
-            projectDomainMirrorService.createOrUpdate(project.getId(), domainMirror);
+            projectDomainMirrorService.createOrUpdate(project.getId(), domainMirrorUploadDto.domainMirror());
             return;
         }
 
         Project project = mapProject(projectName,
-            domainMirror.getAllBoundedContextMirrors().stream().map(BoundedContextMirror::getPackageName).collect(Collectors.toSet()),
+            domainMirrorUploadDto.domainPackages(),
             (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), true);
         Project persistedProject = repository.save(project);
-        projectDomainMirrorService.createOrUpdate(persistedProject.getId(), domainMirror);
+        projectDomainMirrorService.createOrUpdate(persistedProject.getId(), domainMirrorUploadDto.domainMirror());
     }
 
     @Override

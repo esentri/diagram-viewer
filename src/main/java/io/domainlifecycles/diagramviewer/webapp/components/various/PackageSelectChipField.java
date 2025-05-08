@@ -10,7 +10,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.Objects;
 import java.util.Set;
 
 public class PackageSelectChipField extends CustomField<Set<String>> {

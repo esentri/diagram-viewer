@@ -14,10 +14,8 @@ import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
-import io.domainlifecycles.mirror.api.BoundedContextMirror;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
