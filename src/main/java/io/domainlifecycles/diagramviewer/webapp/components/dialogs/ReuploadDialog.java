@@ -99,10 +99,10 @@ public class ReuploadDialog extends Dialog {
         PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
         packageSelectChipField.setWidthFull();
         binder.forField(packageSelectChipField)
-            .asRequired("At least one DomainModel package is required.")
+            .asRequired("At least one package is required.")
             .bind(UploadOptions::getDomainModelPackages, UploadOptions::setDomainModelPackages);
 
-        formLayout.addFormItem(packageSelectChipField, "DomainModel packages");
+        formLayout.addFormItem(packageSelectChipField, "Packages");
 
         return formLayout;
     }

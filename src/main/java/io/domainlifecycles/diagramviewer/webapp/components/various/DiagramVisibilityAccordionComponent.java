@@ -6,6 +6,7 @@ import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
@@ -49,6 +50,17 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
         Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = domainTypeMirrors
             .stream()
             .collect(groupingBy(DomainTypeMirror::getDomainType));
+
+        AccordionPanel packagesPanel = new AccordionPanel();
+        packagesPanel.setSummaryText("Diagram packages");
+
+        FormLayout formLayout = new FormLayout();
+
+        PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
+        packageSelectChipField.setWidthFull();
+        formLayout.addFormItem(packageSelectChipField, "Filtered packages");
+        packagesPanel.add(formLayout);
+        add(packagesPanel);
 
         for (DomainType type: domainTypeOrdered()) {
             List<? extends DomainTypeMirror> mirrors = filterConcreteMirrorsInterfaceAvailable(groupedByDomainMirrorType.get(type));
@@ -176,12 +188,12 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     }
 
     private List<? extends DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(List<? extends DomainTypeMirror> mirrors) {
-        List<DomainTypeMirror> list = new ArrayList<>();
+        List<DomainTypeMirror> domainTypeMirrors = new ArrayList<>();
 
         if(mirrors != null && mirrors.size() > 0) {
             List<String> mirroredTypeNames = mirrors.stream().map(DomainTypeMirror::getTypeName)
                     .filter(typeName -> !typeName.startsWith("io.domainlifecycles")).toList();
-            list.addAll(
+            domainTypeMirrors.addAll(
                     mirrors
                     .stream()
                     .filter(m -> !m.getTypeName().startsWith("io.domainlifecycles"))
@@ -197,15 +209,13 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
             for (DomainTypeMirror mirror : mirrors) {
                 for(String interfaceTypeName : mirror.getAllInterfaceTypeNames()){
                     if(mirroredTypeNames.contains(interfaceTypeName)){
-                        list.remove(mirror);
+                        domainTypeMirrors.remove(mirror);
                     }
                 }
             }
         }
 
-        return list.stream().sorted(
-                (a,b)-> {
-                    return a.getTypeName().compareTo(b.getTypeName());
-                }).collect(Collectors.toList());
+        return domainTypeMirrors.stream().sorted(
+            Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
     }
 }

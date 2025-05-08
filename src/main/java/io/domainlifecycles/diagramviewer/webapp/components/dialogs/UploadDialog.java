@@ -88,9 +88,9 @@ public class UploadDialog extends Dialog {
         PackageSelectChipField domainModelPackageSelectChipField = new PackageSelectChipField();
         domainModelPackageSelectChipField.setWidthFull();
         binder.forField(domainModelPackageSelectChipField)
-            .asRequired("At least one DomainModel package is required.")
+            .asRequired("At least one package is required.")
             .bind(UploadOptions::getDomainModelPackages, UploadOptions::setDomainModelPackages);
-        formLayout.addFormItem(domainModelPackageSelectChipField, "Domain Model packages");
+        formLayout.addFormItem(domainModelPackageSelectChipField, "Packages");
 
         return formLayout;
     }

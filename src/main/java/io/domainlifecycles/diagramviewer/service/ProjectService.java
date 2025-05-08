@@ -8,6 +8,7 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.InputStream;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface ProjectService {
 
@@ -15,24 +16,29 @@ public interface ProjectService {
 
     Project getByName(final String projectName);
 
+    @Transactional
     void update(Project project, String projectName, Set<String> domainModelPackages);
 
     void deleteDiagram(Project project, Diagram diagram);
 
+    @Transactional
     Project save(RegisteredUser registeredUser,
                  InputStream fileContents,
                  String fileName,
                  Set<String> domainModelPackages);
 
+    @Transactional
     void updateTargetFile(Project project, InputStream fileContents, String filename, Set<String> domainModelPackages);
 
+    @Transactional
     void createOrUpdateDomainMirror(String projectName, DomainMirror domainMirror);
+
+    @Transactional
+    void delete(Project project);
 
     void assignUser(Project project, String emailAddress);
 
     void assignUser(Project project, User user);
 
     void unassignUser(Project project, User user);
-
-    void delete(Project project);
 }

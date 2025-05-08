@@ -85,7 +85,7 @@ public class EditProjectDialog extends Dialog {
             .bind(UploadOptions::getProjectName, UploadOptions::setProjectName);
         formLayout.addFormItem(projectNameTextField, "Name");
 
-        PackageSelectChipField domainModelPackageSelectChipField = new PackageSelectChipField(project.getDomainModelPackages());
+        PackageSelectChipField domainModelPackageSelectChipField = new PackageSelectChipField();
         domainModelPackageSelectChipField.setWidthFull();
         binder.forField(domainModelPackageSelectChipField)
             .asRequired("At least one Domain Model package is required.")

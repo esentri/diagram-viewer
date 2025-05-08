@@ -89,11 +89,11 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     private void refreshPage() {
         removeAll();
-        setProjectAndDiagram();
+        setProjectAndDiagramAndDomainTypeMirrors();
         addPageContents();
     }
 
-    private void setProjectAndDiagram() {
+    private void setProjectAndDiagramAndDomainTypeMirrors() {
         project = projectService.getByName(projectName);
         diagram = project.getDiagrams().stream().filter(foundDiagram ->
                 Objects.equals(foundDiagram.getFileName(), diagramName))

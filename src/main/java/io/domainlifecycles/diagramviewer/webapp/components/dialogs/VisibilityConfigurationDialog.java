@@ -92,7 +92,6 @@ public class VisibilityConfigurationDialog extends Dialog {
         Accordion accordion = new Accordion();
         accordion.setSizeFull();
 
-        accordion.add(createAndGetPackagesAccordionPanel());
         accordion.add(createAndGetGeneralAccordionPanel());
         accordion.add(createAndGetDomainEventAccordionPanel());
         accordion.add(createAndGetDomainCommandAccordionPanel());
@@ -105,21 +104,6 @@ public class VisibilityConfigurationDialog extends Dialog {
         accordion.add(createAndGetUnspecifiedServiceKindAccordionPanel());
 
         return accordion;
-    }
-
-    private AccordionPanel createAndGetPackagesAccordionPanel() {
-        AccordionPanel packagesPanel = new AccordionPanel();
-        packagesPanel.setSummaryText("Diagram packages");
-
-        FormLayout formLayout = new FormLayout();
-
-        PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
-        packageSelectChipField.setWidthFull();
-        domainModelVisibilityBinder.forField(packageSelectChipField)
-                .bind(DomainModelVisibility::getFilteredPackageNames, DomainModelVisibility::replaceFilteredPackageNames);
-        formLayout.addFormItem(packageSelectChipField, "Filtered packages");
-        packagesPanel.add(formLayout);
-        return packagesPanel;
     }
 
     private AccordionPanel createAndGetGeneralAccordionPanel() {

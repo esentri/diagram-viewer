@@ -7,8 +7,11 @@ import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
+import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.mirror.api.BoundedContextMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.exception.MirrorException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -16,6 +19,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
@@ -72,8 +76,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void update(Project project,
                        String projectName,
-                       Set<String> domainModelPackages
-    ) {
+                       Set<String> domainModelPackages) {
 
         project.setName(buildCleanFileName(projectName));
         checkProjectValueRequirements(project);
@@ -111,15 +114,8 @@ public class ProjectServiceImpl implements ProjectService {
             String fileName,
             Set<String> domainModelPackages) {
 
-        // persist project without domain model to obtain UUID
-        final Project mappedProject = insert(mapProject(fileName, registeredUser, false));
-
-        Path projectFilePath = saveTargetFile(targetsDirectory, fileContents,
-            buildProjectFilename(mappedProject));
-
-        projectDomainMirrorService.createOrUpdate(mappedProject.getId(), projectFilePath, domainModelPackages);
-
-        return repository.save(mappedProject);
+        final Project mappedProject = insert(mapProject(fileName, domainModelPackages, registeredUser, false));
+        return saveProjectFileAndCreateProjectAndDomainMirror(fileContents, domainModelPackages, mappedProject);
     }
 
     @Override
@@ -127,30 +123,32 @@ public class ProjectServiceImpl implements ProjectService {
             Project project,
             InputStream fileContents,
             String filename,
-            Set<String> domainModelPackages
-    ) {
+            Set<String> domainModelPackages) {
+
         deleteTargetFile(project);
-
-        Path projectFilePath = saveTargetFile(targetsDirectory, fileContents, buildProjectFilename(project));
-        projectDomainMirrorService.createOrUpdate(project.getId(), projectFilePath, domainModelPackages);
-
-        repository.save(project);
+        saveProjectFileAndCreateProjectAndDomainMirror(fileContents, domainModelPackages, project);
     }
 
     @Override
     public void createOrUpdateDomainMirror(
             String projectName,
-            DomainMirror domainMirror
-    ) {
+            DomainMirror domainMirror) {
+
         Optional<Project> foundProject = repository.findByName(projectName);
 
         if(foundProject.isPresent()) {
             Project project = foundProject.get();
+
+            if(!project.isApiUpload()) {
+                deleteTargetFile(project);
+            }
+
             projectDomainMirrorService.createOrUpdate(project.getId(), domainMirror);
             return;
         }
 
         Project project = mapProject(projectName,
+            domainMirror.getAllBoundedContextMirrors().stream().map(BoundedContextMirror::getPackageName).collect(Collectors.toSet()),
             (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), true);
         Project persistedProject = repository.save(project);
         projectDomainMirrorService.createOrUpdate(persistedProject.getId(), domainMirror);
@@ -216,14 +214,28 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.save(project);
     }
 
-    private Project mapProject(String fileName, RegisteredUser registeredUser, boolean apiUpload) {
+    private Project mapProject(String fileName, Set<String> domainModelPackages, RegisteredUser registeredUser, boolean apiUpload) {
         return Project.builder()
             .name(buildCleanFileName(fileName))
             .apiUpload(apiUpload)
             .creator(registeredUser)
+            .domainModelPackages(domainModelPackages)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
             .assignedInvitedUsers(new HashSet<>())
             .build();
+    }
+
+    private Project saveProjectFileAndCreateProjectAndDomainMirror(InputStream fileContents, Set<String> domainModelPackages, Project project) {
+        Path projectFilePath = saveTargetFile(targetsDirectory, fileContents,
+            buildProjectFilename(project));
+
+        try {
+            projectDomainMirrorService.createOrUpdate(project.getId(), projectFilePath, domainModelPackages);
+            return repository.save(project);
+        } catch(RuntimeException e) {
+            deleteTargetFile(project);
+            throw e;
+        }
     }
 
     private Path saveTargetFile(String targetsLocation, InputStream fileContents, String fileName) {
