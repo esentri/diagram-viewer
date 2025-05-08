@@ -31,6 +31,7 @@ import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAccordionComponent;
+import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
@@ -115,7 +116,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             diagram.getDiagramStylingConfiguration().getChangedAt()));
 
         Scroller scroller = new Scroller(
-            new DiagramVisibilityAccordionComponent(project, diagram, domainTypeMirrors, diagramService));
+            new DiagramVisibilityComponentsContainer(project, diagram, domainTypeMirrors, diagramService));
         scroller.setScrollDirection(ScrollDirection.BOTH);
         scroller.setWidth("30%");
         diagramViewerAndStylingContainer.add(scroller);
