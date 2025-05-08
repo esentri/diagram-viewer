@@ -74,10 +74,10 @@ public class CreateDiagramDialog extends Dialog {
             .bind(CreateDiagramOptions::getFileName, CreateDiagramOptions::setFileName);
         formLayout.addFormItem(diagramNameTextField, "File-Name");
 
-        PackageSelectChipField packageSelectChipField = new PackageSelectChipField(mapPackageNames());
+        PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
         packageSelectChipField.setWidthFull();
         binder.forField(packageSelectChipField)
-                .bind(CreateDiagramDialog.CreateDiagramOptions::getFilteredPackages, CreateDiagramDialog.CreateDiagramOptions::setFilteredPackages);
+                .bind(CreateDiagramOptions::getFilteredPackages, CreateDiagramOptions::setFilteredPackages);
         formLayout.addFormItem(packageSelectChipField, "Filtered packages");
 
         Select<FileType> formatSelect = new Select<>();
@@ -89,12 +89,6 @@ public class CreateDiagramDialog extends Dialog {
         formLayout.addFormItem(formatSelect, "Format");
 
         return formLayout;
-    }
-
-    private Set<String> mapPackageNames() {
-        return project.getDomainMirror().getAllBoundedContextMirrors().stream().map(
-            BoundedContextMirror::getPackageName).collect(
-            Collectors.toSet());
     }
 
     @Data

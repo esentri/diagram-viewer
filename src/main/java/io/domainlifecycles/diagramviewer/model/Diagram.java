@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "Diagram")
@@ -56,4 +57,7 @@ public class Diagram {
 
     @CreationTimestamp
     private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant changedAt;
 }

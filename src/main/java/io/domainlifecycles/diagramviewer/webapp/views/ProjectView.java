@@ -19,6 +19,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
@@ -42,16 +43,23 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final SecurityService securityService;
     private final ProjectService projectService;
     private final DiagramService diagramService;
+    private final ProjectDomainMirrorService projectDomainMirrorService;
 
     private Project project;
     private String projectName;
     private Registration registration;
 
-    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService, SecurityService securityService, ProjectService projectService, DiagramService diagramService) {
+    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService,
+                       SecurityService securityService,
+                       ProjectService projectService,
+                       DiagramService diagramService,
+                       ProjectDomainMirrorService projectDomainMirrorService) {
+
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.securityService = securityService;
         this.projectService = projectService;
         this.diagramService = diagramService;
+        this.projectDomainMirrorService = projectDomainMirrorService;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
@@ -119,7 +127,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getDatabaseButton() {
-        GenerateDatabaseModelDialog databaseModelDialog = new GenerateDatabaseModelDialog(sqlddlGeneratorService, project);
+        GenerateDatabaseModelDialog databaseModelDialog = new GenerateDatabaseModelDialog(
+            sqlddlGeneratorService, project, projectDomainMirrorService.getAllAggregateRootMirrors(project.getId()));
 
         Button databaseButton = new Button("Download DDL-SQL-Script", new Icon("vaadin:database"));
         databaseButton.getStyle().set("cursor", "pointer");

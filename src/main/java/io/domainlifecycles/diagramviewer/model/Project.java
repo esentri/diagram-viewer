@@ -15,6 +15,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Data
@@ -47,11 +49,6 @@ public class Project {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
     private Set<Diagram> diagrams;
 
-    @Column(columnDefinition = "TEXT")
-    @Convert(converter = DomainModelConverter.class)
-    private DomainMirror domainMirror;
-
-    @Getter
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> domainModelPackages;
 
@@ -72,6 +69,9 @@ public class Project {
 
     @CreationTimestamp
     private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant changedAt;
 
     public void unassignUser(User user) {
         if(user instanceof RegisteredUser) {

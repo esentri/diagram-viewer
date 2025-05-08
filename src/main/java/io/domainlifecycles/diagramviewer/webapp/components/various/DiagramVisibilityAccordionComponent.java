@@ -36,17 +36,17 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     private final Project project;
     private final Diagram diagram;
 
-    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, DiagramService diagramService) {
+    public DiagramVisibilityAccordionComponent(Project project, Diagram diagram, List<DomainTypeMirror> domainTypeMirrors,
+                                               DiagramService diagramService) {
         setWidthFull();
         this.diagramService = diagramService;
         this.project = project;
         this.diagram = diagram;
-        createAccordion();
+        createAccordion(domainTypeMirrors);
     }
 
-    private void createAccordion() {
-        Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = project.getDomainMirror()
-            .getAllDomainTypeMirrors()
+    private void createAccordion(List<DomainTypeMirror> domainTypeMirrors) {
+        Map<DomainType, ? extends List<? extends DomainTypeMirror>> groupedByDomainMirrorType = domainTypeMirrors
             .stream()
             .collect(groupingBy(DomainTypeMirror::getDomainType));
 
@@ -179,8 +179,8 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
         List<DomainTypeMirror> list = new ArrayList<>();
 
         if(mirrors != null && mirrors.size() > 0) {
-            List<String> mirroredTypeNames = mirrors.stream().filter(m -> !m.getTypeName().startsWith("io.domainlifecycles"))
-                    .map(DomainTypeMirror::getTypeName).toList();
+            List<String> mirroredTypeNames = mirrors.stream().map(DomainTypeMirror::getTypeName)
+                    .filter(typeName -> !typeName.startsWith("io.domainlifecycles")).toList();
             list.addAll(
                     mirrors
                     .stream()

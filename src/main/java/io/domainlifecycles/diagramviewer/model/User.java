@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Data
 @SuperBuilder(toBuilder = true)
@@ -16,10 +17,14 @@ public abstract class User {
 
     @Column(unique=true)
     private String emailAddress;
+
     private String fullName;
 
     @CreationTimestamp
     private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant changedAt;
 
     public abstract void addAssignedProject(final Project project);
     public abstract void removeAssignedProject(Project project);

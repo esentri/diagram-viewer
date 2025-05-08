@@ -2,7 +2,6 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
@@ -10,6 +9,7 @@ import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,15 +24,18 @@ import org.springframework.stereotype.Service;
 public class DiagramServiceImpl implements DiagramService {
 
     private final String diagramsLocation;
+    private final ProjectDomainMirrorService projectDomainMirrorService;
     private final DiagramRepository repository;
     private final KrokiClient krokiClient;
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
+        ProjectDomainMirrorService projectDomainMirrorService,
         DiagramRepository repository,
         KrokiClient krokiClient) {
 
         this.diagramsLocation = diagramsLocation;
+        this.projectDomainMirrorService = projectDomainMirrorService;
         this.repository = repository;
         this.krokiClient = krokiClient;
     }
@@ -87,10 +90,12 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
+        DomainMirror domainMirror = projectDomainMirrorService.getByProjectId(project.getId()).getDomainMirror();
+
         final String nomnoml;
         try {
             nomnoml = DiagrammerUtils.generateNomnoml(
-                project.getDomainMirror(),
+                domainMirror,
                 diagram.getDiagramStylingConfiguration(),
                 diagram.getDomainModelVisibility());
         } catch(IllegalStateException e) {

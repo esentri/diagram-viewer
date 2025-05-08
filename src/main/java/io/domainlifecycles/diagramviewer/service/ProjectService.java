@@ -15,17 +15,16 @@ public interface ProjectService {
 
     Project getByName(final String projectName);
 
-    void update(Project project, String projectName, Set<String> domainModelPackages, Set<String> boundedContextPackages);
+    void update(Project project, String projectName, Set<String> domainModelPackages);
 
     void deleteDiagram(Project project, Diagram diagram);
 
     Project save(RegisteredUser registeredUser,
                  InputStream fileContents,
                  String fileName,
-                 Set<String> domainModelPackages,
-                 Set<String> boundedContextPackages);
+                 Set<String> domainModelPackages);
 
-    void updateTargetFile(Project project, InputStream fileContents, String filename, Set<String> domainModelPackages, Set<String> boundedContextPackages);
+    void updateTargetFile(Project project, InputStream fileContents, String filename, Set<String> domainModelPackages);
 
     void createOrUpdateDomainMirror(String projectName, DomainMirror domainMirror);
 

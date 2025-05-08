@@ -1,5 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
+import com.vaadin.flow.component.ItemLabelGenerator;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -12,12 +13,14 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.server.StreamResource;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
-import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.DomainTypeMirrorMultiSelect;
+import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.BoundedContextMirror;
 
+import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Data;
@@ -30,13 +33,18 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private final Binder<GenerateDatabaseModelOptions> binder;
     private final SQLDDLGeneratorService sqlDDLGeneratorService;
     private final Project project;
+    private final List<AggregateRootMirror> allAggregateRootMirrors;
     private final GenerateDatabaseModelOptions generateDatabaseModelOptions;
 
     private Button generateButton;
 
-    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService, Project project) {
+    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService,
+                                       Project project,
+                                       List<AggregateRootMirror> allAggregateRootMirrors) {
+
         this.sqlDDLGeneratorService = sqlDDLGeneratorService;
         this.project = project;
+        this.allAggregateRootMirrors = allAggregateRootMirrors;
         this.binder = new Binder<>();
 
         generateDatabaseModelOptions = new GenerateDatabaseModelOptions();
@@ -59,15 +67,13 @@ public class GenerateDatabaseModelDialog extends Dialog {
             .bind(GenerateDatabaseModelOptions::getSelectedSqlDialect, GenerateDatabaseModelOptions::setSelectedSqlDialect);
         formLayout.addFormItem(sqlDialectSelect, "SQL Dialect");
 
-        Select<String> boundedContextPackageSelect = new Select<>();
-        boundedContextPackageSelect.setItems(mapPackageNames());
-        binder.forField(boundedContextPackageSelect)
-            .asRequired("Context-Package is required.")
-            .bind(GenerateDatabaseModelOptions::getBoundedContextPackage, GenerateDatabaseModelOptions::setBoundedContextPackage);
-        formLayout.addFormItem(boundedContextPackageSelect, "Context-Package");
-
-        DomainTypeMirrorMultiSelect domainTypeMirrorMultiSelect = new DomainTypeMirrorMultiSelect(project);
-        formLayout.addFormItem(domainTypeMirrorMultiSelect, "Domain Type Mirrors");
+        Select<AggregateRootMirror> aggregateRootMirrorSelect = new Select<>();
+        aggregateRootMirrorSelect.setItems(allAggregateRootMirrors);
+        aggregateRootMirrorSelect.setItemLabelGenerator(DomainTypeMirror::getTypeName);
+        binder.forField(aggregateRootMirrorSelect)
+            .asRequired("Domain-Type is required.")
+            .bind(GenerateDatabaseModelOptions::getSelectedAggregateRootMirror, GenerateDatabaseModelOptions::setSelectedAggregateRootMirror);
+        formLayout.addFormItem(aggregateRootMirrorSelect, "Domain-Type");
 
         Checkbox auditModelCheckbox = new Checkbox();
         binder.forField(auditModelCheckbox).bind(GenerateDatabaseModelOptions::isAuditModel, GenerateDatabaseModelOptions::setAuditModel);
@@ -104,12 +110,6 @@ public class GenerateDatabaseModelDialog extends Dialog {
         return generateButton;
     }
 
-    private Set<String> mapPackageNames() {
-        return project.getDomainMirror().getAllBoundedContextMirrors().stream().map(
-            BoundedContextMirror::getPackageName).collect(
-            Collectors.toSet());
-    }
-
     private String buildScriptFilename() {
         return project == null ? "dlc-project" + SQL_DDL_SCRIPT_SUFFIX : project.getName() + SQL_DDL_SCRIPT_SUFFIX;
     }
@@ -120,8 +120,8 @@ public class GenerateDatabaseModelDialog extends Dialog {
 
     private InputStream getStream() {
         final String ddl = sqlDDLGeneratorService.generateSQL(
-            project.getDomainMirror(),
-            generateDatabaseModelOptions.getBoundedContextPackage(),
+            project.getId(),
+            generateDatabaseModelOptions.getSelectedAggregateRootMirror(),
             generateDatabaseModelOptions.getSelectedSqlDialect(),
             generateDatabaseModelOptions.isAuditModel());
 
@@ -130,7 +130,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
 
     @Data
     private static class GenerateDatabaseModelOptions {
-        private String boundedContextPackage;
+        private AggregateRootMirror selectedAggregateRootMirror;
         private String selectedSqlDialect;
         private boolean auditModel;
     }

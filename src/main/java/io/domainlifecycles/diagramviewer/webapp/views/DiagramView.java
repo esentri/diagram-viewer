@@ -25,6 +25,7 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
@@ -34,10 +35,12 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZ
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
+import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,19 +53,25 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private final String diagramsLocation;
     private final ProjectService projectService;
     private final DiagramService diagramService;
+    private final ProjectDomainMirrorService projectDomainMirrorService;
     private final SecurityService securityService;
     private String projectName;
     private String diagramName;
     private Project project;
     private Diagram diagram;
+    private List<DomainTypeMirror> domainTypeMirrors;
     private Registration registration;
 
     public DiagramView(
         @Value("${diagrams.location}") String diagramsLocation,
-        ProjectService projectService, DiagramService diagramService, SecurityService securityService) {
+        ProjectService projectService, DiagramService diagramService,
+        ProjectDomainMirrorService projectDomainMirrorService,
+        SecurityService securityService) {
+
         this.diagramsLocation = diagramsLocation;
         this.projectService = projectService;
         this.diagramService = diagramService;
+        this.projectDomainMirrorService = projectDomainMirrorService;
         this.securityService = securityService;
 
         setSizeFull();
@@ -87,9 +96,11 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private void setProjectAndDiagram() {
         project = projectService.getByName(projectName);
         diagram = project.getDiagrams().stream().filter(foundDiagram ->
-            Objects.equals(foundDiagram.getFileName(), diagramName))
+                Objects.equals(foundDiagram.getFileName(), diagramName))
             .findAny()
-            .orElseThrow(() -> DiagramViewerException.fail(String.format("No diagram found with name '%s' .", diagramName)));
+            .orElseThrow(
+                () -> DiagramViewerException.fail(String.format("No diagram found with name '%s' .", diagramName)));
+        domainTypeMirrors = projectDomainMirrorService.getAllDomainTypeMirrors(project.getId());
     }
 
     private void addPageContents() {
@@ -97,10 +108,14 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
-        diagramViewerAndStylingContainer.add(new DiagramConfigurationButtonBarComponent(project, diagram, diagramService));
-        diagramViewerAndStylingContainer.add(new DiagramZoomComponentContainer(project.getId().toString(), diagramName));
+        diagramViewerAndStylingContainer.add(
+            new DiagramConfigurationButtonBarComponent(project, diagram, diagramService));
+        diagramViewerAndStylingContainer.add(new DiagramZoomComponentContainer(
+            project.getId().toString(), diagramName, diagram.getChangedAt(),
+            diagram.getDiagramStylingConfiguration().getChangedAt()));
 
-        Scroller scroller = new Scroller(new DiagramVisibilityAccordionComponent(project, diagram, diagramService));
+        Scroller scroller = new Scroller(
+            new DiagramVisibilityAccordionComponent(project, diagram, domainTypeMirrors, diagramService));
         scroller.setScrollDirection(ScrollDirection.BOTH);
         scroller.setWidth("30%");
         diagramViewerAndStylingContainer.add(scroller);
@@ -116,6 +131,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     private Anchor getDiagramDownloadButton() {
         Anchor downloadAnchor = new Anchor(buildDiagramDownloadStreamResource(), "Download Diagram");
+
         downloadAnchor.getStyle().set("cursor", "pointer");
         downloadAnchor.setId("diagramDownloadButton");
         downloadAnchor.getElement().setAttribute("download", true);
@@ -148,7 +164,8 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         deleteDiagramButton.getElement().getStyle().set("margin-left", "auto");
         deleteDiagramButton.getElement().getStyle().set("margin-right", "1rem");
         deleteDiagramButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        deleteDiagramButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
+        deleteDiagramButton.setEnabled(
+            Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
         deleteDiagramButton.addClickListener(e -> confirmDialog.open());
         return deleteDiagramButton;
     }

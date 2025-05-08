@@ -14,7 +14,7 @@ public class DiagrammerUtils {
             DomainModelVisibility domainModelVisibility) {
 
         DomainDiagramConfig diagramConfig = DomainDiagramConfig.builder()
-                .withFilteredPackageNames(domainModelVisibility.getFilteredPackageNames().stream().toList())
+            .withFilteredPackageNames(domainModelVisibility.getFilteredPackageNames().stream().toList())
             .withAggregateRootStyle(diagramStylingConfiguration.getAggregateRootStyle())
             .withAggregateFrameStyle(diagramStylingConfiguration.getAggregateFrameStyle())
             .withEntityStyle(diagramStylingConfiguration.getEntityStyle())

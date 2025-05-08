@@ -44,7 +44,7 @@ dependencies {
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
 	implementation 'io.domainlifecycles:mirror:2.3.0'
 	implementation 'io.domainlifecycles:domain-diagrammer:2.3.0'
-	implementation("io.domainlifecycles:kickstart-generator:1.0.5")
+	implementation("io.domainlifecycles:kickstart-generator:1.0.6")
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation ('org.springframework.boot:spring-boot-starter-test')

@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "DiagramStylingConfiguration")
@@ -302,6 +303,9 @@ public class DiagramStylingConfiguration {
 
     @CreationTimestamp
     private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant changedAt;
 
     public void setId(UUID diagramConfigurationId) {
         this.id = diagramConfigurationId;
@@ -793,5 +797,9 @@ public class DiagramStylingConfiguration {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getChangedAt() {
+        return changedAt;
     }
 }

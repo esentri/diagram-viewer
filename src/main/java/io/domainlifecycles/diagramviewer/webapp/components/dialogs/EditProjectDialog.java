@@ -37,8 +37,7 @@ public class EditProjectDialog extends Dialog {
 
         uploadOptions = new UploadOptions(
                 project.getName(),
-                project.getDomainModelPackages(),
-                mapBoundedContextPackageNames()
+                project.getDomainModelPackages()
         );
 
         setHeaderTitle("Edit Project");
@@ -61,8 +60,7 @@ public class EditProjectDialog extends Dialog {
             projectService.update(
                     project,
                     uploadOptions.getProjectName(),
-                    uploadOptions.getDomainModelPackages(),
-                    mapBoundedContextPackageNames());
+                    uploadOptions.getDomainModelPackages());
             close();
             UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
@@ -94,19 +92,7 @@ public class EditProjectDialog extends Dialog {
             .bind(UploadOptions::getDomainModelPackages, UploadOptions::setDomainModelPackages);
         formLayout.addFormItem(domainModelPackageSelectChipField, "DomainModel packages");
 
-        PackageSelectChipField boundedContextPackageSelectChipField = new PackageSelectChipField(mapBoundedContextPackageNames());
-        boundedContextPackageSelectChipField.setWidthFull();
-        binder.forField(boundedContextPackageSelectChipField)
-                .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
-        formLayout.addFormItem(boundedContextPackageSelectChipField, "Bounded Context packages");
-
         return formLayout;
-    }
-
-    private Set<String> mapBoundedContextPackageNames() {
-        return project.getDomainMirror().getAllBoundedContextMirrors().stream().map(
-            BoundedContextMirror::getPackageName).collect(
-            Collectors.toSet());
     }
 
     @Data
@@ -114,6 +100,5 @@ public class EditProjectDialog extends Dialog {
     private static class UploadOptions {
         private String projectName;
         private Set<String> domainModelPackages;
-        private Set<String> boundedContextPackages;
     }
 }

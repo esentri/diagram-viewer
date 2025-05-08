@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "DomainModelVisibility")
@@ -40,6 +41,10 @@ public class DomainModelVisibility {
     @Getter
     @CreationTimestamp
     private Instant createdAt;
+
+    @Getter
+    @UpdateTimestamp
+    private Instant changedAt;
 
     public DomainModelVisibility(
             Set<String> filteredPackageNames,

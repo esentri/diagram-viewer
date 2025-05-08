@@ -2,10 +2,14 @@ package io.domainlifecycles.diagramviewer.webapp.components.various.zoom;
 
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.dom.Style.Overflow;
+import java.time.Instant;
 
 public class DiagramZoomComponentContainer extends FlexLayout {
 
-    public DiagramZoomComponentContainer(final String projectId, final String diagramName) {
+    public DiagramZoomComponentContainer(final String projectId,
+                                         final String diagramName,
+                                         final Instant diagramLastModified,
+                                         final Instant stylingLastModified) {
         setMinHeight("100%");
         setMaxHeight("100%");
         setSizeFull();
@@ -13,7 +17,8 @@ public class DiagramZoomComponentContainer extends FlexLayout {
         getStyle().setMargin("0 1rem 0");
         getStyle().setOverflow(Overflow.HIDDEN);
 
-        DiagramZoomComponent zoomComponent = new DiagramZoomComponent(projectId, diagramName);
+        DiagramZoomComponent zoomComponent =
+            new DiagramZoomComponent(diagramLastModified, stylingLastModified, projectId, diagramName);
 
         setFlexGrow(1, zoomComponent);
         add(zoomComponent);

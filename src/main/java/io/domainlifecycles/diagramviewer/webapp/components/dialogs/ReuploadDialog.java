@@ -41,9 +41,8 @@ public class ReuploadDialog extends Dialog {
 
         uploadOptions = new UploadOptions(
                 project.getName(),
-                project.getDomainModelPackages(),
-                project.getDomainMirror().getAllBoundedContextMirrors().stream()
-                .map(BoundedContextMirror::getPackageName).collect(Collectors.toSet()));
+                project.getDomainModelPackages()
+        );
 
         setHeaderTitle("Reupload Project");
         setWidth("30%");
@@ -67,8 +66,7 @@ public class ReuploadDialog extends Dialog {
                     project,
                     fileInputStream,
                     uploadOptions.getProjectName(),
-                    uploadOptions.getDomainModelPackages(),
-                    uploadOptions.getBoundedContextPackages()
+                    uploadOptions.getDomainModelPackages()
             );
             UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
@@ -127,6 +125,5 @@ public class ReuploadDialog extends Dialog {
     private static class UploadOptions {
         private String projectName;
         private Set<String> domainModelPackages;
-        private Set<String> boundedContextPackages;
     }
 }

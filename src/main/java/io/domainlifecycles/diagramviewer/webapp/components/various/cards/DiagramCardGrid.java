@@ -35,7 +35,9 @@ public class DiagramCardGrid extends FormLayout {
             .sorted(Comparator.comparing(Diagram::getCreatedAt))
             .forEach(diagram -> {
                 DiagramCard diagramCard = new DiagramCard(diagram,
-                    DiagramFileUtils.assembleDiagramUrl(project.getId().toString(), diagram.getFileName()));
+                    DiagramFileUtils.assembleDiagramUrl(
+                        diagram.getChangedAt(), diagram.getDiagramStylingConfiguration().getChangedAt(),
+                        project.getId().toString(), diagram.getFileName()));
 
                 Div diagramCardLinkWrapper = new Div(diagramCard);
                 diagramCardLinkWrapper.addClickListener(

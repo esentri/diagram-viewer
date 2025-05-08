@@ -56,8 +56,7 @@ public class UploadDialog extends Dialog {
                     securityService.getCurrentlySignedInUser(),
                     fileInputStream,
                     uploadOptions.getProjectName(),
-                    uploadOptions.getDomainModelPackages(),
-                    uploadOptions.getBoundedContextPackages()
+                    uploadOptions.getDomainModelPackages()
             );
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
@@ -91,15 +90,7 @@ public class UploadDialog extends Dialog {
         binder.forField(domainModelPackageSelectChipField)
             .asRequired("At least one DomainModel package is required.")
             .bind(UploadOptions::getDomainModelPackages, UploadOptions::setDomainModelPackages);
-
         formLayout.addFormItem(domainModelPackageSelectChipField, "Domain Model packages");
-
-        PackageSelectChipField boundedContextPackageSelectChipField = new PackageSelectChipField();
-        boundedContextPackageSelectChipField.setWidthFull();
-        binder.forField(boundedContextPackageSelectChipField)
-                .bind(UploadOptions::getBoundedContextPackages, UploadOptions::setBoundedContextPackages);
-
-        formLayout.addFormItem(boundedContextPackageSelectChipField, "Bounded Context packages");
 
         return formLayout;
     }
@@ -120,6 +111,5 @@ public class UploadDialog extends Dialog {
     private static class UploadOptions {
         private String projectName;
         private Set<String> domainModelPackages;
-        private Set<String> boundedContextPackages;
     }
 }

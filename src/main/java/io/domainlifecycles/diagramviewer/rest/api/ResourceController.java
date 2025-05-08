@@ -12,9 +12,11 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,7 +33,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class ResourceController {
 
     public static final String RESOURCES_API_PATH = "/api/resources";
-    public static final String TIMESTAMP_REQUEST_PARAMETER_NAME = "timestamp";
+    public static final String DIAGRAM_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "ignored1";
+    public static final String STYLING_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "stylingLastModified";
+
 
     private final String diagramFolderLocation;
 
@@ -43,7 +47,8 @@ public class ResourceController {
     public ResponseEntity<InputStreamResource> getFile(
             @PathVariable("directoryName") String directoryName,
             @PathVariable("fileName") String fileName,
-            @RequestParam(TIMESTAMP_REQUEST_PARAMETER_NAME) String ignored) throws IOException {
+            @RequestParam(DIAGRAM_LAST_MODIFIED_REQUEST_PARAMETER_NAME) String ignored1,
+            @RequestParam(STYLING_LAST_MODIFIED_REQUEST_PARAMETER_NAME) String ignored2) throws IOException {
 
         URI filePath;
         try {
@@ -71,13 +76,14 @@ public class ResourceController {
         }
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type", evaluateContentType(fileName));
+        headers.setContentType(evaluateContentType(fileName));
         headers.setContentLength(Files.size(Paths.get(filePath)));
+        headers.setCacheControl(CacheControl.maxAge(Duration.ofDays(30)));
         return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
     }
 
-    private String evaluateContentType(String fileName) {
+    private MediaType evaluateContentType(String fileName) {
         Optional<MediaType> mimeTypeOptional = MediaTypeFactory.getMediaType(fileName);
-        return mimeTypeOptional.map(MediaType::toString).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        return mimeTypeOptional.orElse(MediaType.APPLICATION_OCTET_STREAM);
     }
 }

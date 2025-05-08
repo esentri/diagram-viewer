@@ -21,8 +21,7 @@ public class DomainModelUtils {
 
     public static DomainMirror initializeDomainMirrorFromJar(
             Path path,
-            Set<String> domainModelPackages,
-            Set<String> boundedContextPackages){
+            Set<String> domainModelPackages){
         if(domainModelPackages == null || domainModelPackages.isEmpty()) {
             throw DiagramViewerException.fail("Domain model packages is null or empty!");
         }
@@ -39,9 +38,6 @@ public class DomainModelUtils {
                 final ReflectiveDomainMirrorFactory domainModelFactory = new ReflectiveDomainMirrorFactory(domainModelPackages.toArray(String[]::new));
                 domainModelFactory.setGenericTypeResolver(new TypeMetaResolver());
                 domainModelFactory.setExternalClassLoader(cl.get());
-                if(boundedContextPackages != null && !boundedContextPackages.isEmpty()) {
-                    domainModelFactory.setBoundedContextPackages(boundedContextPackages.toArray(String[]::new));
-                }
 
                 var dm = domainModelFactory.initializeDomainMirror();
                 LOGGER.info("Domain model initialized");

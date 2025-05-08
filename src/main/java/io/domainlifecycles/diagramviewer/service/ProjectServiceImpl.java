@@ -7,7 +7,6 @@ import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.IOException;
@@ -35,6 +34,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final DiagramService diagramService;
     private final RegisteredUserService registeredUserService;
     private final InvitedUserService invitedUserService;
+    private final ProjectDomainMirrorService projectDomainMirrorService;
     private final ProjectRepository repository;
 
     public ProjectServiceImpl(
@@ -43,6 +43,7 @@ public class ProjectServiceImpl implements ProjectService {
         DiagramService diagramService,
         RegisteredUserService registeredUserService,
         InvitedUserService invitedUserService,
+        ProjectDomainMirrorService projectDomainMirrorService,
         ProjectRepository repository) {
 
         this.targetsDirectory = targetsDirectory;
@@ -50,6 +51,7 @@ public class ProjectServiceImpl implements ProjectService {
         this.diagramService = diagramService;
         this.registeredUserService = registeredUserService;
         this.invitedUserService = invitedUserService;
+        this.projectDomainMirrorService = projectDomainMirrorService;
         this.repository = repository;
     }
 
@@ -70,20 +72,21 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void update(Project project,
                        String projectName,
-                       Set<String> domainModelPackages,
-                       Set<String> boundedContextPackages
+                       Set<String> domainModelPackages
     ) {
+
         project.setName(buildCleanFileName(projectName));
         checkProjectValueRequirements(project);
-
-        project.setDomainMirror(generateDomainModel(domainModelPackages, buildProjectFilePath(project), boundedContextPackages));
+        Path projectFilePath = buildProjectFilePath(project);
 
         if(Objects.equals(project.getName(), projectName)) {
-            repository.save(project);
+            Project persistedProject = repository.save(project);
+            projectDomainMirrorService.createOrUpdate(persistedProject.getId(), projectFilePath, domainModelPackages);
             return;
         }
 
-        insert(project);
+        Project persistedProject = insert(project);
+        projectDomainMirrorService.createOrUpdate(persistedProject.getId(), projectFilePath, domainModelPackages);
     }
 
     @Override
@@ -106,18 +109,15 @@ public class ProjectServiceImpl implements ProjectService {
             RegisteredUser registeredUser,
             InputStream fileContents,
             String fileName,
-            Set<String> domainModelPackages,
-            Set<String> boundedContextPackages
-    ) {
+            Set<String> domainModelPackages) {
 
         // persist project without domain model to obtain UUID
-        final Project mappedProject = insert(mapProject(fileName, registeredUser));
+        final Project mappedProject = insert(mapProject(fileName, registeredUser, false));
 
         Path projectFilePath = saveTargetFile(targetsDirectory, fileContents,
             buildProjectFilename(mappedProject));
 
-        mappedProject.setDomainMirror(generateDomainModel(domainModelPackages, projectFilePath, boundedContextPackages));
-
+        projectDomainMirrorService.createOrUpdate(mappedProject.getId(), projectFilePath, domainModelPackages);
 
         return repository.save(mappedProject);
     }
@@ -127,13 +127,12 @@ public class ProjectServiceImpl implements ProjectService {
             Project project,
             InputStream fileContents,
             String filename,
-            Set<String> domainModelPackages,
-            Set<String> boundedContextPackages
+            Set<String> domainModelPackages
     ) {
         deleteTargetFile(project);
 
         Path projectFilePath = saveTargetFile(targetsDirectory, fileContents, buildProjectFilename(project));
-        project.setDomainMirror(generateDomainModel(domainModelPackages, projectFilePath, boundedContextPackages));
+        projectDomainMirrorService.createOrUpdate(project.getId(), projectFilePath, domainModelPackages);
 
         repository.save(project);
     }
@@ -147,14 +146,14 @@ public class ProjectServiceImpl implements ProjectService {
 
         if(foundProject.isPresent()) {
             Project project = foundProject.get();
-            project.setDomainMirror(domainMirror);
-            repository.save(project);
+            projectDomainMirrorService.createOrUpdate(project.getId(), domainMirror);
             return;
         }
 
-        Project project = mapProject(projectName, domainMirror,
-            (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        repository.save(project);
+        Project project = mapProject(projectName,
+            (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), true);
+        Project persistedProject = repository.save(project);
+        projectDomainMirrorService.createOrUpdate(persistedProject.getId(), domainMirror);
     }
 
     @Override
@@ -194,7 +193,9 @@ public class ProjectServiceImpl implements ProjectService {
         final String projectName = project.getName();
         Project fetchedProject = getByName(projectName);
         fetchedProject.unassignAllUsers();
+
         repository.delete(fetchedProject);
+        projectDomainMirrorService.delete(fetchedProject.getId());
 
         if(!project.isApiUpload()) {
             deleteTargetFile(project);
@@ -215,35 +216,14 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.save(project);
     }
 
-    private Project mapProject(String fileName, RegisteredUser registeredUser) {
+    private Project mapProject(String fileName, RegisteredUser registeredUser, boolean apiUpload) {
         return Project.builder()
             .name(buildCleanFileName(fileName))
-            .apiUpload(false)
+            .apiUpload(apiUpload)
             .creator(registeredUser)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
             .assignedInvitedUsers(new HashSet<>())
             .build();
-    }
-
-    private Project mapProject(String projectName, DomainMirror domainMirror, RegisteredUser registeredUser) {
-        return Project.builder()
-            .name(projectName)
-            .domainMirror(domainMirror)
-            .apiUpload(true)
-            .creator(registeredUser)
-            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
-            .assignedInvitedUsers(new HashSet<>())
-            .build();
-    }
-
-    private DomainMirror generateDomainModel(Set<String> domainModelPackages,
-                                             Path projectFilePath,
-                                             Set<String> boundedContextPackages) {
-        return DomainModelUtils.initializeDomainMirrorFromJar(
-                projectFilePath,
-                domainModelPackages,
-                boundedContextPackages
-        );
     }
 
     private Path saveTargetFile(String targetsLocation, InputStream fileContents, String fileName) {
