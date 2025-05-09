@@ -10,18 +10,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(DomainMirrorController.DOMAIN_MIRROR_API_PATH)
-public class DomainMirrorController {
+@RequestMapping(DomainMirrorUploadController.UPLOAD_DOMAIN_MIRROR_API_PATH)
+public class DomainMirrorUploadController {
 
-    public static final String DOMAIN_MIRROR_API_PATH = "/api/domain-mirror/";
+    public static final String UPLOAD_DOMAIN_MIRROR_API_PATH = "/api/upload/";
 
     private final ProjectService projectService;
 
-    public DomainMirrorController(ProjectService projectService) {
+    public DomainMirrorUploadController(ProjectService projectService) {
         this.projectService = projectService;
     }
 
-    @PutMapping("/{projectName}")
+    @PutMapping("/domain-mirror/{projectName}")
     public ResponseEntity<String> createOrUpdateDomainModel(
         @PathVariable String projectName, @RequestBody DomainMirrorUploadDto domainMirrorUploadDto) {
 
