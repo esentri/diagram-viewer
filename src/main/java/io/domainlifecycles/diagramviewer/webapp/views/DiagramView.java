@@ -102,7 +102,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             .findAny()
             .orElseThrow(
                 () -> DiagramViewerException.fail(String.format("No diagram found with name '%s' .", diagramName)));
-        domainTypeMirrors = projectDomainMirrorService.getAllDomainTypeMirrors(project.getId());
+        domainTypeMirrors = projectDomainMirrorService.getAllDomainTypeMirrorsWithoutEnumsAndIds(project.getId());
     }
 
     private void addPageContents() {

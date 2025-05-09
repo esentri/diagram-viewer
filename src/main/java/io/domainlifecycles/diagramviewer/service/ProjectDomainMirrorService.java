@@ -13,7 +13,7 @@ public interface ProjectDomainMirrorService {
 
     ProjectDomainMirror getByProjectId(final UUID projectId);
 
-    List<DomainTypeMirror> getAllDomainTypeMirrors(final UUID projectId);
+    List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(final UUID projectId);
 
     List<AggregateRootMirror> getAllAggregateRootMirrors(final UUID projectId);
 

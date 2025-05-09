@@ -83,10 +83,11 @@ class ProjectService_ITest {
 
     @Test
     void Should_CreateProject_When_AllValuesAreValid() throws IOException {
-
+        var pack = new HashSet<String>();
+        pack.add("com.esentri");
         // when
         Project project = service.save(registeredUser,
-            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", Set.of("com.esentri"), Set.of("com.esentri"));
+            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", pack);
 
         // then
         assertThat(project).isNotNull();

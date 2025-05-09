@@ -8,19 +8,24 @@ import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorService {
 
     private final ProjectDomainMirrorRepository repository;
+    private final JacksonDomainSerializer serializer;
 
     public ProjectDomainMirrorServiceImpl(ProjectDomainMirrorRepository repository) {
         this.repository = repository;
+        this.serializer = new JacksonDomainSerializer(false);
     }
 
     @Override
@@ -30,15 +35,19 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     }
 
     @Override
-    public List<DomainTypeMirror> getAllDomainTypeMirrors(UUID projectId) {
-        return getByProjectId(projectId)
-            .getDomainMirror().getAllDomainTypeMirrors();
+    public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
+        return repository.findProjectDomainTypesWithOutEnumsAndIds(projectId)
+                .stream()
+                .map(m -> (DomainTypeMirror)serializer.deserializeTypeMirror(m))
+                .toList();
     }
 
     @Override
     public List<AggregateRootMirror> getAllAggregateRootMirrors(UUID projectId) {
-        return getByProjectId(projectId)
-            .getDomainMirror().getAllAggregateRootMirrors();
+        return repository.findProjectAggregateTypes(projectId)
+                .stream()
+                .map(m -> (AggregateRootMirror)serializer.deserializeTypeMirror(m))
+                .toList();
     }
 
     @Override

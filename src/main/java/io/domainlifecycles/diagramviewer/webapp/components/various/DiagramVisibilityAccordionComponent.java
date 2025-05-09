@@ -48,6 +48,12 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
         Map<DomainType, ? extends List<? extends DomainTypeMirror>> typeMirrorsGroupedByDomainMirrorType =
             domainTypeMirrors
             .stream()
+            .filter(dtm ->
+                    diagram.getDomainModelVisibility()
+                            .getFilteredPackageNames()
+                            .stream()
+                            .anyMatch(p -> dtm.getTypeName().startsWith(p))
+            )
             .collect(groupingBy(DomainTypeMirror::getDomainType));
 
         for (DomainType type : domainTypeOrdered()) {
