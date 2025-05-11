@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
@@ -29,6 +30,7 @@ import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
@@ -127,8 +129,17 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     private HorizontalLayout createAndGetButtonBar() {
         HorizontalLayout buttonBar = new HorizontalLayout();
-        buttonBar.add(getDiagramDownloadButton(), getDeleteDiagramButton());
+        buttonBar.getStyle().setMarginLeft("3.5rem");
+        buttonBar.add(getRenameDiagramButton(), getDiagramDownloadButton(), getDeleteDiagramButton());
         return buttonBar;
+    }
+
+    private Button getRenameDiagramButton() {
+        RenameDiagramDialog renameDiagramDialog = new RenameDiagramDialog(diagramService, project, diagram);
+        Button renameDiagramButton = new Button("Rename", new Icon(VaadinIcon.PENCIL));
+        renameDiagramButton.addClickListener(e -> renameDiagramDialog.open());
+
+        return renameDiagramButton;
     }
 
     private Anchor getDiagramDownloadButton() {
@@ -137,7 +148,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         downloadAnchor.getStyle().set("cursor", "pointer");
         downloadAnchor.setId("diagramDownloadButton");
         downloadAnchor.getElement().setAttribute("download", true);
-        downloadAnchor.getStyle().setMarginLeft("3.5rem");
         downloadAnchor.removeAll();
         downloadAnchor.add(new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD_ALT)));
 
@@ -173,13 +183,10 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private StreamResource buildDiagramDownloadStreamResource() {
-        return new StreamResource(diagram.getFileName(), () -> getDiagramFileStream(
-            Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName()).toAbsolutePath().toString()));
-    }
+        Path diagramLocation = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
+        byte[] fileContents = FileIOUtils.readFile(diagramLocation.toAbsolutePath().toString());
 
-    private InputStream getDiagramFileStream(final String diagramLocation) {
-        byte[] fileContents = FileIOUtils.readFile(diagramLocation);
-        return new ByteArrayInputStream(fileContents);
+        return new StreamResource(diagram.getFileName(), () -> new ByteArrayInputStream(fileContents));
     }
 
     @Override

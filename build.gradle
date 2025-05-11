@@ -25,6 +25,7 @@ repositories {
 ext {
 	set('vaadinVersion', "24.7.1")
 	javaDockerVersion = "3.4.0"
+	dlcVersion = "2.3.0"
 }
 
 tasks.named('bootJar') {
@@ -42,8 +43,8 @@ dependencies {
 	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"
 	implementation "com.github.docker-java:docker-java-transport-httpclient5:${javaDockerVersion}"
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
-	implementation 'io.domainlifecycles:mirror:2.3.0'
-	implementation 'io.domainlifecycles:domain-diagrammer:2.3.0'
+	implementation "io.domainlifecycles:mirror:${dlcVersion}"
+	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	implementation("io.domainlifecycles:kickstart-generator:1.0.6")
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

@@ -13,9 +13,12 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +43,11 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
+    public Set<Diagram> findAll(UUID projectId) {
+        return repository.findByProjectId(projectId);
+    }
+
+    @Override
     public Diagram update(Diagram diagram, Project project) {
         final Diagram updatedDiagram = insert(diagram);
         createAndSaveDiagramToFilesystem(project, updatedDiagram);
@@ -48,20 +56,28 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public Diagram create(Project project, String fileName, FileType fileType, Set<String> filteredPackages) {
-        Path diagramPath = Path.of(diagramsLocation, project.getName(), fileName + fileType.getFileSuffix());
+    public Diagram update(Diagram diagram, Project project, String fileName) {
+        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
+        String newFilenameWithSuffix = fileName + diagram.getFileType().getFileSuffix();
+        FileIOUtils.renameFile(diagramPath, newFilenameWithSuffix);
 
+        diagram.setFileName(newFilenameWithSuffix);
+        return update(diagram, project);
+    }
+
+    @Override
+    public Diagram create(Project project, String fileName, FileType fileType, Set<String> filteredPackages, Set<String> blacklistedClassnames) {
         Diagram diagram = Diagram.builder()
-            .fileName(diagramPath.getFileName().toString())
+            .fileName(fileName + fileType.getFileSuffix())
             .fileType(fileType)
-            .domainModelVisibility(new DomainModelVisibility(filteredPackages, null, null))
+            .domainModelVisibility(new DomainModelVisibility(filteredPackages, null, blacklistedClassnames))
             .project(project)
             .build();
 
-        final Diagram updatedDiagram = insert(diagram);
-        createAndSaveDiagramToFilesystem(project, updatedDiagram);
+        final Diagram persistedDiagram = insert(diagram);
+        createAndSaveDiagramToFilesystem(project, persistedDiagram);
 
-        return updatedDiagram;
+        return persistedDiagram;
     }
 
     private Diagram insert(Diagram diagram) {

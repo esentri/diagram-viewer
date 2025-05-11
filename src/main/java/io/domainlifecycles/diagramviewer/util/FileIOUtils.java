@@ -45,6 +45,27 @@ public class FileIOUtils {
         Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
     }
 
+    public static void renameFile(Path path, String newFilename) {
+        if(newFilename == null || newFilename.isBlank()) {
+            throw DiagramViewerException.fail("Filename may not be empty for renaming.");
+        }
+
+        Path parentDir = path.getParent();
+        if (parentDir == null) {
+            throw DiagramViewerException.fail(
+                String.format("Specified file path '%s' for renaming has no parent directory.", path.toAbsolutePath()));
+        }
+
+        Path newPath = parentDir.resolve(newFilename);
+
+        try {
+            Files.move(path, newPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch(RuntimeException | IOException e) {
+            throw DiagramViewerException.fail(
+                String.format("Could not rename file '%s' to '%s'.", path.toAbsolutePath(), newPath.getFileName()), e);
+        }
+    }
+
     public static byte[] readFile(String absoluteLocationPath) {
         try {
             Path path = Paths.get(absoluteLocationPath);

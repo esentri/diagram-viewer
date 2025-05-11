@@ -9,6 +9,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -90,7 +91,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         HorizontalLayout horizontalNameAndEditButtonAndReuploadButtonLayout = new HorizontalLayout();
 
-        Button editProjectButton = new Button(new Icon("vaadin:pencil"), e -> editProjectDialog.open());
+        Button editProjectButton = new Button(new Icon(VaadinIcon.PENCIL), e -> editProjectDialog.open());
         editProjectButton.addThemeName("icon");
         editProjectButton.getStyle().set("cursor", "pointer");
 
@@ -119,7 +120,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Button getCreateDiagramButton() {
-        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(diagramService, project);
+        CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(diagramService, project,
+            projectDomainMirrorService.getAllDomainTypeMirrorsWithoutEnumsAndIds(project.getId()));
 
         Button createDiagramButton = new Button("Create new Diagram", new Icon("vaadin:plus"));
         createDiagramButton.getStyle().set("cursor", "pointer");

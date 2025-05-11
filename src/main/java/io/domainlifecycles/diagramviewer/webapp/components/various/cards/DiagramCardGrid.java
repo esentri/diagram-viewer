@@ -1,8 +1,13 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.cards;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dnd.DragSource;
+import com.vaadin.flow.component.dnd.DropEffect;
+import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.router.RouteParameters;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
@@ -47,7 +52,24 @@ public class DiagramCardGrid extends FormLayout {
                             DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, diagram.getFileName()))));
                 diagramCardLinkWrapper.getStyle().set("cursor", "pointer");
 
+                diagramCard.setDragData(diagram);
+                diagramCard.setDropEffect(DropEffect.COPY);
+
+                diagramCard.addDropListener(event -> {
+                    String draggedDiagramName = ((Diagram) event.getDragData().orElseThrow()).getFileName();
+                    Notification.show("Dropped '" + draggedDiagramName + "' on '" + diagram.getFileName() + "'.");
+                });
+
+                diagramCard.addDragStartListener(event -> diagramCard.setActive(false));
+                diagramCard.addDragEndListener(event -> diagramCard.setActive(true));
+
                 add(diagramCardLinkWrapper);
             });
+    }
+
+    private int getComponentIndex(Component component) {
+        if (component.getParent().isEmpty()) return -1;
+        Component parent = component.getParent().get();
+        return parent.getChildren().toList().indexOf(component);
     }
 }
