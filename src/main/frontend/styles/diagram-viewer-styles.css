@@ -22,3 +22,7 @@
     width: max-content;
     max-width: 50em;
 }
+
+img {
+    -webkit-user-drag: none;
+}

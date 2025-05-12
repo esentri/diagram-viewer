@@ -40,36 +40,8 @@ public class DiagramCardGrid extends FormLayout {
             .stream()
             .sorted(Comparator.comparing(Diagram::getCreatedAt))
             .forEach(diagram -> {
-                DiagramCard diagramCard = new DiagramCard(diagram,
-                    DiagramFileUtils.assembleDiagramUrl(
-                        diagram.getChangedAt(), diagram.getDiagramStylingConfiguration().getChangedAt(),
-                        project.getId().toString(), diagram.getFileName()));
-
-                Div diagramCardLinkWrapper = new Div(diagramCard);
-                diagramCardLinkWrapper.addClickListener(
-                    event -> UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
-                        Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(),
-                            DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, diagram.getFileName()))));
-                diagramCardLinkWrapper.getStyle().set("cursor", "pointer");
-
-                diagramCard.setDragData(diagram);
-                diagramCard.setDropEffect(DropEffect.COPY);
-
-                diagramCard.addDropListener(event -> {
-                    String draggedDiagramName = ((Diagram) event.getDragData().orElseThrow()).getFileName();
-                    Notification.show("Dropped '" + draggedDiagramName + "' on '" + diagram.getFileName() + "'.");
-                });
-
-                diagramCard.addDragStartListener(event -> diagramCard.setActive(false));
-                diagramCard.addDragEndListener(event -> diagramCard.setActive(true));
-
+                DiagramCardLinkWrapper diagramCardLinkWrapper = new DiagramCardLinkWrapper(project, diagram);
                 add(diagramCardLinkWrapper);
             });
-    }
-
-    private int getComponentIndex(Component component) {
-        if (component.getParent().isEmpty()) return -1;
-        Component parent = component.getParent().get();
-        return parent.getChildren().toList().indexOf(component);
     }
 }

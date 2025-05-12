@@ -1,0 +1,80 @@
+package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
+
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.router.RouteParameters;
+import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
+import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
+import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+public class CreateFolderDialog extends Dialog {
+
+
+    private final Binder<CreateFolderOptions> binder;
+    private final CreateFolderOptions createFolderOptions;
+
+    private Button createButton;
+
+    public CreateFolderDialog(Diagram dragDiagram, Diagram dropDiagram) {
+        this.binder = new Binder<>();
+
+        this.createFolderOptions = new CreateFolderOptions();
+
+        setHeaderTitle("Create Folder");
+
+        getFooter().add(createCreateButton());
+        getFooter().add(createCancelButton());
+        add(createDialogLayout());
+
+        binder.readBean(createFolderOptions);
+        binder.addStatusChangeListener(event -> createButton.setEnabled(binder.isValid()));
+    }
+
+    private Button createCreateButton() {
+        createButton = new Button("Create");
+
+        createButton.addClickListener(e -> {
+            binder.writeBeanIfValid(createFolderOptions);
+            close();
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
+        });
+
+        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        return createButton;
+    }
+
+    private Button createCancelButton() {
+        return new Button("Cancel", e -> close());
+    }
+
+    private FormLayout createDialogLayout() {
+        FormLayout formLayout = new FormLayout();
+
+        TextField folderNameTextField = new TextField();
+        binder.forField(folderNameTextField)
+            .asRequired("Name is required.")
+            .bind(CreateFolderOptions::getFolderName, CreateFolderOptions::setFolderName);
+        formLayout.addFormItem(folderNameTextField, "Name");
+
+        return formLayout;
+    }
+
+    @Data
+    @NoArgsConstructor
+    private static class CreateFolderOptions {
+        private String folderName;
+    }
+}
