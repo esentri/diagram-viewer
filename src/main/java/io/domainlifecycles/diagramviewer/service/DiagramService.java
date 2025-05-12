@@ -12,6 +12,8 @@ public interface DiagramService {
 
     Set<Diagram> findAll(UUID projectId);
 
+    Diagram update(Diagram diagram);
+
     Diagram update(Diagram diagram, Project project);
 
     Diagram update(Diagram diagram, Project project, String fileName);

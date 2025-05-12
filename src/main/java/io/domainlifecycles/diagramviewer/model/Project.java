@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,6 +44,9 @@ public class Project {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
     private Set<Diagram> diagrams;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
+    private Set<DiagramDirectory> diagramDirectories;
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> domainModelPackages;
@@ -93,6 +97,24 @@ public class Project {
     public void unassignAllUsers() {
         new HashSet<>(assignedRegisteredUsers).forEach(this::unassignUser);
         new HashSet<>(assignedInvitedUsers).forEach(this::unassignUser);
+    }
+
+    public void addDiagram(Diagram diagram) {
+        diagrams.add(diagram);
+    }
+
+    public void removeDiagram(Diagram diagram) {
+        diagrams.remove(diagram);
+    }
+
+    public void addDiagramDirectory(DiagramDirectory diagramDirectory) {
+        diagramDirectories.add(diagramDirectory);
+    }
+
+    public Set<Diagram> getDiagramsWithoutDirectory() {
+        return diagrams.stream()
+            .filter(diagram -> diagram.getDiagramDirectory() == null)
+            .collect(Collectors.toSet());
     }
 
     @Override

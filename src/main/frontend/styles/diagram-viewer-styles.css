@@ -10,6 +10,12 @@
     padding: 2rem
 }
 
+#diagram-directory-viewer {
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 2rem
+}
+
 #diagram-viewer-and-styling-container {
     margin-top: 1rem;
     box-sizing: border-box;

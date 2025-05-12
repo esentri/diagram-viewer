@@ -94,7 +94,7 @@ public class CreateDiagramDialog extends Dialog {
         Select<Diagram> diagramTemplateSelect = new Select<>();
         diagramTemplateSelect.setWidthFull();
         diagramTemplateSelect.setEmptySelectionAllowed(true);
-        diagramTemplateSelect.setItems(diagramService.findAll(project.getId()));
+        diagramTemplateSelect.setItems(project.getDiagrams());
         diagramTemplateSelect.setItemLabelGenerator(diagram -> diagram == null ? "" : diagram.getFileName());
         advancedConfigurationFormLayout.addFormItem(diagramTemplateSelect, "Template");
 

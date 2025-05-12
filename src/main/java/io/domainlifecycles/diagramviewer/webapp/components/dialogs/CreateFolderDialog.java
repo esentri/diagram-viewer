@@ -11,24 +11,33 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.RouteParameters;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Map;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 public class CreateFolderDialog extends Dialog {
 
-
+    private final Project project;
+    private final Diagram dragDiagram;
+    private final Diagram dropDiagram;
+    private final DiagramDirectoryService diagramDirectoryService;
     private final Binder<CreateFolderOptions> binder;
     private final CreateFolderOptions createFolderOptions;
 
     private Button createButton;
 
-    public CreateFolderDialog(Diagram dragDiagram, Diagram dropDiagram) {
+    public CreateFolderDialog(Project project, Diagram dragDiagram, Diagram dropDiagram, DiagramDirectoryService diagramDirectoryService) {
+        this.project = project;
+        this.dragDiagram = dragDiagram;
+        this.dropDiagram = dropDiagram;
+        this.diagramDirectoryService = diagramDirectoryService;
         this.binder = new Binder<>();
 
         this.createFolderOptions = new CreateFolderOptions();
@@ -48,6 +57,7 @@ public class CreateFolderDialog extends Dialog {
 
         createButton.addClickListener(e -> {
             binder.writeBeanIfValid(createFolderOptions);
+            diagramDirectoryService.create(createFolderOptions.getFolderName(), project, Set.of(dragDiagram, dropDiagram));
             close();
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });

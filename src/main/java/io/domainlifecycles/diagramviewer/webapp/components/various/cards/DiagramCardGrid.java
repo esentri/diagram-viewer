@@ -1,29 +1,16 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.cards;
 
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.dnd.DragSource;
-import com.vaadin.flow.component.dnd.DropEffect;
-import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.router.RouteParameters;
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
-import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
-import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
+import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import java.util.Comparator;
-import java.util.Map;
+import java.util.Set;
 
 public class DiagramCardGrid extends FormLayout {
 
-    private final Project project;
-
-    public DiagramCardGrid(Project project) {
-        this.project = project;
-
+    private DiagramCardGrid() {
         setSizeFull();
         getStyle().setMarginTop("2rem");
         setResponsiveSteps(
@@ -32,16 +19,53 @@ public class DiagramCardGrid extends FormLayout {
             new ResponsiveStep("900px", 4),
             new ResponsiveStep("1200px", 5)
         );
-        buildGrid();
     }
 
-    private void buildGrid() {
-        project.getDiagrams()
+    public DiagramCardGrid(
+        DiagramDirectoryService diagramDirectoryService,
+        Project project,
+        Set<DiagramDirectory> diagramDirectories,
+        Set<Diagram> diagrams) {
+
+        this();
+        buildGrid(diagramDirectoryService, project, diagramDirectories, diagrams);
+    }
+
+    public DiagramCardGrid(
+        DiagramDirectoryService diagramDirectoryService,
+        Project project,
+        Set<Diagram> diagrams) {
+
+        this();
+        buildGrid(diagramDirectoryService, project, diagrams);
+    }
+
+    private void buildGrid(DiagramDirectoryService diagramDirectoryService, Project project, Set<DiagramDirectory> diagramDirectories, Set<Diagram> diagrams) {
+
+        diagramDirectories
+            .stream()
+            .sorted(Comparator.comparing(DiagramDirectory::getCreatedAt))
+            .forEach(diagramDirectory -> {
+                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, project, diagramDirectory);
+                add(cardLinkWrapper);
+            });
+
+        diagrams
             .stream()
             .sorted(Comparator.comparing(Diagram::getCreatedAt))
             .forEach(diagram -> {
-                DiagramCardLinkWrapper diagramCardLinkWrapper = new DiagramCardLinkWrapper(project, diagram);
-                add(diagramCardLinkWrapper);
+                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, project, diagram);
+                add(cardLinkWrapper);
+            });
+    }
+
+    private void buildGrid(DiagramDirectoryService diagramDirectoryService, Project project, Set<Diagram> diagrams) {
+        diagrams
+            .stream()
+            .sorted(Comparator.comparing(Diagram::getCreatedAt))
+            .forEach(diagram -> {
+                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, project, diagram);
+                add(cardLinkWrapper);
             });
     }
 }

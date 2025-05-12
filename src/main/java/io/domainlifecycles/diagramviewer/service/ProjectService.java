@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface ProjectService {
 
+    @Transactional
     Stream<Project> getAll(RegisteredUser registeredUser);
 
     Project getByName(final String projectName);

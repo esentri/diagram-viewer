@@ -91,11 +91,11 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void deleteDiagram(Project project, Diagram diagram) {
-        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(),
-            diagram.getFileName());
-
         project.getDiagrams().remove(diagram);
         repository.save(project);
+
+        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(),
+            diagram.getFileName());
 
         try {
             FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString());
@@ -214,6 +214,8 @@ public class ProjectServiceImpl implements ProjectService {
     private Project mapProject(String fileName, Set<String> domainModelPackages, RegisteredUser registeredUser, boolean apiUpload) {
         return Project.builder()
             .name(buildCleanFileName(fileName))
+            .diagrams(new HashSet<>())
+            .diagramDirectories(new HashSet<>())
             .apiUpload(apiUpload)
             .creator(registeredUser)
             .domainModelPackages(domainModelPackages)

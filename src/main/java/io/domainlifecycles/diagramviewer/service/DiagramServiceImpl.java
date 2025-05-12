@@ -47,6 +47,11 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
+    public Diagram update(Diagram diagram) {
+        return insert(diagram);
+    }
+
+    @Override
     public Diagram update(Diagram diagram, Project project) {
         final Diagram updatedDiagram = insert(diagram);
         createAndSaveDiagramToFilesystem(project, updatedDiagram);
@@ -75,6 +80,8 @@ public class DiagramServiceImpl implements DiagramService {
 
         final Diagram persistedDiagram = insert(diagram);
         createAndSaveDiagramToFilesystem(project, persistedDiagram);
+
+        project.addDiagram(diagram);
 
         return persistedDiagram;
     }

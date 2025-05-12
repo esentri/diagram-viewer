@@ -1,17 +1,17 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.cards;
 
-import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.dnd.DragSource;
 import com.vaadin.flow.component.dnd.DropEffect;
 import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.notification.Notification;
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
+import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateFolderDialog;
 
-public class DiagramCard extends Card implements DragSource<DiagramCardLinkWrapper>, DropTarget<DiagramCardLinkWrapper> {
+public class DiagramCard extends Card implements DragSource<CardLinkWrapper>, DropTarget<CardLinkWrapper> {
 
-    public DiagramCard(final Diagram diagram, final String diagramSrc) {
+    public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final Diagram diagram, final String diagramSrc) {
         setTitle(diagram.getFileName());
 
         Image image = new Image(diagramSrc, diagram.getFileName());
@@ -19,10 +19,21 @@ public class DiagramCard extends Card implements DragSource<DiagramCardLinkWrapp
         image.setWidth("95%");
         setMedia(image);
 
-        configureDragAndDrop(diagram);
+        configureDragAndDrop(diagram, diagramDirectoryService);
     }
 
-    private void configureDragAndDrop(Diagram diagram) {
+    public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final DiagramDirectory diagramDirectory) {
+        setTitle(diagramDirectory.getName());
+
+        Image image = new Image("frontend/icons/folder-open-o.svg", "Directory");
+        image.setHeight("200px");
+        image.setWidth("95%");
+        setMedia(image);
+
+        configureDragAndDrop(diagramDirectory, diagramDirectoryService);
+    }
+
+    private void configureDragAndDrop(Diagram diagram, DiagramDirectoryService diagramDirectoryService) {
         DragSource.create(this);
         DropTarget.create(this);
 
@@ -31,11 +42,23 @@ public class DiagramCard extends Card implements DragSource<DiagramCardLinkWrapp
 
         addDropListener(event -> {
             Diagram draggedDiagram = (Diagram) event.getDragData().orElseThrow();
-            CreateFolderDialog createFolderDialog = new CreateFolderDialog(draggedDiagram, diagram);
+            CreateFolderDialog createFolderDialog = new CreateFolderDialog(diagram.getProject(), draggedDiagram, diagram, diagramDirectoryService);
             createFolderDialog.open();
         });
 
         addDragStartListener(event -> setActive(false));
         addDragEndListener(event -> setActive(true));
+    }
+
+    private void configureDragAndDrop(DiagramDirectory diagramDirectory, DiagramDirectoryService diagramDirectoryService) {
+        DropTarget.create(this);
+
+        setDraggable(false);
+        setDropEffect(DropEffect.COPY);
+
+        addDropListener(event -> {
+            Diagram draggedDiagram = (Diagram) event.getDragData().orElseThrow();
+            diagramDirectoryService.add(diagramDirectory, draggedDiagram);
+        });
     }
 }

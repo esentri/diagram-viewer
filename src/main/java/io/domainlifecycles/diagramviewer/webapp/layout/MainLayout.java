@@ -32,6 +32,7 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
@@ -39,10 +40,13 @@ import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")
@@ -189,24 +193,49 @@ public class MainLayout extends AppLayout {
     private SideNavItem[] createSideNavLinks() {
         return projectService.getAll(securityService.getCurrentlySignedInUser())
             .sorted(Comparator.comparing(Project::getCreatedAt))
-            .map(project -> {
-                SideNavItem parentSideNavItem = new SideNavItem(project.getName(), ProjectView.class, new RouteParameters(Map.of("projectName", project.getName())));
-                parentSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
-
-                project.getDiagrams()
-                    .stream().sorted(Comparator.comparing(Diagram::getCreatedAt))
-                    .forEach(diagram -> {
-                        SideNavItem sideNavItem = new SideNavItem(diagram.getFileName(), DiagramView.class,
-                            new RouteParameters(Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(), "diagramName",
-                                diagram.getFileName())));
-
-                        sideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
-                        parentSideNavItem.addItem(sideNavItem);
-                    });
-
-                return parentSideNavItem;
-            })
+            .map(this::createAndGetProjectSideNavItem)
             .toArray(SideNavItem[]::new);
+    }
+
+    private SideNavItem createAndGetProjectSideNavItem(Project project) {
+        SideNavItem projectSideNavItem = new SideNavItem(
+            project.getName(), ProjectView.class, new RouteParameters(Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName())));
+        projectSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
+
+        project.getDiagramDirectories()
+            .stream().sorted(Comparator.comparing(DiagramDirectory::getCreatedAt))
+                .forEach(diagramDirectory -> {
+                    SideNavItem directorySideNavItem = createAndGetDiagramDirectorySideNavItem(project, diagramDirectory);
+                    projectSideNavItem.addItem(directorySideNavItem);
+                });
+
+        createAndAddChildDiagramSideNavItems(project, projectSideNavItem, project.getDiagramsWithoutDirectory());
+
+        return projectSideNavItem;
+    }
+
+    private SideNavItem createAndGetDiagramDirectorySideNavItem(Project project, DiagramDirectory diagramDirectory) {
+        SideNavItem directorySideNavItem = new SideNavItem(diagramDirectory.getName(), DiagramDirectoryView.class,
+            new RouteParameters(Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER, diagramDirectory.getName())));
+
+        createAndAddChildDiagramSideNavItems(project, directorySideNavItem, diagramDirectory.getDiagrams());
+
+        directorySideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
+        return directorySideNavItem;
+    }
+
+    private void createAndAddChildDiagramSideNavItems(Project project, SideNavItem parentSideNavItem, Set<Diagram> diagrams) {
+        diagrams
+            .stream().sorted(Comparator.comparing(Diagram::getCreatedAt))
+            .forEach(diagram -> {
+                SideNavItem sideNavItem = new SideNavItem(diagram.getFileName(), DiagramView.class,
+                    new RouteParameters(
+                        Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(), "diagramName",
+                        diagram.getFileName())));
+
+                sideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
+                parentSideNavItem.addItem(sideNavItem);
+            });
     }
 
     private void refreshSideNavLinks() {

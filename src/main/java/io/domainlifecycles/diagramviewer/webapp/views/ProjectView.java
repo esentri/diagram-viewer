@@ -19,6 +19,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
@@ -35,7 +36,7 @@ import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
 
-@Route(value = "/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
+@Route(value = "/project/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Project Viewer")
 @PermitAll
 public class ProjectView extends FlexLayout implements BeforeEnterObserver {
@@ -46,6 +47,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final SecurityService securityService;
     private final ProjectService projectService;
     private final DiagramService diagramService;
+    private final DiagramDirectoryService diagramDirectoryService;
     private final SessionStorage sessionStorage;
 
     private Project project;
@@ -56,12 +58,13 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
                        SecurityService securityService,
                        ProjectService projectService,
                        DiagramService diagramService,
-                       SessionStorage sessionStorage) {
+                       DiagramDirectoryService diagramDirectoryService, SessionStorage sessionStorage) {
 
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.securityService = securityService;
         this.projectService = projectService;
         this.diagramService = diagramService;
+        this.diagramDirectoryService = diagramDirectoryService;
         this.sessionStorage = sessionStorage;
 
         setSizeFull();
@@ -81,7 +84,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private void addPageContents() {
         add(createAndGetNameAndEditButtonAndReuploadButtonLayout(), createAndGetButtonBar());
-        Scroller scroller = new Scroller(new DiagramCardGridContainer(project));
+        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, project, project.getDiagramDirectories(), project.getDiagramsWithoutDirectory()));
         add(scroller);
     }
 
