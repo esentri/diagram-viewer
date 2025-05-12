@@ -1,19 +1,19 @@
 #diagram-viewer {
     box-sizing: border-box;
     overflow: hidden;
-    padding: 1rem
+    padding: 2rem 1rem;
 }
 
 #project-viewer {
     box-sizing: border-box;
     overflow: hidden;
-    padding: 2rem
+    padding: 2rem;
 }
 
 #diagram-directory-viewer {
     box-sizing: border-box;
     overflow: hidden;
-    padding: 2rem
+    padding: 2rem;
 }
 
 #diagram-viewer-and-styling-container {

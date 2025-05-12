@@ -30,6 +30,8 @@ import static java.util.stream.Collectors.groupingBy;
 
 public class DiagramVisibilityAccordionComponent extends Accordion {
 
+    private static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
+
     private final DiagramService diagramService;
     private final Project project;
     private final Diagram diagram;
@@ -45,20 +47,29 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
     }
 
     private void createAccordion(List<DomainTypeMirror> domainTypeMirrors) {
+        List<DomainTypeMirror> directlyContained = domainTypeMirrors.stream().filter(dtm ->
+            diagram.getDomainModelVisibility()
+                .getFilteredPackageNames()
+                .stream()
+                .anyMatch(p -> dtm.getTypeName().startsWith(p))
+        ).toList();
+
         Map<DomainType, ? extends List<? extends DomainTypeMirror>> typeMirrorsGroupedByDomainMirrorType =
             domainTypeMirrors
-            .stream()
-            .filter(dtm -> {
-                Set<String> filteredPackageNames = diagram.getDomainModelVisibility()
-                    .getFilteredPackageNames();
+                .stream()
+                .filter(dtm -> {
+                    Set<String> filteredPackageNames = diagram.getDomainModelVisibility()
+                        .getFilteredPackageNames();
 
-                if(filteredPackageNames == null || filteredPackageNames.isEmpty()) return true;
+                    if(filteredPackageNames == null || filteredPackageNames.isEmpty()) return true;
 
-                return filteredPackageNames
-                    .stream()
-                    .anyMatch(p -> dtm.getTypeName().startsWith(p));
-            })
-            .collect(groupingBy(DomainTypeMirror::getDomainType));
+                    return directlyContained.contains(dtm)
+                        || directlyContained
+                        .stream()
+                        .flatMap(d -> d.getAllFields().stream())
+                        .anyMatch(f -> f.getType().getTypeName().equals(dtm.getTypeName()));
+                })
+                .collect(groupingBy(DomainTypeMirror::getDomainType));
 
         for (DomainType type : domainTypeOrdered()) {
             List<? extends DomainTypeMirror> mirrors = filterConcreteMirrorsInterfaceAvailable(
@@ -203,6 +214,8 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
         list.add(DomainType.DOMAIN_EVENT);
         list.add(DomainType.REPOSITORY);
         list.add(DomainType.AGGREGATE_ROOT);
+        list.add(DomainType.ENTITY);
+        list.add(DomainType.VALUE_OBJECT);
         list.add(DomainType.QUERY_HANDLER);
         list.add(DomainType.READ_MODEL);
         list.add(DomainType.OUTBOUND_SERVICE);
@@ -217,16 +230,14 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
 
         if (mirrors != null && mirrors.size() > 0) {
             List<String> mirroredTypeNames = mirrors.stream().map(DomainTypeMirror::getTypeName)
-                .filter(typeName -> !typeName.startsWith("io.domainlifecycles")).toList();
+                .filter(typeName -> !typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
             domainTypeMirrors.addAll(
                 mirrors
                     .stream()
-                    .filter(m -> !m.getTypeName().startsWith("io.domainlifecycles"))
+                    .filter(m -> !m.getTypeName().startsWith(DOMAINLIFECYCLES_PACKAGE_NAME))
                     .filter(m ->
-                        !m.getDomainType().equals(DomainType.ENTITY) &&
-                            !m.getDomainType().equals(DomainType.VALUE_OBJECT) &&
-                            !m.getDomainType().equals(DomainType.ENUM) &&
-                            !m.getDomainType().equals(DomainType.IDENTITY)
+                        !m.getDomainType().equals(DomainType.ENUM) &&
+                        !m.getDomainType().equals(DomainType.IDENTITY)
                     )
                     .toList()
             );

@@ -7,6 +7,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -17,6 +18,9 @@ import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.EditProjectDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDirectoryDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ReuploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
@@ -69,16 +73,27 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
 
     private HorizontalLayout createAndGetNameAndDeleteButtonLayout() {
         HorizontalLayout horizontalNameAndEditButtonAndReuploadButtonLayout = new HorizontalLayout();
-        horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(diagramDirectory.getName()), getDeleteDirectoryButton());
+        horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(diagramDirectory.getName()), getRenameDirectoryButton(), getDeleteDirectoryButton());
 
         return horizontalNameAndEditButtonAndReuploadButtonLayout;
+    }
+
+    private Button getRenameDirectoryButton() {
+        RenameDiagramDirectoryDialog renameDiagramDirectoryDialog = new RenameDiagramDirectoryDialog(diagramDirectoryService, diagramDirectory);
+
+        Button renameDiagramDirectoryButton = new Button(new Icon(VaadinIcon.PENCIL), e -> renameDiagramDirectoryDialog.open());
+        renameDiagramDirectoryButton.addThemeName("icon");
+        renameDiagramDirectoryButton.getStyle().set("cursor", "pointer");
+
+        return renameDiagramDirectoryButton;
     }
 
     private Button getDeleteDirectoryButton() {
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Delete Directory");
         confirmDialog.setText(String.format(
-            "Are you sure you want to delete directory '%s'?", diagramDirectory.getName()));
+            "Are you sure you want to delete directory '%s'?\n" +
+                "Note: This will delete all diagrams inside of this directory!", diagramDirectory.getName()));
 
         confirmDialog.setCancelable(true);
 

@@ -39,7 +39,7 @@ public class DiagramDirectory {
     @JoinColumn(name="project_id", nullable=false)
     private Project project;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "diagramDirectory")
+    @OneToMany(fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "diagramDirectory")
     private Set<Diagram> diagrams;
 
     @CreationTimestamp

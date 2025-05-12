@@ -51,6 +51,12 @@ public class DiagramDirectoryServiceImpl implements DiagramDirectoryService {
     }
 
     @Override
+    public void update(DiagramDirectory diagramDirectory, String name) {
+        diagramDirectory.setName(name);
+        repository.save(diagramDirectory);
+    }
+
+    @Override
     public void delete(DiagramDirectory diagramDirectory) {
         repository.delete(diagramDirectory);
     }

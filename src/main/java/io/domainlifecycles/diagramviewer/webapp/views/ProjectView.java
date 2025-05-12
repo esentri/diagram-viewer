@@ -102,7 +102,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         reuploadProjectButton.addThemeName("icon");
         editProjectButton.getStyle().set("cursor", "pointer");
 
-        horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(project.getName()), editProjectButton, reuploadProjectButton);
+        horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(project.getName()), editProjectButton, reuploadProjectButton, getDeleteProjectButton());
 
         return horizontalNameAndEditButtonAndReuploadButtonLayout;
     }
@@ -117,7 +117,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.getStyle().setMarginTop("2rem");
 
-        buttonBar.add(getCreateDiagramButton(), getDatabaseButton(), getManageUsersButton(), getDeleteProjectButton());
+        buttonBar.add(getCreateDiagramButton(), getDatabaseButton(), getManageUsersButton());
 
         return buttonBar;
     }
