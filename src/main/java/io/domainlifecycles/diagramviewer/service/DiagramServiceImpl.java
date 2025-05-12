@@ -9,16 +9,15 @@ import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -26,18 +25,18 @@ import org.springframework.stereotype.Service;
 public class DiagramServiceImpl implements DiagramService {
 
     private final String diagramsLocation;
-    private final ProjectDomainMirrorService projectDomainMirrorService;
+    private final SessionStorage sessionStorage;
     private final DiagramRepository repository;
     private final KrokiClient krokiClient;
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
-        ProjectDomainMirrorService projectDomainMirrorService,
+        SessionStorage sessionStorage,
         DiagramRepository repository,
         KrokiClient krokiClient) {
 
         this.diagramsLocation = diagramsLocation;
-        this.projectDomainMirrorService = projectDomainMirrorService;
+        this.sessionStorage = sessionStorage;
         this.repository = repository;
         this.krokiClient = krokiClient;
     }
@@ -103,7 +102,7 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
-        DomainMirror domainMirror = projectDomainMirrorService.getByProjectId(project.getId()).getDomainMirror();
+        DomainMirror domainMirror = sessionStorage.getDomainMirror(project.getId());
 
         final String nomnoml;
         try {

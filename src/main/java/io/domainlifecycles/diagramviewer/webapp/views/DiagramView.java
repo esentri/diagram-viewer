@@ -1,7 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
@@ -26,7 +25,6 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
@@ -37,10 +35,10 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZ
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +55,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private final String diagramsLocation;
     private final ProjectService projectService;
     private final DiagramService diagramService;
-    private final ProjectDomainMirrorService projectDomainMirrorService;
+    private final SessionStorage sessionStorage;
     private final SecurityService securityService;
     private String projectName;
     private String diagramName;
@@ -69,13 +67,13 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     public DiagramView(
         @Value("${diagrams.location}") String diagramsLocation,
         ProjectService projectService, DiagramService diagramService,
-        ProjectDomainMirrorService projectDomainMirrorService,
+        SessionStorage sessionStorage,
         SecurityService securityService) {
 
         this.diagramsLocation = diagramsLocation;
         this.projectService = projectService;
         this.diagramService = diagramService;
-        this.projectDomainMirrorService = projectDomainMirrorService;
+        this.sessionStorage = sessionStorage;
         this.securityService = securityService;
 
         setSizeFull();
@@ -104,7 +102,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             .findAny()
             .orElseThrow(
                 () -> DiagramViewerException.fail(String.format("No diagram found with name '%s' .", diagramName)));
-        domainTypeMirrors = projectDomainMirrorService.getAllDomainTypeMirrorsWithoutEnumsAndIds(project.getId());
+        domainTypeMirrors = sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(project.getId());
     }
 
     private void addPageContents() {

@@ -51,20 +51,19 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     }
 
     @Override
-    public void createOrUpdate(UUID projectId, Path projectFilePath, Set<String> domainModelPackages) {
+    public ProjectDomainMirror createOrUpdate(UUID projectId, Path projectFilePath, Set<String> domainModelPackages) {
         DomainMirror domainMirror = generateDomainMirror(domainModelPackages, projectFilePath);
-        createOrUpdate(projectId, domainMirror);
+        return createOrUpdate(projectId, domainMirror);
     }
 
     @Override
-    public void createOrUpdate(UUID projectId, DomainMirror domainMirror) {
+    public ProjectDomainMirror createOrUpdate(UUID projectId, DomainMirror domainMirror) {
         Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(projectId);
 
         if(foundProjectDomainMirror.isPresent()) {
             ProjectDomainMirror projectDomainMirror = foundProjectDomainMirror.get();
             projectDomainMirror.setDomainMirror(domainMirror);
-            repository.save(projectDomainMirror);
-            return;
+            return repository.save(projectDomainMirror);
         }
 
         ProjectDomainMirror projectDomainMirror = ProjectDomainMirror.builder()
@@ -72,7 +71,7 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
             .domainMirror(domainMirror)
             .build();
 
-        repository.save(projectDomainMirror);
+        return repository.save(projectDomainMirror);
     }
 
     @Override

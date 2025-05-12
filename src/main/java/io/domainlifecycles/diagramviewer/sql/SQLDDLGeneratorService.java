@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.sql;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.kickstart.configuration.target.SQLTargetConfig;
 import io.domainlifecycles.kickstart.configuration.target.base.TargetConfig.TargetType;
 import io.domainlifecycles.kickstart.map.BoundedContextPackage;
@@ -23,19 +23,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class SQLDDLGeneratorService {
 
-    private final ProjectDomainMirrorService projectDomainMirrorService;
+    private final SessionStorage sessionStorage;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLDDLGeneratorService.class);
 
-    public SQLDDLGeneratorService(ProjectDomainMirrorService projectDomainMirrorService) {
-        this.projectDomainMirrorService = projectDomainMirrorService;
+    public SQLDDLGeneratorService(SessionStorage sessionStorage) {
+        this.sessionStorage = sessionStorage;
     }
 
     public String generateSQL(UUID projectId, AggregateRootMirror aggregateRootMirror, String sqlDialect, boolean audit) {
         LOGGER.info(String.format("Generating DDL for '%s'...", aggregateRootMirror));
 
-        DomainMirror domainMirror = projectDomainMirrorService.getByProjectId(projectId).getDomainMirror();
-        GenDomainModel dm = MirrorMapper.mapDomain(domainMirror, new BoundedContextPackage("dummy", "dummy"));
+        DomainMirror domainMirror = sessionStorage.getDomainMirror(projectId);
+
+        GenDomainModel dm;
+        try {
+            dm = MirrorMapper.mapDomain(domainMirror, new BoundedContextPackage("dummy", "dummy"));
+        } catch(IllegalStateException e) {
+            throw DiagramViewerException.fail("Could not map DomainModel for SQL-DDL generation.", e);
+        }
 
         String aggregateRootFullQualifiedTypeName = aggregateRootMirror.getTypeName();
         String aggregateRootTypeName = aggregateRootFullQualifiedTypeName.contains(".")

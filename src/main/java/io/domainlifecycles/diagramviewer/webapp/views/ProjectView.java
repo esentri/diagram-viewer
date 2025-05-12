@@ -20,7 +20,6 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
@@ -32,6 +31,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ShareProjectD
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
 import java.util.Objects;
 
@@ -46,7 +46,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final SecurityService securityService;
     private final ProjectService projectService;
     private final DiagramService diagramService;
-    private final ProjectDomainMirrorService projectDomainMirrorService;
+    private final SessionStorage sessionStorage;
 
     private Project project;
     private String projectName;
@@ -56,13 +56,13 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
                        SecurityService securityService,
                        ProjectService projectService,
                        DiagramService diagramService,
-                       ProjectDomainMirrorService projectDomainMirrorService) {
+                       SessionStorage sessionStorage) {
 
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.securityService = securityService;
         this.projectService = projectService;
         this.diagramService = diagramService;
-        this.projectDomainMirrorService = projectDomainMirrorService;
+        this.sessionStorage = sessionStorage;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
@@ -121,7 +121,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private Button getCreateDiagramButton() {
         CreateDiagramDialog createDiagramDialog = new CreateDiagramDialog(diagramService, project,
-            projectDomainMirrorService.getAllDomainTypeMirrorsWithoutEnumsAndIds(project.getId()));
+            sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(project.getId()));
 
         Button createDiagramButton = new Button("Create new Diagram", new Icon("vaadin:plus"));
         createDiagramButton.getStyle().set("cursor", "pointer");
@@ -132,7 +132,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private Button getDatabaseButton() {
         GenerateDatabaseModelDialog databaseModelDialog = new GenerateDatabaseModelDialog(
-            sqlddlGeneratorService, project, projectDomainMirrorService.getAllAggregateRootMirrors(project.getId()));
+            sqlddlGeneratorService, project, sessionStorage.getAllAggregateRootMirrors(project.getId()));
 
         Button databaseButton = new Button("Download DDL-SQL-Script", new Icon("vaadin:database"));
         databaseButton.getStyle().set("cursor", "pointer");

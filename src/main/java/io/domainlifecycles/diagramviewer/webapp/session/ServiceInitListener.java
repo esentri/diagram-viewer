@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.session;
+package io.domainlifecycles.diagramviewer.webapp.session;
 
 import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.VaadinServiceInitListener;

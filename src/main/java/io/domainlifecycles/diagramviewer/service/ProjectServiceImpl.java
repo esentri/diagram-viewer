@@ -9,6 +9,7 @@ import io.domainlifecycles.diagramviewer.model.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.rest.api.model.DomainMirrorUploadDto;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -34,7 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final DiagramService diagramService;
     private final RegisteredUserService registeredUserService;
     private final InvitedUserService invitedUserService;
-    private final ProjectDomainMirrorService projectDomainMirrorService;
+    private final SessionStorage sessionStorage;
     private final ProjectRepository repository;
 
     public ProjectServiceImpl(
@@ -43,7 +44,7 @@ public class ProjectServiceImpl implements ProjectService {
         DiagramService diagramService,
         RegisteredUserService registeredUserService,
         InvitedUserService invitedUserService,
-        ProjectDomainMirrorService projectDomainMirrorService,
+        SessionStorage sessionStorage,
         ProjectRepository repository) {
 
         this.targetsDirectory = targetsDirectory;
@@ -51,7 +52,7 @@ public class ProjectServiceImpl implements ProjectService {
         this.diagramService = diagramService;
         this.registeredUserService = registeredUserService;
         this.invitedUserService = invitedUserService;
-        this.projectDomainMirrorService = projectDomainMirrorService;
+        this.sessionStorage = sessionStorage;
         this.repository = repository;
     }
 
@@ -80,12 +81,12 @@ public class ProjectServiceImpl implements ProjectService {
 
         if(Objects.equals(project.getName(), projectName)) {
             Project persistedProject = repository.save(project);
-            projectDomainMirrorService.createOrUpdate(persistedProject.getId(), projectFilePath, domainModelPackages);
+            sessionStorage.createOrUpdate(persistedProject.getId(), projectFilePath, domainModelPackages);
             return;
         }
 
         Project persistedProject = insert(project);
-        projectDomainMirrorService.createOrUpdate(persistedProject.getId(), projectFilePath, domainModelPackages);
+        sessionStorage.createOrUpdate(persistedProject.getId(), projectFilePath, domainModelPackages);
     }
 
     @Override
@@ -139,7 +140,7 @@ public class ProjectServiceImpl implements ProjectService {
                 deleteTargetFile(project);
             }
 
-            projectDomainMirrorService.createOrUpdate(project.getId(), domainMirrorUploadDto.domainMirror());
+            sessionStorage.createOrUpdate(project.getId(), domainMirrorUploadDto.domainMirror());
             return;
         }
 
@@ -147,7 +148,7 @@ public class ProjectServiceImpl implements ProjectService {
             domainMirrorUploadDto.domainModelPackages(),
             (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), true);
         Project persistedProject = repository.save(project);
-        projectDomainMirrorService.createOrUpdate(persistedProject.getId(), domainMirrorUploadDto.domainMirror());
+        sessionStorage.createOrUpdate(persistedProject.getId(), domainMirrorUploadDto.domainMirror());
     }
 
     @Override
@@ -189,7 +190,7 @@ public class ProjectServiceImpl implements ProjectService {
         fetchedProject.unassignAllUsers();
 
         repository.delete(fetchedProject);
-        projectDomainMirrorService.delete(fetchedProject.getId());
+        sessionStorage.delete(fetchedProject.getId());
 
         if(!project.isApiUpload()) {
             deleteTargetFile(project);
@@ -226,7 +227,7 @@ public class ProjectServiceImpl implements ProjectService {
             buildProjectFilename(project));
 
         try {
-            projectDomainMirrorService.createOrUpdate(project.getId(), projectFilePath, domainModelPackages);
+            sessionStorage.createOrUpdate(project.getId(), projectFilePath, domainModelPackages);
             return repository.save(project);
         } catch(RuntimeException e) {
             deleteTargetFile(project);

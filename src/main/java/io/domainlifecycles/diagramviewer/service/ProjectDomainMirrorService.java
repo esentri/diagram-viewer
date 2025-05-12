@@ -17,9 +17,9 @@ public interface ProjectDomainMirrorService {
 
     List<AggregateRootMirror> getAllAggregateRootMirrors(final UUID projectId);
 
-    void createOrUpdate(final UUID projectId, Path projectFilePath, Set<String> domainModelPackages);
+    ProjectDomainMirror createOrUpdate(final UUID projectId, Path projectFilePath, Set<String> domainModelPackages);
 
-    void createOrUpdate(final UUID projectId, DomainMirror domainMirror);
+    ProjectDomainMirror createOrUpdate(final UUID projectId, DomainMirror domainMirror);
 
     void delete(final UUID projectId);
 }
