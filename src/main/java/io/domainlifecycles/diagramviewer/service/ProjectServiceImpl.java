@@ -91,7 +91,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void deleteDiagram(Project project, Diagram diagram) {
-        project.getDiagrams().remove(diagram);
+        project.removeDiagram(diagram);
         repository.save(project);
 
         Path diagramPath = Path.of(diagramsLocation, project.getId().toString(),
