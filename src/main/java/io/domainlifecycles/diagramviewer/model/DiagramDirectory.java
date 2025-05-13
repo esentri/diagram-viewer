@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -63,5 +64,14 @@ public class DiagramDirectory {
     public void addDiagram(Diagram diagram) {
         diagrams.add(diagram);
         diagram.setDiagramDirectory(this);
+    }
+
+    public void removeDiagram(Diagram diagram) {
+        diagrams.remove(diagram);
+        diagram.setDiagramDirectory(null);
+    }
+
+    public void removeAllDiagrams() {
+        new HashSet<>(diagrams).forEach(this::removeDiagram);
     }
 }

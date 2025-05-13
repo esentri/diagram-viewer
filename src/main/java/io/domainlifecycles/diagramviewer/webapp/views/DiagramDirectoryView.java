@@ -18,9 +18,8 @@ import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
-import io.domainlifecycles.diagramviewer.webapp.components.dialogs.EditProjectDialog;
+import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDirectoryDialog;
-import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ReuploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
@@ -34,14 +33,15 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
     public static final String DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER = "diagramDirectoryName";
 
     private final DiagramDirectoryService diagramDirectoryService;
+    private final ProjectService projectService;
 
     private DiagramDirectory diagramDirectory;
     private Project project;
     private String diagramDirectoryName;
 
-    public DiagramDirectoryView(DiagramDirectoryService diagramDirectoryService) {
-
+    public DiagramDirectoryView(DiagramDirectoryService diagramDirectoryService, ProjectService projectService) {
         this.diagramDirectoryService = diagramDirectoryService;
+        this.projectService = projectService;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
@@ -92,15 +92,14 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Delete Directory");
         confirmDialog.setText(String.format(
-            "Are you sure you want to delete directory '%s'?\n" +
-                "Note: This will delete all diagrams inside of this directory!", diagramDirectory.getName()));
+            "Are you sure you want to delete directory '%s'?", diagramDirectory.getName()));
 
         confirmDialog.setCancelable(true);
 
         confirmDialog.setConfirmText("Delete");
         confirmDialog.setConfirmButtonTheme("error primary");
         confirmDialog.addConfirmListener(event -> {
-            diagramDirectoryService.delete(diagramDirectory);
+            projectService.deleteDiagramDirectory(project, diagramDirectory);
             confirmDialog.close();
             UI.getCurrent().navigate(DefaultView.class);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));

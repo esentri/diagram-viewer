@@ -105,10 +105,18 @@ public class Project {
 
     public void removeDiagram(Diagram diagram) {
         diagrams.remove(diagram);
+        diagrams = new HashSet<>(diagrams);
     }
 
     public void addDiagramDirectory(DiagramDirectory diagramDirectory) {
         diagramDirectories.add(diagramDirectory);
+        diagramDirectory.setProject(this);
+    }
+
+    public void removeDiagramDirectory(DiagramDirectory diagramDirectory) {
+        diagramDirectories.remove(diagramDirectory);
+        diagramDirectories = new HashSet<>(diagramDirectories);
+        diagramDirectory.setProject(null);
     }
 
     public Set<Diagram> getDiagramsWithoutDirectory() {

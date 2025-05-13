@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.User;
@@ -21,6 +22,8 @@ public interface ProjectService {
     void update(Project project, String projectName, Set<String> domainModelPackages);
 
     void deleteDiagram(Project project, Diagram diagram);
+
+    void deleteDiagramDirectory(Project project, DiagramDirectory diagramDirectory);
 
     @Transactional
     Project save(RegisteredUser registeredUser,

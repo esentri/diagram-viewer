@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.model.RegisteredUser;
@@ -102,6 +103,13 @@ public class ProjectServiceImpl implements ProjectService {
         } catch (IOException e) {
             throw DiagramViewerException.fail("Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
         }
+    }
+
+    @Override
+    public void deleteDiagramDirectory(Project project, DiagramDirectory diagramDirectory) {
+        project.removeDiagramDirectory(diagramDirectory);
+        diagramDirectory.removeAllDiagrams();
+        repository.save(project);
     }
 
     @Override

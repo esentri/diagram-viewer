@@ -61,4 +61,16 @@ public class Diagram {
 
     @UpdateTimestamp
     private Instant changedAt;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Diagram diagram)) return false;
+        return id != null && id.equals(diagram.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : super.hashCode();
+    }
 }

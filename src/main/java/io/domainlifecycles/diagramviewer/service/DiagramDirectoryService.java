@@ -17,6 +17,4 @@ public interface DiagramDirectoryService {
     void add(DiagramDirectory diagramDirectory, Diagram diagram);
 
     void update(DiagramDirectory diagramDirectory, String name);
-
-    void delete(DiagramDirectory diagramDirectory);
 }
