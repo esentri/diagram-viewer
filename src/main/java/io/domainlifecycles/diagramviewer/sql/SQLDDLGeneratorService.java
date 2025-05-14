@@ -31,14 +31,17 @@ public class SQLDDLGeneratorService {
         this.sessionStorage = sessionStorage;
     }
 
-    public String generateSQL(UUID projectId, AggregateRootMirror aggregateRootMirror, String sqlDialect, boolean audit) {
+    public String generateSQL(
+            UUID projectId,
+            AggregateRootMirror aggregateRootMirror,
+            String sqlDialect,
+            boolean audit,
+            String sqlSchemaName) {
         LOGGER.info(String.format("Generating DDL for '%s'...", aggregateRootMirror));
-
         DomainMirror domainMirror = sessionStorage.getDomainMirror(projectId);
-
         GenDomainModel dm;
         try {
-            dm = MirrorMapper.mapDomain(domainMirror, new BoundedContextPackage("dummy", "dummy"));
+            dm = MirrorMapper.mapDomain(domainMirror, new BoundedContextPackage("DEFAULT", sqlSchemaName));
         } catch(IllegalStateException e) {
             throw DiagramViewerException.fail("Could not map DomainModel for SQL-DDL generation.", e);
         }
@@ -50,13 +53,17 @@ public class SQLDDLGeneratorService {
 
         DomainBaseObject baseObject = dm.findDomainBaseObjectByName(null, aggregateRootTypeName);
 
-        SQLPrinter printer = getPrinterImplementation(sqlDialect, audit, dm);
+        SQLPrinter printer = getPrinterImplementation(sqlDialect, audit, dm, sqlSchemaName);
 
         LOGGER.info("Generated DDL for '{}' successfully!", aggregateRootMirror);
         return printer.sourceCodeFile((AggregateRoot) baseObject).content();
     }
 
-    private SQLPrinter getPrinterImplementation(String sqlDialect, boolean audit, GenDomainModel dm) {
+    private SQLPrinter getPrinterImplementation(
+            String sqlDialect,
+            boolean audit,
+            GenDomainModel dm,
+            String sqlSchemaName) {
         SQLPrinter printer;
         switch (sqlDialect) {
             case "Oracle" -> {
@@ -64,6 +71,7 @@ public class SQLDDLGeneratorService {
                     .targetType(TargetType.SQL_ORACLE)
                     .destinationPath("dummy")
                     .generateAuditTables(audit)
+                    .auditSchema(sqlSchemaName)
                     .build();
                 printer = new OracleSQLPrinter(target, dm);
             }
@@ -72,6 +80,7 @@ public class SQLDDLGeneratorService {
                     .targetType(TargetType.SQL_POSTGRES)
                     .destinationPath("dummy")
                     .generateAuditTables(audit)
+                    .auditSchema(sqlSchemaName)
                     .build();
                 printer = new PostgresSQLPrinter(target, dm);
             }
