@@ -1,12 +1,12 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 public interface DiagramService {
 
@@ -18,7 +18,7 @@ public interface DiagramService {
 
     Diagram update(Diagram diagram, Project project, String fileName);
 
-    Diagram create(Project project, String fileName, FileType fileType, Set<String> filteredPackages, Set<String> blacklistedClassnames);
+    Diagram create(Project project, String fileName, FileType fileType, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
 
     void deleteFilesFromFilesystem(String projectId);
 }

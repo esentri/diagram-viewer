@@ -14,12 +14,16 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,6 +40,7 @@ public class CreateDiagramDialog extends Dialog {
 
     private CreateDiagramOptions createDiagramOptions;
     private Button createButton;
+    private TextField diagramNameTextField;
 
     public CreateDiagramDialog(DiagramService diagramService, Project project, List<DomainTypeMirror> domainTypeMirrors) {
         this.diagramService = diagramService;
@@ -44,6 +49,8 @@ public class CreateDiagramDialog extends Dialog {
         this.binder = new Binder<>();
 
         this.createDiagramOptions = new CreateDiagramOptions(FileType.SVG);
+        this.createDiagramOptions.domainModelVisibility = new DomainModelVisibility();
+        this.createDiagramOptions.diagramStylingConfiguration = new DiagramStylingConfiguration();
 
         setHeaderTitle("Create Diagram");
         setWidth("50%");
@@ -61,7 +68,12 @@ public class CreateDiagramDialog extends Dialog {
 
         createButton.addClickListener(e -> {
             binder.writeBeanIfValid(createDiagramOptions);
-            diagramService.create(project, createDiagramOptions.getFileName(), createDiagramOptions.getFileType(), createDiagramOptions.getFilteredPackages(), createDiagramOptions.getBlacklistedClassnames());
+            diagramService.create(
+                    project,
+                    createDiagramOptions.getFileName(),
+                    createDiagramOptions.getFileType(),
+                    createDiagramOptions.getDomainModelVisibility(),
+                    createDiagramOptions.getDiagramStylingConfiguration());
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });
@@ -101,7 +113,9 @@ public class CreateDiagramDialog extends Dialog {
         PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
         packageSelectChipField.setWidthFull();
         binder.forField(packageSelectChipField)
-            .bind(CreateDiagramOptions::getFilteredPackages, CreateDiagramOptions::setFilteredPackages);
+            .bind(
+                    opt -> opt.getDomainModelVisibility().getFilteredPackageNames(),
+                    (opt, v) -> opt.getDomainModelVisibility().replaceFilteredPackageNames(v));
         advancedConfigurationFormLayout.addFormItem(packageSelectChipField, "Filtered packages");
 
         MultiSelectComboBox<String> blacklistedClassnamesMultiSelectComboBox = new MultiSelectComboBox<>();
@@ -110,20 +124,42 @@ public class CreateDiagramDialog extends Dialog {
         blacklistedClassnamesMultiSelectComboBox.setItems(domainTypeMirrors.stream().map(DomainTypeMirror::getTypeName).collect(
             Collectors.toSet()));
         binder.forField(blacklistedClassnamesMultiSelectComboBox)
-            .bind(CreateDiagramOptions::getBlacklistedClassnames, CreateDiagramOptions::setBlacklistedClassnames);
+            .bind(opt -> opt.getDomainModelVisibility().getBlacklistedClassNames(),
+                    (opt, v) -> opt.getDomainModelVisibility().replaceBlacklistedClassNames(v));
         advancedConfigurationFormLayout.addFormItem(blacklistedClassnamesMultiSelectComboBox, "Excluded classes");
 
         diagramTemplateSelect.addValueChangeListener(e -> {
+            var diagram = e.getValue();
+            var visibility = new DomainModelVisibility();
+            var styling = new  DiagramStylingConfiguration();
+            if(diagram != null) {
+                visibility = e.getValue().getDomainModelVisibility().toBuilder()
+                        .id(null)
+                        .createdAt(null)
+                        .changedAt(null)
+                        .build();
+                styling = e.getValue().getDiagramStylingConfiguration().toBuilder()
+                        .id(null)
+                        .createdAt(null)
+                        .changedAt(null)
+                        .build();
+                blacklistedClassnamesMultiSelectComboBox.setValue(Collections.emptySet());
+                blacklistedClassnamesMultiSelectComboBox.setEnabled(false);
+                packageSelectChipField.clear();
+                packageSelectChipField.setEnabled(false);
+            }else{
+                blacklistedClassnamesMultiSelectComboBox.setEnabled(true);
+                packageSelectChipField.setEnabled(true);
+            }
+
             createDiagramOptions = CreateDiagramOptions.builder()
                 .fileType(FileType.SVG)
-                .fileName(createDiagramOptions.getFileName())
-                .blacklistedClassnames(e.getValue() == null ? null :
-                    e.getValue().getDomainModelVisibility().getBlacklistedClassNames())
-                .filteredPackages(e.getValue()  == null ? null :
-                    e.getValue().getDomainModelVisibility().getFilteredPackageNames())
+                .fileName(diagramNameTextField.getValue())
+                .domainModelVisibility(visibility)
+                .diagramStylingConfiguration(styling)
                 .build();
-
             binder.readBean(createDiagramOptions);
+
         });
 
         advancedConfigurationPanel.add(advancedConfigurationFormLayout);
@@ -134,7 +170,7 @@ public class CreateDiagramDialog extends Dialog {
     private FormLayout createAndGetDialogFormLayout() {
         FormLayout formLayout = new FormLayout();
 
-        TextField diagramNameTextField = new TextField();
+        diagramNameTextField = new TextField();
         binder.forField(diagramNameTextField)
             .asRequired("Name is required.")
             .bind(CreateDiagramOptions::getFileName, CreateDiagramOptions::setFileName);
@@ -157,8 +193,8 @@ public class CreateDiagramDialog extends Dialog {
     private static class CreateDiagramOptions {
         private String fileName;
         private FileType fileType;
-        private Set<String> filteredPackages;
-        private Set<String> blacklistedClassnames;
+        private DomainModelVisibility domainModelVisibility;
+        private DiagramStylingConfiguration diagramStylingConfiguration;
 
         public CreateDiagramOptions(FileType fileType) {
             this.fileType = fileType;

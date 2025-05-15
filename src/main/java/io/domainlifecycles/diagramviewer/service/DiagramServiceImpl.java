@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.Diagram;
+import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
@@ -70,11 +71,16 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public Diagram create(Project project, String fileName, FileType fileType, Set<String> filteredPackages, Set<String> blacklistedClassnames) {
+    public Diagram create(Project project,
+                          String fileName,
+                          FileType fileType,
+                          DomainModelVisibility visibility,
+                          DiagramStylingConfiguration diagramStylingConfiguration) {
         Diagram diagram = Diagram.builder()
             .fileName(fileName + fileType.getFileSuffix())
             .fileType(fileType)
-            .domainModelVisibility(new DomainModelVisibility(filteredPackages, null, blacklistedClassnames))
+            .domainModelVisibility(visibility)
+            .diagramStylingConfiguration(diagramStylingConfiguration)
             .project(project)
             .build();
 

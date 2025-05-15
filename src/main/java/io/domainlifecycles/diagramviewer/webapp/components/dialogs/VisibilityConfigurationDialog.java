@@ -45,6 +45,8 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showOutboundServiceMethodsCheckbox;
     private Checkbox showUnspecifiedServiceKindFieldsCheckbox;
     private Checkbox showUnspecifiedServiceKindMethodsCheckbox;
+    private Checkbox showAggregateFieldsCheckbox;
+    private Checkbox showAggregateMethodsCheckbox;
 
 
     public VisibilityConfigurationDialog(DiagramService diagramService, Project project, Diagram diagram) {
@@ -92,6 +94,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         accordion.setSizeFull();
 
         accordion.add(createAndGetGeneralAccordionPanel());
+        accordion.add(createAndGetAggregateAccordionPanel());
         accordion.add(createAndGetDomainEventAccordionPanel());
         accordion.add(createAndGetDomainCommandAccordionPanel());
         accordion.add(createAndGetApplicationServiceAccordionPanel());
@@ -135,6 +138,29 @@ public class VisibilityConfigurationDialog extends Dialog {
 
         generalPanel.add(formLayout);
         return generalPanel;
+    }
+
+    private AccordionPanel createAndGetAggregateAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Aggregates");
+
+        FormLayout aggregatesDialogFormLayout = new FormLayout();
+        // specific
+        Checkbox showAggregatesCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showAggregatesCheckbox, DiagramStylingConfiguration::isShowAggregates, DiagramStylingConfiguration::setShowAggregates);
+
+        showAggregateFieldsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showAggregateFieldsCheckbox, DiagramStylingConfiguration::isShowAggregateFields, DiagramStylingConfiguration::setShowAggregateFields);
+
+        showAggregateMethodsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showAggregateMethodsCheckbox, DiagramStylingConfiguration::isShowAggregateMethods, DiagramStylingConfiguration::setShowAggregateMethods);
+
+        aggregatesDialogFormLayout.addFormItem(showAggregatesCheckbox,"Show");
+        aggregatesDialogFormLayout.addFormItem(showAggregateFieldsCheckbox,"Fields");
+        aggregatesDialogFormLayout.addFormItem(showAggregateMethodsCheckbox,"Methods");
+
+        accordionPanel.add(aggregatesDialogFormLayout);
+        return accordionPanel;
     }
 
     private AccordionPanel createAndGetDomainEventAccordionPanel() {

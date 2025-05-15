@@ -6,6 +6,8 @@ import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
 import io.domainlifecycles.mirror.api.DomainMirror;
 
+import java.util.Collections;
+
 public class DiagrammerUtils {
 
     public static String generateNomnoml(
@@ -14,7 +16,9 @@ public class DiagrammerUtils {
             DomainModelVisibility domainModelVisibility) {
 
         DomainDiagramConfig diagramConfig = DomainDiagramConfig.builder()
-            .withFilteredPackageNames(domainModelVisibility.getFilteredPackageNames().stream().toList())
+            .withFilteredPackageNames(
+                    domainModelVisibility.getFilteredPackageNames() == null ?
+                            Collections.emptyList() : domainModelVisibility.getFilteredPackageNames().stream().toList())
             .withAggregateRootStyle(diagramStylingConfiguration.getAggregateRootStyle())
             .withAggregateFrameStyle(diagramStylingConfiguration.getAggregateFrameStyle())
             .withEntityStyle(diagramStylingConfiguration.getEntityStyle())
@@ -40,6 +44,9 @@ public class DiagrammerUtils {
             .withShowAssertions(diagramStylingConfiguration.isShowAssertions())
             .withShowMethods(diagramStylingConfiguration.isShowMethods())
             .withShowOnlyPublicMethods(diagramStylingConfiguration.isShowOnlyPublicMethods())
+            .withShowAggregates(diagramStylingConfiguration.isShowAggregates())
+            .withShowAggregateFields(diagramStylingConfiguration.isShowAggregateFields())
+            .withShowAggregateMethods(diagramStylingConfiguration.isShowAggregateMethods())
             .withShowDomainEvents(diagramStylingConfiguration.isShowDomainEvents())
             .withShowDomainEventFields(diagramStylingConfiguration.isShowDomainEventFields())
             .withShowDomainEventMethods(diagramStylingConfiguration.isShowDomainEventMethods())
@@ -75,8 +82,14 @@ public class DiagrammerUtils {
             .withShowObjectMembersInClasses(diagramStylingConfiguration.isShowObjectMembersInClasses())
             .withMultiplicityInLabel(diagramStylingConfiguration.isMultiplicityInLabel())
             .withFieldStereotypes(diagramStylingConfiguration.isFieldStereotypes())
-            .withTransitiveFilterSeedDomainServiceTypeNames(domainModelVisibility.getSeedClassNames().stream().toList())
-            .withClassesBlacklist(domainModelVisibility.getBlacklistedClassNames().stream().toList())
+            .withTransitiveFilterSeedDomainServiceTypeNames(
+                    domainModelVisibility.getSeedClassNames() == null ?
+                            Collections.emptyList() :
+                            domainModelVisibility.getSeedClassNames().stream().toList())
+            .withClassesBlacklist(
+                    domainModelVisibility.getBlacklistedClassNames() == null ?
+                        Collections.emptyList() :
+                        domainModelVisibility.getBlacklistedClassNames().stream().toList())
                 .build();
 
         DomainDiagramGenerator generator = new DomainDiagramGenerator(diagramConfig, domainMirror);
