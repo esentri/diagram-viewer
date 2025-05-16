@@ -48,8 +48,6 @@ public class CreateDiagramDialog extends Dialog {
         this.binder = new Binder<>();
 
         this.createDiagramOptions = new CreateDiagramOptions(FileType.SVG);
-        this.createDiagramOptions.domainModelVisibility = new DomainModelVisibility();
-        this.createDiagramOptions.diagramStylingConfiguration = new DiagramStylingConfiguration();
 
         setHeaderTitle("Create Diagram");
         setWidth("50%");
@@ -112,8 +110,7 @@ public class CreateDiagramDialog extends Dialog {
         PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
         packageSelectChipField.setWidthFull();
         binder.forField(packageSelectChipField)
-            .bind(
-                    opt -> opt.getDomainModelVisibility().getFilteredPackageNames(),
+            .bind(opt -> opt.getDomainModelVisibility().getFilteredPackageNames(),
                     (opt, v) -> opt.getDomainModelVisibility().replaceFilteredPackageNames(v));
         advancedConfigurationFormLayout.addFormItem(packageSelectChipField, "Filtered packages");
 
@@ -128,10 +125,14 @@ public class CreateDiagramDialog extends Dialog {
         advancedConfigurationFormLayout.addFormItem(blacklistedClassnamesMultiSelectComboBox, "Excluded classes");
 
         diagramTemplateSelect.addValueChangeListener(e -> {
-            var diagram = e.getValue();
-            var visibility = new DomainModelVisibility();
-            var styling = new  DiagramStylingConfiguration();
-            if(diagram != null) {
+            Diagram templateDiagram = e.getValue();
+            DomainModelVisibility visibility = new DomainModelVisibility();
+            DiagramStylingConfiguration styling = new DiagramStylingConfiguration();
+
+            boolean templateDiagramSelected = templateDiagram != null;
+            if(templateDiagramSelected) {
+
+                // Use new visibility/styling instances but map values
                 visibility = e.getValue().getDomainModelVisibility().toBuilder()
                         .id(null)
                         .createdAt(null)
@@ -142,14 +143,10 @@ public class CreateDiagramDialog extends Dialog {
                         .createdAt(null)
                         .changedAt(null)
                         .build();
-                blacklistedClassnamesMultiSelectComboBox.setValue(Collections.emptySet());
-                blacklistedClassnamesMultiSelectComboBox.setEnabled(false);
-                packageSelectChipField.clear();
-                packageSelectChipField.setEnabled(false);
-            }else{
-                blacklistedClassnamesMultiSelectComboBox.setEnabled(true);
-                packageSelectChipField.setEnabled(true);
             }
+
+            blacklistedClassnamesMultiSelectComboBox.setEnabled(!templateDiagramSelected);
+            packageSelectChipField.setEnabled(!templateDiagramSelected);
 
             createDiagramOptions = CreateDiagramOptions.builder()
                 .fileType(FileType.SVG)
@@ -157,8 +154,8 @@ public class CreateDiagramDialog extends Dialog {
                 .domainModelVisibility(visibility)
                 .diagramStylingConfiguration(styling)
                 .build();
-            binder.readBean(createDiagramOptions);
 
+            binder.readBean(createDiagramOptions);
         });
 
         advancedConfigurationPanel.add(advancedConfigurationFormLayout);
@@ -197,6 +194,8 @@ public class CreateDiagramDialog extends Dialog {
 
         public CreateDiagramOptions(FileType fileType) {
             this.fileType = fileType;
+            this.domainModelVisibility = new DomainModelVisibility();
+            this.diagramStylingConfiguration = new DiagramStylingConfiguration();
         }
     }
 }
