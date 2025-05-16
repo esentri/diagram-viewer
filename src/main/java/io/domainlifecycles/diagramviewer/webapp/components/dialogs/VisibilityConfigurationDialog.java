@@ -10,10 +10,10 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
-import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
-import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
-import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 

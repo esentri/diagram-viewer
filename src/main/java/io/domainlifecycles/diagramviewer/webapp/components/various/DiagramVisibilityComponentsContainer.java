@@ -2,8 +2,8 @@ package io.domainlifecycles.diagramviewer.webapp.components.various;
 
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;

@@ -1,14 +1,14 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.ProjectDomainMirror;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.repository.ProjectDomainMirrorRepository;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,10 +20,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorService {
 
+    private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final ProjectDomainMirrorRepository repository;
     private final JacksonDomainSerializer serializer;
 
-    public ProjectDomainMirrorServiceImpl(ProjectDomainMirrorRepository repository) {
+    public ProjectDomainMirrorServiceImpl(RegenerateDiagramsJobService regenerateDiagramsJobService, ProjectDomainMirrorRepository repository) {
+        this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.repository = repository;
         this.serializer = new JacksonDomainSerializer(false);
     }
@@ -51,23 +53,24 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     }
 
     @Override
-    public ProjectDomainMirror createOrUpdate(UUID projectId, Path projectFilePath, Set<String> domainModelPackages) {
+    public ProjectDomainMirror createOrUpdate(Project project, Path projectFilePath, Set<String> domainModelPackages) {
         DomainMirror domainMirror = generateDomainMirror(domainModelPackages, projectFilePath);
-        return createOrUpdate(projectId, domainMirror);
+        return createOrUpdate(project, domainMirror);
     }
 
     @Override
-    public ProjectDomainMirror createOrUpdate(UUID projectId, DomainMirror domainMirror) {
-        Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(projectId);
+    public ProjectDomainMirror createOrUpdate(Project project, DomainMirror domainMirror) {
+        Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(project.getId());
 
         if(foundProjectDomainMirror.isPresent()) {
+            regenerateDiagramsJobService.create(project);
             ProjectDomainMirror projectDomainMirror = foundProjectDomainMirror.get();
             projectDomainMirror.setDomainMirror(domainMirror);
             return repository.save(projectDomainMirror);
         }
 
         ProjectDomainMirror projectDomainMirror = ProjectDomainMirror.builder()
-            .projectId(projectId)
+            .projectId(project.getId())
             .domainMirror(domainMirror)
             .build();
 

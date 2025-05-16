@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.session;
 
-import io.domainlifecycles.diagramviewer.model.ProjectDomainMirror;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
@@ -71,15 +72,15 @@ public class SessionStorage {
         domainMirrorContainers.put(projectId, domainMirrorContainer);
     }
 
-    public void createOrUpdate(UUID projectId, DomainMirror domainMirror) {
-        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(projectId, domainMirror);
-        createAndAddDomainMirrorContainer(projectId, projectDomainMirror);
+    public void createOrUpdate(Project project, DomainMirror domainMirror) {
+        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, domainMirror);
+        createAndAddDomainMirrorContainer(project.getId(), projectDomainMirror);
     }
 
-    public void createOrUpdate(UUID projectId, Path projectFilePath, Set<String> domainModelPackages) {
-        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(projectId, projectFilePath,
+    public void createOrUpdate(Project project, Path projectFilePath, Set<String> domainModelPackages) {
+        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, projectFilePath,
             domainModelPackages);
-        createAndAddDomainMirrorContainer(projectId, projectDomainMirror);
+        createAndAddDomainMirrorContainer(project.getId(), projectDomainMirror);
     }
 
     public void delete(UUID projectId) {

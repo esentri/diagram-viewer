@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.model.InvitedUser;
+import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 
 public interface InvitedUserService {
 

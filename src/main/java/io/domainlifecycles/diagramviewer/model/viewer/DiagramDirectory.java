@@ -1,6 +1,5 @@
-package io.domainlifecycles.diagramviewer.model;
+package io.domainlifecycles.diagramviewer.model.viewer;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;

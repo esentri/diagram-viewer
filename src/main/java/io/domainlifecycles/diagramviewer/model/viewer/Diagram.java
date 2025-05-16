@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.model;
+package io.domainlifecycles.diagramviewer.model.viewer;
 
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import jakarta.persistence.CascadeType;

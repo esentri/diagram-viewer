@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.repository;
 
-import io.domainlifecycles.diagramviewer.model.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.repository.CrudRepository;

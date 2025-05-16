@@ -1,10 +1,10 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
-import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.RegisteredUser;
-import io.domainlifecycles.diagramviewer.model.User;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.User;
 import io.domainlifecycles.diagramviewer.rest.api.model.DomainMirrorUploadDto;
 import java.io.InputStream;
 import java.util.Set;

@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.model.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 
 public interface SecurityService {
 

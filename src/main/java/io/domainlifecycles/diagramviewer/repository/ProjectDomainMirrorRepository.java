@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.repository;
 
-import io.domainlifecycles.diagramviewer.model.ProjectDomainMirror;
+import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 
 import java.util.List;
 import java.util.Optional;

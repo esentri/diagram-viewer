@@ -2,8 +2,8 @@ package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagram.domain.DomainDiagramGenerator;
 import io.domainlifecycles.diagram.domain.config.DomainDiagramConfig;
-import io.domainlifecycles.diagramviewer.model.DiagramStylingConfiguration;
-import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.mirror.api.DomainMirror;
 
 public class DiagrammerUtils {

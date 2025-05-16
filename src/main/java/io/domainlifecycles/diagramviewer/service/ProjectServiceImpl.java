@@ -1,12 +1,12 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
-import io.domainlifecycles.diagramviewer.model.InvitedUser;
-import io.domainlifecycles.diagramviewer.model.Project;
-import io.domainlifecycles.diagramviewer.model.RegisteredUser;
-import io.domainlifecycles.diagramviewer.model.User;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
+import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.rest.api.model.DomainMirrorUploadDto;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
@@ -82,12 +82,12 @@ public class ProjectServiceImpl implements ProjectService {
 
         if(Objects.equals(project.getName(), projectName)) {
             Project persistedProject = repository.save(project);
-            sessionStorage.createOrUpdate(persistedProject.getId(), projectFilePath, domainModelPackages);
+            sessionStorage.createOrUpdate(persistedProject, projectFilePath, domainModelPackages);
             return;
         }
 
         Project persistedProject = insert(project);
-        sessionStorage.createOrUpdate(persistedProject.getId(), projectFilePath, domainModelPackages);
+        sessionStorage.createOrUpdate(persistedProject, projectFilePath, domainModelPackages);
     }
 
     @Override
@@ -148,7 +148,7 @@ public class ProjectServiceImpl implements ProjectService {
                 deleteTargetFile(project);
             }
 
-            sessionStorage.createOrUpdate(project.getId(), domainMirrorUploadDto.domainMirror());
+            sessionStorage.createOrUpdate(project, domainMirrorUploadDto.domainMirror());
             return;
         }
 
@@ -156,7 +156,7 @@ public class ProjectServiceImpl implements ProjectService {
             domainMirrorUploadDto.domainModelPackages(),
             (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), true);
         Project persistedProject = repository.save(project);
-        sessionStorage.createOrUpdate(persistedProject.getId(), domainMirrorUploadDto.domainMirror());
+        sessionStorage.createOrUpdate(persistedProject, domainMirrorUploadDto.domainMirror());
     }
 
     @Override
@@ -237,7 +237,7 @@ public class ProjectServiceImpl implements ProjectService {
             buildProjectFilename(project));
 
         try {
-            sessionStorage.createOrUpdate(project.getId(), projectFilePath, domainModelPackages);
+            sessionStorage.createOrUpdate(project, projectFilePath, domainModelPackages);
             return repository.save(project);
         } catch(RuntimeException e) {
             deleteTargetFile(project);

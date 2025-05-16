@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.security;
 
-import io.domainlifecycles.diagramviewer.model.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.rest.api.DomainMirrorUploadController;
 import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
 import jakarta.servlet.FilterChain;

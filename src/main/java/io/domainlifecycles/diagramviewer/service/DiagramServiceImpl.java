@@ -1,9 +1,9 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.DomainModelVisibility;
-import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
@@ -60,7 +60,7 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public Diagram update(Diagram diagram, Project project, String fileName) {
+    public Diagram rename(Diagram diagram, Project project, String fileName) {
         Path diagramPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
         String newFilenameWithSuffix = fileName + diagram.getFileType().getFileSuffix();
         FileIOUtils.renameFile(diagramPath, newFilenameWithSuffix);
@@ -84,6 +84,11 @@ public class DiagramServiceImpl implements DiagramService {
         project.addDiagram(diagram);
 
         return persistedDiagram;
+    }
+
+    @Override
+    public void regenerate(Diagram diagram, DomainMirror domainMirror) {
+        createAndSaveDiagramToFilesystem(diagram.getProject(), diagram, domainMirror);
     }
 
     private Diagram insert(Diagram diagram) {
@@ -110,7 +115,10 @@ public class DiagramServiceImpl implements DiagramService {
 
     private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
         DomainMirror domainMirror = sessionStorage.getDomainMirror(project.getId());
+        createAndSaveDiagramToFilesystem(project, diagram, domainMirror);
+    }
 
+    private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram, DomainMirror domainMirror) {
         final String nomnoml;
         try {
             nomnoml = DiagrammerUtils.generateNomnoml(

@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.InvitedUser;
+import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import java.util.HashSet;
 import org.springframework.stereotype.Service;

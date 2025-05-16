@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.model;
+package io.domainlifecycles.diagramviewer.model.viewer;
 
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycler;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;

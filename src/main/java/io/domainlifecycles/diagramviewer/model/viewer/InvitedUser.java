@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.model;
+package io.domainlifecycles.diagramviewer.model.viewer;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,21 +14,27 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * An Instance of a InvitedUser is created, when a Project admin adds a new email-address to the Project members and
+ * the given email-address is not known to the system. The invited user remains in the database for as long as he signs up
+ * for the first time, then this instance will be deleted and instead a new {@link RegisteredUser} created.
+ * Invited Users allow the project admin to give users access to projects, although they haven't signed up yet.
+ *
+ * @author leonvoellinger
+ */
 @Entity
 @Data
-@Table(name = "RegisteredUser")
+@Table(name = "InvitedUser")
 @ToString(exclude = "assignedProjects")
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
-public class RegisteredUser extends User {
+public class InvitedUser extends User {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    private UUID apiKey;
-
-    @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedRegisteredUsers")
+    @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedInvitedUsers")
     private Set<Project> assignedProjects;
 
     @Override
@@ -43,15 +49,11 @@ public class RegisteredUser extends User {
         this.assignedProjects = new HashSet<>(assignedProjects);
     }
 
-    public boolean hasApiKey() {
-        return apiKey != null;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof RegisteredUser registeredUser)) return false;
-        return id != null && id.equals(registeredUser.id);
+        if (!(o instanceof InvitedUser invitedUser)) return false;
+        return id != null && id.equals(invitedUser.id);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.model.ProjectDomainMirror;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -17,9 +18,9 @@ public interface ProjectDomainMirrorService {
 
     List<AggregateRootMirror> getAllAggregateRootMirrors(final UUID projectId);
 
-    ProjectDomainMirror createOrUpdate(final UUID projectId, Path projectFilePath, Set<String> domainModelPackages);
+    ProjectDomainMirror createOrUpdate(final Project project, Path projectFilePath, Set<String> domainModelPackages);
 
-    ProjectDomainMirror createOrUpdate(final UUID projectId, DomainMirror domainMirror);
+    ProjectDomainMirror createOrUpdate(final Project project, DomainMirror domainMirror);
 
     void delete(final UUID projectId);
 }

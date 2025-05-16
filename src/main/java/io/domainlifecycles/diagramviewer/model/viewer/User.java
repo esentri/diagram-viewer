@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.model;
+package io.domainlifecycles.diagramviewer.model.viewer;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;

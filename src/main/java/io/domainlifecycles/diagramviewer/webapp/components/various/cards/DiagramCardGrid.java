@@ -1,9 +1,9 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.cards;
 
 import com.vaadin.flow.component.formlayout.FormLayout;
-import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.DiagramDirectory;
-import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import java.util.Comparator;
 import java.util.Set;

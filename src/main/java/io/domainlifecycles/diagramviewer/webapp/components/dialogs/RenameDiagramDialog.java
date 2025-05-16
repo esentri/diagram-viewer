@@ -9,8 +9,8 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.RouteParameters;
-import io.domainlifecycles.diagramviewer.model.Diagram;
-import io.domainlifecycles.diagramviewer.model.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
@@ -18,7 +18,6 @@ import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 public class RenameDiagramDialog extends Dialog {
 
@@ -54,7 +53,7 @@ public class RenameDiagramDialog extends Dialog {
 
         createButton.addClickListener(e -> {
             binder.writeBeanIfValid(createDiagramOptions);
-            diagramService.update(diagram, project, createDiagramOptions.getFileName());
+            diagramService.rename(diagram, project, createDiagramOptions.getFileName());
             close();
             UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
                     Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(),
