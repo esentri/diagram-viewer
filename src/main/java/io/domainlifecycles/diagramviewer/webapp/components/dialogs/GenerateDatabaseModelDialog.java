@@ -8,6 +8,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.server.StreamResource;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
@@ -39,10 +40,14 @@ public class GenerateDatabaseModelDialog extends Dialog {
 
         this.sqlDDLGeneratorService = sqlDDLGeneratorService;
         this.project = project;
-        this.allAggregateRootMirrors = allAggregateRootMirrors;
+        this.allAggregateRootMirrors = allAggregateRootMirrors.stream()
+                .filter(m -> !m.getTypeName().startsWith("io.domainlifecycles"))
+                .toList();
         this.binder = new Binder<>();
 
         generateDatabaseModelOptions = new GenerateDatabaseModelOptions();
+        //default
+        generateDatabaseModelOptions.selectedSqlDialect = SQL_DIALECT_SELECT_VALUES[0];
 
         setHeaderTitle("Download SQL-DDL-Model");
         getFooter().add(createGenerateButton());
@@ -73,6 +78,12 @@ public class GenerateDatabaseModelDialog extends Dialog {
         Checkbox auditModelCheckbox = new Checkbox();
         binder.forField(auditModelCheckbox).bind(GenerateDatabaseModelOptions::isAuditModel, GenerateDatabaseModelOptions::setAuditModel);
         formLayout.addFormItem(auditModelCheckbox, "Audit Model");
+
+        TextField schemaNameTextField = new TextField();
+        binder.forField(schemaNameTextField)
+                .asRequired("Schema name is required.")
+                .bind(GenerateDatabaseModelOptions::getSchemaName, GenerateDatabaseModelOptions::setSchemaName);
+        formLayout.addFormItem(schemaNameTextField, "Schema Name");
 
         return formLayout;
     }
@@ -118,7 +129,9 @@ public class GenerateDatabaseModelDialog extends Dialog {
             project.getId(),
             generateDatabaseModelOptions.getSelectedAggregateRootMirror(),
             generateDatabaseModelOptions.getSelectedSqlDialect(),
-            generateDatabaseModelOptions.isAuditModel());
+            generateDatabaseModelOptions.isAuditModel(),
+            generateDatabaseModelOptions.getSchemaName()
+        );
 
         return new ByteArrayInputStream(ddl.getBytes(StandardCharsets.UTF_8));
     }
@@ -128,5 +141,6 @@ public class GenerateDatabaseModelDialog extends Dialog {
         private AggregateRootMirror selectedAggregateRootMirror;
         private String selectedSqlDialect;
         private boolean auditModel;
+        private String schemaName;
     }
 }

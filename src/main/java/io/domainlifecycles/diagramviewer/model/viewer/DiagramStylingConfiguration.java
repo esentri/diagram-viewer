@@ -23,7 +23,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Table(name = "DiagramStylingConfiguration")
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class DiagramStylingConfiguration {
 
     @Id
@@ -131,6 +131,18 @@ public class DiagramStylingConfiguration {
      * If true, generally only public methods are included
      */
     @Builder.Default private boolean showOnlyPublicMethods = true;
+    /**
+     * If true, Aggregate classes are included (AggregateRoot, included Entity, included ValueObject)
+     */
+    @Builder.Default private boolean showAggregates = true;
+    /**
+     * If true, fields of Aggregates are included
+     */
+    @Builder.Default private boolean showAggregateFields = true;
+    /**
+     * If true, methods of Aggregates are included
+     */
+    @Builder.Default private boolean showAggregateMethods = true;
     /**
      * If true, DomainEvent classes are included
      */
@@ -801,5 +813,29 @@ public class DiagramStylingConfiguration {
 
     public Instant getChangedAt() {
         return changedAt;
+    }
+
+    public boolean isShowAggregates() {
+        return showAggregates;
+    }
+
+    public void setShowAggregates(boolean showAggregates) {
+        this.showAggregates = showAggregates;
+    }
+
+    public boolean isShowAggregateFields() {
+        return showAggregateFields;
+    }
+
+    public void setShowAggregateFields(boolean showAggregateFields) {
+        this.showAggregateFields = showAggregateFields;
+    }
+
+    public boolean isShowAggregateMethods() {
+        return showAggregateMethods;
+    }
+
+    public void setShowAggregateMethods(boolean showAggregateMethods) {
+        this.showAggregateMethods = showAggregateMethods;
     }
 }

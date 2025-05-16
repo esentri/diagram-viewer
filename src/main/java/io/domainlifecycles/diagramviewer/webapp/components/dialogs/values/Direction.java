@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs.values;
 
 public enum Direction {
-    UP("up", "Up"),
+    RIGHT("right", "Right"),
     DOWN("down", "Down");
 
     private final String nomnomlValue;

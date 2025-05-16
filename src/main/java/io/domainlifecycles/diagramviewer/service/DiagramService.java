@@ -1,6 +1,8 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.mirror.api.DomainMirror;
@@ -17,7 +19,7 @@ public interface DiagramService {
 
     Diagram rename(Diagram diagram, Project project, String fileName);
 
-    Diagram create(Project project, String fileName, FileType fileType, Set<String> filteredPackages, Set<String> blacklistedClassnames);
+    Diagram create(Project project, String fileName, FileType fileType, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
 
     void regenerate(Diagram diagram, DomainMirror domainMirror);
 

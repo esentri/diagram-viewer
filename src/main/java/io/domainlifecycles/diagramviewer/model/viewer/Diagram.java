@@ -25,7 +25,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Table(name = "Diagram")
 @Data
 @ToString(exclude = "project")
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class Diagram {

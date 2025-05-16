@@ -131,4 +131,9 @@ public class PackageSelectChipField extends CustomField<Set<String>> {
     public Set<String> getEmptyValue() {
         return Collections.emptySet();
     }
+
+    public void clear(){
+        tags.clear();
+        tagsLayout.removeAll();
+    }
 }

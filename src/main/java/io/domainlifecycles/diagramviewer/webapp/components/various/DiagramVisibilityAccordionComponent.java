@@ -107,9 +107,10 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
         if (domainTypeOrdered().contains(type) && !DomainType.ENUM.equals(type)) {
             Button visibleButton = createAndGetDomainTypeVisibilityButton(mirror);
             buttonLayout.add(visibleButton);
-
-            Button seedButton = createAndGetDomainTypeSeedButton(mirror);
-            buttonLayout.add(seedButton);
+            if(!DomainType.VALUE_OBJECT.equals(type) && !DomainType.ENTITY.equals(type)) {
+                Button seedButton = createAndGetDomainTypeSeedButton(mirror);
+                buttonLayout.add(seedButton);
+            }
         }
 
         typeMirrorVisibilityLayout.add(buttonLayout);
