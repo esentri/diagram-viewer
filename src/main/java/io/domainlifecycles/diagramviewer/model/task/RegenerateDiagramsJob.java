@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.model.task;
 
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -21,7 +21,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Table(name = "RegenerateDiagramsJob")
 @Data
-@ToString(exclude = "project")
+@ToString(exclude = "diagram")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -31,9 +31,9 @@ public class RegenerateDiagramsJob {
     @GeneratedValue
     private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="project_id", nullable=false)
-    private Project project;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="diagram_id", nullable=false)
+    private Diagram diagram;
 
     @CreationTimestamp
     private Instant createdAt;

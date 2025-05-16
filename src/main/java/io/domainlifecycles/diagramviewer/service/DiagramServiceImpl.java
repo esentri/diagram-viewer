@@ -19,11 +19,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DiagramServiceImpl implements DiagramService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiagramServiceImpl.class);
 
     private final String diagramsLocation;
     private final SessionStorage sessionStorage;
@@ -94,6 +98,7 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public void regenerate(Diagram diagram, DomainMirror domainMirror) {
+        LOGGER.info(String.format("Regenerating diagram '%s'.", diagram.getFileName()));
         createAndSaveDiagramToFilesystem(diagram.getProject(), diagram, domainMirror);
     }
 

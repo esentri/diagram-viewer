@@ -5,10 +5,14 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.RegenerateDomainMirrorJobRepository;
 import java.util.List;
 import java.util.stream.StreamSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class RegenerateDiagramsJobServiceImpl implements RegenerateDiagramsJobService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegenerateDiagramsJobServiceImpl.class);
 
     private final RegenerateDomainMirrorJobRepository repository;
 
@@ -23,11 +27,12 @@ public class RegenerateDiagramsJobServiceImpl implements RegenerateDiagramsJobSe
 
     @Override
     public void create(Project project) {
-        RegenerateDiagramsJob job = RegenerateDiagramsJob.builder()
-            .project(project)
-            .build();
-
-        repository.save(job);
+        project.getDiagrams().forEach(diagram -> {
+            RegenerateDiagramsJob job = RegenerateDiagramsJob.builder()
+                .diagram(diagram)
+                .build();
+            repository.save(job);
+        });
     }
 
     @Override
