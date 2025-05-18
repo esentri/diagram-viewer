@@ -2,12 +2,10 @@ package io.domainlifecycles.diagramviewer.scheduled;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramRegenerationTaskException;
 import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
-import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobServiceImpl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

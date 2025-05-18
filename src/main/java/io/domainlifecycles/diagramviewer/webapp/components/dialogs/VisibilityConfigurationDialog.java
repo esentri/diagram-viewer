@@ -62,11 +62,15 @@ public class VisibilityConfigurationDialog extends Dialog {
 
         add(createDialogLayout());
 
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
+                domainModelVisibilityBinder.readBean(diagram.getDomainModelVisibility());
+            }
+        });
+
         getFooter().add(createSaveButton());
         getFooter().add(createCancelButton());
-
-        diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
-        domainModelVisibilityBinder.readBean(diagram.getDomainModelVisibility());
     }
 
     private Button createSaveButton() {

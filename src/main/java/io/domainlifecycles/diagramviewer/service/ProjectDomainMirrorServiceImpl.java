@@ -8,13 +8,12 @@ import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
 import org.springframework.stereotype.Service;
 
 @Service

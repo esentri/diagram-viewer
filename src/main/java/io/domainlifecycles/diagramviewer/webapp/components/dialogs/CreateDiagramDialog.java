@@ -22,8 +22,6 @@ import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -47,8 +45,6 @@ public class CreateDiagramDialog extends Dialog {
         this.domainTypeMirrors = domainTypeMirrors;
         this.binder = new Binder<>();
 
-        this.createDiagramOptions = new CreateDiagramOptions(FileType.SVG);
-
         setHeaderTitle("Create Diagram");
         setWidth("50%");
 
@@ -56,7 +52,13 @@ public class CreateDiagramDialog extends Dialog {
         getFooter().add(createCancelButton());
         add(createDialogLayout());
 
-        binder.readBean(createDiagramOptions);
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                this.createDiagramOptions = new CreateDiagramOptions(FileType.SVG);
+                binder.readBean(createDiagramOptions);
+            }
+        });
+
         binder.addStatusChangeListener(event -> createButton.setEnabled(binder.isValid()));
     }
 

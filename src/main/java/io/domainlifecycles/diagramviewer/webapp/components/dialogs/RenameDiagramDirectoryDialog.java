@@ -22,16 +22,14 @@ public class RenameDiagramDirectoryDialog extends Dialog {
     private final DiagramDirectoryService diagramDirectoryService;
     private final DiagramDirectory diagramDirectory;
     private final Binder<RenameDiagramDirectoryOptions> binder;
-    private final RenameDiagramDirectoryOptions renameDiagramDirectoryOptions;
 
-    private Button createButton;
+    private RenameDiagramDirectoryOptions renameDiagramDirectoryOptions;
+    private Button saveButton;
 
     public RenameDiagramDirectoryDialog(DiagramDirectoryService diagramDirectoryService, DiagramDirectory diagramDirectory) {
         this.diagramDirectoryService = diagramDirectoryService;
         this.diagramDirectory = diagramDirectory;
         this.binder = new Binder<>();
-
-        this.renameDiagramDirectoryOptions = new RenameDiagramDirectoryOptions(diagramDirectory.getName());
 
         setHeaderTitle("Rename Directory");
 
@@ -39,14 +37,20 @@ public class RenameDiagramDirectoryDialog extends Dialog {
         getFooter().add(createCancelButton());
         add(createDialogLayout());
 
-        binder.readBean(renameDiagramDirectoryOptions);
-        binder.addStatusChangeListener(event -> createButton.setEnabled(binder.isValid()));
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                this.renameDiagramDirectoryOptions = new RenameDiagramDirectoryOptions(diagramDirectory.getName());
+                binder.readBean(renameDiagramDirectoryOptions);
+            }
+        });
+
+        binder.addStatusChangeListener(event -> saveButton.setEnabled(binder.isValid()));
     }
 
     private Button createSaveButton() {
-        createButton = new Button("Save");
+        saveButton = new Button("Save");
 
-        createButton.addClickListener(e -> {
+        saveButton.addClickListener(e -> {
             binder.writeBeanIfValid(renameDiagramDirectoryOptions);
             diagramDirectoryService.update(diagramDirectory, renameDiagramDirectoryOptions.getName());
             close();
@@ -55,8 +59,8 @@ public class RenameDiagramDirectoryDialog extends Dialog {
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 
-        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        return createButton;
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        return saveButton;
     }
 
     private Button createCancelButton() {

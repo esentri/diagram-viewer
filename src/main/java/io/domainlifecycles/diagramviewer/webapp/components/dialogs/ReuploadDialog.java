@@ -27,8 +27,8 @@ public class ReuploadDialog extends Dialog {
     private final ProjectService projectService;
     private final Binder<UploadOptions> binder;
     private final Project project;
-    private final UploadOptions uploadOptions;
 
+    private UploadOptions uploadOptions;
     private Button uploadButton;
     private InputStream fileInputStream;
 
@@ -36,11 +36,6 @@ public class ReuploadDialog extends Dialog {
         this.project = project;
         this.projectService = projectService;
         this.binder = new Binder<>();
-
-        uploadOptions = new UploadOptions(
-                project.getName(),
-                project.getDomainModelPackages()
-        );
 
         setHeaderTitle("Reupload Project");
         setWidth("30%");
@@ -50,7 +45,16 @@ public class ReuploadDialog extends Dialog {
         getFooter().add(createCancelButton());
         add(createDialogLayout());
 
-        binder.readBean(uploadOptions);
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                uploadOptions = new UploadOptions(
+                    project.getName(),
+                    project.getDomainModelPackages()
+                );
+                binder.readBean(uploadOptions);
+            }
+        });
+
         binder.addStatusChangeListener(event -> uploadButton.setEnabled(binder.isValid()));
     }
 

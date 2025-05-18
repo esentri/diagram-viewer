@@ -23,8 +23,8 @@ public class CreateFolderDialog extends Dialog {
     private final Diagram dropDiagram;
     private final DiagramDirectoryService diagramDirectoryService;
     private final Binder<CreateFolderOptions> binder;
-    private final CreateFolderOptions createFolderOptions;
 
+    private CreateFolderOptions createFolderOptions;
     private Button createButton;
 
     public CreateFolderDialog(Project project, Diagram dragDiagram, Diagram dropDiagram, DiagramDirectoryService diagramDirectoryService) {
@@ -42,7 +42,13 @@ public class CreateFolderDialog extends Dialog {
         getFooter().add(createCancelButton());
         add(createDialogLayout());
 
-        binder.readBean(createFolderOptions);
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                this.createFolderOptions = new CreateFolderOptions();
+                binder.readBean(createFolderOptions);
+            }
+        });
+
         binder.addStatusChangeListener(event -> createButton.setEnabled(binder.isValid()));
     }
 

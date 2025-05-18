@@ -1,11 +1,9 @@
 package io.domainlifecycles.diagramviewer.repository;
 
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;

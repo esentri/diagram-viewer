@@ -47,10 +47,14 @@ public class StylingConfigurationDialog extends Dialog {
 
         add(createDialogLayout());
 
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                binder.readBean(diagram.getDiagramStylingConfiguration());
+            }
+        });
+
         getFooter().add(createSaveButton());
         getFooter().add(createCancelButton());
-
-        binder.readBean(diagram.getDiagramStylingConfiguration());
     }
 
     private Button createSaveButton() {

@@ -25,9 +25,11 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.DiagramTypeNotesDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityComponentsContainer;
@@ -55,6 +57,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private final String diagramsLocation;
     private final ProjectService projectService;
     private final DiagramService diagramService;
+    private final DiagramTypeNoteService diagramTypeNoteService;
     private final SessionStorage sessionStorage;
     private final SecurityService securityService;
     private String projectName;
@@ -67,12 +70,14 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     public DiagramView(
         @Value("${diagrams.location}") String diagramsLocation,
         ProjectService projectService, DiagramService diagramService,
+        DiagramTypeNoteService diagramTypeNoteService,
         SessionStorage sessionStorage,
         SecurityService securityService) {
 
         this.diagramsLocation = diagramsLocation;
         this.projectService = projectService;
         this.diagramService = diagramService;
+        this.diagramTypeNoteService = diagramTypeNoteService;
         this.sessionStorage = sessionStorage;
         this.securityService = securityService;
 
@@ -128,7 +133,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private HorizontalLayout createAndGetButtonBar() {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.getStyle().setMarginLeft("3.5rem");
-        buttonBar.add(getRenameDiagramButton(), getDiagramDownloadButton(), getDeleteDiagramButton());
+        buttonBar.add(getRenameDiagramButton(), getAddTypeNotesButton(), getDiagramDownloadButton(), getDeleteDiagramButton());
         return buttonBar;
     }
 
@@ -150,6 +155,14 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         downloadAnchor.add(new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD_ALT)));
 
         return downloadAnchor;
+    }
+
+    private Button getAddTypeNotesButton() {
+        DiagramTypeNotesDialog diagramTypeNotesDialog = new DiagramTypeNotesDialog(diagram, domainTypeMirrors, diagramTypeNoteService);
+        Button typeNotesButton = new Button("Notes", new Icon(VaadinIcon.NOTEBOOK));
+        typeNotesButton.addClickListener(e -> diagramTypeNotesDialog.open());
+
+        return typeNotesButton;
     }
 
     private Button getDeleteDiagramButton() {

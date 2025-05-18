@@ -36,7 +36,12 @@ public class VariousConfigurationDialog extends Dialog {
         setHeight("60%");
 
         add(createDialogLayout());
-        diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
+
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
+            }
+        });
 
         getFooter().add(createSaveButton());
         getFooter().add(createCancelButton());

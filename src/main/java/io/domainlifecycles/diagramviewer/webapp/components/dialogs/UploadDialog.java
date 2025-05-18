@@ -23,8 +23,8 @@ public class UploadDialog extends Dialog {
     private final ProjectService projectService;
     private final SecurityService securityService;
     private final Binder<UploadOptions> binder;
-    private final UploadOptions uploadOptions;
 
+    private UploadOptions uploadOptions;
     private Button uploadButton;
     private InputStream fileInputStream;
 
@@ -33,14 +33,19 @@ public class UploadDialog extends Dialog {
         this.securityService = securityService;
         this.binder = new Binder<>();
 
-        uploadOptions = new UploadOptions();
-
         setHeaderTitle("Upload Project");
         setWidth("30%");
         setHeight("50%");
 
         getFooter().add(createUploadButton());
         getFooter().add(createCancelButton());
+
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                uploadOptions = new UploadOptions();
+                binder.readBean(uploadOptions);
+            }
+        });
 
         add(createDialogLayout());
         binder.addStatusChangeListener(event -> uploadButton.setEnabled(binder.isValid()));

@@ -24,19 +24,14 @@ public class EditProjectDialog extends Dialog {
     private final Project project;
     private final ProjectService projectService;
     private final Binder<UploadOptions> binder;
-    private final UploadOptions uploadOptions;
 
+    private UploadOptions uploadOptions;
     private Button saveButton;
 
     public EditProjectDialog(Project project, ProjectService projectService) {
         this.project = project;
         this.projectService = projectService;
         this.binder = new Binder<>();
-
-        uploadOptions = new UploadOptions(
-                project.getName(),
-                project.getDomainModelPackages()
-        );
 
         setHeaderTitle("Edit Project");
         setWidth("30%");
@@ -46,7 +41,16 @@ public class EditProjectDialog extends Dialog {
         getFooter().add(createCancelButton());
         add(createDialogLayout());
 
-        binder.readBean(uploadOptions);
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                this.uploadOptions = new UploadOptions(
+                    project.getName(),
+                    project.getDomainModelPackages()
+                );
+                binder.readBean(uploadOptions);
+            }
+        });
+
         binder.addStatusChangeListener(event -> saveButton.setEnabled(binder.isValid()));
     }
 

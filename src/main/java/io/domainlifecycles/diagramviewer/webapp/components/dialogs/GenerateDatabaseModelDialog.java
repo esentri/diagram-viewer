@@ -30,8 +30,8 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private final SQLDDLGeneratorService sqlDDLGeneratorService;
     private final Project project;
     private final List<AggregateRootMirror> allAggregateRootMirrors;
-    private final GenerateDatabaseModelOptions generateDatabaseModelOptions;
 
+    private GenerateDatabaseModelOptions generateDatabaseModelOptions;
     private Button generateButton;
 
     public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService,
@@ -45,14 +45,17 @@ public class GenerateDatabaseModelDialog extends Dialog {
                 .toList();
         this.binder = new Binder<>();
 
-        generateDatabaseModelOptions = new GenerateDatabaseModelOptions();
-        //default
-        generateDatabaseModelOptions.selectedSqlDialect = SQL_DIALECT_SELECT_VALUES[0];
-
         setHeaderTitle("Download SQL-DDL-Model");
         getFooter().add(createGenerateButton());
         getFooter().add(createCloseButton());
         add(createDialogLayout());
+
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                this.generateDatabaseModelOptions = new GenerateDatabaseModelOptions(SQL_DIALECT_SELECT_VALUES[0]);
+                binder.readBean(generateDatabaseModelOptions);
+            }
+        });
 
         binder.addStatusChangeListener(event -> generateButton.setEnabled(binder.isValid()));
     }
@@ -142,5 +145,9 @@ public class GenerateDatabaseModelDialog extends Dialog {
         private String selectedSqlDialect;
         private boolean auditModel;
         private String schemaName;
+
+        public GenerateDatabaseModelOptions(String selectedSqlDialect) {
+            this.selectedSqlDialect = selectedSqlDialect;
+        }
     }
 }

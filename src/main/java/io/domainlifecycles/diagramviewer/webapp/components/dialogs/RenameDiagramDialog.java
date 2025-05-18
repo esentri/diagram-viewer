@@ -24,9 +24,9 @@ public class RenameDiagramDialog extends Dialog {
     private final DiagramService diagramService;
     private final Project project;
     private final Binder<RenameDiagramOptions> binder;
-    private final RenameDiagramOptions createDiagramOptions;
     private final Diagram diagram;
 
+    private RenameDiagramOptions renameDiagramOptions;
     private Button createButton;
 
     public RenameDiagramDialog(DiagramService diagramService, Project project, Diagram diagram) {
@@ -35,7 +35,7 @@ public class RenameDiagramDialog extends Dialog {
         this.diagram = diagram;
         this.binder = new Binder<>();
 
-        this.createDiagramOptions = new RenameDiagramOptions(
+        this.renameDiagramOptions = new RenameDiagramOptions(
             diagram.getFileName().replaceAll(diagram.getFileType().getFileSuffix(), ""));
 
         setHeaderTitle("Rename Diagram");
@@ -44,7 +44,14 @@ public class RenameDiagramDialog extends Dialog {
         getFooter().add(createCancelButton());
         add(createDialogLayout());
 
-        binder.readBean(createDiagramOptions);
+        addOpenedChangeListener(e -> {
+            if(e.isOpened()) {
+                this.renameDiagramOptions = new RenameDiagramOptions(
+                    diagram.getFileName().replaceAll(diagram.getFileType().getFileSuffix(), ""));
+                binder.readBean(renameDiagramOptions);
+            }
+        });
+
         binder.addStatusChangeListener(event -> createButton.setEnabled(binder.isValid()));
     }
 
@@ -52,8 +59,8 @@ public class RenameDiagramDialog extends Dialog {
         createButton = new Button("Save");
 
         createButton.addClickListener(e -> {
-            binder.writeBeanIfValid(createDiagramOptions);
-            diagramService.rename(diagram, project, createDiagramOptions.getFileName());
+            binder.writeBeanIfValid(renameDiagramOptions);
+            diagramService.rename(diagram, project, renameDiagramOptions.getFileName());
             close();
             UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
                     Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(),
