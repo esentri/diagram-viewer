@@ -1,11 +1,14 @@
 package io.domainlifecycles.diagramviewer.scheduled;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import io.domainlifecycles.diagramviewer.exception.DiagramRegenerationTaskException;
 import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +57,7 @@ public class DiagramRegenerationTask {
                     regenerateDiagramsJobService.delete(job);
                 } catch(Exception e) {
                     LOGGER.error(
-                        String.format("Error occurred while regenerating diagram '%s.'. Continuing with others...",
+                        String.format("Error occurred while regenerating diagram '%s'. Continuing with others...",
                             job.getDiagram().getFileName()));
 
                     caughtErrors.add(DiagramRegenerationError.builder()

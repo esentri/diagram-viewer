@@ -106,9 +106,11 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
 
         if (domainTypeOrdered().contains(type) && !DomainType.ENUM.equals(type)) {
             Button visibleButton = createAndGetDomainTypeVisibilityButton(mirror);
+            visibleButton.getStyle().set("cursor", "pointer");
             buttonLayout.add(visibleButton);
             if(!DomainType.VALUE_OBJECT.equals(type) && !DomainType.ENTITY.equals(type)) {
                 Button seedButton = createAndGetDomainTypeSeedButton(mirror);
+                seedButton.getStyle().set("cursor", "pointer");
                 buttonLayout.add(seedButton);
             }
         }
@@ -120,6 +122,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
 
     private Button createAndGetDomainTypeSeedButton(DomainTypeMirror mirror) {
         Button seedButton = new Button(new Icon(VaadinIcon.FILTER));
+        seedButton.getStyle().set("cursor", "pointer");
         seedButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
 
         if (diagram.getDomainModelVisibility().getSeedClassNames().contains(mirror.getTypeName())) {
@@ -132,6 +135,7 @@ public class DiagramVisibilityAccordionComponent extends Accordion {
 
     private Button createAndGetDomainTypeVisibilityButton(DomainTypeMirror mirror) {
         Button visibleButton = new Button(new Icon(VaadinIcon.EYE_SLASH));
+        visibleButton.getStyle().set("cursor", "pointer");
         visibleButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
 
         if (diagram.getDomainModelVisibility().getBlacklistedClassNames().contains(

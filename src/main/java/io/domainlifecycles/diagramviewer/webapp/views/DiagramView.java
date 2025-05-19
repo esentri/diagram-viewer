@@ -140,6 +140,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private Button getRenameDiagramButton() {
         RenameDiagramDialog renameDiagramDialog = new RenameDiagramDialog(diagramService, project, diagram);
         Button renameDiagramButton = new Button("Rename", new Icon(VaadinIcon.PENCIL));
+        renameDiagramButton.getStyle().set("cursor", "pointer");
         renameDiagramButton.addClickListener(e -> renameDiagramDialog.open());
 
         return renameDiagramButton;
@@ -152,14 +153,18 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         downloadAnchor.setId("diagramDownloadButton");
         downloadAnchor.getElement().setAttribute("download", true);
         downloadAnchor.removeAll();
-        downloadAnchor.add(new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD_ALT)));
+
+        Button downloadDiagramButton = new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD_ALT));
+        downloadDiagramButton.getStyle().set("cursor", "pointer");
+        downloadAnchor.add(downloadDiagramButton);
 
         return downloadAnchor;
     }
 
     private Button getAddTypeNotesButton() {
         DiagramTypeNotesDialog diagramTypeNotesDialog = new DiagramTypeNotesDialog(diagram, domainTypeMirrors, diagramTypeNoteService);
-        Button typeNotesButton = new Button("Notes", new Icon(VaadinIcon.NOTEBOOK));
+        Button typeNotesButton = new Button("Notes", new Icon(VaadinIcon.COMMENT_ELLIPSIS_O));
+        typeNotesButton.getStyle().set("cursor", "pointer");
         typeNotesButton.addClickListener(e -> diagramTypeNotesDialog.open());
 
         return typeNotesButton;

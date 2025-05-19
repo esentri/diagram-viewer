@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
@@ -37,16 +38,22 @@ public class DiagramConfigurationButtonBarComponent extends FlexLayout {
 
     private List<Component> getStylingConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService) {
         Dialog stylingConfigurationDialog = new StylingConfigurationDialog(project, diagram, diagramService);
-        return List.of(new Button(new Icon("vaadin:paintbrush"), e -> stylingConfigurationDialog.open()), stylingConfigurationDialog);
+        Button stylingConfigurationButton = new Button(new Icon(VaadinIcon.PAINTBRUSH), e -> stylingConfigurationDialog.open());
+        stylingConfigurationButton.getStyle().set("cursor", "pointer");
+        return List.of(stylingConfigurationButton, stylingConfigurationDialog);
     }
 
     private List<Component> getVisibilityConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService) {
         Dialog visibilityConfigurationDialog = new VisibilityConfigurationDialog(diagramService, project, diagram);
-        return List.of(new Button(new Icon("vaadin:eye"), e -> visibilityConfigurationDialog.open()), visibilityConfigurationDialog);
+        Button visibilityConfigurationButton = new Button(new Icon(VaadinIcon.EYE), e -> visibilityConfigurationDialog.open());
+        visibilityConfigurationButton.getStyle().set("cursor", "pointer");
+        return List.of(visibilityConfigurationButton, visibilityConfigurationDialog);
     }
 
     private List<Component> getVariousConfigurationButtonAndDialog(Project project, Diagram diagram, DiagramService diagramService) {
         Dialog variousConfigurationDialog = new VariousConfigurationDialog(diagram, project, diagramService);
-        return List.of(new Button(new Icon("vaadin:cogs"), e -> variousConfigurationDialog.open()), variousConfigurationDialog);
+        Button variousConfigurationButton = new Button(new Icon(VaadinIcon.COGS), e -> variousConfigurationDialog.open());
+        variousConfigurationButton.getStyle().set("cursor", "pointer");
+        return List.of(variousConfigurationButton, variousConfigurationDialog);
     }
 }

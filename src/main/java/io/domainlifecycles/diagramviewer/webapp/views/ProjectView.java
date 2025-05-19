@@ -100,7 +100,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         Button reuploadProjectButton = new Button(new Icon("vaadin:cloud-upload-o"), e -> reuploadDialog.open());
         reuploadProjectButton.addThemeName("icon");
-        editProjectButton.getStyle().set("cursor", "pointer");
+        reuploadProjectButton.getStyle().set("cursor", "pointer");
 
         horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(project.getName()), editProjectButton, reuploadProjectButton, getDeleteProjectButton());
 
