@@ -62,10 +62,12 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
         Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(project.getId());
 
         if(foundProjectDomainMirror.isPresent()) {
-            regenerateDiagramsJobService.create(project);
+
             ProjectDomainMirror projectDomainMirror = foundProjectDomainMirror.get();
             projectDomainMirror.setDomainMirror(domainMirror);
-            return repository.save(projectDomainMirror);
+            var mirror = repository.save(projectDomainMirror);
+            regenerateDiagramsJobService.create(project);
+            return mirror;
         }
 
         ProjectDomainMirror projectDomainMirror = ProjectDomainMirror.builder()

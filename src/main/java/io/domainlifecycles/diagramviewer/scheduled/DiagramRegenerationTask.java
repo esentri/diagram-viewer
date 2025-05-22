@@ -1,25 +1,24 @@
 package io.domainlifecycles.diagramviewer.scheduled;
 
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.UI;
 import io.domainlifecycles.diagramviewer.exception.DiagramRegenerationTaskException;
 import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class DiagramRegenerationTask {
@@ -53,6 +52,9 @@ public class DiagramRegenerationTask {
 
             regenerateDiagramsJobsForProject.forEach(job -> {
                 try {
+                    var diagram = job.getDiagram();
+                    diagram.setChangedAt(Instant.now());
+                    diagramService.update(diagram);
                     diagramService.regenerate(job.getDiagram(), projectDomainMirror.getDomainMirror());
                     regenerateDiagramsJobService.delete(job);
                 } catch(Exception e) {
