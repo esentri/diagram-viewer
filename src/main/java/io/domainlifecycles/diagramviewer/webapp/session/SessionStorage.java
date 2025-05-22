@@ -5,6 +5,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -23,10 +24,15 @@ public class SessionStorage {
 
     private final ProjectDomainMirrorService projectDomainMirrorService;
     private final Map<UUID, DomainMirrorContainer> domainMirrorContainers;
+    private boolean packageFilterOpen;
+    private final Map<DomainType, Boolean> domainTypeDigramSettingsOpen;
+    private boolean advancedTrimmingOpen = false;
 
     public SessionStorage(ProjectDomainMirrorService projectDomainMirrorService) {
         this.projectDomainMirrorService = projectDomainMirrorService;
         this.domainMirrorContainers = new HashMap<>();
+        this.domainTypeDigramSettingsOpen = new HashMap<>();
+        this.packageFilterOpen = true;
     }
 
     public DomainMirror getDomainMirror(UUID projectId) {
@@ -97,6 +103,30 @@ public class SessionStorage {
 
         domainMirrorContainers.remove(projectId);
         domainMirrorContainers.put(projectId, domainMirrorContainer);
+    }
+
+    public boolean isPackageFilterOpen() {
+        return packageFilterOpen;
+    }
+
+    public void setPackageFilterOpen(boolean packageFilterOpen) {
+        this.packageFilterOpen = packageFilterOpen;
+    }
+
+    public boolean isDomainTypeSettingOpen(DomainType domainType) {
+        return domainTypeDigramSettingsOpen.get(domainType) == null ? false : domainTypeDigramSettingsOpen.get(domainType);
+    }
+
+    public void setDomainTypeSettingOpen(DomainType domainType, boolean open) {
+        domainTypeDigramSettingsOpen.put(domainType, open);
+    }
+
+    public boolean isAdvancedTrimmingOpen() {
+        return advancedTrimmingOpen;
+    }
+
+    public void setAdvancedTrimmingOpen(boolean advancedTrimmingOpen) {
+        this.advancedTrimmingOpen = advancedTrimmingOpen;
     }
 
     @Data

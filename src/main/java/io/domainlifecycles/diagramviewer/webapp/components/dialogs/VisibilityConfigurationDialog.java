@@ -27,6 +27,11 @@ public class VisibilityConfigurationDialog extends Dialog {
 
     private Checkbox showAllFieldsCheckbox;
     private Checkbox showAllMethodsCheckbox;
+
+    private Checkbox showAllAbstractTypesCheckbox;
+    private Checkbox showAbstractTypesInAggregatesCheckbox;
+    private Checkbox useAbstractTypeNamesForServiceKindsCheckbox;
+
     private Checkbox showDomainEventFieldsCheckbox;
     private Checkbox showDomainEventMethodsCheckbox;
     private Checkbox showDomainCommandFieldsCheckbox;
@@ -139,6 +144,18 @@ public class VisibilityConfigurationDialog extends Dialog {
         Checkbox showOnlyPublicMethodsCheckbox = new Checkbox();
         formLayout.addFormItem(showOnlyPublicMethodsCheckbox,"Public methods only");
         diagramConfigurationBinder.bind(showOnlyPublicMethodsCheckbox, DiagramStylingConfiguration::isShowOnlyPublicMethods, DiagramStylingConfiguration::setShowOnlyPublicMethods);
+
+        showAllAbstractTypesCheckbox = new Checkbox();
+        formLayout.addFormItem(showAllAbstractTypesCheckbox,"Show all abstract types");
+        diagramConfigurationBinder.bind(showAllAbstractTypesCheckbox, DiagramStylingConfiguration::isShowAllAbstractTypes, DiagramStylingConfiguration::setShowAllAbstractTypes);
+
+        showAbstractTypesInAggregatesCheckbox = new Checkbox();
+        formLayout.addFormItem(showAbstractTypesInAggregatesCheckbox,"Show abstract types within aggregates");
+        diagramConfigurationBinder.bind(showAbstractTypesInAggregatesCheckbox, DiagramStylingConfiguration::isShowAbstractTypesInAggregates, DiagramStylingConfiguration::setShowAbstractTypesInAggregates);
+
+        useAbstractTypeNamesForServiceKindsCheckbox = new Checkbox();
+        formLayout.addFormItem(useAbstractTypeNamesForServiceKindsCheckbox,"Use abstract type names for service kinds");
+        diagramConfigurationBinder.bind(useAbstractTypeNamesForServiceKindsCheckbox, DiagramStylingConfiguration::isUseAbstractTypeNamesForServiceKinds, DiagramStylingConfiguration::setUseAbstractTypeNamesForServiceKinds);
 
         generalPanel.add(formLayout);
         return generalPanel;

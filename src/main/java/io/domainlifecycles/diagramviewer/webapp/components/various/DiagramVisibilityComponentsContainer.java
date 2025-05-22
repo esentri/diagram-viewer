@@ -5,16 +5,17 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;
 
 public class DiagramVisibilityComponentsContainer extends VerticalLayout {
 
-    public DiagramVisibilityComponentsContainer(Project project, Diagram diagram, List<DomainTypeMirror> domainTypeMirrors,
+    public DiagramVisibilityComponentsContainer(SessionStorage sessionStorage, Project project, Diagram diagram, List<DomainTypeMirror> domainTypeMirrors,
                                                 DiagramService diagramService) {
         setWidthFull();
-        add(new DiagramPackageFilterAccordionComponent(diagram, project, diagramService),
+        add(new DiagramFilterComponent(sessionStorage, diagram, project, domainTypeMirrors, diagramService),
             new Hr(),
-            new DiagramVisibilityAccordionComponent(project, diagram, domainTypeMirrors, diagramService));
+            new DiagramVisibilityComponent(sessionStorage, project, diagram, domainTypeMirrors, diagramService));
     }
 }
