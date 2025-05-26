@@ -87,7 +87,7 @@ public class DiagramVisibilityComponent extends Div {
     }
 
     private Details createAndGetDetailsLayoutForDomainType(DomainType type, List<? extends DomainTypeMirror> domainTypeMirrors) {
-        var details = new Details(translateDomainType(type));
+        Details details = new Details(translateDomainType(type));
         details.setOpened(this.sessionStorage.isDomainTypeSettingOpen(type));
         VerticalLayout layout = new VerticalLayout();
 
@@ -97,18 +97,20 @@ public class DiagramVisibilityComponent extends Div {
         }
 
         details.add(layout);
-        details.addOpenedChangeListener(event -> {
-            this.sessionStorage.setDomainTypeSettingOpen(type, event.isOpened());
-        });
+        details.addOpenedChangeListener(event -> this.sessionStorage.setDomainTypeSettingOpen(type, event.isOpened()));
         return details;
     }
 
     private Component createAndGetContentForDomainTypeAndMirror(DomainType type, DomainTypeMirror mirror) {
         VerticalLayout typeMirrorVisibilityLayout = new VerticalLayout();
         typeMirrorVisibilityLayout.setMargin(false);
-        typeMirrorVisibilityLayout.setWrap(false);
+        typeMirrorVisibilityLayout.setSpacing(false);
+        typeMirrorVisibilityLayout.getStyle().setPaddingBottom("0");
+        typeMirrorVisibilityLayout.getStyle().setPaddingTop("0");
 
         NativeLabel typeMirrorNameLabel = new NativeLabel(shortClassName(mirror.getTypeName()));
+        typeMirrorNameLabel.getStyle().set("font-weight", "bold");
+
         Details blendingLayout = new Details("Trim settings");
         blendingLayout.setOpened(false);
 
@@ -177,11 +179,11 @@ public class DiagramVisibilityComponent extends Div {
             }
         }
 
-        visible.addClickListener(e -> mirrorVisibilityChanged(mirror, visible, filterType));
+        visible.addClickListener(e -> mirrorVisibilityChanged(mirror, filterType));
         return visible;
     }
 
-    private void mirrorVisibilityChanged(DomainTypeMirror mirror, Checkbox checkbox, VisibilityFilterType filterType) {
+    private void mirrorVisibilityChanged(DomainTypeMirror mirror, VisibilityFilterType filterType) {
         String typeName = mirror.getTypeName();
         DomainModelVisibility visibility = diagram.getDomainModelVisibility();
 
@@ -339,7 +341,7 @@ public class DiagramVisibilityComponent extends Div {
         EXCLUDE_CONNECTED_INGOING("exclude ingoing connections"),
         EXCLUDE_CONNECTED_OUTGOING("exclude outgoing connections");
 
-        String label;
+        final String label;
 
         VisibilityFilterType(String label) {
             this.label = label;
