@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.security;
 
 import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.rest.api.DomainMirrorUploadController;
+import io.domainlifecycles.diagramviewer.rest.api.ResourceController;
 import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,7 +34,8 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        if (path.startsWith(DomainMirrorUploadController.UPLOAD_DOMAIN_MIRROR_API_PATH)) {
+        if (path.startsWith(DomainMirrorUploadController.UPLOAD_DOMAIN_MIRROR_API_PATH) || path.startsWith(
+            ResourceController.RESOURCES_API_PATH + ResourceController.VIEW_API_PATH_SUFFIX)) {
             final String apiKey = request.getHeader(API_KEY_HEADER_NAME);
             final Optional<RegisteredUser> foundRegisteredUser = registeredUserService.findByApiKey(apiKey);
 

@@ -43,6 +43,7 @@ dependencies {
 	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"
 	implementation "com.github.docker-java:docker-java-transport-httpclient5:${javaDockerVersion}"
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
+	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.0'
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	implementation("io.domainlifecycles:kickstart-generator:1.0.6")

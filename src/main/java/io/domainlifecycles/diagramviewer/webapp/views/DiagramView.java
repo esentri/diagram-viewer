@@ -32,6 +32,7 @@ import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.DiagramTypeNotesDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
+import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAndNotesComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
@@ -121,11 +122,8 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             project.getId().toString(), diagramName, diagram.getChangedAt(),
             diagram.getDiagramStylingConfiguration().getChangedAt()));
 
-        Scroller scroller = new Scroller(
-            new DiagramVisibilityComponentsContainer(sessionStorage, project, diagram, domainTypeMirrors, diagramService));
-        scroller.setScrollDirection(ScrollDirection.BOTH);
-        scroller.setWidth("30%");
-        diagramViewerAndStylingContainer.add(scroller);
+        diagramViewerAndStylingContainer.add(
+            new DiagramVisibilityAndNotesComponentsContainer(sessionStorage, project, diagram, domainTypeMirrors, diagramService, diagramTypeNoteService));
 
         add(diagramViewerAndStylingContainer);
     }
@@ -133,7 +131,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private HorizontalLayout createAndGetButtonBar() {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.getStyle().setMarginLeft("3.5rem");
-        buttonBar.add(getRenameDiagramButton(), getAddTypeNotesButton(), getDiagramDownloadButton(), getDeleteDiagramButton());
+        buttonBar.add(getRenameDiagramButton(), getDiagramDownloadButton(), getDeleteDiagramButton());
         return buttonBar;
     }
 
@@ -159,15 +157,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         downloadAnchor.add(downloadDiagramButton);
 
         return downloadAnchor;
-    }
-
-    private Button getAddTypeNotesButton() {
-        DiagramTypeNotesDialog diagramTypeNotesDialog = new DiagramTypeNotesDialog(diagram, domainTypeMirrors, diagramTypeNoteService);
-        Button typeNotesButton = new Button("Notes", new Icon(VaadinIcon.COMMENT_ELLIPSIS_O));
-        typeNotesButton.getStyle().set("cursor", "pointer");
-        typeNotesButton.addClickListener(e -> diagramTypeNotesDialog.open());
-
-        return typeNotesButton;
     }
 
     private Button getDeleteDiagramButton() {

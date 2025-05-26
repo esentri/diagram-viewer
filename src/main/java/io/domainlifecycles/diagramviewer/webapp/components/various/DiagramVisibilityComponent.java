@@ -90,6 +90,8 @@ public class DiagramVisibilityComponent extends Div {
         Details details = new Details(translateDomainType(type));
         details.setOpened(this.sessionStorage.isDomainTypeSettingOpen(type));
         VerticalLayout layout = new VerticalLayout();
+        layout.setSpacing(false);
+        layout.setPadding(false);
 
         for (DomainTypeMirror mirror : domainTypeMirrors) {
             Component typeMirrorVisibilityLayout = createAndGetContentForDomainTypeAndMirror(type, mirror);
@@ -112,6 +114,7 @@ public class DiagramVisibilityComponent extends Div {
         typeMirrorNameLabel.getStyle().set("font-weight", "bold");
 
         Details blendingLayout = new Details("Trim settings");
+        blendingLayout.addClassName("diagram-styling-details");
         blendingLayout.setOpened(false);
 
         if (domainTypeOrdered().contains(type) && !DomainType.ENUM.equals(type)) {

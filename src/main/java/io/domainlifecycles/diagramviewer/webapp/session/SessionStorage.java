@@ -25,13 +25,13 @@ public class SessionStorage {
     private final ProjectDomainMirrorService projectDomainMirrorService;
     private final Map<UUID, DomainMirrorContainer> domainMirrorContainers;
     private boolean packageFilterOpen;
-    private final Map<DomainType, Boolean> domainTypeDigramSettingsOpen;
+    private final Map<DomainType, Boolean> domainTypeDiagramSettingsOpen;
     private boolean advancedTrimmingOpen = false;
 
     public SessionStorage(ProjectDomainMirrorService projectDomainMirrorService) {
         this.projectDomainMirrorService = projectDomainMirrorService;
         this.domainMirrorContainers = new HashMap<>();
-        this.domainTypeDigramSettingsOpen = new HashMap<>();
+        this.domainTypeDiagramSettingsOpen = new HashMap<>();
         this.packageFilterOpen = true;
     }
 
@@ -114,11 +114,11 @@ public class SessionStorage {
     }
 
     public boolean isDomainTypeSettingOpen(DomainType domainType) {
-        return domainTypeDigramSettingsOpen.get(domainType) == null ? false : domainTypeDigramSettingsOpen.get(domainType);
+        return domainTypeDiagramSettingsOpen.get(domainType) != null && domainTypeDiagramSettingsOpen.get(domainType);
     }
 
     public void setDomainTypeSettingOpen(DomainType domainType, boolean open) {
-        domainTypeDigramSettingsOpen.put(domainType, open);
+        domainTypeDiagramSettingsOpen.put(domainType, open);
     }
 
     public boolean isAdvancedTrimmingOpen() {

@@ -31,6 +31,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/domain-model/**").permitAll()
+                .requestMatchers("/api/resources/view/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login((login) -> login.successHandler(successHandler))

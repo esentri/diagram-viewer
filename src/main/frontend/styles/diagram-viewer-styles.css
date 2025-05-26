@@ -29,6 +29,10 @@
     max-width: 50em;
 }
 
+.diagram-styling-details vaadin-details-summary {
+    padding: 0 !important;
+}
+
 img {
     -webkit-user-drag: none;
 }

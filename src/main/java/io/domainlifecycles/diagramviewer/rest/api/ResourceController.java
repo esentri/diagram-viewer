@@ -33,7 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ResourceController {
 
     public static final String RESOURCES_API_PATH = "/api/resources";
-    public static final String DIAGRAM_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "ignored1";
+    public static final String VIEW_API_PATH_SUFFIX = "/view";
+    public static final String DIAGRAM_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "diagramLastModified";
     public static final String STYLING_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "stylingLastModified";
 
 
@@ -50,6 +51,18 @@ public class ResourceController {
             @RequestParam(DIAGRAM_LAST_MODIFIED_REQUEST_PARAMETER_NAME) String ignored1,
             @RequestParam(STYLING_LAST_MODIFIED_REQUEST_PARAMETER_NAME) String ignored2) throws IOException {
 
+        return getDiagramResponseEntity(directoryName, fileName);
+    }
+
+    @GetMapping(value = VIEW_API_PATH_SUFFIX + "/{directoryName}/{fileName}")
+    public ResponseEntity<InputStreamResource> getFile(
+        @PathVariable("directoryName") String directoryName,
+        @PathVariable("fileName") String fileName) throws IOException {
+
+        return getDiagramResponseEntity(directoryName, fileName);
+    }
+
+    private ResponseEntity<InputStreamResource> getDiagramResponseEntity(String directoryName, String fileName) throws IOException {
         URI filePath;
         try {
             filePath = Path.of(diagramFolderLocation, directoryName, fileName).toUri();
@@ -72,7 +85,8 @@ public class ResourceController {
 
         if(!inputStreamResource.exists()) {
             throw DiagramViewerException.fail(
-                String.format("Could not find file %s in directory %s/%s.", fileName, diagramFolderLocation, directoryName));
+                String.format("Could not find file %s in directory %s/%s.", fileName, diagramFolderLocation,
+                    directoryName));
         }
 
         HttpHeaders headers = new HttpHeaders();
