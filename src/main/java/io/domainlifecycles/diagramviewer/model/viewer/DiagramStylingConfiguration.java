@@ -295,6 +295,29 @@ public class DiagramStylingConfiguration {
     @Builder.Default private boolean showObjectMembersInClasses = true;
 
     /**
+     * Indicates whether all abstract types should be displayed.
+     *
+     * When set to true, all abstract types are included in the output or process.
+     * When set to false, abstract types may be selectively hidden or excluded.
+     */
+    @Builder.Default private boolean showAllAbstractTypes = false;
+
+    /**
+     * Determines whether abstract types should be displayed in aggregates.
+     * If set to {@code true}, abstract types will be shown within aggregates.
+     * If set to {@code false}, abstract types will be hidden.
+     */
+    @Builder.Default private boolean showAbstractTypesInAggregates = true;
+
+    /**
+     * Determines whether abstract type names are used for service kinds instead of concrete type names.
+     * If set to {@code true}, abstract type names will be utilized, which can be useful in scenarios
+     * where dynamic binding or abstraction over specific implementations is required.
+     * By default, this is set to {@code false}, meaning concrete type names will be used.
+     */
+    @Builder.Default private boolean useAbstractTypeNamesForServiceKinds = true;
+
+    /**
      * If true, multiplicity is added to the associations label.
      */
     @Builder.Default private boolean multiplicityInLabel = true;
@@ -837,5 +860,29 @@ public class DiagramStylingConfiguration {
 
     public void setShowAggregateMethods(boolean showAggregateMethods) {
         this.showAggregateMethods = showAggregateMethods;
+    }
+
+    public boolean isShowAllAbstractTypes() {
+        return showAllAbstractTypes;
+    }
+
+    public void setShowAllAbstractTypes(boolean showAllAbstractTypes) {
+        this.showAllAbstractTypes = showAllAbstractTypes;
+    }
+
+    public boolean isShowAbstractTypesInAggregates() {
+        return showAbstractTypesInAggregates;
+    }
+
+    public void setShowAbstractTypesInAggregates(boolean showAbstractTypesInAggregates) {
+        this.showAbstractTypesInAggregates = showAbstractTypesInAggregates;
+    }
+
+    public boolean isUseAbstractTypeNamesForServiceKinds() {
+        return useAbstractTypeNamesForServiceKinds;
+    }
+
+    public void setUseAbstractTypeNamesForServiceKinds(boolean useAbstractTypeNamesForServiceKinds) {
+        this.useAbstractTypeNamesForServiceKinds = useAbstractTypeNamesForServiceKinds;
     }
 }

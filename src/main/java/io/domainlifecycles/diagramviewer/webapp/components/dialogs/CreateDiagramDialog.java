@@ -112,9 +112,9 @@ public class CreateDiagramDialog extends Dialog {
         PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
         packageSelectChipField.setWidthFull();
         binder.forField(packageSelectChipField)
-            .bind(opt -> opt.getDomainModelVisibility().getFilteredPackageNames(),
-                    (opt, v) -> opt.getDomainModelVisibility().replaceFilteredPackageNames(v));
-        advancedConfigurationFormLayout.addFormItem(packageSelectChipField, "Filtered packages");
+            .bind(opt -> opt.getDomainModelVisibility().getExplicitlyIncludedPackagesNames(),
+                    (opt, v) -> opt.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(v));
+        advancedConfigurationFormLayout.addFormItem(packageSelectChipField, "Explicitly included packages");
 
         MultiSelectComboBox<String> blacklistedClassnamesMultiSelectComboBox = new MultiSelectComboBox<>();
         blacklistedClassnamesMultiSelectComboBox.setWidthFull();

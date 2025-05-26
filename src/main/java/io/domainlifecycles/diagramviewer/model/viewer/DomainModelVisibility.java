@@ -30,11 +30,27 @@ public class DomainModelVisibility {
 
     @Getter
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> filteredPackageNames;
+    private Set<String> explicitlyIncludedPackagesNames;
 
     @Getter
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> seedClassNames;
+    private Set<String> includeConnectedToClassNames;
+
+    @Getter
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> includeConnectedToIngoingClassNames;
+
+    @Getter
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> includeConnectedToOutgoingClassNames;
+
+    @Getter
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> excludeConnectedToIngoingClassNames;
+
+    @Getter
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> excludeConnectedToOutgoingClassNames;
 
     @Getter
     @ElementCollection(fetch = FetchType.EAGER)
@@ -49,24 +65,104 @@ public class DomainModelVisibility {
     private Instant changedAt;
 
     public DomainModelVisibility(
-            Set<String> filteredPackageNames,
-            Set<String> seedClassNames,
+            Set<String> explicitlyIncludedPackagesNames,
+            Set<String> includeConnectedToClassNames,
+            Set<String> includeConnectedToIngoingClassNames,
+            Set<String> includeConnectedToOutgoingClassNames,
+            Set<String> excludeConnectedToIngoingClassNames,
+            Set<String> excludeConnectedToOutgoingClassNames,
             Set<String> blacklistedClassNames
     ) {
-        this.filteredPackageNames = filteredPackageNames == null ? new HashSet<>() : filteredPackageNames;
-        this.seedClassNames = seedClassNames == null ? new HashSet<>() : seedClassNames;
+        this.explicitlyIncludedPackagesNames = explicitlyIncludedPackagesNames == null ? new HashSet<>() : explicitlyIncludedPackagesNames;
+        this.includeConnectedToIngoingClassNames = includeConnectedToIngoingClassNames == null ? new HashSet<>() : includeConnectedToIngoingClassNames;
+        this.includeConnectedToOutgoingClassNames = includeConnectedToOutgoingClassNames == null ? new HashSet<>() : includeConnectedToOutgoingClassNames;
+        this.excludeConnectedToIngoingClassNames = excludeConnectedToIngoingClassNames == null ? new HashSet<>() : excludeConnectedToIngoingClassNames;
+        this.excludeConnectedToOutgoingClassNames = excludeConnectedToOutgoingClassNames == null ? new HashSet<>() : excludeConnectedToOutgoingClassNames;
+        this.includeConnectedToClassNames = includeConnectedToClassNames == null ? new HashSet<>() : includeConnectedToClassNames;
         this.blacklistedClassNames = blacklistedClassNames == null ? new HashSet<>() : blacklistedClassNames;
     }
 
     public DomainModelVisibility replaceBlacklistedClassNames(Set<String> blacklistedClassNames) {
-        return new DomainModelVisibility(filteredPackageNames, seedClassNames, blacklistedClassNames);
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames
+        );
     }
 
-    public DomainModelVisibility replaceSeedClassNames(Set<String> seedClassNames) {
-        return new DomainModelVisibility(filteredPackageNames, seedClassNames, blacklistedClassNames);
+    public DomainModelVisibility replaceIncludeConnectedToClassNames(Set<String> includeConnectedToClassNames) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames
+        );
     }
 
-    public DomainModelVisibility replaceFilteredPackageNames(Set<String> filteredPackageNames) {
-        return new DomainModelVisibility(filteredPackageNames, seedClassNames, blacklistedClassNames);
+    public DomainModelVisibility replaceIncludeConnectedToIngoingClassNames(Set<String> includeConnectedToIngoingClassNames) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames
+        );
+    }
+
+    public DomainModelVisibility replaceIncludeConnectedToOutgoingClassNames(Set<String> includeConnectedToOutgoingClassNames) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames
+        );
+    }
+
+    public DomainModelVisibility replaceExcludeConnectedToIngoingClassNames(Set<String> excludeConnectedToIngoingClassNames) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames
+        );
+    }
+
+    public DomainModelVisibility replaceExcludeConnectedToOutgoingClassNames(Set<String> excludeConnectedToOutgoingClassNames) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames
+        );
+    }
+
+    public DomainModelVisibility replaceExplicitlyIncludedPackagesNames(Set<String> explicitlyIncludedPackagesNames) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames
+        );
     }
 }

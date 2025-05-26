@@ -122,7 +122,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             diagram.getDiagramStylingConfiguration().getChangedAt()));
 
         Scroller scroller = new Scroller(
-            new DiagramVisibilityComponentsContainer(project, diagram, domainTypeMirrors, diagramService));
+            new DiagramVisibilityComponentsContainer(sessionStorage, project, diagram, domainTypeMirrors, diagramService));
         scroller.setScrollDirection(ScrollDirection.BOTH);
         scroller.setWidth("30%");
         diagramViewerAndStylingContainer.add(scroller);

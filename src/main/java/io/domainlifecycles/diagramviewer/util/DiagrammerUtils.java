@@ -1,7 +1,11 @@
 package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagram.domain.DomainDiagramGenerator;
+import io.domainlifecycles.diagram.domain.config.DiagramTrimSettings;
 import io.domainlifecycles.diagram.domain.config.DomainDiagramConfig;
+import io.domainlifecycles.diagram.domain.config.GeneralVisualSettings;
+import io.domainlifecycles.diagram.domain.config.LayoutSettings;
+import io.domainlifecycles.diagram.domain.config.StyleSettings;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.mirror.api.DomainMirror;
@@ -14,81 +18,103 @@ public class DiagrammerUtils {
             DiagramStylingConfiguration diagramStylingConfiguration,
             DomainModelVisibility domainModelVisibility) {
 
+        DiagramTrimSettings trimSettings = DiagramTrimSettings.builder()
+                .withExplicitlyIncludedPackageNames(domainModelVisibility.getExplicitlyIncludedPackagesNames() == null ?
+                        Collections.emptyList() : domainModelVisibility.getExplicitlyIncludedPackagesNames().stream().toList())
+                .withIncludeConnectedTo(domainModelVisibility.getIncludeConnectedToClassNames() == null ?
+                        Collections.emptyList() : domainModelVisibility.getIncludeConnectedToClassNames().stream().toList())
+                .withIncludeConnectedToIngoing(domainModelVisibility.getIncludeConnectedToIngoingClassNames() == null ?
+                        Collections.emptyList() : domainModelVisibility.getIncludeConnectedToIngoingClassNames().stream().toList())
+                .withIncludeConnectedToOutgoing(domainModelVisibility.getIncludeConnectedToOutgoingClassNames() == null ?
+                        Collections.emptyList() : domainModelVisibility.getIncludeConnectedToOutgoingClassNames().stream().toList())
+                .withExcludeConnectedToIngoing(domainModelVisibility.getExcludeConnectedToIngoingClassNames() == null ?
+                        Collections.emptyList() : domainModelVisibility.getExcludeConnectedToIngoingClassNames().stream().toList())
+                .withExcludeConnectedToOutgoing(domainModelVisibility.getExcludeConnectedToOutgoingClassNames() == null ?
+                        Collections.emptyList() : domainModelVisibility.getExcludeConnectedToOutgoingClassNames().stream().toList())
+                .withClassesBlacklist(domainModelVisibility.getBlacklistedClassNames() == null ?
+                        Collections.emptyList() : domainModelVisibility.getBlacklistedClassNames().stream().toList())
+                .build();
+
+        StyleSettings styleSettings = StyleSettings.builder()
+                .withAggregateFrameStyle(diagramStylingConfiguration.getAggregateFrameStyle())
+                .withAggregateRootStyle(diagramStylingConfiguration.getAggregateRootStyle())
+                .withEntityStyle(diagramStylingConfiguration.getEntityStyle())
+                .withApplicationServiceStyle(diagramStylingConfiguration.getApplicationServiceStyle())
+                .withDomainCommandStyle(diagramStylingConfiguration.getDomainCommandStyle())
+                .withDomainEventStyle(diagramStylingConfiguration.getDomainEventStyle())
+                .withDomainServiceStyle(diagramStylingConfiguration.getDomainServiceStyle())
+                .withIdentityStyle(diagramStylingConfiguration.getIdentityStyle())
+                .withOutboundServiceStyle(diagramStylingConfiguration.getOutboundServiceStyle())
+                .withBackgroundColor(diagramStylingConfiguration.getBackgroundColor())
+                .withFont(diagramStylingConfiguration.getFont().getNomnomlValue())
+                .withQueryHandlerStyle(diagramStylingConfiguration.getQueryHandlerStyle())
+                .withReadModelStyle(diagramStylingConfiguration.getReadModelStyle())
+                .withRepositoryStyle(diagramStylingConfiguration.getRepositoryStyle())
+                .withEnumStyle(diagramStylingConfiguration.getEnumStyle())
+                .withUnspecifiedServiceKindStyle(diagramStylingConfiguration.getUnspecifiedServiceKindStyle())
+                .withValueObjectStyle(diagramStylingConfiguration.getValueObjectStyle())
+                .build();
+
+        LayoutSettings layoutSettings = LayoutSettings.builder()
+                .withAcycler(diagramStylingConfiguration.getAcycler().getNomnomlValue())
+                .withDirection(diagramStylingConfiguration.getDirection().getNomnomlValue())
+                .withRanker(diagramStylingConfiguration.getRanker().getNomnomlValue())
+                .build();
+
+        GeneralVisualSettings visualSettings = GeneralVisualSettings.builder()
+                .withShowFields(diagramStylingConfiguration.isShowFields())
+                .withShowMethods(diagramStylingConfiguration.isShowMethods())
+                .withFieldStereotypes(diagramStylingConfiguration.isFieldStereotypes())
+                .withFieldBlacklist(diagramStylingConfiguration.getFieldBlacklist())
+                .withMethodBlacklist(diagramStylingConfiguration.getMethodBlacklist())
+                .withShowAggregates(diagramStylingConfiguration.isShowAggregates())
+                .withShowAggregateFields(diagramStylingConfiguration.isShowAggregateFields())
+                .withShowAggregateMethods(diagramStylingConfiguration.isShowAggregateMethods())
+                .withMultiplicityInLabel(diagramStylingConfiguration.isMultiplicityInLabel())
+                .withCallApplicationServiceDriver(diagramStylingConfiguration.isCallApplicationServiceDriver())
+                .withShowAssertions(diagramStylingConfiguration.isShowAssertions())
+                .withShowApplicationServices(diagramStylingConfiguration.isShowApplicationServices())
+                .withShowApplicationServiceFields(diagramStylingConfiguration.isShowApplicationServiceFields())
+                .withShowApplicationServiceMethods(diagramStylingConfiguration.isShowApplicationServiceMethods())
+                .withShowDomainCommands(diagramStylingConfiguration.isShowDomainCommands())
+                .withShowDomainCommandFields(diagramStylingConfiguration.isShowDomainCommandFields())
+                .withShowDomainCommandMethods(diagramStylingConfiguration.isShowDomainCommandMethods())
+                .withShowDomainEvents(diagramStylingConfiguration.isShowDomainEvents())
+                .withShowDomainEventFields(diagramStylingConfiguration.isShowDomainEventFields())
+                .withShowDomainEventMethods(diagramStylingConfiguration.isShowDomainEventMethods())
+                .withShowDomainServices(diagramStylingConfiguration.isShowDomainServices())
+                .withShowDomainServiceFields(diagramStylingConfiguration.isShowDomainServiceFields())
+                .withShowDomainServiceMethods(diagramStylingConfiguration.isShowDomainServiceMethods())
+                .withShowFullQualifiedClassNames(diagramStylingConfiguration.isShowFullQualifiedClassNames())
+                .withShowOnlyPublicMethods(diagramStylingConfiguration.isShowOnlyPublicMethods())
+                .withShowObjectMembersInClasses(diagramStylingConfiguration.isShowObjectMembersInClasses())
+                .withShowOnlyTopLevelDomainCommandRelations(diagramStylingConfiguration.isShowOnlyTopLevelDomainCommandRelations())
+                .withShowInheritedMembersInClasses(diagramStylingConfiguration.isShowInheritedMembersInClasses())
+                .withShowOutboundServices(diagramStylingConfiguration.isShowOutboundServices())
+                .withShowOutboundServiceFields(diagramStylingConfiguration.isShowOutboundServiceFields())
+                .withShowOutboundServiceMethods(diagramStylingConfiguration.isShowOutboundServiceMethods())
+                .withShowQueryHandlers(diagramStylingConfiguration.isShowQueryHandlers())
+                .withShowQueryHandlerFields(diagramStylingConfiguration.isShowQueryHandlerFields())
+                .withShowQueryHandlerMethods(diagramStylingConfiguration.isShowQueryHandlerMethods())
+                .withShowRepositories(diagramStylingConfiguration.isShowRepositories())
+                .withShowRepositoryFields(diagramStylingConfiguration.isShowRepositoryFields())
+                .withShowRepositoryMethods(diagramStylingConfiguration.isShowRepositoryMethods())
+                .withShowReadModels(diagramStylingConfiguration.isShowReadModels())
+                .withShowReadModelFields(diagramStylingConfiguration.isShowReadModelFields())
+                .withShowReadModelMethods(diagramStylingConfiguration.isShowReadModelMethods())
+                .withShowUnspecifiedServiceKinds(diagramStylingConfiguration.isShowUnspecifiedServiceKinds())
+                .withShowUnspecifiedServiceKindFields(diagramStylingConfiguration.isShowUnspecifiedServiceKindFields())
+                .withShowUnspecifiedServiceKindMethods(diagramStylingConfiguration.isShowUnspecifiedServiceKindMethods())
+                .withUseAbstractTypeNameForConcreteServiceKinds(diagramStylingConfiguration.isUseAbstractTypeNamesForServiceKinds())
+                .withShowAllAbstractTypes(diagramStylingConfiguration.isShowAllAbstractTypes())
+                .withShowAbstractTypesInAggregates(diagramStylingConfiguration.isShowAbstractTypesInAggregates())
+                .build();
+
         DomainDiagramConfig diagramConfig = DomainDiagramConfig.builder()
-            .withFilteredPackageNames(
-                    domainModelVisibility.getFilteredPackageNames() == null ?
-                            Collections.emptyList() : domainModelVisibility.getFilteredPackageNames().stream().toList())
-            .withAggregateRootStyle(diagramStylingConfiguration.getAggregateRootStyle())
-            .withAggregateFrameStyle(diagramStylingConfiguration.getAggregateFrameStyle())
-            .withEntityStyle(diagramStylingConfiguration.getEntityStyle())
-            .withValueObjectStyle(diagramStylingConfiguration.getValueObjectStyle())
-            .withEnumStyle(diagramStylingConfiguration.getEnumStyle())
-            .withIdentityStyle(diagramStylingConfiguration.getIdentityStyle())
-            .withDomainEventStyle(diagramStylingConfiguration.getDomainEventStyle())
-            .withDomainCommandStyle(diagramStylingConfiguration.getDomainCommandStyle())
-            .withApplicationServiceStyle(diagramStylingConfiguration.getApplicationServiceStyle())
-            .withDomainServiceStyle(diagramStylingConfiguration.getDomainServiceStyle())
-            .withRepositoryStyle(diagramStylingConfiguration.getRepositoryStyle())
-            .withReadModelStyle(diagramStylingConfiguration.getReadModelStyle())
-            .withQueryHandlerStyle(diagramStylingConfiguration.getQueryHandlerStyle())
-            .withOutboundServiceStyle(diagramStylingConfiguration.getOutboundServiceStyle())
-            .withUnspecifiedServiceKindStyle(diagramStylingConfiguration.getUnspecifiedServiceKindStyle())
-            .withFont(diagramStylingConfiguration.getFont().getNomnomlValue())
-            .withDirection(diagramStylingConfiguration.getDirection().getNomnomlValue())
-            .withRanker(diagramStylingConfiguration.getRanker().getNomnomlValue())
-            .withAcycler(diagramStylingConfiguration.getAcycler().getNomnomlValue())
-            .withBackgroundColor(diagramStylingConfiguration.getBackgroundColor())
-            .withShowFields(diagramStylingConfiguration.isShowFields())
-            .withShowFullQualifiedClassNames(diagramStylingConfiguration.isShowFullQualifiedClassNames())
-            .withShowAssertions(diagramStylingConfiguration.isShowAssertions())
-            .withShowMethods(diagramStylingConfiguration.isShowMethods())
-            .withShowOnlyPublicMethods(diagramStylingConfiguration.isShowOnlyPublicMethods())
-            .withShowAggregates(diagramStylingConfiguration.isShowAggregates())
-            .withShowAggregateFields(diagramStylingConfiguration.isShowAggregateFields())
-            .withShowAggregateMethods(diagramStylingConfiguration.isShowAggregateMethods())
-            .withShowDomainEvents(diagramStylingConfiguration.isShowDomainEvents())
-            .withShowDomainEventFields(diagramStylingConfiguration.isShowDomainEventFields())
-            .withShowDomainEventMethods(diagramStylingConfiguration.isShowDomainEventMethods())
-            .withShowDomainCommands(diagramStylingConfiguration.isShowDomainCommands())
-            .withShowOnlyTopLevelDomainCommandRelations(diagramStylingConfiguration.isShowOnlyTopLevelDomainCommandRelations())
-            .withShowDomainCommandFields(diagramStylingConfiguration.isShowDomainCommandFields())
-            .withShowDomainCommandMethods(diagramStylingConfiguration.isShowDomainCommandMethods())
-            .withShowDomainServices(diagramStylingConfiguration.isShowDomainServices())
-            .withShowDomainServiceFields(diagramStylingConfiguration.isShowDomainServiceFields())
-            .withShowDomainServiceMethods(diagramStylingConfiguration.isShowDomainServiceMethods())
-            .withShowApplicationServices(diagramStylingConfiguration.isShowApplicationServices())
-            .withShowApplicationServiceFields(diagramStylingConfiguration.isShowApplicationServiceFields())
-            .withShowApplicationServiceMethods(diagramStylingConfiguration.isShowApplicationServiceMethods())
-            .withShowRepositories(diagramStylingConfiguration.isShowRepositories())
-            .withShowRepositoryFields(diagramStylingConfiguration.isShowRepositoryFields())
-            .withShowRepositoryMethods(diagramStylingConfiguration.isShowRepositoryMethods())
-            .withShowReadModels(diagramStylingConfiguration.isShowReadModels())
-            .withShowReadModelFields(diagramStylingConfiguration.isShowReadModelFields())
-            .withShowReadModelMethods(diagramStylingConfiguration.isShowReadModelMethods())
-            .withShowQueryHandlers(diagramStylingConfiguration.isShowQueryHandlers())
-            .withShowQueryHandlerFields(diagramStylingConfiguration.isShowQueryHandlerFields())
-            .withShowQueryHandlerMethods(diagramStylingConfiguration.isShowQueryHandlerMethods())
-            .withShowOutboundServices(diagramStylingConfiguration.isShowOutboundServices())
-            .withShowOutboundServiceFields(diagramStylingConfiguration.isShowOutboundServiceFields())
-            .withShowOutboundServiceMethods(diagramStylingConfiguration.isShowOutboundServiceMethods())
-            .withShowUnspecifiedServiceKinds(diagramStylingConfiguration.isShowUnspecifiedServiceKinds())
-            .withShowUnspecifiedServiceKindFields(diagramStylingConfiguration.isShowUnspecifiedServiceKindFields())
-            .withShowUnspecifiedServiceKindMethods(diagramStylingConfiguration.isShowUnspecifiedServiceKindMethods())
-            .withCallApplicationServiceDriver(diagramStylingConfiguration.isCallApplicationServiceDriver())
-            .withFieldBlacklist(diagramStylingConfiguration.getFieldBlacklist())
-            .withMethodBlacklist(diagramStylingConfiguration.getMethodBlacklist())
-            .withShowInheritedMembersInClasses(diagramStylingConfiguration.isShowInheritedMembersInClasses())
-            .withShowObjectMembersInClasses(diagramStylingConfiguration.isShowObjectMembersInClasses())
-            .withMultiplicityInLabel(diagramStylingConfiguration.isMultiplicityInLabel())
-            .withFieldStereotypes(diagramStylingConfiguration.isFieldStereotypes())
-            .withTransitiveFilterSeedDomainServiceTypeNames(
-                    domainModelVisibility.getSeedClassNames() == null ?
-                            Collections.emptyList() :
-                            domainModelVisibility.getSeedClassNames().stream().toList())
-            .withClassesBlacklist(
-                    domainModelVisibility.getBlacklistedClassNames() == null ?
-                        Collections.emptyList() :
-                        domainModelVisibility.getBlacklistedClassNames().stream().toList())
+                .withGeneralVisualSettings(visualSettings)
+                .withStyleSettings(styleSettings)
+                .withLayoutSettings(layoutSettings)
+                .withDiagramTrimSettings(trimSettings)
                 .build();
 
         DomainDiagramGenerator generator = new DomainDiagramGenerator(diagramConfig, domainMirror);

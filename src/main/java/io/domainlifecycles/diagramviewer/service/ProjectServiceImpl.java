@@ -66,7 +66,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project getByName(final String projectName) {
-        return repository.findByName(projectName)
+        return repository.findByName(buildCleanFileName(projectName))
             .orElseThrow(() -> DiagramViewerException.fail(String.format("No project found with name: %s",
                 projectName)));
     }
@@ -139,10 +139,14 @@ public class ProjectServiceImpl implements ProjectService {
             String projectName,
             DomainMirrorUploadDto domainMirrorUploadDto) {
 
-        Optional<Project> foundProject = repository.findByName(projectName);
+        Optional<Project> foundProject = repository.findByName(buildCleanFileName(projectName));
 
         if(foundProject.isPresent()) {
             Project project = foundProject.get();
+            var registeredUser = (RegisteredUser)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if(!project.getAssignedRegisteredUsers().contains(registeredUser)){
+                throw new IllegalStateException(String.format("User has no access to project '%s'",project.getName()));
+            }
 
             if(!project.isApiUpload()) {
                 deleteTargetFile(project);
