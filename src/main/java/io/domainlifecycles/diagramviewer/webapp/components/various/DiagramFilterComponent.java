@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 public class DiagramFilterComponent extends Div {
 
-    private final static double STRING_LENGTH_TO_REM_FACTOR = 0.6;
+    public static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
 
     private final SessionStorage sessionStorage;
     private final Diagram diagram;
@@ -37,8 +37,6 @@ public class DiagramFilterComponent extends Div {
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnectedExcludeIngoing;
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnectedExcludeOutgoing;
     private MultiSelectComboBox<DomainTypeMirror> comboBoxInvisibleDomainObjects;
-
-    private static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
 
     public DiagramFilterComponent(
             SessionStorage sessionStorage,
@@ -61,23 +59,8 @@ public class DiagramFilterComponent extends Div {
         packageDetails.setWidthFull();
         packageDetails.setOpened(sessionStorage.isPackageFilterOpen());
 
-        List<String> packages = buildPackageNamesSorted(domainTypeMirrors);
-        int longestItemLength = packages.stream()
-            .max(Comparator.comparingInt(String::length))
-            .orElse("").length();
-
         MultiSelectComboBox<String> packageMultiSelectComboBox =
-            new MultiSelectComboBox<>("", packages);
-
-        packageMultiSelectComboBox.setWidthFull();
-        packageMultiSelectComboBox.setValue(diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames());
-        packageMultiSelectComboBox.getStyle().set("--vaadin-multi-select-combo-box-overlay-width", longestItemLength * STRING_LENGTH_TO_REM_FACTOR + "rem");
-        packageMultiSelectComboBox.addValueChangeListener(e -> {
-            diagram.setDomainModelVisibility(diagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
-            diagramService.update(diagram, project);
-            ComponentUtil.fireEvent(
-                UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
-        });
+            new PackageMultiSelectComboBox(domainTypeMirrors, diagram, project, diagramService);
 
         packageDetails.add(packageMultiSelectComboBox);
         packageDetails.addOpenedChangeListener(e -> sessionStorage.setPackageFilterOpen(e.isOpened()));
@@ -133,36 +116,6 @@ public class DiagramFilterComponent extends Div {
         ));
 
         return comboBox;
-    }
-
-    private List<String> buildPackageNamesSorted(List<DomainTypeMirror> domainTypeMirrors) {
-        Set<String> result = new HashSet<>();
-
-        for (DomainTypeMirror type : domainTypeMirrors) {
-            String typeName = type.getTypeName();
-            int indexOfLastDot = typeName.lastIndexOf('.');
-            if (indexOfLastDot == -1 || typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)) continue;
-
-            String fullPackage = typeName.substring(0, indexOfLastDot);
-            String[] parts = fullPackage.split("\\.");
-
-            if (parts.length < 3) continue;
-
-            StringBuilder current = new StringBuilder(parts[0]);
-            for (int i = 1; i < parts.length; i++) {
-                current.append('.').append(parts[i]);
-                if (i >= 2) {
-                    result.add(current.toString());
-                }
-            }
-        }
-
-        List<String> sorted = new ArrayList<>(result);
-        sorted.sort(Comparator
-            .comparingInt((String s) -> s.split("\\.").length)
-            .thenComparing(Comparator.naturalOrder()));
-
-        return sorted;
     }
 
     private String name(DomainTypeMirror mirror) {
