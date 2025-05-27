@@ -1,103 +1,86 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.textfield.TextArea;
-import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
-import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
-import io.domainlifecycles.diagramviewer.webapp.components.dialogs.DiagramTypeNotesDialog;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 public class DiagramNotesComponentsContainer extends VerticalLayout {
 
     private final Diagram diagram;
     private final List<DomainTypeMirror> domainTypeMirrors;
     private final DiagramTypeNoteService diagramTypeNoteService;
-    private final Binder<TypeNotes> binder;
+    private final DiagramViewNotesContainer notesViewContainer;
+    private final DiagramCreateNotesContainer diagramCreateNotesContainer;
+    private final Button addNotesButton;
 
-    private TypeNotes typeNotes;
+    private boolean isInViewMode;
     private Button saveButton;
+    private Registration registration;
 
     public DiagramNotesComponentsContainer(Diagram diagram, List<DomainTypeMirror> allDomainTypeMirrors, DiagramTypeNoteService diagramTypeNoteService) {
+        setPadding(false);
+        setMargin(false);
+        getStyle().set("overflow-x", "hidden");
+
+        this.isInViewMode = true;
         this.diagram = diagram;
         this.domainTypeMirrors = allDomainTypeMirrors;
         this.diagramTypeNoteService = diagramTypeNoteService;
-        this.binder = new Binder<>();
 
-        add(createDialogLayout());
-        add(createSaveButton());
+        addNotesButton = getAddNotesButton();
+        add(addNotesButton);
+
+        notesViewContainer = new DiagramViewNotesContainer(diagram, diagramTypeNoteService);
+        diagramCreateNotesContainer = new DiagramCreateNotesContainer(domainTypeMirrors, diagramTypeNoteService, diagram);
+
+        add(notesViewContainer);
     }
 
-
-    private FormLayout createDialogLayout() {
-        FormLayout formLayout = new FormLayout();
-        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
-        formLayout.setSizeFull();
-
-        TextArea typeNotesTextArea = new TextArea();
-        typeNotesTextArea.setWidthFull();
-        typeNotesTextArea.setHeight("400px");
-        typeNotesTextArea.setMaxLength(DiagramTypeNote.NOTES_MAX_LENGTH);
-        typeNotesTextArea.setClearButtonVisible(true);
-        typeNotesTextArea.setEnabled(false);
-        typeNotesTextArea.addValueChangeListener(e -> e.getSource()
-            .setHelperText(e.getValue().length() + "/" + DiagramTypeNote.NOTES_MAX_LENGTH));
-        typeNotesTextArea.setValueChangeMode(ValueChangeMode.EAGER);
-        binder.forField(typeNotesTextArea)
-            .bind(TypeNotes::getNotes, TypeNotes::setNotes);
-
-        Select<DomainTypeMirror> domainTypeSelect = new Select<>();
-        domainTypeSelect.setItems(domainTypeMirrors);
-        domainTypeSelect.setItemLabelGenerator(DomainTypeMirror::getTypeName);
-        domainTypeSelect.setWidthFull();
-        domainTypeSelect.addValueChangeListener(e -> {
-            DomainTypeMirror selectedDomainTypeMirror = e.getValue();
-            String notes = diagramTypeNoteService.getNotes(diagram, selectedDomainTypeMirror);
-            typeNotes = new TypeNotes(notes, selectedDomainTypeMirror);
-            binder.readBean(typeNotes);
-            typeNotesTextArea.setEnabled(true);
-        });
-        binder.forField(domainTypeSelect)
-            .asRequired("Type is required.")
-            .bind(TypeNotes::getSelectedTypeMirror, TypeNotes::setSelectedTypeMirror);
-
-        formLayout.addFormItem(domainTypeSelect, "Type");
-        formLayout.addFormItem(typeNotesTextArea, "Notes");
-
-        return formLayout;
+    private Button getAddNotesButton() {
+        Button addNotesButton = new Button("Add", new Icon(VaadinIcon.PLUS));
+        addNotesButton.addClickListener(e -> switchNotesView(null));
+        return addNotesButton;
     }
 
-    private Button createSaveButton() {
-        saveButton = new Button("Save");
-
-        saveButton.addClickListener(e -> {
-            binder.writeBeanIfValid(typeNotes);
-            diagramTypeNoteService.save(
-                typeNotes.getNotes(),
-                typeNotes.getSelectedTypeMirror(),
-                diagram);
-        });
-
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        return saveButton;
+    private void switchNotesView(String typeMirrorName) {
+        this.removeAll();
+        if(isInViewMode) {
+            add(diagramCreateNotesContainer);
+            diagramCreateNotesContainer.setSelectedTypeMirrorName(typeMirrorName);
+        }
+        else {
+            add(addNotesButton);
+            add(notesViewContainer);
+            notesViewContainer.refreshNotes();
+        }
+        isInViewMode = !isInViewMode;
     }
 
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        registration =
+            ComponentUtil.addListener(
+                attachEvent.getUI(),
+                DiagramTypeNotesChangedEvent.class,
+                event ->  switchNotesView(event.getTypeMirrorName())
+            );
+    }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    private static class TypeNotes {
-        private String notes;
-        private DomainTypeMirror selectedTypeMirror;
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        registration.remove();
     }
 }

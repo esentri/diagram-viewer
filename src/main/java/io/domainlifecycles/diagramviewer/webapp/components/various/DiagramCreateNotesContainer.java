@@ -1,9 +1,14 @@
-package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
+package io.domainlifecycles.diagramviewer.webapp.components.various;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep.LabelsPosition;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.Binder;
@@ -11,74 +16,46 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-public class DiagramTypeNotesDialog extends Dialog {
+public class DiagramCreateNotesContainer extends VerticalLayout {
 
-    private final Diagram diagram;
     private final List<DomainTypeMirror> domainTypeMirrors;
+    private final Diagram diagram;
     private final DiagramTypeNoteService diagramTypeNoteService;
     private final Binder<TypeNotes> binder;
 
     private TypeNotes typeNotes;
     private Button saveButton;
 
-    public DiagramTypeNotesDialog(Diagram diagram, List<DomainTypeMirror> allDomainTypeMirrors, DiagramTypeNoteService diagramTypeNoteService) {
+    public DiagramCreateNotesContainer(List<DomainTypeMirror> domainTypeMirrors, DiagramTypeNoteService diagramTypeNoteService, Diagram diagram) {
+        this.domainTypeMirrors = domainTypeMirrors;
         this.diagram = diagram;
-        this.domainTypeMirrors = allDomainTypeMirrors;
         this.diagramTypeNoteService = diagramTypeNoteService;
         this.binder = new Binder<>();
 
-        setHeaderTitle("Type notes");
-        setWidth("50%");
-        setHeight("70%");
+        setPadding(false);
+        setMargin(false);
 
-        getFooter().add(createSaveButton());
-        getFooter().add(createCancelButton());
-        add(createDialogLayout());
-
-        addOpenedChangeListener(e -> {
-            if(e.isOpened()) {
-                this.typeNotes = new TypeNotes();
-                binder.readBean(typeNotes);
-            }
-        });
-
+        add(getButtonLayout(), createFormLayout());
         binder.addStatusChangeListener(event -> saveButton.setEnabled(binder.isValid()));
     }
 
-    private Button createSaveButton() {
-        saveButton = new Button("Save");
-
-        saveButton.addClickListener(e -> {
-            binder.writeBeanIfValid(typeNotes);
-            diagramTypeNoteService.save(
-                typeNotes.getNotes(),
-                typeNotes.getSelectedTypeMirror(),
-                diagram);
-            close();
-        });
-
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        return saveButton;
-    }
-
-    private Button createCancelButton() {
-        return new Button("Cancel", e -> close());
-    }
-
-    private FormLayout createDialogLayout() {
+    private FormLayout createFormLayout() {
         FormLayout formLayout = new FormLayout();
-        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
+        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1, LabelsPosition.TOP));
         formLayout.setSizeFull();
 
         TextArea typeNotesTextArea = new TextArea();
         typeNotesTextArea.setWidthFull();
-        typeNotesTextArea.setHeight("400px");
+        typeNotesTextArea.setHeight("30rem");
         typeNotesTextArea.setMaxLength(DiagramTypeNote.NOTES_MAX_LENGTH);
         typeNotesTextArea.setClearButtonVisible(true);
         typeNotesTextArea.setEnabled(false);
@@ -107,6 +84,37 @@ public class DiagramTypeNotesDialog extends Dialog {
         formLayout.addFormItem(typeNotesTextArea, "Notes");
 
         return formLayout;
+    }
+
+    private HorizontalLayout getButtonLayout() {
+        HorizontalLayout buttonLayout = new HorizontalLayout();
+        buttonLayout.setWidthFull();
+        buttonLayout.setJustifyContentMode(JustifyContentMode.END);
+
+        saveButton = new Button(new Icon(VaadinIcon.CHECK));
+        saveButton.addClickListener(e -> {
+            binder.writeBeanIfValid(typeNotes);
+            diagramTypeNoteService.save(
+                typeNotes.getNotes(),
+                typeNotes.getSelectedTypeMirror(),
+                diagram);
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramTypeNotesChangedEvent(this, false, null));
+        });
+        saveButton.getStyle().setMargin("0");
+
+        Button cancelButton = new Button(new Icon(VaadinIcon.CLOSE));
+        cancelButton.addClickListener(e -> ComponentUtil.fireEvent(UI.getCurrent(), new DiagramTypeNotesChangedEvent(this, false, null)));
+        cancelButton.getStyle().setMargin("0");
+
+        buttonLayout.add(saveButton, cancelButton);
+        return buttonLayout;
+    }
+
+    public void setSelectedTypeMirrorName(String typeMirrorName) {
+        DomainTypeMirror foundDomainTypeMirrorByName = domainTypeMirrors.stream().filter(
+            domainTypeMirror -> Objects.equals(domainTypeMirror.getTypeName(), typeMirrorName)).findFirst().orElse(null);
+        this.typeNotes = new TypeNotes(diagramTypeNoteService.getNotes(diagram, foundDomainTypeMirrorByName), foundDomainTypeMirrorByName);
+        binder.readBean(typeNotes);
     }
 
     @Data

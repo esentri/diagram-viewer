@@ -5,7 +5,12 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -49,5 +54,12 @@ public class DiagramTypeNoteServiceImpl implements DiagramTypeNoteService {
         Optional<DiagramTypeNote> foundNotes = repository.findByDiagramIdAndDomainTypeMirrorName(
             diagram.getId(), domainTypeMirror.getTypeName());
         return foundNotes.isEmpty() ? "" : foundNotes.get().getNotes();
+    }
+
+    @Override
+    public Map<String, String> getNotes(Diagram diagram) {
+        List<DiagramTypeNote> allDiagramTypeNotes = repository.findByDiagramId(diagram.getId());
+        return allDiagramTypeNotes.stream().collect(Collectors.toMap(DiagramTypeNote::getDomainTypeMirrorName,
+            DiagramTypeNote::getNotes));
     }
 }
