@@ -300,7 +300,7 @@ public class DiagramStylingConfiguration {
      * When set to true, all abstract types are included in the output or process.
      * When set to false, abstract types may be selectively hidden or excluded.
      */
-    @Builder.Default private boolean showAllAbstractTypes = false;
+    @Builder.Default private boolean showAllAbstractTypes = true;
 
     /**
      * Determines whether abstract types should be displayed in aggregates.
@@ -315,7 +315,7 @@ public class DiagramStylingConfiguration {
      * where dynamic binding or abstraction over specific implementations is required.
      * By default, this is set to {@code false}, meaning concrete type names will be used.
      */
-    @Builder.Default private boolean useAbstractTypeNamesForServiceKinds = true;
+    @Builder.Default private boolean useAbstractTypeNamesForServiceKinds = false;
 
     /**
      * If true, multiplicity is added to the associations label.

@@ -29,7 +29,6 @@ import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.diagramviewer.webapp.components.dialogs.DiagramTypeNotesDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAndNotesComponentsContainer;

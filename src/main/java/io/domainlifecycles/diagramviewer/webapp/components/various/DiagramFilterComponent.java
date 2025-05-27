@@ -16,7 +16,6 @@ import io.domainlifecycles.mirror.api.DomainTypeMirror;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -72,27 +71,27 @@ public class DiagramFilterComponent extends Div {
 
         List<DomainTypeMirror> items = filterConcreteMirrorsInterfaceAvailable();
 
-        comboBoxConnected = createAndConfigureCheckbox("Include Connections to:", items,
+        comboBoxConnected = createAndConfigureComboBox("Include Connections to:", items,
             diagram.getDomainModelVisibility().getIncludeConnectedToClassNames());
         advancedFilterDetails.add(comboBoxConnected);
 
-        comboBoxConnectedIngoing = createAndConfigureCheckbox("Include ingoing connections to:", items,
+        comboBoxConnectedIngoing = createAndConfigureComboBox("Include ingoing connections to:", items,
             diagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames());
         advancedFilterDetails.add(comboBoxConnectedIngoing);
 
-        comboBoxConnectedOutgoing = createAndConfigureCheckbox("Include outgoing connections from:", items,
+        comboBoxConnectedOutgoing = createAndConfigureComboBox("Include outgoing connections from:", items,
             diagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames());
         advancedFilterDetails.add(comboBoxConnectedOutgoing);
 
-        comboBoxConnectedExcludeIngoing = createAndConfigureCheckbox("Exclude ingoing connections to:", items,
+        comboBoxConnectedExcludeIngoing = createAndConfigureComboBox("Exclude ingoing connections to:", items,
             diagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames());
         advancedFilterDetails.add(comboBoxConnectedExcludeIngoing);
 
-        comboBoxConnectedExcludeOutgoing = createAndConfigureCheckbox("Exclude outgoing connections from:", items,
+        comboBoxConnectedExcludeOutgoing = createAndConfigureComboBox("Exclude outgoing connections from:", items,
             diagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames());
         advancedFilterDetails.add(comboBoxConnectedExcludeOutgoing);
 
-        comboBoxInvisibleDomainObjects = createAndConfigureCheckbox("Invisible domain objects:", items,
+        comboBoxInvisibleDomainObjects = createAndConfigureComboBox("Invisible domain objects:", items,
             diagram.getDomainModelVisibility().getBlacklistedClassNames());
         advancedFilterDetails.add(comboBoxInvisibleDomainObjects);
 
@@ -100,13 +99,13 @@ public class DiagramFilterComponent extends Div {
         add(advancedFilterDetails);
     }
 
-    private MultiSelectComboBox<DomainTypeMirror> createAndConfigureCheckbox(String label, List<DomainTypeMirror> items, Set<String> classNames) {
-        MultiSelectComboBox<DomainTypeMirror> comboBox = new MultiSelectComboBox<>(label);
-        comboBox.setWidthFull();
-        comboBox.setItems(items);
-        comboBox.setItemLabelGenerator(this::name);
-        comboBox.select(selected(classNames));
-        comboBox.addValueChangeListener(e -> regenerateDiagram(
+    private MultiSelectComboBox<DomainTypeMirror> createAndConfigureComboBox(String label, List<DomainTypeMirror> items, Set<String> classNames) {
+        MultiSelectComboBox<DomainTypeMirror> multiSelectComboBox = new MultiSelectComboBox<>(label);
+        multiSelectComboBox.setWidthFull();
+        multiSelectComboBox.setItems(items);
+        multiSelectComboBox.setItemLabelGenerator(this::name);
+        multiSelectComboBox.select(selected(classNames));
+        multiSelectComboBox.addValueChangeListener(e -> regenerateDiagram(
             comboBoxConnected.getSelectedItems(),
             comboBoxConnectedIngoing.getSelectedItems(),
             comboBoxConnectedOutgoing.getSelectedItems(),
@@ -115,7 +114,7 @@ public class DiagramFilterComponent extends Div {
             comboBoxInvisibleDomainObjects.getSelectedItems()
         ));
 
-        return comboBox;
+        return multiSelectComboBox;
     }
 
     private String name(DomainTypeMirror mirror) {

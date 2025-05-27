@@ -9,6 +9,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
@@ -28,9 +31,8 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showAllFieldsCheckbox;
     private Checkbox showAllMethodsCheckbox;
 
-    private Checkbox showAllAbstractTypesCheckbox;
     private Checkbox showAbstractTypesInAggregatesCheckbox;
-    private Checkbox useAbstractTypeNamesForServiceKindsCheckbox;
+    private Checkbox showInterfaceAndAbstractClassImplementations;
 
     private Checkbox showDomainEventFieldsCheckbox;
     private Checkbox showDomainEventMethodsCheckbox;
@@ -145,17 +147,18 @@ public class VisibilityConfigurationDialog extends Dialog {
         formLayout.addFormItem(showOnlyPublicMethodsCheckbox,"Public methods only");
         diagramConfigurationBinder.bind(showOnlyPublicMethodsCheckbox, DiagramStylingConfiguration::isShowOnlyPublicMethods, DiagramStylingConfiguration::setShowOnlyPublicMethods);
 
-        showAllAbstractTypesCheckbox = new Checkbox();
-        formLayout.addFormItem(showAllAbstractTypesCheckbox,"Show all abstract types");
-        diagramConfigurationBinder.bind(showAllAbstractTypesCheckbox, DiagramStylingConfiguration::isShowAllAbstractTypes, DiagramStylingConfiguration::setShowAllAbstractTypes);
-
         showAbstractTypesInAggregatesCheckbox = new Checkbox();
-        formLayout.addFormItem(showAbstractTypesInAggregatesCheckbox,"Show abstract types within aggregates");
+        formLayout.addFormItem(showAbstractTypesInAggregatesCheckbox, "Show interfaces and abstract types within aggregates");
         diagramConfigurationBinder.bind(showAbstractTypesInAggregatesCheckbox, DiagramStylingConfiguration::isShowAbstractTypesInAggregates, DiagramStylingConfiguration::setShowAbstractTypesInAggregates);
 
-        useAbstractTypeNamesForServiceKindsCheckbox = new Checkbox();
-        formLayout.addFormItem(useAbstractTypeNamesForServiceKindsCheckbox,"Use abstract type names for service kinds");
-        diagramConfigurationBinder.bind(useAbstractTypeNamesForServiceKindsCheckbox, DiagramStylingConfiguration::isUseAbstractTypeNamesForServiceKinds, DiagramStylingConfiguration::setUseAbstractTypeNamesForServiceKinds);
+        showInterfaceAndAbstractClassImplementations = new Checkbox();
+        showInterfaceAndAbstractClassImplementations.setTooltipText("Note: When you activate this option, make sure to include the packages where your implementations are located in the 'explicitly included packages'. Otherwise, only the interfaces will be shown.");
+        formLayout.addFormItem(showInterfaceAndAbstractClassImplementations, "Show interface and abstract class implementations");
+        diagramConfigurationBinder.bind(showInterfaceAndAbstractClassImplementations,
+            DiagramStylingConfiguration::isShowAllAbstractTypes, (diagramStylingConfiguration, checkBoxValue) -> {
+            diagramStylingConfiguration.setShowAllAbstractTypes(checkBoxValue);
+            diagramStylingConfiguration.setUseAbstractTypeNamesForServiceKinds(!checkBoxValue);
+        });
 
         generalPanel.add(formLayout);
         return generalPanel;

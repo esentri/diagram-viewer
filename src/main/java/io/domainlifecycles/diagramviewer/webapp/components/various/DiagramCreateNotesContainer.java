@@ -55,7 +55,7 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
 
         TextArea typeNotesTextArea = new TextArea();
         typeNotesTextArea.setWidthFull();
-        typeNotesTextArea.setHeight("30rem");
+        typeNotesTextArea.setHeight("27rem");
         typeNotesTextArea.setMaxLength(DiagramTypeNote.NOTES_MAX_LENGTH);
         typeNotesTextArea.setClearButtonVisible(true);
         typeNotesTextArea.setEnabled(false);

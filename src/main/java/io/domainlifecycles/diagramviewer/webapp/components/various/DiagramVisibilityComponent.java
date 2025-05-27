@@ -138,14 +138,12 @@ public class DiagramVisibilityComponent extends Div {
         return typeMirrorVisibilityLayout;
     }
 
-
-
     private Checkbox createAndGetDomainTypeVisibilityCheckbox(DomainTypeMirror mirror, VisibilityFilterType filterType) {
         Checkbox visible = new Checkbox(filterType.label);
 
         switch (filterType) {
             case VISIBLE -> {
-                if (diagram.getDomainModelVisibility().getBlacklistedClassNames().contains(
+                if (!diagram.getDomainModelVisibility().getBlacklistedClassNames().contains(
                         mirror.getTypeName())) {
                     visible.setValue(true);
                 }
