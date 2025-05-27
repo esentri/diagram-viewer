@@ -1,12 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various;
 
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,7 +14,12 @@ public class PackageMultiSelectComboBox extends MultiSelectComboBox<String> {
 
     private final static double STRING_LENGTH_TO_REM_FACTOR = 0.6;
 
-    public PackageMultiSelectComboBox(List<DomainTypeMirror> domainTypeMirrors, Diagram diagram, Project project, DiagramService diagramService) {
+    public PackageMultiSelectComboBox(List<DomainTypeMirror> domainTypeMirrors, Diagram diagram) {
+        this(domainTypeMirrors);
+        setValue(diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames());
+    }
+
+    public PackageMultiSelectComboBox(List<DomainTypeMirror> domainTypeMirrors) {
 
         List<String> packages = buildPackageNamesSorted(domainTypeMirrors);
         int longestItemLength = packages.stream()
@@ -29,14 +29,7 @@ public class PackageMultiSelectComboBox extends MultiSelectComboBox<String> {
         setItems(packages);
 
         setWidthFull();
-        setValue(diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames());
         getStyle().set("--vaadin-multi-select-combo-box-overlay-width", longestItemLength * STRING_LENGTH_TO_REM_FACTOR + "rem");
-        addValueChangeListener(e -> {
-            diagram.setDomainModelVisibility(diagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
-            diagramService.update(diagram, project);
-            ComponentUtil.fireEvent(
-                UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
-        });
     }
 
     private List<String> buildPackageNamesSorted(List<DomainTypeMirror> domainTypeMirrors) {

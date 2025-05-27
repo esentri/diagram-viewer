@@ -19,7 +19,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
+import io.domainlifecycles.diagramviewer.webapp.components.various.PackageMultiSelectComboBox;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;
@@ -109,12 +109,12 @@ public class CreateDiagramDialog extends Dialog {
         diagramTemplateSelect.setItemLabelGenerator(diagram -> diagram == null ? "" : diagram.getFileName());
         advancedConfigurationFormLayout.addFormItem(diagramTemplateSelect, "Template");
 
-        PackageSelectChipField packageSelectChipField = new PackageSelectChipField();
-        packageSelectChipField.setWidthFull();
-        binder.forField(packageSelectChipField)
+        PackageMultiSelectComboBox packageMultiSelectComboBox = new PackageMultiSelectComboBox(domainTypeMirrors);
+        packageMultiSelectComboBox.setWidthFull();
+        binder.forField(packageMultiSelectComboBox)
             .bind(opt -> opt.getDomainModelVisibility().getExplicitlyIncludedPackagesNames(),
-                    (opt, v) -> opt.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(v));
-        advancedConfigurationFormLayout.addFormItem(packageSelectChipField, "Explicitly included packages");
+                    (opt, v) -> opt.setDomainModelVisibility(opt.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(v)));
+        advancedConfigurationFormLayout.addFormItem(packageMultiSelectComboBox, "Explicitly included packages");
 
         MultiSelectComboBox<String> blacklistedClassnamesMultiSelectComboBox = new MultiSelectComboBox<>();
         blacklistedClassnamesMultiSelectComboBox.setWidthFull();
@@ -123,7 +123,7 @@ public class CreateDiagramDialog extends Dialog {
             Collectors.toSet()));
         binder.forField(blacklistedClassnamesMultiSelectComboBox)
             .bind(opt -> opt.getDomainModelVisibility().getBlacklistedClassNames(),
-                    (opt, v) -> opt.getDomainModelVisibility().replaceBlacklistedClassNames(v));
+                    (opt, v) -> opt.setDomainModelVisibility(opt.getDomainModelVisibility().replaceBlacklistedClassNames(v)));
         advancedConfigurationFormLayout.addFormItem(blacklistedClassnamesMultiSelectComboBox, "Excluded classes");
 
         diagramTemplateSelect.addValueChangeListener(e -> {
@@ -148,7 +148,7 @@ public class CreateDiagramDialog extends Dialog {
             }
 
             blacklistedClassnamesMultiSelectComboBox.setEnabled(!templateDiagramSelected);
-            packageSelectChipField.setEnabled(!templateDiagramSelected);
+            packageMultiSelectComboBox.setEnabled(!templateDiagramSelected);
 
             createDiagramOptions = CreateDiagramOptions.builder()
                 .fileType(FileType.SVG)

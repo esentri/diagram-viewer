@@ -10,6 +10,7 @@ import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DiagramViewNotesContainer extends VerticalLayout {
 
@@ -29,19 +30,35 @@ public class DiagramViewNotesContainer extends VerticalLayout {
     public void refreshNotes() {
         removeAll();
         Map<String, String> allDiagramTypeNotesByDomainTypeMirrorName = diagramTypeNoteService.getNotes(diagram);
+        Map<String, String> allDiagramTypeNotesByDomainTypeMirrorNameFilteredByIncludedPackages =
+            allDiagramTypeNotesByDomainTypeMirrorName.entrySet().stream()
+                .filter(typeMirrorNoteEntry -> {
+                    if (diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames() == null ||
+                        diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()) return true;
 
-        List<Component> allTypeNotes = allDiagramTypeNotesByDomainTypeMirrorName.keySet().stream().map(domainTypeMirrorName -> {
-            TextArea textArea = new TextArea();
-            textArea.setWidthFull();
-            textArea.setLabel(domainTypeMirrorName);
-            textArea.setReadOnly(true);
-            textArea.setValue(allDiagramTypeNotesByDomainTypeMirrorName.get(domainTypeMirrorName));
+                    return diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream().anyMatch(
+                        includedPackageName -> typeMirrorNoteEntry.getKey().startsWith(includedPackageName));
+                })
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue
+                ));
 
-            textArea.addFocusListener(e -> ComponentUtil.fireEvent(UI.getCurrent(), new DiagramTypeNotesChangedEvent(this, false, domainTypeMirrorName)));
+        List<Component> allTypeNotesInPackage =
+            allDiagramTypeNotesByDomainTypeMirrorNameFilteredByIncludedPackages.keySet().stream().map(
+            domainTypeMirrorName -> {
+                TextArea textArea = new TextArea();
+                textArea.setWidthFull();
+                textArea.setLabel(domainTypeMirrorName);
+                textArea.setReadOnly(true);
+                textArea.setValue(allDiagramTypeNotesByDomainTypeMirrorName.get(domainTypeMirrorName));
 
-            return (Component) textArea;
-        }).toList();
+                textArea.addFocusListener(e -> ComponentUtil.fireEvent(UI.getCurrent(),
+                    new DiagramTypeNotesChangedEvent(this, false, domainTypeMirrorName)));
 
-        add(allTypeNotes);
+                return (Component) textArea;
+            }).toList();
+
+        add(allTypeNotesInPackage);
     }
 }

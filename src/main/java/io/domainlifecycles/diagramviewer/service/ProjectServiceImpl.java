@@ -34,6 +34,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final String targetsDirectory;
     private final String diagramsLocation;
     private final DiagramService diagramService;
+    private final DiagramTypeNoteService diagramTypeNoteService;
     private final RegisteredUserService registeredUserService;
     private final InvitedUserService invitedUserService;
     private final SessionStorage sessionStorage;
@@ -43,7 +44,7 @@ public class ProjectServiceImpl implements ProjectService {
         @Value("${targets.location}") String targetsDirectory,
         @Value("${diagrams.location}") String diagramsLocation,
         DiagramService diagramService,
-        RegisteredUserService registeredUserService,
+        DiagramTypeNoteService diagramTypeNoteService, RegisteredUserService registeredUserService,
         InvitedUserService invitedUserService,
         SessionStorage sessionStorage,
         ProjectRepository repository) {
@@ -51,6 +52,7 @@ public class ProjectServiceImpl implements ProjectService {
         this.targetsDirectory = targetsDirectory;
         this.diagramsLocation = diagramsLocation;
         this.diagramService = diagramService;
+        this.diagramTypeNoteService = diagramTypeNoteService;
         this.registeredUserService = registeredUserService;
         this.invitedUserService = invitedUserService;
         this.sessionStorage = sessionStorage;
@@ -92,6 +94,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void deleteDiagram(Project project, Diagram diagram) {
+        diagramTypeNoteService.delete(diagram);
         project.removeDiagram(diagram);
         repository.save(project);
 
@@ -200,6 +203,8 @@ public class ProjectServiceImpl implements ProjectService {
         final String projectName = project.getName();
         Project fetchedProject = getByName(projectName);
         fetchedProject.unassignAllUsers();
+
+        project.getDiagrams().forEach(diagramTypeNoteService::delete);
 
         repository.delete(fetchedProject);
         sessionStorage.delete(fetchedProject.getId());

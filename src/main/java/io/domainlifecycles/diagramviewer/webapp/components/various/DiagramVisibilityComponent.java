@@ -3,12 +3,10 @@ package io.domainlifecycles.diagramviewer.webapp.components.various;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
-
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.NativeLabel;
-
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
@@ -18,7 +16,6 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEven
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -67,11 +64,7 @@ public class DiagramVisibilityComponent extends Div {
 
                     if(filteredPackageNames == null || filteredPackageNames.isEmpty()) return true;
 
-                    return directlyContained.contains(dtm)
-                        || directlyContained
-                        .stream()
-                        .flatMap(d -> d.getAllFields().stream())
-                        .anyMatch(f -> f.getType().getTypeName().equals(dtm.getTypeName()));
+                    return directlyContained.contains(dtm);
                 })
                 .collect(groupingBy(DomainTypeMirror::getDomainType));
 

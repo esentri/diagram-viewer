@@ -16,11 +16,12 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -65,8 +66,9 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
         binder.forField(typeNotesTextArea)
             .bind(TypeNotes::getNotes, TypeNotes::setNotes);
 
+        Set<DomainTypeMirror> allDomainTypeMirrorsInIncludedPackages = getAllDomainTypeMirrorsInIncludedPackages(domainTypeMirrors, diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames());
         Select<DomainTypeMirror> domainTypeSelect = new Select<>();
-        domainTypeSelect.setItems(domainTypeMirrors);
+        domainTypeSelect.setItems(allDomainTypeMirrorsInIncludedPackages);
         domainTypeSelect.setItemLabelGenerator(DomainTypeMirror::getTypeName);
         domainTypeSelect.setWidthFull();
         domainTypeSelect.addValueChangeListener(e -> {
@@ -84,6 +86,13 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
         formLayout.addFormItem(typeNotesTextArea, "Notes");
 
         return formLayout;
+    }
+
+    private Set<DomainTypeMirror> getAllDomainTypeMirrorsInIncludedPackages(List<DomainTypeMirror> domainTypeMirrors, Set<String> explicitlyIncludedPackagesNames) {
+        return domainTypeMirrors.stream().filter(domainTypeMirror -> {
+            if(explicitlyIncludedPackagesNames == null || explicitlyIncludedPackagesNames.isEmpty()) return true;
+            return explicitlyIncludedPackagesNames.stream().anyMatch(packageName -> domainTypeMirror.getTypeName().startsWith(packageName));
+        }).collect(Collectors.toSet());
     }
 
     private HorizontalLayout getButtonLayout() {

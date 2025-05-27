@@ -5,11 +5,9 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +43,19 @@ public class DiagramTypeNoteServiceImpl implements DiagramTypeNoteService {
         }
 
         repository.save(diagramTypeNoteForPersist);
+    }
+
+    @Override
+    public void delete(DomainTypeMirror typeMirror, Diagram diagram) {
+        Optional<DiagramTypeNote> foundDiagramTypeNote = repository.findByDiagramIdAndDomainTypeMirrorName(
+            diagram.getId(), typeMirror.getTypeName());
+        foundDiagramTypeNote.ifPresent(repository::delete);
+    }
+
+    @Override
+    public void delete(Diagram diagram) {
+        List<DiagramTypeNote> allTypeNotesForDiagram = repository.findByDiagramId(diagram.getId());
+        repository.deleteAll(allTypeNotesForDiagram);
     }
 
     @Override

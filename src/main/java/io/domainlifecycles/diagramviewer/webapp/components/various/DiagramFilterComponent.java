@@ -13,9 +13,10 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEven
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,7 +60,13 @@ public class DiagramFilterComponent extends Div {
         packageDetails.setOpened(sessionStorage.isPackageFilterOpen());
 
         MultiSelectComboBox<String> packageMultiSelectComboBox =
-            new PackageMultiSelectComboBox(domainTypeMirrors, diagram, project, diagramService);
+            new PackageMultiSelectComboBox(domainTypeMirrors, diagram);
+        packageMultiSelectComboBox.addValueChangeListener(e -> {
+            diagram.setDomainModelVisibility(diagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
+            diagramService.update(diagram, project);
+            ComponentUtil.fireEvent(
+                UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+        });
 
         packageDetails.add(packageMultiSelectComboBox);
         packageDetails.addOpenedChangeListener(e -> sessionStorage.setPackageFilterOpen(e.isOpened()));
@@ -72,37 +79,45 @@ public class DiagramFilterComponent extends Div {
         List<DomainTypeMirror> items = filterConcreteMirrorsInterfaceAvailable();
 
         comboBoxConnected = createAndConfigureComboBox("Include Connections to:", items,
-            diagram.getDomainModelVisibility().getIncludeConnectedToClassNames());
+            diagram.getDomainModelVisibility().getIncludeConnectedToClassNames(), Collections.emptySet());
         advancedFilterDetails.add(comboBoxConnected);
 
         comboBoxConnectedIngoing = createAndConfigureComboBox("Include ingoing connections to:", items,
-            diagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames());
+            diagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames(),
+            diagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames());
         advancedFilterDetails.add(comboBoxConnectedIngoing);
 
         comboBoxConnectedOutgoing = createAndConfigureComboBox("Include outgoing connections from:", items,
-            diagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames());
+            diagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames(),
+            diagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames());
         advancedFilterDetails.add(comboBoxConnectedOutgoing);
 
         comboBoxConnectedExcludeIngoing = createAndConfigureComboBox("Exclude ingoing connections to:", items,
-            diagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames());
+            diagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames(),
+            diagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames());
         advancedFilterDetails.add(comboBoxConnectedExcludeIngoing);
 
         comboBoxConnectedExcludeOutgoing = createAndConfigureComboBox("Exclude outgoing connections from:", items,
-            diagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames());
+            diagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames(),
+            diagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames());
         advancedFilterDetails.add(comboBoxConnectedExcludeOutgoing);
 
         comboBoxInvisibleDomainObjects = createAndConfigureComboBox("Invisible domain objects:", items,
-            diagram.getDomainModelVisibility().getBlacklistedClassNames());
+            diagram.getDomainModelVisibility().getBlacklistedClassNames(), Collections.emptySet());
         advancedFilterDetails.add(comboBoxInvisibleDomainObjects);
 
         add(packageDetails);
         add(advancedFilterDetails);
     }
 
-    private MultiSelectComboBox<DomainTypeMirror> createAndConfigureComboBox(String label, List<DomainTypeMirror> items, Set<String> classNames) {
+    private MultiSelectComboBox<DomainTypeMirror> createAndConfigureComboBox(String label, List<DomainTypeMirror> items, Set<String> classNames, Set<String> complementaryClassNames) {
+        HashSet<DomainTypeMirror> complementDomainTypeMirrors = new HashSet<>(items);
+        complementDomainTypeMirrors.removeIf(
+            typeMirror -> complementaryClassNames.contains(typeMirror.getTypeName()));
+
         MultiSelectComboBox<DomainTypeMirror> multiSelectComboBox = new MultiSelectComboBox<>(label);
         multiSelectComboBox.setWidthFull();
-        multiSelectComboBox.setItems(items);
+        multiSelectComboBox.setItems(complementDomainTypeMirrors);
         multiSelectComboBox.setItemLabelGenerator(this::name);
         multiSelectComboBox.select(selected(classNames));
         multiSelectComboBox.addValueChangeListener(e -> regenerateDiagram(
@@ -186,7 +201,7 @@ public class DiagramFilterComponent extends Div {
 
             for (DomainTypeMirror mirror : domainTypeMirrors) {
                 for (String interfaceTypeName : mirror.getAllInterfaceTypeNames()) {
-                    if (mirroredTypeNames.contains(interfaceTypeName)) {
+                    if (mirroredTypeNames.contains(interfaceTypeName) && !diagram.getDiagramStylingConfiguration().isShowAllAbstractTypes()) {
                         domainTypeMirrorsFiltered.remove(mirror);
                     }
                 }
