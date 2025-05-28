@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.exception.MirrorException;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
 import java.net.MalformedURLException;
@@ -38,10 +39,16 @@ public class DomainModelUtils {
                 domainModelFactory.setGenericTypeResolver(new TypeMetaResolver());
                 domainModelFactory.setExternalClassLoader(cl.get());
 
-                var dm = domainModelFactory.initializeDomainMirror();
-                LOGGER.info("Domain model initialized");
-                LOGGER.debug("Mirrored types count = " + dm.getAllDomainTypeMirrors().size());
-                return dm;
+                try {
+                    var dm = domainModelFactory.initializeDomainMirror();
+                    LOGGER.info("Domain model initialized");
+                    LOGGER.debug("Mirrored types count = " + dm.getAllDomainTypeMirrors().size());
+                    return dm;
+                } catch(MirrorException e) {
+                    throw DiagramViewerException.fail("Domain model could not be initialized. Please check whether you " +
+                        "specified correct and all packages needed to read the Domain model. It is necessary to specify " +
+                        "referenced packages as well.");
+                }
             }
         }
         throw DiagramViewerException.fail("Domain model could not be initialized!");

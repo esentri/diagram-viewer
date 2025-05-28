@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.various;
+package io.domainlifecycles.diagramviewer.webapp.components.various.notes;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;

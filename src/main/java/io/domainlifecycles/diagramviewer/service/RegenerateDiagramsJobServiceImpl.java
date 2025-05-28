@@ -1,9 +1,11 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.RegenerateDomainMirrorJobRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,5 +40,11 @@ public class RegenerateDiagramsJobServiceImpl implements RegenerateDiagramsJobSe
     @Override
     public void delete(RegenerateDiagramsJob job) {
         repository.delete(job);
+    }
+
+    @Override
+    public void delete(Diagram diagram) {
+        List<RegenerateDiagramsJob> foundJobs = repository.findByDiagramId(diagram.getId());
+        foundJobs.forEach(this::delete);
     }
 }

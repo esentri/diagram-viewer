@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.various;
+package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.Scroller.ScrollDirection;
@@ -7,6 +7,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
+import io.domainlifecycles.diagramviewer.webapp.components.various.notes.DiagramNotesComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;

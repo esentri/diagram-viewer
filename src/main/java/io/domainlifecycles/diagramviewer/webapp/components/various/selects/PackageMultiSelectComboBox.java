@@ -1,14 +1,14 @@
-package io.domainlifecycles.diagramviewer.webapp.components.various;
+package io.domainlifecycles.diagramviewer.webapp.components.various.selects;
 
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramFilterComponent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import static io.domainlifecycles.diagramviewer.webapp.components.various.DiagramFilterComponent.DOMAINLIFECYCLES_PACKAGE_NAME;
 
 public class PackageMultiSelectComboBox extends MultiSelectComboBox<String> {
 
@@ -38,7 +38,7 @@ public class PackageMultiSelectComboBox extends MultiSelectComboBox<String> {
         for (DomainTypeMirror type : domainTypeMirrors) {
             String typeName = type.getTypeName();
             int indexOfLastDot = typeName.lastIndexOf('.');
-            if (indexOfLastDot == -1 || typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)) continue;
+            if (indexOfLastDot == -1 || typeName.startsWith(DiagramFilterComponent.DOMAINLIFECYCLES_PACKAGE_NAME)) continue;
 
             String fullPackage = typeName.substring(0, indexOfLastDot);
             String[] parts = fullPackage.split("\\.");

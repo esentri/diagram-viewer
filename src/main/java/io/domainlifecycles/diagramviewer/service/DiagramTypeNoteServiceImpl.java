@@ -32,9 +32,19 @@ public class DiagramTypeNoteServiceImpl implements DiagramTypeNoteService {
 
         if(foundNotes.isPresent()) {
             diagramTypeNoteForPersist = foundNotes.get();
+
+            if(notes.isBlank()) {
+                repository.delete(diagramTypeNoteForPersist);
+                return;
+            }
+
             diagramTypeNoteForPersist.setNotes(notes);
         }
         else {
+            if(notes.isBlank()) {
+                return;
+            }
+
             diagramTypeNoteForPersist = DiagramTypeNote.builder()
                 .notes(notes)
                 .domainTypeMirrorName(domainTypeMirror.getTypeName())

@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.various;
+package io.domainlifecycles.diagramviewer.webapp.components.various.selects;
 
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;

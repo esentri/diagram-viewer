@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.webapp.components.various;
+package io.domainlifecycles.diagramviewer.webapp.components.various.notes;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
@@ -47,16 +47,17 @@ public class DiagramViewNotesContainer extends VerticalLayout {
         List<Component> allTypeNotesInPackage =
             allDiagramTypeNotesByDomainTypeMirrorNameFilteredByIncludedPackages.keySet().stream().map(
             domainTypeMirrorName -> {
-                TextArea textArea = new TextArea();
-                textArea.setWidthFull();
-                textArea.setLabel(domainTypeMirrorName);
-                textArea.setReadOnly(true);
-                textArea.setValue(allDiagramTypeNotesByDomainTypeMirrorName.get(domainTypeMirrorName));
+                TextArea notesTextArea = new TextArea();
+                notesTextArea.setWidthFull();
+                notesTextArea.setLabel(domainTypeMirrorName);
+                notesTextArea.setReadOnly(true);
+                notesTextArea.setValue(allDiagramTypeNotesByDomainTypeMirrorName.get(domainTypeMirrorName));
+                notesTextArea.addClassName("notes-text-area");
 
-                textArea.addFocusListener(e -> ComponentUtil.fireEvent(UI.getCurrent(),
+                notesTextArea.addFocusListener(e -> ComponentUtil.fireEvent(UI.getCurrent(),
                     new DiagramTypeNotesChangedEvent(this, false, domainTypeMirrorName)));
 
-                return (Component) textArea;
+                return (Component) notesTextArea;
             }).toList();
 
         add(allTypeNotesInPackage);

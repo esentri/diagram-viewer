@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,4 +14,6 @@ public interface RegenerateDiagramsJobService {
     void create(Project project);
 
     void delete(RegenerateDiagramsJob job);
+
+    void delete(Diagram diagram);
 }

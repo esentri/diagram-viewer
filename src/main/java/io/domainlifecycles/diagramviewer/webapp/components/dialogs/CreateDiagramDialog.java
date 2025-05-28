@@ -19,7 +19,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.components.various.PackageMultiSelectComboBox;
+import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageMultiSelectComboBox;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;

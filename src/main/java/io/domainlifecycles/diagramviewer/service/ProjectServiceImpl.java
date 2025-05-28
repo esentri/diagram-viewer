@@ -35,6 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final String diagramsLocation;
     private final DiagramService diagramService;
     private final DiagramTypeNoteService diagramTypeNoteService;
+    private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final RegisteredUserService registeredUserService;
     private final InvitedUserService invitedUserService;
     private final SessionStorage sessionStorage;
@@ -44,7 +45,7 @@ public class ProjectServiceImpl implements ProjectService {
         @Value("${targets.location}") String targetsDirectory,
         @Value("${diagrams.location}") String diagramsLocation,
         DiagramService diagramService,
-        DiagramTypeNoteService diagramTypeNoteService, RegisteredUserService registeredUserService,
+        DiagramTypeNoteService diagramTypeNoteService, RegenerateDiagramsJobService regenerateDiagramsJobService, RegisteredUserService registeredUserService,
         InvitedUserService invitedUserService,
         SessionStorage sessionStorage,
         ProjectRepository repository) {
@@ -53,6 +54,7 @@ public class ProjectServiceImpl implements ProjectService {
         this.diagramsLocation = diagramsLocation;
         this.diagramService = diagramService;
         this.diagramTypeNoteService = diagramTypeNoteService;
+        this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.registeredUserService = registeredUserService;
         this.invitedUserService = invitedUserService;
         this.sessionStorage = sessionStorage;
@@ -95,6 +97,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void deleteDiagram(Project project, Diagram diagram) {
         diagramTypeNoteService.delete(diagram);
+        regenerateDiagramsJobService.delete(diagram);
         project.removeDiagram(diagram);
         repository.save(project);
 

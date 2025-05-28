@@ -1,8 +1,9 @@
-package io.domainlifecycles.diagramviewer.webapp.components.various;
+package io.domainlifecycles.diagramviewer.webapp.components.various.notes;
 
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep.LabelsPosition;
 import com.vaadin.flow.component.icon.Icon;
@@ -18,6 +19,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -27,6 +29,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 public class DiagramCreateNotesContainer extends VerticalLayout {
+
+    private final static double STRING_LENGTH_TO_REM_FACTOR = 0.6;
 
     private final List<DomainTypeMirror> domainTypeMirrors;
     private final Diagram diagram;
@@ -67,22 +71,28 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
             .bind(TypeNotes::getNotes, TypeNotes::setNotes);
 
         Set<DomainTypeMirror> allDomainTypeMirrorsInIncludedPackages = getAllDomainTypeMirrorsInIncludedPackages(domainTypeMirrors, diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames());
-        Select<DomainTypeMirror> domainTypeSelect = new Select<>();
-        domainTypeSelect.setItems(allDomainTypeMirrorsInIncludedPackages);
-        domainTypeSelect.setItemLabelGenerator(DomainTypeMirror::getTypeName);
-        domainTypeSelect.setWidthFull();
-        domainTypeSelect.addValueChangeListener(e -> {
+        int longestDomainTypeMirrorNameLength = allDomainTypeMirrorsInIncludedPackages.stream()
+            .map(DomainTypeMirror::getTypeName)
+            .max(Comparator.comparingInt(String::length))
+            .orElse("").length();
+
+        ComboBox<DomainTypeMirror> domainTypeComboBox = new ComboBox<>();
+        domainTypeComboBox.setItems(allDomainTypeMirrorsInIncludedPackages);
+        domainTypeComboBox.setItemLabelGenerator(DomainTypeMirror::getTypeName);
+        domainTypeComboBox.setWidthFull();
+        getStyle().set("--vaadin-combo-box-overlay-width", longestDomainTypeMirrorNameLength * STRING_LENGTH_TO_REM_FACTOR + "rem");
+        domainTypeComboBox.addValueChangeListener(e -> {
             DomainTypeMirror selectedDomainTypeMirror = e.getValue();
             String notes = diagramTypeNoteService.getNotes(diagram, selectedDomainTypeMirror);
             typeNotes = new TypeNotes(notes, selectedDomainTypeMirror);
             binder.readBean(typeNotes);
             typeNotesTextArea.setEnabled(true);
         });
-        binder.forField(domainTypeSelect)
+        binder.forField(domainTypeComboBox)
             .asRequired("Type is required.")
             .bind(TypeNotes::getSelectedTypeMirror, TypeNotes::setSelectedTypeMirror);
 
-        formLayout.addFormItem(domainTypeSelect, "Type");
+        formLayout.addFormItem(domainTypeComboBox, "Type");
         formLayout.addFormItem(typeNotesTextArea, "Notes");
 
         return formLayout;

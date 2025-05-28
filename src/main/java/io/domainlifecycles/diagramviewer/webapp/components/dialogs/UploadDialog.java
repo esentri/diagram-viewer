@@ -12,7 +12,7 @@ import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
-import io.domainlifecycles.diagramviewer.webapp.components.various.PackageSelectChipField;
+import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import java.io.InputStream;
 import java.util.Set;

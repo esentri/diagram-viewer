@@ -10,6 +10,7 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -22,6 +23,7 @@ import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.rest.api.ResourceController;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
@@ -29,7 +31,7 @@ import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
-import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramVisibilityAndNotesComponentsContainer;
+import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramVisibilityAndNotesComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
@@ -127,7 +129,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private HorizontalLayout createAndGetButtonBar() {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.getStyle().setMarginLeft("3.5rem");
-        buttonBar.add(getRenameDiagramButton(), getDiagramDownloadButton(), getDeleteDiagramButton());
+        buttonBar.add(getRenameDiagramButton(), getDiagramDownloadButton(), getCopyDiagramLinkButton(), getDeleteDiagramButton());
         return buttonBar;
     }
 
@@ -153,6 +155,26 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         downloadAnchor.add(downloadDiagramButton);
 
         return downloadAnchor;
+    }
+
+    private Button getCopyDiagramLinkButton() {
+        Button copyDiagramLinkButton = new Button("Copy External Link", new Icon(VaadinIcon.LINK));
+        copyDiagramLinkButton.getStyle().set("cursor", "pointer");
+
+        UI.getCurrent().getPage().fetchCurrentURL(url ->
+            copyDiagramLinkButton.addClickListener(e -> {
+                String baseUrlWithTailingSlash = url.toString();
+                baseUrlWithTailingSlash = baseUrlWithTailingSlash.replace("?continue", "");
+                String baseUrl = baseUrlWithTailingSlash.substring(0, baseUrlWithTailingSlash.length() - 1);
+                String diagramUrl = baseUrl + ResourceController.RESOURCES_API_PATH +
+                    ResourceController.VIEW_API_PATH_SUFFIX + "/" + project.getId() + "/" + diagram.getFileName();
+                UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0);", diagramUrl);
+
+                Notification.show("Diagram link has been copied to clipboard. Note: To successfully access the " +
+                    "resource, make sure you add your API-Key to the 'X-API-Key' header in your HTTP request.");
+            }));
+
+        return copyDiagramLinkButton;
     }
 
     private Button getDeleteDiagramButton() {
