@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface ProjectRepository extends CrudRepository<Project, UUID> {
 
     Optional<Project> findByName(String projectName);
+
 }

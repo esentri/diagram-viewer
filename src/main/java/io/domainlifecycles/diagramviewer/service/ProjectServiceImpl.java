@@ -14,6 +14,7 @@ import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -157,7 +158,8 @@ public class ProjectServiceImpl implements ProjectService {
             if(!project.isApiUpload()) {
                 deleteTargetFile(project);
             }
-
+            project.setChangedAt(Instant.now());
+            repository.save(project);
             sessionStorage.createOrUpdate(project, domainMirrorUploadDto.domainMirror());
             return;
         }

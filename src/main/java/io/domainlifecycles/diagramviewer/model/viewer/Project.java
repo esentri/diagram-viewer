@@ -136,4 +136,11 @@ public class Project {
     public int hashCode() {
         return id != null ? id.hashCode() : super.hashCode();
     }
+
+    public Instant getLatestChangeInstant() {
+        if(changedAt == null) {
+            return createdAt;
+        }
+        return changedAt;
+    }
 }

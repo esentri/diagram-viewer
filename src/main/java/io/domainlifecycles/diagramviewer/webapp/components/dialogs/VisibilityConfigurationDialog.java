@@ -28,8 +28,12 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showAllFieldsCheckbox;
     private Checkbox showAllMethodsCheckbox;
 
-    private Checkbox showAbstractTypesInAggregatesCheckbox;
-    private Checkbox showInterfaceAndAbstractClassImplementations;
+    private Checkbox showAllInheritanceStructuresCheckbox;
+    private Checkbox showInheritanceInAggregatesCheckbox;
+    private Checkbox showInheritanceStructuresForReadModelsCheckbox;
+    private Checkbox showInheritanceStructuresForDomainEventsCheckbox;
+    private Checkbox showInheritanceStructuresForDomainCommandsCheckbox;
+    private Checkbox showInheritanceStructuresForServiceKindsCheckbox;
 
     private Checkbox showDomainEventFieldsCheckbox;
     private Checkbox showDomainEventMethodsCheckbox;
@@ -144,18 +148,54 @@ public class VisibilityConfigurationDialog extends Dialog {
         formLayout.addFormItem(showOnlyPublicMethodsCheckbox,"Public methods only");
         diagramConfigurationBinder.bind(showOnlyPublicMethodsCheckbox, DiagramStylingConfiguration::isShowOnlyPublicMethods, DiagramStylingConfiguration::setShowOnlyPublicMethods);
 
-        showAbstractTypesInAggregatesCheckbox = new Checkbox();
-        formLayout.addFormItem(showAbstractTypesInAggregatesCheckbox, "Show interfaces and abstract types within aggregates");
-        diagramConfigurationBinder.bind(showAbstractTypesInAggregatesCheckbox, DiagramStylingConfiguration::isShowAbstractTypesInAggregates, DiagramStylingConfiguration::setShowAbstractTypesInAggregates);
+        showAllInheritanceStructuresCheckbox = new Checkbox();
+        showAllInheritanceStructuresCheckbox.setTooltipText("Note: When you activate this option, make sure to include the packages where your implementations are located in the 'explicitly included packages'. Otherwise, only the interfaces will be shown.");
+        formLayout.addFormItem(showAllInheritanceStructuresCheckbox, "Show interface and abstract class implementations");
+        diagramConfigurationBinder.bind(
+                showAllInheritanceStructuresCheckbox,
+                DiagramStylingConfiguration::isShowAllInheritanceStructures,
+                DiagramStylingConfiguration::setShowAllInheritanceStructures
+        );
 
-        showInterfaceAndAbstractClassImplementations = new Checkbox();
-        showInterfaceAndAbstractClassImplementations.setTooltipText("Note: When you activate this option, make sure to include the packages where your implementations are located in the 'explicitly included packages'. Otherwise, only the interfaces will be shown.");
-        formLayout.addFormItem(showInterfaceAndAbstractClassImplementations, "Show interface and abstract class implementations");
-        diagramConfigurationBinder.bind(showInterfaceAndAbstractClassImplementations,
-            DiagramStylingConfiguration::isShowAllAbstractTypes, (diagramStylingConfiguration, checkBoxValue) -> {
-            diagramStylingConfiguration.setShowAllAbstractTypes(checkBoxValue);
-            diagramStylingConfiguration.setUseAbstractTypeNamesForServiceKinds(!checkBoxValue);
-        });
+        showInheritanceInAggregatesCheckbox = new Checkbox();
+        formLayout.addFormItem(showInheritanceInAggregatesCheckbox, "Show interfaces and abstract types within aggregates");
+        diagramConfigurationBinder.bind(
+                showInheritanceInAggregatesCheckbox,
+                DiagramStylingConfiguration::isShowInheritanceStructuresInAggregates,
+                DiagramStylingConfiguration::setShowInheritanceStructuresInAggregates
+        );
+
+        showInheritanceStructuresForReadModelsCheckbox = new Checkbox();
+        formLayout.addFormItem(showInheritanceStructuresForReadModelsCheckbox, "Show interfaces and abstract types for read models");
+        diagramConfigurationBinder.bind(
+                showInheritanceStructuresForReadModelsCheckbox,
+                DiagramStylingConfiguration::isShowInheritanceStructuresForReadModels,
+                DiagramStylingConfiguration::setShowInheritanceStructuresForReadModels
+        );
+
+        showInheritanceStructuresForDomainEventsCheckbox = new Checkbox();
+        formLayout.addFormItem(showInheritanceStructuresForDomainEventsCheckbox, "Show interfaces and abstract types for domain events");
+        diagramConfigurationBinder.bind(
+                showInheritanceStructuresForDomainEventsCheckbox,
+                DiagramStylingConfiguration::isShowInheritanceStructuresForDomainEvents,
+                DiagramStylingConfiguration::setShowInheritanceStructuresForDomainEvents
+        );
+
+        showInheritanceStructuresForDomainCommandsCheckbox = new Checkbox();
+        formLayout.addFormItem(showInheritanceStructuresForDomainCommandsCheckbox, "Show interfaces and abstract types for domain commands");
+        diagramConfigurationBinder.bind(
+                showInheritanceStructuresForDomainCommandsCheckbox,
+                DiagramStylingConfiguration::isShowInheritanceStructuresForDomainCommands,
+                DiagramStylingConfiguration::setShowInheritanceStructuresForDomainCommands
+        );
+
+        showInheritanceStructuresForServiceKindsCheckbox = new Checkbox();
+        formLayout.addFormItem(showInheritanceStructuresForServiceKindsCheckbox, "Show interfaces and abstract types for any service kind");
+        diagramConfigurationBinder.bind(
+                showInheritanceStructuresForServiceKindsCheckbox,
+                DiagramStylingConfiguration::isShowInheritanceStructuresForServiceKinds,
+                DiagramStylingConfiguration::setShowInheritanceStructuresForServiceKinds
+        );
 
         generalPanel.add(formLayout);
         return generalPanel;

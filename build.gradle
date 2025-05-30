@@ -25,7 +25,7 @@ repositories {
 ext {
 	set('vaadinVersion', "24.7.1")
 	javaDockerVersion = "3.4.0"
-	dlcVersion = "2.3.0"
+	dlcVersion = "2.4.0"
 }
 
 tasks.named('bootJar') {
@@ -46,7 +46,7 @@ dependencies {
 	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.0'
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
-	implementation("io.domainlifecycles:kickstart-generator:1.0.6")
+	implementation("io.domainlifecycles:kickstart-generator:1.0.7")
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation ('org.springframework.boot:spring-boot-starter-test')

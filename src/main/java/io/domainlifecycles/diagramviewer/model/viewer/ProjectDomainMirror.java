@@ -40,4 +40,5 @@ public class ProjectDomainMirror {
 
     @UpdateTimestamp
     private Instant changedAt;
+
 }

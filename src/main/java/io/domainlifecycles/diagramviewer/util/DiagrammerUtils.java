@@ -105,9 +105,12 @@ public class DiagrammerUtils {
                 .withShowUnspecifiedServiceKinds(diagramStylingConfiguration.isShowUnspecifiedServiceKinds())
                 .withShowUnspecifiedServiceKindFields(diagramStylingConfiguration.isShowUnspecifiedServiceKindFields())
                 .withShowUnspecifiedServiceKindMethods(diagramStylingConfiguration.isShowUnspecifiedServiceKindMethods())
-                .withUseAbstractTypeNameForConcreteServiceKinds(diagramStylingConfiguration.isUseAbstractTypeNamesForServiceKinds())
-                .withShowAllAbstractTypes(diagramStylingConfiguration.isShowAllAbstractTypes())
-                .withShowAbstractTypesInAggregates(diagramStylingConfiguration.isShowAbstractTypesInAggregates())
+                .withShowAllInheritanceStructures(diagramStylingConfiguration.isShowAllInheritanceStructures())
+                .withShowInheritanceStructuresForDomainCommands(diagramStylingConfiguration.isShowInheritanceStructuresForDomainCommands())
+                .withShowInheritanceStructuresForDomainEvents(diagramStylingConfiguration.isShowInheritanceStructuresForDomainEvents())
+                .withShowInheritanceStructuresForReadModels(diagramStylingConfiguration.isShowInheritanceStructuresForReadModels())
+                .withShowInheritanceStructuresForServiceKinds(diagramStylingConfiguration.isShowInheritanceStructuresForServiceKinds())
+                .withShowInheritanceStructuresInAggregates(diagramStylingConfiguration.isShowInheritanceStructuresInAggregates())
                 .build();
 
         DomainDiagramConfig diagramConfig = DomainDiagramConfig.builder()

@@ -16,6 +16,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
@@ -56,9 +57,11 @@ public class Diagram {
     @Builder.Default
     private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null, null, null, null, null, null);
 
+    @Getter
     @CreationTimestamp
     private Instant createdAt;
 
+    @Getter
     @UpdateTimestamp
     private Instant changedAt;
 

@@ -200,13 +200,22 @@ public class DiagramFilterComponent extends Div {
                             .toList()
             );
 
-            for (DomainTypeMirror mirror : domainTypeMirrors) {
-                for (String interfaceTypeName : mirror.getAllInterfaceTypeNames()) {
-                    if (mirroredTypeNames.contains(interfaceTypeName) && !diagram.getDiagramStylingConfiguration().isShowAllAbstractTypes()) {
-                        domainTypeMirrorsFiltered.remove(mirror);
+            if(!diagram.getDiagramStylingConfiguration().isShowAllInheritanceStructures()){
+                for (DomainTypeMirror mirror : domainTypeMirrors) {
+                    switch (mirror.getDomainType()) {
+                        case SERVICE_KIND, OUTBOUND_SERVICE, APPLICATION_SERVICE, DOMAIN_SERVICE, REPOSITORY, QUERY_HANDLER -> {
+                            for (String interfaceTypeName : mirror.getAllInterfaceTypeNames()) {
+                                if (!interfaceTypeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME) && !diagram.getDiagramStylingConfiguration().isShowInheritanceStructuresForServiceKinds()) {
+                                    if (mirroredTypeNames.contains(interfaceTypeName)) {
+                                        domainTypeMirrorsFiltered.remove(mirror);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
+
         }
 
         return domainTypeMirrorsFiltered.stream().sorted(
