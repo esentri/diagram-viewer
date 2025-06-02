@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
@@ -67,6 +68,11 @@ public class ProjectServiceImpl implements ProjectService {
         return StreamSupport.stream(repository.findAll().spliterator(), false)
             .filter(project -> project.getAssignedRegisteredUsers().stream()
                 .anyMatch(assignedUser -> Objects.equals(assignedUser.getId(), registeredUser.getId())));
+    }
+
+    @Override
+    public Optional<Project> findById(UUID id) {
+        return repository.findById(id);
     }
 
     @Override

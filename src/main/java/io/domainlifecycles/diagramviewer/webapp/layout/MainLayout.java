@@ -4,6 +4,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -42,6 +43,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
+import io.domainlifecycles.diagramviewer.webapp.views.LoginView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Comparator;
 import java.util.Map;
@@ -104,7 +106,7 @@ public class MainLayout extends AppLayout {
 
     private void addPopoverContents(RegisteredUser registeredUser) {
         userInfoPopover.add(createAndGetPopoverUserInfoLayout(registeredUser), new Hr(),
-            createAndGetPopoverApiKeyLayout(registeredUser));
+            createAndGetPopoverApiKeyLayout(registeredUser), new Hr(), createAndGetSignOutButton());
     }
 
     private HorizontalLayout createAndGetPopoverUserInfoLayout(RegisteredUser registeredUser) {
@@ -170,6 +172,19 @@ public class MainLayout extends AppLayout {
         button.getStyle().set("margin-inline-start", "auto");
         button.getStyle().set("border-radius", "50%");
         return button;
+    }
+
+    private Button createAndGetSignOutButton() {
+        Button signOutButton = new Button("Sign Out");
+        signOutButton.addThemeVariants(ButtonVariant.LUMO_WARNING);
+        signOutButton.setWidthFull();
+        signOutButton.getStyle().setPadding("var(--lumo-space-m)");
+        signOutButton.addClickListener(e -> signOutUser());
+        return signOutButton;
+    }
+
+    private void signOutUser() {
+        UI.getCurrent().navigate(LoginView.class);
     }
 
     private void buildDrawerContent() {

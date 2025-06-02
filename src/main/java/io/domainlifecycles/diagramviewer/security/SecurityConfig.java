@@ -2,11 +2,20 @@ package io.domainlifecycles.diagramviewer.security;
 
 import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.spring.security.NavigationAccessControlConfigurer;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -26,18 +35,22 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter) throws Exception {
-        http
+        return http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/login").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/domain-model/**").permitAll()
                 .requestMatchers("/api/resources/view/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login((login) -> login.successHandler(successHandler))
-            .addFilterAfter(apiKeyAuthFilter, BasicAuthenticationFilter.class);
-
-        return http.build();
+            .addFilterAfter(apiKeyAuthFilter, BasicAuthenticationFilter.class)
+            /*.exceptionHandling(
+                httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(
+                    (request, response, authException) -> response.sendRedirect("/login")))
+            */.logout(httpSecurityLogoutConfigurer -> httpSecurityLogoutConfigurer.logoutSuccessUrl("/login"))
+            .build();
     }
 
     @Bean
