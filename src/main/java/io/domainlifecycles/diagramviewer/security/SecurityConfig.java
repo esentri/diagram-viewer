@@ -38,18 +38,15 @@ public class SecurityConfig {
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/domain-model/**").permitAll()
                 .requestMatchers("/api/resources/view/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .oauth2Login((login) -> login.successHandler(successHandler))
+            .oauth2Login((login) -> {
+                login.successHandler(successHandler);
+            })
             .addFilterAfter(apiKeyAuthFilter, BasicAuthenticationFilter.class)
-            /*.exceptionHandling(
-                httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(
-                    (request, response, authException) -> response.sendRedirect("/login")))
-            */.logout(httpSecurityLogoutConfigurer -> httpSecurityLogoutConfigurer.logoutSuccessUrl("/login"))
             .build();
     }
 

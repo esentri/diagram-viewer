@@ -45,6 +45,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         securityService.acknowledgeUserAuthentication(email, fullName);
 
         SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
-        response.sendRedirect(savedRequest.getRedirectUrl());
+
+        String redirectUrl = savedRequest == null ? "/" : savedRequest.getRedirectUrl();
+        response.sendRedirect(redirectUrl);
     }
 }

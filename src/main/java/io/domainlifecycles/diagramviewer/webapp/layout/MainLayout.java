@@ -43,7 +43,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
-import io.domainlifecycles.diagramviewer.webapp.views.LoginView;
+//import io.domainlifecycles.diagramviewer.webapp.views.LoginView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Comparator;
 import java.util.Map;
@@ -184,7 +184,7 @@ public class MainLayout extends AppLayout {
     }
 
     private void signOutUser() {
-        UI.getCurrent().navigate(LoginView.class);
+        UI.getCurrent().getPage().setLocation("/logout");
     }
 
     private void buildDrawerContent() {

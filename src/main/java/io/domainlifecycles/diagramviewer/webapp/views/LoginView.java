@@ -48,8 +48,8 @@ import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
 
-@Route(value = "/login")
-@PageTitle("DLC | Login")
+@Route(value = "/signin")
+@PageTitle("DLC | Sign In")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout {
 
