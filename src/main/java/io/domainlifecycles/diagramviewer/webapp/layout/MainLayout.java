@@ -106,7 +106,7 @@ public class MainLayout extends AppLayout {
 
     private void addPopoverContents(RegisteredUser registeredUser) {
         userInfoPopover.add(createAndGetPopoverUserInfoLayout(registeredUser), new Hr(),
-            createAndGetPopoverApiKeyLayout(registeredUser), new Hr(), createAndGetSignOutButton());
+            createAndGetPopoverApiKeyLayout(registeredUser), new Hr(), createAndGetSignOutButtonLayout());
     }
 
     private HorizontalLayout createAndGetPopoverUserInfoLayout(RegisteredUser registeredUser) {
@@ -174,13 +174,19 @@ public class MainLayout extends AppLayout {
         return button;
     }
 
-    private Button createAndGetSignOutButton() {
+    private VerticalLayout createAndGetSignOutButtonLayout() {
+        VerticalLayout signOutButtonLayout = new VerticalLayout();
+        signOutButtonLayout.getThemeList().remove("spacing");
+        signOutButtonLayout.getStyle().setPadding("0 --var(--lumo-space-m)");
+
         Button signOutButton = new Button("Sign Out");
         signOutButton.addThemeVariants(ButtonVariant.LUMO_WARNING);
         signOutButton.setWidthFull();
-        signOutButton.getStyle().setPadding("var(--lumo-space-m)");
+        signOutButton.getStyle().setMargin("0");
         signOutButton.addClickListener(e -> signOutUser());
-        return signOutButton;
+
+        signOutButtonLayout.add(signOutButton);
+        return signOutButtonLayout;
     }
 
     private void signOutUser() {
