@@ -43,6 +43,7 @@ public class SignInView extends VerticalLayout {
 
         Button signInButton = new Button(imgWrapper, e -> UI.getCurrent().getPage().setLocation("/oauth2/authorization/okta"));
         signInButton.setWidth("10%");
+        signInButton.getStyle().set("cursor", "pointer");
         add(dlcImage, signInButton);
     }
 }
