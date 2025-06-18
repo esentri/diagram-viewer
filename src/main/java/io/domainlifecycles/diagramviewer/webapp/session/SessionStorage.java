@@ -20,11 +20,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.SessionScope;
 
 @Component
 @SessionScope
+@Slf4j
 public class SessionStorage {
 
     private final ProjectDomainMirrorService projectDomainMirrorService;
@@ -54,22 +56,26 @@ public class SessionStorage {
     }
 
     public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
+        log.debug("getAllDomainTypeMirrorsWithoutEnumsAndIds for {}", projectId);
         return getDomainMirrorContainer(projectId).getDomainTypeMirrors();
     }
 
     public List<AggregateRootMirror> getAllAggregateRootMirrors(UUID projectId) {
+        log.debug("getAllAggregateRootMirrors for {}", projectId);
         return getDomainMirrorContainer(projectId).getAggregateRootMirrors();
     }
 
     private DomainMirrorContainer getDomainMirrorContainer(UUID projectId) {
+        log.debug("getDomainMirrorContainer for {}", projectId);
         var project = projectRepository.findById(projectId);
+        log.debug("find finished {}", projectId);
         if(project.isPresent()) {
             if(domainMirrorContainers.containsKey(projectId)) {
                 var container = domainMirrorContainers.get(projectId);
-
                 if(container.getLastUpdated().isBefore(project.get().getLatestChangeInstant())){
                     add(project.get());
                 }
+                log.debug("Returning container for {}", projectId);
                 return domainMirrorContainers.get(projectId);
             }
             add(project.get());
@@ -79,6 +85,7 @@ public class SessionStorage {
     }
 
     private void add(Project project) {
+        log.debug("add {}", project);
         var projectDomainMirror = projectDomainMirrorService.getByProjectId(project.getId());
         DomainMirror domainMirror = projectDomainMirror.getDomainMirror();
         List<AggregateRootMirror> aggregateRootMirrors = projectDomainMirrorService.getAllAggregateRootMirrors(
@@ -94,6 +101,7 @@ public class SessionStorage {
             .build();
 
         domainMirrorContainers.put(project.getId(), domainMirrorContainer);
+        log.debug("adding {} finished", project);
     }
 
     public void createOrUpdate(Project project, DomainMirror domainMirror) {

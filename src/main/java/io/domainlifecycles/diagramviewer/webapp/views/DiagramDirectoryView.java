@@ -72,10 +72,9 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
     }
 
     private HorizontalLayout createAndGetNameAndDeleteButtonLayout() {
-        HorizontalLayout horizontalNameAndEditButtonAndReuploadButtonLayout = new HorizontalLayout();
-        horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(diagramDirectory.getName()), getRenameDirectoryButton(), getDeleteDirectoryButton());
-
-        return horizontalNameAndEditButtonAndReuploadButtonLayout;
+        HorizontalLayout horizontalLayout = new HorizontalLayout();
+        horizontalLayout.add(new H2(diagramDirectory.getName()), getRenameDirectoryButton(), getDeleteDirectoryButton());
+        return horizontalLayout;
     }
 
     private Button getRenameDirectoryButton() {

@@ -16,6 +16,8 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEven
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -25,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import static java.util.stream.Collectors.groupingBy;
 
+@Slf4j
 public class DiagramVisibilityComponent extends Div {
 
     private static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
@@ -48,12 +51,14 @@ public class DiagramVisibilityComponent extends Div {
     }
 
     private void createDetails(List<DomainTypeMirror> domainTypeMirrors) {
+        log.debug("createDetails DiagramVisibilityComponent started");
         List<DomainTypeMirror> directlyContained = domainTypeMirrors.stream().filter(dtm ->
             diagram.getDomainModelVisibility()
                 .getExplicitlyIncludedPackagesNames()
                 .stream()
                 .anyMatch(p -> dtm.getTypeName().startsWith(p))
         ).toList();
+        log.debug("createDetails mirrors filtered");
 
         Map<DomainType, ? extends List<? extends DomainTypeMirror>> typeMirrorsGroupedByDomainMirrorType =
             domainTypeMirrors
@@ -67,7 +72,7 @@ public class DiagramVisibilityComponent extends Div {
                     return directlyContained.contains(dtm);
                 })
                 .collect(groupingBy(DomainTypeMirror::getDomainType));
-
+        log.debug("createDetails mirrors grouped");
         for (DomainType type : domainTypeOrdered()) {
             List<? extends DomainTypeMirror> mirrors = filterConcreteMirrorsInterfaceAvailable(
                 typeMirrorsGroupedByDomainMirrorType.get(type));
@@ -77,23 +82,56 @@ public class DiagramVisibilityComponent extends Div {
                 add(details);
             }
         }
+        log.debug("createDetails DiagramVisibilityComponent finished");
     }
 
     private Details createAndGetDetailsLayoutForDomainType(DomainType type, List<? extends DomainTypeMirror> domainTypeMirrors) {
+        log.debug("createAndGetDetailsLayoutForDomainType started {}", type);
         Details details = new Details(translateDomainType(type));
-        details.setOpened(this.sessionStorage.isDomainTypeSettingOpen(type));
-        VerticalLayout layout = new VerticalLayout();
-        layout.setSpacing(false);
-        layout.setPadding(false);
-
-        for (DomainTypeMirror mirror : domainTypeMirrors) {
-            Component typeMirrorVisibilityLayout = createAndGetContentForDomainTypeAndMirror(type, mirror);
-            layout.add(typeMirrorVisibilityLayout);
+        if(this.sessionStorage.isDomainTypeSettingOpen(type)){
+            details.setOpened(true);
+            openDomainTypeView(
+                details,
+                true,
+                type,
+                domainTypeMirrors
+            );
+        }else{
+            details.setOpened(false);
         }
 
-        details.add(layout);
-        details.addOpenedChangeListener(event -> this.sessionStorage.setDomainTypeSettingOpen(type, event.isOpened()));
+        details.addOpenedChangeListener(event -> {
+            this.sessionStorage.setDomainTypeSettingOpen(type, event.isOpened());
+            openDomainTypeView(
+                details,
+                event.isOpened(),
+                type,
+                domainTypeMirrors
+            );
+        });
+        log.debug("createAndGetDetailsLayoutForDomainType finished {}", type);
         return details;
+    }
+
+    private void openDomainTypeView(
+            Details details,
+            boolean opened,
+            DomainType type,
+            List<? extends DomainTypeMirror> domainTypeMirrors
+    ){
+        if(opened){
+            VerticalLayout layout = new VerticalLayout();
+            layout.setSpacing(false);
+            layout.setPadding(false);
+            for (DomainTypeMirror mirror : domainTypeMirrors) {
+                Component typeMirrorVisibilityLayout = createAndGetContentForDomainTypeAndMirror(type, mirror);
+                layout.add(typeMirrorVisibilityLayout);
+            }
+            details.add(layout);
+        }else{
+            details.removeAll();
+        }
+
     }
 
     private Component createAndGetContentForDomainTypeAndMirror(DomainType type, DomainTypeMirror mirror) {

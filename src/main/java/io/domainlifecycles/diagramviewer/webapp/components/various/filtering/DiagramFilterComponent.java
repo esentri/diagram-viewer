@@ -14,6 +14,8 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEven
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class DiagramFilterComponent extends Div {
 
     public static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
@@ -56,6 +59,7 @@ public class DiagramFilterComponent extends Div {
     }
 
     private void createDetails() {
+        log.debug("createDetails DiagramVisibilityComponent started");
         Details packageDetails = new Details("Explicitly included packages");
         packageDetails.setWidthFull();
         packageDetails.setOpened(sessionStorage.isPackageFilterOpen());
@@ -109,6 +113,7 @@ public class DiagramFilterComponent extends Div {
 
         add(packageDetails);
         add(advancedFilterDetails);
+        log.debug("createDetails DiagramVisibilityComponent finished");
     }
 
     private MultiSelectComboBox<DomainTypeMirror> createAndConfigureComboBox(String label, List<DomainTypeMirror> items, Set<String> classNames, Set<String> complementaryClassNames) {

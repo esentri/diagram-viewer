@@ -34,11 +34,15 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChanged
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.Objects;
 
 @Route(value = "/project/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Project Viewer")
 @PermitAll
+@Slf4j
 public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     public static final String PROJECT_NAME_ROUTE_PARAMETER = "projectName";
@@ -54,12 +58,15 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private String projectName;
     private Registration registration;
 
-    public ProjectView(SQLDDLGeneratorService sqlddlGeneratorService,
+    private final boolean jarUploadEnabled;
+
+    public ProjectView(@Value("${jar.upload.enabled}") boolean jarUploadEnabled,
+                       SQLDDLGeneratorService sqlddlGeneratorService,
                        SecurityService securityService,
                        ProjectService projectService,
                        DiagramService diagramService,
                        DiagramDirectoryService diagramDirectoryService, SessionStorage sessionStorage) {
-
+        this.jarUploadEnabled = jarUploadEnabled;
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.securityService = securityService;
         this.projectService = projectService;
@@ -74,6 +81,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
+        log.debug("Enter ProjectView");
         projectName = event.getRouteParameters().get(PROJECT_NAME_ROUTE_PARAMETER).orElseThrow();
         refreshPage();
     }
@@ -90,20 +98,22 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private HorizontalLayout createAndGetNameAndEditButtonAndReuploadButtonLayout() {
         EditProjectDialog editProjectDialog = new EditProjectDialog(project, projectService);
-        ReuploadDialog reuploadDialog = new ReuploadDialog(project, projectService);
-
         HorizontalLayout horizontalNameAndEditButtonAndReuploadButtonLayout = new HorizontalLayout();
-
         Button editProjectButton = new Button(new Icon(VaadinIcon.PENCIL), e -> editProjectDialog.open());
         editProjectButton.addThemeName("icon");
         editProjectButton.getStyle().set("cursor", "pointer");
 
-        Button reuploadProjectButton = new Button(new Icon("vaadin:cloud-upload-o"), e -> reuploadDialog.open());
-        reuploadProjectButton.addThemeName("icon");
-        reuploadProjectButton.getStyle().set("cursor", "pointer");
+        horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(project.getName()), editProjectButton);
 
-        horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(project.getName()), editProjectButton, reuploadProjectButton, getDeleteProjectButton());
+        if(jarUploadEnabled){
+            ReuploadDialog reuploadDialog = new ReuploadDialog(project, projectService);
+            Button reuploadProjectButton = new Button(new Icon("vaadin:cloud-upload-o"), e -> reuploadDialog.open());
+            reuploadProjectButton.addThemeName("icon");
+            reuploadProjectButton.getStyle().set("cursor", "pointer");
+            horizontalNameAndEditButtonAndReuploadButtonLayout.add(reuploadProjectButton);
+        }
 
+        horizontalNameAndEditButtonAndReuploadButtonLayout.add(getDeleteProjectButton());
         return horizontalNameAndEditButtonAndReuploadButtonLayout;
     }
 

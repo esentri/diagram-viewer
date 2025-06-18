@@ -11,8 +11,11 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.notes.Diagram
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;
+
+import lombok.extern.slf4j.Slf4j;
 import org.vaadin.addons.taefi.component.ToggleButtonGroup;
 
+@Slf4j
 public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout {
 
     private final DiagramVisibilityComponentsContainer diagramVisibilityComponentsContainer;
@@ -22,6 +25,7 @@ public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout
     public DiagramVisibilityAndNotesComponentsContainer(SessionStorage sessionStorage, Project project, Diagram diagram, List<DomainTypeMirror> domainTypeMirrors,
                                                         DiagramService diagramService, DiagramTypeNoteService diagramTypeNoteService) {
 
+        log.debug("creating DiagramVisibilityAndNotesComponentsContainer started");
         setPadding(false);
         setMargin(false);
         setHeightFull();
@@ -30,17 +34,20 @@ public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout
         ToggleButtonGroup<SelectableView> toggleButtonGroup = new ToggleButtonGroup<>(List.of(SelectableView.VISIBILITY, SelectableView.NOTES));
         toggleButtonGroup.setItemLabelGenerator(SelectableView::getLabel);
         toggleButtonGroup.addValueChangeListener(e -> switchDisplayedContent(e.getValue()));
-
+        log.debug("creating DiagramVisibilityComponentsContainer started");
         diagramVisibilityComponentsContainer = new DiagramVisibilityComponentsContainer(sessionStorage, project,
             diagram, domainTypeMirrors, diagramService);
+        log.debug("creating DiagramVisibilityComponentsContainer finished");
+        log.debug("creating DiagramNotesComponentsContainer started");
         diagramNotesComponentsContainer = new DiagramNotesComponentsContainer(diagram, domainTypeMirrors, diagramTypeNoteService);
-
+        log.debug("creating DiagramNotesComponentsContainer finished");
         scroller = new Scroller();
         scroller.setScrollDirection(ScrollDirection.BOTH);
         scroller.setWidthFull();
 
         toggleButtonGroup.setValue(SelectableView.VISIBILITY);
         add(toggleButtonGroup, scroller);
+        log.debug("creating DiagramVisibilityAndNotesComponentsContainer finished");
     }
 
     private void switchDisplayedContent(SelectableView selectedView) {

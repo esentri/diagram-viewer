@@ -44,11 +44,14 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
 @Route(value = "/diagram/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER + "/:" + DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Diagram Viewer")
 @PermitAll
+@Slf4j
 public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     public static final String DIAGRAM_NAME_ROUTE_PARAMETER = "diagramName";
@@ -89,14 +92,17 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     public void beforeEnter(BeforeEnterEvent event) {
         projectName = event.getRouteParameters().get(ProjectView.PROJECT_NAME_ROUTE_PARAMETER).orElseThrow();
         diagramName = event.getRouteParameters().get(DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER).orElseThrow();
-
         refreshPage();
     }
 
     private void refreshPage() {
+        log.debug("Refreshing diagram view");
         removeAll();
+        log.debug("Remove components from diagram view finished");
         setProjectAndDiagramAndDomainTypeMirrors();
+        log.debug("SetProjectAndDiagramAndDomainTypeMirrors finished");
         addPageContents();
+        log.debug("Refreshing diagram view finished");
     }
 
     private void setProjectAndDiagramAndDomainTypeMirrors() {
@@ -110,20 +116,23 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private void addPageContents() {
+        log.debug("Add components to diagram view");
         add(createAndGetButtonBar());
-
+        log.debug("Add Button bar finished");
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
         diagramViewerAndStylingContainer.add(
             new DiagramConfigurationButtonBarComponent(project, diagram, diagramService));
+        log.debug("creating DiagramConfigurationButtonBarComponent finished");
         diagramViewerAndStylingContainer.add(new DiagramZoomComponentContainer(
             project.getId().toString(), diagramName, diagram.getChangedAt(),
             diagram.getDiagramStylingConfiguration().getChangedAt()));
-
+        log.debug("creating DiagramZoomComponentContainer finished");
         diagramViewerAndStylingContainer.add(
             new DiagramVisibilityAndNotesComponentsContainer(sessionStorage, project, diagram, domainTypeMirrors, diagramService, diagramTypeNoteService));
-
+        log.debug("creating DiagramVisibilityAndNotesComponentsContainer finished");
         add(diagramViewerAndStylingContainer);
+        log.debug("addPageContents finished");
     }
 
     private HorizontalLayout createAndGetButtonBar() {

@@ -43,6 +43,8 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChanged
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
@@ -61,13 +63,21 @@ public class MainLayout extends AppLayout {
     private Registration registration;
     private Popover userInfoPopover;
 
-    public MainLayout(ProjectService projectService,
-                      SecurityService securityService, RegisteredUserService registeredUserService) {
+    private final boolean jarUploadEnabled;
 
+    public MainLayout(@Value("${jar.upload.enabled}") boolean jarUploadEnabled,
+                      ProjectService projectService,
+                      SecurityService securityService,
+                      RegisteredUserService registeredUserService) {
+        this.jarUploadEnabled = jarUploadEnabled;
         this.projectService = projectService;
         this.securityService = securityService;
         this.registeredUserService = registeredUserService;
-        this.uploadDialog = new UploadDialog(projectService, securityService);
+        if(jarUploadEnabled){
+            this.uploadDialog = new UploadDialog(projectService, securityService);
+        }else{
+            this.uploadDialog = null;
+        }
 
         addToNavbar(new DrawerToggle(), getDlcLogo());
         createAndAddUserInfoPopoverWithButton();
@@ -176,11 +186,14 @@ public class MainLayout extends AppLayout {
         Scroller scroller = new Scroller(getSideNav());
         scroller.setClassName(LumoUtility.Padding.SMALL);
 
-        Button uploadButton = new Button("Upload", new Icon("vaadin:cloud-upload-o"));
-        uploadButton.addClickListener(e -> uploadDialog.open());
-        uploadButton.getStyle().set("cursor", "pointer");
+        addToDrawer(scroller);
 
-        addToDrawer(scroller, uploadButton);
+        if(jarUploadEnabled) {
+            Button uploadButton = new Button("Upload", new Icon("vaadin:cloud-upload-o"));
+            uploadButton.addClickListener(e -> uploadDialog.open());
+            uploadButton.getStyle().set("cursor", "pointer");
+            addToDrawer(uploadButton);
+        }
     }
 
     private SideNav getSideNav() {
