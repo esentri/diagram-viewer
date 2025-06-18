@@ -3,8 +3,8 @@ package io.domainlifecycles.diagramviewer.webapp.session;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
-import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
+import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainType;
@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import lombok.Builder;
@@ -30,7 +31,7 @@ import org.springframework.web.context.annotation.SessionScope;
 public class SessionStorage {
 
     private final ProjectDomainMirrorService projectDomainMirrorService;
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final Map<UUID, DomainMirrorContainer> domainMirrorContainers;
     @Setter
     @Getter
@@ -42,10 +43,10 @@ public class SessionStorage {
 
     public SessionStorage(
             ProjectDomainMirrorService projectDomainMirrorService,
-            ProjectRepository projectRepository
+            ProjectService projectService
     ) {
         this.projectDomainMirrorService = projectDomainMirrorService;
-        this.projectRepository = projectRepository;
+        this.projectService = projectService;
         this.domainMirrorContainers = new HashMap<>();
         this.domainTypeDiagramSettingsOpen = new HashMap<>();
         this.packageFilterOpen = true;
@@ -66,13 +67,14 @@ public class SessionStorage {
     }
 
     private DomainMirrorContainer getDomainMirrorContainer(UUID projectId) {
-        log.debug("getDomainMirrorContainer for {}", projectId);
-        var project = projectRepository.findById(projectId);
-        log.debug("find finished {}", projectId);
+        Optional<Project> project = projectService.findById(projectId);
         if(project.isPresent()) {
             if(domainMirrorContainers.containsKey(projectId)) {
-                var container = domainMirrorContainers.get(projectId);
-                if(container.getLastUpdated().isBefore(project.get().getLatestChangeInstant())){
+                DomainMirrorContainer container = domainMirrorContainers.get(projectId);
+
+                Instant containerLastUpdated = container.getLastUpdated();
+                if(containerLastUpdated != null && project.get().getLatestChangeInstant().isAfter(containerLastUpdated)){
+
                     add(project.get());
                 }
                 log.debug("Returning container for {}", projectId);

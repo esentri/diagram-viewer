@@ -7,7 +7,9 @@ import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.viewer.User;
 import io.domainlifecycles.diagramviewer.rest.api.model.DomainMirrorUploadDto;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,8 @@ public interface ProjectService {
 
     @Transactional
     Stream<Project> getAll(RegisteredUser registeredUser);
+
+    Optional<Project> findById(UUID id);
 
     Project getByName(final String projectName);
 

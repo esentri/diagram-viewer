@@ -4,6 +4,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -42,6 +43,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
+//import io.domainlifecycles.diagramviewer.webapp.views.LoginView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -114,7 +116,7 @@ public class MainLayout extends AppLayout {
 
     private void addPopoverContents(RegisteredUser registeredUser) {
         userInfoPopover.add(createAndGetPopoverUserInfoLayout(registeredUser), new Hr(),
-            createAndGetPopoverApiKeyLayout(registeredUser));
+            createAndGetPopoverApiKeyLayout(registeredUser), new Hr(), createAndGetSignOutButtonLayout());
     }
 
     private HorizontalLayout createAndGetPopoverUserInfoLayout(RegisteredUser registeredUser) {
@@ -180,6 +182,25 @@ public class MainLayout extends AppLayout {
         button.getStyle().set("margin-inline-start", "auto");
         button.getStyle().set("border-radius", "50%");
         return button;
+    }
+
+    private VerticalLayout createAndGetSignOutButtonLayout() {
+        VerticalLayout signOutButtonLayout = new VerticalLayout();
+        signOutButtonLayout.getThemeList().remove("spacing");
+        signOutButtonLayout.getStyle().setPadding("0 --var(--lumo-space-m)");
+
+        Button signOutButton = new Button("Sign Out");
+        signOutButton.addThemeVariants(ButtonVariant.LUMO_WARNING);
+        signOutButton.setWidthFull();
+        signOutButton.getStyle().setMargin("0");
+        signOutButton.addClickListener(e -> signOutUser());
+
+        signOutButtonLayout.add(signOutButton);
+        return signOutButtonLayout;
+    }
+
+    private void signOutUser() {
+        UI.getCurrent().getPage().setLocation("/logout");
     }
 
     private void buildDrawerContent() {

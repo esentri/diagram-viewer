@@ -5,6 +5,7 @@ import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.server.auth.NavigationContext;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
+import io.domainlifecycles.diagramviewer.webapp.views.SignInView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,8 @@ public class ProjectAndDiagramNavigationAccessChecker implements NavigationAcces
     @Override
     public AccessCheckResult check(NavigationContext context) {
         AccessCheckResult result;
+
+        if(SignInView.class.equals(context.getNavigationTarget())) return AccessCheckResult.allow();
 
         if (ProjectView.class.equals(context.getNavigationTarget()) || DiagramView.class.equals(
             context.getNavigationTarget())) {

@@ -10,6 +10,7 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,18 +39,20 @@ public class KrokiClient {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(krokiContainerUrl + path))
             .header("Accept", "text/plain")
+            .timeout(Duration.ofSeconds(10))
             .POST(BodyPublishers.ofString(rawInputDiagramContent))
             .build();
 
-        return sendWithRetries(request);
+        return send(request);
     }
 
-    private byte[] sendWithRetries(final HttpRequest httpRequest) {
+    private byte[] send(final HttpRequest httpRequest) {
         try {
             LOGGER.debug(String.format("Sending HTTP request '%s' to Kroki Docker container.",
                 httpRequest.bodyPublisher().orElseGet(() -> BodyPublishers.ofString("Request body empty!"))));
-            final HttpResponse<byte[]> response = HttpClient.newHttpClient().send(httpRequest,
-                BodyHandlers.ofByteArray());
+            final HttpResponse<byte[]> response = HttpClient
+                .newHttpClient()
+                .send(httpRequest, BodyHandlers.ofByteArray());
 
             if (response.statusCode() < 400) {
                 LOGGER.debug("HTTP request to Kroki Docker container has been successful.");
