@@ -70,7 +70,7 @@ pipelines:
       - step:
           name: Build & Test
           caches:
-            - shared-maven
+            - maven
             - gradle
             - zip
           services:
