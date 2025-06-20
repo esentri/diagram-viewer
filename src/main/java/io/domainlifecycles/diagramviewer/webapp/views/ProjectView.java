@@ -19,11 +19,12 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.plugin.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
-import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.sql.NoOpSQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.EditProjectDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
@@ -127,7 +128,11 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.getStyle().setMarginTop("2rem");
 
-        buttonBar.add(getCreateDiagramButton(), getDatabaseButton(), getManageUsersButton());
+        buttonBar.add(getCreateDiagramButton());
+        if(!(sqlddlGeneratorService instanceof NoOpSQLDDLGeneratorService)){
+            buttonBar.add(getDatabaseButton());
+        }
+        buttonBar.add(getManageUsersButton());
 
         return buttonBar;
     }
@@ -145,7 +150,10 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private Button getDatabaseButton() {
         GenerateDatabaseModelDialog databaseModelDialog = new GenerateDatabaseModelDialog(
-            sqlddlGeneratorService, project, sessionStorage.getAllAggregateRootMirrors(project.getId()));
+            sessionStorage,
+            sqlddlGeneratorService,
+            project
+        );
 
         Button databaseButton = new Button("Download DDL-SQL-Script", new Icon("vaadin:database"));
         databaseButton.getStyle().set("cursor", "pointer");

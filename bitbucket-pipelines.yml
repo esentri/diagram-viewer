@@ -20,7 +20,7 @@ pipelines:
   branches:
     main:
       - step:
-          name: Build Local Dependencies
+          name: Build Local Dependencies Kickstart
           image: maven:3.8.3-openjdk-17
           caches:
             - maven
@@ -29,6 +29,22 @@ pipelines:
             - cd nitrox-kickstart
             - git checkout feature/roaster
             - mvn clean install
+            - cd ..
+      - step:
+          name: Build Local Dependencies Plugins
+          caches:
+            - maven
+            - gradle
+          script:
+            - git clone git@bitbucket.org:esentri/digram-viewer-plugin.git
+            - cd digram-viewer-plugin
+            - gradle clean build
+            - gradle publishToMavenLocal
+            - cd ..
+            - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
+            - cd digram-viewer-generator-plugin
+            - gradle clean build
+            - gradle publishToMavenLocal
             - cd ..
       - parallel:
         - step:
@@ -54,6 +70,7 @@ pipelines:
             - docker
           script:
             - export TESTCONTAINERS_RYUK_DISABLED=true
+            - export BUILD_PROFILE=INTERNAL
             - gradle clean build -Pvaadin.productionMode
             - zip -r application.zip .platform
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar

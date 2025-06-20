@@ -12,7 +12,9 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.server.StreamResource;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.sql.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.plugin.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.plugin.SQLDialect;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.io.ByteArrayInputStream;
@@ -22,7 +24,7 @@ import java.util.List;
 import lombok.Data;
 
 public class GenerateDatabaseModelDialog extends Dialog {
-    private static final String[] SQL_DIALECT_SELECT_VALUES = {"Oracle", "Postgres"};
+    private static final SQLDialect[] SQL_DIALECT_SELECT_VALUES = {SQLDialect.ORACLE, SQLDialect.POSTGRES};
     private static final String SQL_DDL_SCRIPT_SUFFIX = "-ddl-script.sql";
     private static final String APPLICATION_SQL_MIME_TYPE = "application/sql";
 
@@ -30,17 +32,20 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private final SQLDDLGeneratorService sqlDDLGeneratorService;
     private final Project project;
     private final List<AggregateRootMirror> allAggregateRootMirrors;
+    private final SessionStorage sessionStorage;
 
     private GenerateDatabaseModelOptions generateDatabaseModelOptions;
     private Button generateButton;
 
-    public GenerateDatabaseModelDialog(SQLDDLGeneratorService sqlDDLGeneratorService,
-                                       Project project,
-                                       List<AggregateRootMirror> allAggregateRootMirrors) {
-
+    public GenerateDatabaseModelDialog(
+            SessionStorage sessionStorage,
+            SQLDDLGeneratorService sqlDDLGeneratorService,
+            Project project
+    ) {
+        this.sessionStorage = sessionStorage;
         this.sqlDDLGeneratorService = sqlDDLGeneratorService;
         this.project = project;
-        this.allAggregateRootMirrors = allAggregateRootMirrors.stream()
+        this.allAggregateRootMirrors = sessionStorage.getAllAggregateRootMirrors(project.getId()).stream()
                 .filter(m -> !m.getTypeName().startsWith("io.domainlifecycles"))
                 .toList();
         this.binder = new Binder<>();
@@ -63,7 +68,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
     private FormLayout createDialogLayout() {
         FormLayout formLayout = new FormLayout();
 
-        Select<String> sqlDialectSelect = new Select<>();
+        Select<SQLDialect> sqlDialectSelect = new Select<>();
         sqlDialectSelect.setItems(SQL_DIALECT_SELECT_VALUES);
         sqlDialectSelect.setValue(SQL_DIALECT_SELECT_VALUES[0]);
         binder.forField(sqlDialectSelect)
@@ -129,7 +134,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
 
     private InputStream getStream() {
         final String ddl = sqlDDLGeneratorService.generateSQL(
-            project.getId(),
+            sessionStorage.getDomainMirror(project.getId()),
             generateDatabaseModelOptions.getSelectedAggregateRootMirror(),
             generateDatabaseModelOptions.getSelectedSqlDialect(),
             generateDatabaseModelOptions.isAuditModel(),
@@ -142,11 +147,11 @@ public class GenerateDatabaseModelDialog extends Dialog {
     @Data
     private static class GenerateDatabaseModelOptions {
         private AggregateRootMirror selectedAggregateRootMirror;
-        private String selectedSqlDialect;
+        private SQLDialect selectedSqlDialect;
         private boolean auditModel;
         private String schemaName;
 
-        public GenerateDatabaseModelOptions(String selectedSqlDialect) {
+        public GenerateDatabaseModelOptions(SQLDialect selectedSqlDialect) {
             this.selectedSqlDialect = selectedSqlDialect;
         }
     }
