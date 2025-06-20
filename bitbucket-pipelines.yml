@@ -36,15 +36,15 @@ pipelines:
             - maven
             - gradle
           script:
-            - git clone git@bitbucket.org:esentri/digram-viewer-plugin.git
-            - cd digram-viewer-plugin
-            - gradle -settings-file './settings.gradle' clean build
-            - gradle settings-file './settings.gradle' publishToMavenLocal
+            - git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git
+            - cd diagram-viewer-plugin
+            - gradle clean build
+            - gradle publishToMavenLocal
             - cd ..
             - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
-            - cd digram-viewer-generator-plugin
-            - gradle settings-file './settings.gradle' clean build
-            - gradle settings-file './settings.gradle' publishToMavenLocal
+            - cd diagram-viewer-generator-plugin
+            - gradle clean build
+            - gradle publishToMavenLocal
             - cd ..
       - parallel:
         - step:
