@@ -31,8 +31,6 @@ pipelines:
             - git checkout feature/roaster
             - mvn clean install
             - cd ..
-          artifacts:
-            - ~/.m2/repository/**
       - step:
           name: Build Local Dependencies
           caches:
@@ -47,8 +45,6 @@ pipelines:
             - cd diagram-viewer-generator-plugin
             - gradle clean build publishToMavenLocal
             - cd ..
-          artifacts:
-            - ~/.m2/repository/**
       - parallel:
         - step:
             name: Security Scan
@@ -72,6 +68,9 @@ pipelines:
           services:
             - docker
           script:
+            - ls ~/.m2/repository/io/domainlifecycles/kickstart-generator
+            - ls ~/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
+            - ls ~/.m2/repository/io/domainlifecycles/diagram-viewer-generator-plugin
             - export TESTCONTAINERS_RYUK_DISABLED=true
             - export BUILD_PROFILE=INTERNAL
             - gradle clean build -Pvaadin.productionMode
