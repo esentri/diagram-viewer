@@ -31,8 +31,10 @@ pipelines:
             - git checkout feature/roaster
             - mvn clean install
             - cd ..
+          artifacts:
+            - ~/.m2/repository/**
       - step:
-          name: Build Local Dependencies Plugin
+          name: Build Local Dependencies
           caches:
             - shared-maven
           script:
@@ -40,17 +42,13 @@ pipelines:
             - cd diagram-viewer-plugin
             - gradle clean build publishToMavenLocal
             - cd ..
-      - step:
-          name: Build Local Dependencies Plugin Generator
-          caches:
-            - shared-maven
-          script:
-            - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
             - ls ~/.m2/repository/io/domainlifecycles/kickstart-generator
-            - ls ~/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
+            - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
             - cd diagram-viewer-generator-plugin
             - gradle clean build publishToMavenLocal
             - cd ..
+          artifacts:
+            - ~/.m2/repository/**
       - parallel:
         - step:
             name: Security Scan
