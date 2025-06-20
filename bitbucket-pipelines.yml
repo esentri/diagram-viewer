@@ -32,20 +32,19 @@ pipelines:
             - cd ..
       - step:
           name: Build Local Dependencies Plugins
-          image: gradle:8.10.1-jdk17
           caches:
             - maven
             - gradle
           script:
             - git clone git@bitbucket.org:esentri/digram-viewer-plugin.git
             - cd digram-viewer-plugin
-            - gradle clean build
-            - gradle publishToMavenLocal
+            - gradle -settings-file './settings.gradle' clean build
+            - gradle settings-file './settings.gradle' publishToMavenLocal
             - cd ..
             - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
             - cd digram-viewer-generator-plugin
-            - gradle clean build
-            - gradle publishToMavenLocal
+            - gradle settings-file './settings.gradle' clean build
+            - gradle settings-file './settings.gradle' publishToMavenLocal
             - cd ..
       - parallel:
         - step:
