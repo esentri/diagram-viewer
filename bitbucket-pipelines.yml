@@ -51,6 +51,8 @@ pipelines:
             - shared-maven
           script:
             - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
+            - ls ~/.m2/repository/io/domainlifecycles/kickstart-generator
+            - ls ~/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
             - cd diagram-viewer-generator-plugin
             - gradle clean build
             - gradle publishToMavenLocal
