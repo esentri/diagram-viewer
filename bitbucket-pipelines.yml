@@ -31,6 +31,8 @@ pipelines:
             - git checkout feature/roaster
             - mvn clean install
             - cd ..
+          artifacts:
+            - ~/.m2/repository/**
       - step:
           name: Build Local Dependencies Plugin
           caches:
@@ -41,6 +43,8 @@ pipelines:
             - gradle clean build
             - gradle publishToMavenLocal
             - cd ..
+          artifacts:
+            - ~/.m2/repository/**
       - step:
           name: Build Local Dependencies Plugin Generator
           caches:
@@ -51,6 +55,8 @@ pipelines:
             - gradle clean build
             - gradle publishToMavenLocal
             - cd ..
+          artifacts:
+            - ~/.m2/repository/**
       - parallel:
         - step:
             name: Security Scan
