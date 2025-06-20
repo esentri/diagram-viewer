@@ -39,7 +39,7 @@ pipelines:
             - git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git
             - cd diagram-viewer-plugin
             - gradle clean build
-            - gradle publish
+            - gradle publishToMavenLocal
             - cd ..
       - step:
           name: Build Local Dependencies Plugin Generator
@@ -50,7 +50,7 @@ pipelines:
             - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
             - cd diagram-viewer-generator-plugin
             - gradle clean build
-            - gradle publish
+            - gradle publishToMavenLocal
             - cd ..
       - parallel:
         - step:
