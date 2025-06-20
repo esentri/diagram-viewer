@@ -38,11 +38,6 @@ pipelines:
             - git checkout feature/roaster
             - mvn clean install
             - cd ..
-      - step:
-          name: Build Local Dependencies
-          caches:
-            - maven
-          script:
             - git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git
             - cd diagram-viewer-plugin
             - gradle clean build publishToMavenLocal
@@ -51,8 +46,9 @@ pipelines:
             - cd diagram-viewer-generator-plugin
             - gradle clean build publishToMavenLocal
             - cd ..
+            - ls -R ~/.m2/repository/io/domainlifecycles
           artifacts:
-            - /root/.m2/repository/**
+            - ~/.m2/repository/**
       - parallel:
         - step:
             name: Security Scan
@@ -76,6 +72,7 @@ pipelines:
           services:
             - docker
           script:
+            - ls -R ~/.m2/repository/io/domainlifecycles
             - export TESTCONTAINERS_RYUK_DISABLED=true
             - export BUILD_PROFILE=INTERNAL
             - gradle clean build -Pvaadin.productionMode
