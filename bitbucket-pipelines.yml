@@ -34,7 +34,6 @@ pipelines:
           name: Build Local Dependencies Plugin
           caches:
             - maven
-            - gradle
           script:
             - git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git
             - cd diagram-viewer-plugin
@@ -45,7 +44,6 @@ pipelines:
           name: Build Local Dependencies Plugin Generator
           caches:
             - maven
-            - gradle
           script:
             - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
             - cd diagram-viewer-generator-plugin
