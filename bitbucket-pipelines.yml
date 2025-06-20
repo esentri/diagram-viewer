@@ -12,7 +12,7 @@ image: gradle:8.10.1-jdk17
 definitions:
   caches:
     zip: /usr/bin
-    shared-maven: ~/.m2/repository
+    shared-maven: /root/.m2/repository/**
   services:
     docker:
       memory: 2048
@@ -46,9 +46,9 @@ pipelines:
             - cd diagram-viewer-generator-plugin
             - gradle clean build publishToMavenLocal
             - cd ..
-            - ls ~/.m2/repository/io/domainlifecycles/kickstart-generator
-            - ls ~/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
-            - ls ~/.m2/repository/io/domainlifecycles/diagram-viewer-generator-plugin
+            - ls /root/.m2/repository/io/domainlifecycles/kickstart-generator
+            - ls /root/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
+            - ls /root/.m2/repository/io/domainlifecycles/diagram-viewer-generator-plugin
           artifacts:
             - ~/.m2/repository/**
       - parallel:
@@ -74,9 +74,9 @@ pipelines:
           services:
             - docker
           script:
-            - ls ~/.m2/repository/io/domainlifecycles/kickstart-generator
-            - ls ~/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
-            - ls ~/.m2/repository/io/domainlifecycles/diagram-viewer-generator-plugin
+            - ls /root/.m2/repository/io/domainlifecycles/kickstart-generator
+            - ls /root/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
+            - ls /root/.m2/repository/io/domainlifecycles/diagram-viewer-generator-plugin
             - export TESTCONTAINERS_RYUK_DISABLED=true
             - export BUILD_PROFILE=INTERNAL
             - gradle clean build -Pvaadin.productionMode
