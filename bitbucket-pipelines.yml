@@ -12,7 +12,8 @@ image: gradle:8.10.1-jdk17
 definitions:
   caches:
     zip: /usr/bin
-    shared-maven: /root/.m2/repository/**
+    maven: ~/.m2
+    gradle: ~/.gradle
   services:
     docker:
       memory: 2048
@@ -22,10 +23,16 @@ pipelines:
     main:
       - step:
           name: Build Local Dependencies Kickstart
-          image: maven:3.8.3-openjdk-17
           caches:
-            - shared-maven
+            - maven
           script:
+            - # Download and install Maven 3.8.3
+            - wget https://archive.apache.org/dist/maven/maven-3/3.8.3/binaries/apache-maven-3.8.3-bin.tar.gz
+            - tar -xzf apache-maven-3.8.3-bin.tar.gz
+            - export M2_HOME=$(pwd)/apache-maven-3.8.3
+            - export PATH=$M2_HOME/bin:$PATH
+            - # Verify Maven version
+            - mvn --version
             - git clone git@bitbucket.org:esentri/nitrox-kickstart.git
             - cd nitrox-kickstart
             - git checkout feature/roaster
@@ -33,9 +40,8 @@ pipelines:
             - cd ..
       - step:
           name: Build Local Dependencies
-          image: gradle:8.10.1-jdk17
           caches:
-            - shared-maven
+            - maven
           script:
             - git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git
             - cd diagram-viewer-plugin
