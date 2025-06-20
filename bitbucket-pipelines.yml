@@ -12,6 +12,7 @@ image: gradle:8.10.1-jdk17
 definitions:
   caches:
     zip: /usr/bin
+    shared-maven: ~/.m2/repository
   services:
     docker:
       memory: 2048
@@ -23,39 +24,33 @@ pipelines:
           name: Build Local Dependencies Kickstart
           image: maven:3.8.3-openjdk-17
           caches:
-            - maven
+            - shared-maven
           script:
             - git clone git@bitbucket.org:esentri/nitrox-kickstart.git
             - cd nitrox-kickstart
             - git checkout feature/roaster
             - mvn clean install
             - cd ..
-          artifacts:
-            - ~/.m2/repository/**
       - step:
           name: Build Local Dependencies Plugin
           caches:
-            - maven
+            - shared-maven
           script:
             - git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git
             - cd diagram-viewer-plugin
             - gradle clean build
             - gradle publishToMavenLocal
             - cd ..
-          artifacts:
-            - ~/.m2/repository/**
       - step:
           name: Build Local Dependencies Plugin Generator
           caches:
-            - maven
+            - shared-maven
           script:
             - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
             - cd diagram-viewer-generator-plugin
             - gradle clean build
             - gradle publishToMavenLocal
             - cd ..
-          artifacts:
-            - ~/.m2/repository/**
       - parallel:
         - step:
             name: Security Scan
@@ -73,7 +68,7 @@ pipelines:
       - step:
           name: Build & Test
           caches:
-            - maven
+            - shared-maven
             - gradle
             - zip
           services:
