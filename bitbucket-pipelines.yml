@@ -41,16 +41,12 @@ pipelines:
             - cd diagram-viewer-plugin
             - gradle clean build publishToMavenLocal
             - cd ..
-            - ls ~/.m2/repository/io/domainlifecycles/kickstart-generator
             - git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git
             - cd diagram-viewer-generator-plugin
             - gradle clean build publishToMavenLocal
             - cd ..
-            - ls /root/.m2/repository/io/domainlifecycles/kickstart-generator
-            - ls /root/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
-            - ls /root/.m2/repository/io/domainlifecycles/diagram-viewer-generator-plugin
           artifacts:
-            - ~/.m2/repository/**
+            - /root/.m2/repository/**
       - parallel:
         - step:
             name: Security Scan
@@ -74,9 +70,6 @@ pipelines:
           services:
             - docker
           script:
-            - ls /root/.m2/repository/io/domainlifecycles/kickstart-generator
-            - ls /root/.m2/repository/io/domainlifecycles/diagram-viewer-plugin
-            - ls /root/.m2/repository/io/domainlifecycles/diagram-viewer-generator-plugin
             - export TESTCONTAINERS_RYUK_DISABLED=true
             - export BUILD_PROFILE=INTERNAL
             - gradle clean build -Pvaadin.productionMode
