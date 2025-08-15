@@ -5,14 +5,14 @@ if (Object.keys(window.Vaadin.featureFlags).length === 0) {
 window.Vaadin.featureFlags.exampleFeatureFlag = false;
 window.Vaadin.featureFlags.collaborationEngineBackend = false;
 window.Vaadin.featureFlags.formFillerAddon = false;
-window.Vaadin.featureFlags.hillaI18n = false;
 window.Vaadin.featureFlags.fullstackSignals = false;
+window.Vaadin.featureFlags.flowFullstackSignals = false;
 window.Vaadin.featureFlags.copilotExperimentalFeatures = false;
-window.Vaadin.featureFlags.dashboardComponent = false;
-window.Vaadin.featureFlags.cardComponent = false;
+window.Vaadin.featureFlags.masterDetailLayoutComponent = false;
 window.Vaadin.featureFlags.react19 = false;
 window.Vaadin.featureFlags.accessibleDisabledButtons = false;
 window.Vaadin.featureFlags.layoutComponentImprovements = false;
+window.Vaadin.featureFlags.defaultAutoResponsiveFormLayout = false;
 };
 if (window.Vaadin.featureFlagsUpdaters) { 
 const activator = (id) => window.Vaadin.featureFlags[id] = true;

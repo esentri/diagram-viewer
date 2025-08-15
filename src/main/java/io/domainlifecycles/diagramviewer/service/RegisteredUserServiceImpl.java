@@ -28,6 +28,7 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
 
     @Override
     public Optional<RegisteredUser> findByApiKey(String apiKey) {
+        if(apiKey == null || apiKey.isBlank()) return Optional.empty();
         return repository.findByApiKey(UUID.fromString(apiKey));
     }
 

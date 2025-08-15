@@ -27,6 +27,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -44,17 +47,17 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().requestMatchers(
-            "/VAADIN/**",
-            "/favicon.ico",
-            "/robots.txt",
-            "/manifest.webmanifest",
-            "/sw.js",
-            "/offline-page.html",
-            "/frontend/**",
-            "/webjars/**",
-            "/frontend-es5/**",
-            "/frontend-es6/**",
-            ".well-known/**"
+            PathPatternRequestMatcher.withDefaults().matcher("/VAADIN/**"),
+            PathPatternRequestMatcher.withDefaults().matcher("/favicon.ico"),
+            PathPatternRequestMatcher.withDefaults().matcher("/robots.txt"),
+            PathPatternRequestMatcher.withDefaults().matcher("/manifest.webmanifest"),
+            PathPatternRequestMatcher.withDefaults().matcher("/sw.js"),
+            PathPatternRequestMatcher.withDefaults().matcher("/offline-page.html"),
+            PathPatternRequestMatcher.withDefaults().matcher("/frontend/**"),
+            PathPatternRequestMatcher.withDefaults().matcher("/webjars/**"),
+            PathPatternRequestMatcher.withDefaults().matcher("/frontend-es5/**"),
+            PathPatternRequestMatcher.withDefaults().matcher("/frontend-es6/**"),
+            PathPatternRequestMatcher.withDefaults().matcher("/.well-known/**")
         );
     }
 
@@ -64,10 +67,10 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .logout((logout) -> logout.logoutSuccessUrl(SignInView.VIEW_PATH))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(SignInView.VIEW_PATH).anonymous()
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/api/domain-model/**").permitAll()
-                .requestMatchers("/api/resources/view/**").permitAll()
+                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(SignInView.VIEW_PATH)).anonymous()
+                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/actuator/**")).permitAll()
+                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/api/domain-model/**")).permitAll()
+                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/api/resources/view/**")).permitAll()
                 .requestMatchers(this::isFrameworkInternalRequest).permitAll()
                 .anyRequest().authenticated()
             )
