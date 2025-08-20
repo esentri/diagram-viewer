@@ -80,6 +80,7 @@ public class DiagramServiceImpl implements DiagramService {
                           FileType fileType,
                           DomainModelVisibility visibility,
                           DiagramStylingConfiguration diagramStylingConfiguration) {
+
         Diagram diagram = Diagram.builder()
             .fileName(fileName + fileType.getFileSuffix())
             .fileType(fileType)

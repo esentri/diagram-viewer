@@ -98,7 +98,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private HorizontalLayout createAndGetNameAndEditButtonAndReuploadButtonLayout() {
-        EditProjectDialog editProjectDialog = new EditProjectDialog(project, projectService);
+        EditProjectDialog editProjectDialog = new EditProjectDialog(project, projectService, securityService);
         HorizontalLayout horizontalNameAndEditButtonAndReuploadButtonLayout = new HorizontalLayout();
         Button editProjectButton = new Button(new Icon(VaadinIcon.PENCIL), e -> editProjectDialog.open());
         editProjectButton.addThemeName("icon");
@@ -107,7 +107,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(project.getName()), editProjectButton);
 
         if(jarUploadEnabled){
-            ReuploadDialog reuploadDialog = new ReuploadDialog(project, projectService);
+            ReuploadDialog reuploadDialog = new ReuploadDialog(project, projectService, securityService);
             Button reuploadProjectButton = new Button(new Icon("vaadin:cloud-upload-o"), e -> reuploadDialog.open());
             reuploadProjectButton.addThemeName("icon");
             reuploadProjectButton.getStyle().set("cursor", "pointer");

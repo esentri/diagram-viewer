@@ -10,11 +10,19 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.server.streams.UploadHandler;
+import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
 
@@ -26,8 +34,10 @@ public class UploadDialog extends Dialog {
 
     private UploadOptions uploadOptions;
     private Button uploadButton;
-    private InputStream fileInputStream;
+    private PackageSelectChipField packageSelectChipField;
     private String fileName;
+    private byte[] fileContents;
+    private String uploadMimeType;
 
     public UploadDialog(ProjectService projectService, SecurityService securityService) {
         this.projectService = projectService;
@@ -57,13 +67,21 @@ public class UploadDialog extends Dialog {
         uploadButton.setEnabled(binder.isValid());
 
         uploadButton.addClickListener(e -> {
+            Path pathToFile;
+            try {
+                pathToFile = Files.createTempFile(
+                    fileName.substring(0, fileName.lastIndexOf('.')),
+                    fileName.substring(fileName.lastIndexOf('.')));
+                Files.write(pathToFile, fileContents);
+            } catch (IOException ex) {
+                throw DiagramViewerException.fail("Could not save temporary .jar file.", e);
+            }
+
             binder.writeBeanIfValid(uploadOptions);
             projectService.create(
-                uploadOptions.getProjectName(), securityService.getCurrentlySignedInUser(),
-                    fileInputStream,
-                    fileName,
-                uploadOptions.getDomainModelPackages()
-            );
+                uploadOptions.getProjectName(), uploadOptions.getDomainModelPackages(),
+                securityService.getCurrentlySignedInUser(), pathToFile,
+                UploadFileType.findByMimeType(uploadMimeType));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });
@@ -91,28 +109,37 @@ public class UploadDialog extends Dialog {
 
         formLayout.addFormItem(projectNameTextField, "Project Name");
 
-        PackageSelectChipField domainModelPackageSelectChipField = new PackageSelectChipField();
-        domainModelPackageSelectChipField.setWidthFull();
-        binder.forField(domainModelPackageSelectChipField)
-            .asRequired("At least one package is required.")
+        packageSelectChipField = new PackageSelectChipField();
+        packageSelectChipField.setWidthFull();
+        binder.forField(packageSelectChipField)
+            .withValidator(packages -> {
+                if (Objects.equals(uploadMimeType, UploadFileType.JAR.getMimeType())) {
+                    return packages != null && !packages.isEmpty();
+                }
+                return true;
+            }, "At least one package is required.")
             .bind(UploadOptions::getDomainModelPackages, UploadOptions::setDomainModelPackages);
-        formLayout.addFormItem(domainModelPackageSelectChipField, "Packages");
+        formLayout.addFormItem(packageSelectChipField, "Packages");
+        packageSelectChipField.setEnabled(Objects.equals(uploadMimeType, UploadFileType.JAR.getMimeType()));
 
         return formLayout;
     }
 
     private Upload getUpload() {
-        MemoryBuffer uploadBuffer = new MemoryBuffer();
-        Upload upload = new Upload(uploadBuffer);
+        UploadHandler inMemoryUploadHandler = UploadHandler.inMemory(
+            (uploadMetadata, bytes) -> {
+                fileName = uploadMetadata.fileName();
+                fileContents = bytes;
+                uploadMimeType = uploadMetadata.contentType();
+                packageSelectChipField.setEnabled(Objects.equals(uploadMimeType, UploadFileType.JAR.getMimeType()));
+            });
+
+        Upload upload = new Upload(inMemoryUploadHandler);
         upload.setWidthFull();
 
         upload.setMaxFileSize(500000000); // 500MB
-        upload.setAcceptedFileTypes("application/java-archive", "application/json");
+        upload.setAcceptedFileTypes("application/java-archive", "application/json", ".jar", ".json");
 
-        upload.addSucceededListener(event -> {
-            fileInputStream = uploadBuffer.getInputStream();
-            fileName = uploadBuffer.getFileName();
-        });
         return upload;
     }
 

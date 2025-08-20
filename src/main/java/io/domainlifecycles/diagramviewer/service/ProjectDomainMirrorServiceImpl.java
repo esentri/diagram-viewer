@@ -5,6 +5,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.repository.ProjectDomainMirrorRepository;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -53,8 +54,8 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     }
 
     @Override
-    public ProjectDomainMirror createOrUpdate(Project project, Path filePath, Set<String> domainModelPackages) {
-        DomainMirror domainMirror = generateDomainMirror(domainModelPackages, filePath);
+    public ProjectDomainMirror createOrUpdate(Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType) {
+        DomainMirror domainMirror = generateDomainMirror(pathToFile, domainModelPackages, uploadFileType);
         return createOrUpdate(project, domainMirror);
     }
 
@@ -63,12 +64,11 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
         Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(project.getId());
 
         if(foundProjectDomainMirror.isPresent()) {
-
             ProjectDomainMirror projectDomainMirror = foundProjectDomainMirror.get();
             projectDomainMirror.setDomainMirror(domainMirror);
-            var mirror = repository.save(projectDomainMirror);
+            ProjectDomainMirror persistedMirror = repository.save(projectDomainMirror);
             regenerateDiagramsJobService.create(project);
-            return mirror;
+            return persistedMirror;
         }
 
         ProjectDomainMirror projectDomainMirror = ProjectDomainMirror.builder()
@@ -85,11 +85,7 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
         repository.delete(projectDomainMirror);
     }
 
-    private DomainMirror generateDomainMirror(Set<String> domainModelPackages,
-                                              Path projectFilePath) {
-        return DomainModelUtils.initializeDomainMirror(
-            projectFilePath,
-            domainModelPackages
-        );
+    private DomainMirror generateDomainMirror(Path pathToJarFile, Set<String> domainModelPackages, UploadFileType uploadFileType) {
+        return DomainModelUtils.initializeDomainMirrorFromFile(pathToJarFile, domainModelPackages, uploadFileType);
     }
 }

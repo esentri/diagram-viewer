@@ -5,6 +5,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainType;
@@ -106,6 +107,11 @@ public class SessionStorage {
 
         domainMirrorContainers.put(project.getId(), domainMirrorContainer);
         log.debug("adding {} finished", project);
+    }
+
+    public void createOrUpdate(Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType) {
+        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, domainModelPackages, pathToFile, uploadFileType);
+        createAndAddDomainMirrorContainer(project, projectDomainMirror);
     }
 
     public void createOrUpdate(Project project, DomainMirror domainMirror) {

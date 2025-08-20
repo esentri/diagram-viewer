@@ -82,7 +82,7 @@ class ProjectService_ITest {
     }
 
     @Test
-    void Should_CreateProject_When_AllValuesAreValid() throws IOException {
+    void Should_updateDomainMirrorProject_When_AllValuesAreValid() throws IOException {
         var pack = new HashSet<String>();
         pack.add("com.esentri");
         // when
