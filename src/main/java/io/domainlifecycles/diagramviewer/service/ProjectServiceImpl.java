@@ -5,6 +5,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.model.viewer.ProjectFileType;
 import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.viewer.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
@@ -77,7 +78,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project getByName(final String projectName) {
-        return repository.findByName(buildCleanFileName(projectName))
+        return repository.findByName(buildCleanProjectName(projectName))
             .orElseThrow(() -> DiagramViewerException.fail(String.format("No project found with name: %s",
                 projectName)));
     }
@@ -87,7 +88,7 @@ public class ProjectServiceImpl implements ProjectService {
                        String projectName,
                        Set<String> domainModelPackages) {
 
-        project.setName(buildCleanFileName(projectName));
+        project.setName(buildCleanProjectName(projectName));
         checkProjectValueRequirements(project);
         Path projectFilePath = buildProjectFilePath(project);
 
@@ -126,33 +127,34 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project save(
-            RegisteredUser registeredUser,
-            InputStream fileContents,
-            String fileName,
-            Set<String> domainModelPackages) {
+    public Project create(
+        String projectName, RegisteredUser registeredUser,
+        InputStream jarFile,
+        String jarFileName,
+        Set<String> domainModelPackages) {
 
-        final Project mappedProject = insert(mapProject(fileName, domainModelPackages, registeredUser, false));
-        return saveProjectFileAndCreateProjectAndDomainMirror(fileContents, domainModelPackages, mappedProject);
+        final Project mappedProject = insert(mapProject(projectName, jarFileName, domainModelPackages, registeredUser, false));
+        return saveProjectFileAndCreateProjectAndDomainMirror(jarFile, domainModelPackages, mappedProject);
     }
 
     @Override
-    public void updateTargetFile(
+    public void updateJarFile(
             Project project,
-            InputStream fileContents,
+            InputStream jarFile,
             String filename,
             Set<String> domainModelPackages) {
 
         deleteTargetFile(project);
-        saveProjectFileAndCreateProjectAndDomainMirror(fileContents, domainModelPackages, project);
+        saveProjectFileAndCreateProjectAndDomainMirror(jarFile, domainModelPackages, project);
     }
 
     @Override
     public void createOrUpdateDomainMirror(
             String projectName,
+            String fileName,
             DomainMirrorUploadDto domainMirrorUploadDto) {
 
-        Optional<Project> foundProject = repository.findByName(buildCleanFileName(projectName));
+        Optional<Project> foundProject = repository.findByName(buildCleanProjectName(projectName));
 
         if(foundProject.isPresent()) {
             Project project = foundProject.get();
@@ -164,13 +166,14 @@ public class ProjectServiceImpl implements ProjectService {
             if(!project.isApiUpload()) {
                 deleteTargetFile(project);
             }
+
             project.setChangedAt(Instant.now());
             repository.save(project);
             sessionStorage.createOrUpdate(project, domainMirrorUploadDto.domainMirror());
             return;
         }
 
-        Project project = mapProject(projectName,
+        Project project = mapProject(projectName, fileName,
             domainMirrorUploadDto.domainModelPackages(),
             (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), true);
         Project persistedProject = repository.save(project);
@@ -239,12 +242,13 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.save(project);
     }
 
-    private Project mapProject(String fileName, Set<String> domainModelPackages, RegisteredUser registeredUser, boolean apiUpload) {
+    private Project mapProject(String projectName, String fileName, Set<String> domainModelPackages, RegisteredUser registeredUser, boolean apiUpload) {
         return Project.builder()
-            .name(buildCleanFileName(fileName))
+            .name(buildCleanProjectName(projectName))
             .diagrams(new HashSet<>())
             .diagramDirectories(new HashSet<>())
             .apiUpload(apiUpload)
+            .projectFileType(!apiUpload ? getFileType(fileName) : null)
             .creator(registeredUser)
             .domainModelPackages(domainModelPackages)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
@@ -290,7 +294,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private String buildProjectFilename(Project project) {
-        return project.getId() + ".jar";
+        return project.getId() + project.getProjectFileType().getFileTypeEnding();
     }
 
     private boolean userIsAlreadyAssignedToProject(Project project, User user) {
@@ -308,7 +312,16 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
-    private String buildCleanFileName(final String fileName) {
-        return fileName == null || fileName.isBlank() ? fileName : fileName.replaceAll("[.-]", "_");
+    private String buildCleanProjectName(final String projectName) {
+        return projectName == null || projectName.isBlank() ? projectName : projectName.replaceAll("[.-]", "_");
+    }
+
+    private ProjectFileType getFileType(String fileName) {
+        if(fileName.endsWith(".jar")) {
+            return ProjectFileType.JAR;
+        } else if(fileName.endsWith(".json")) {
+            return ProjectFileType.JSON;
+        }
+        throw DiagramViewerException.fail(String.format("Uploaded project file '%s' has an unsupported file extension.", fileName));
     }
 }

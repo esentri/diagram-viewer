@@ -5,6 +5,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +19,7 @@ public interface ProjectDomainMirrorService {
 
     List<AggregateRootMirror> getAllAggregateRootMirrors(final UUID projectId);
 
-    ProjectDomainMirror createOrUpdate(final Project project, Path projectFilePath, Set<String> domainModelPackages);
+    ProjectDomainMirror createOrUpdate(final Project project, Path filePath, Set<String> domainModelPackages);
 
     ProjectDomainMirror createOrUpdate(final Project project, DomainMirror domainMirror);
 

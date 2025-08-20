@@ -2,12 +2,16 @@ package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.reflect.FileDomainMirrorFactory;
 import io.domainlifecycles.mirror.exception.MirrorException;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -19,12 +23,36 @@ public class DomainModelUtils {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DomainModelUtils.class);
 
-    public static DomainMirror initializeDomainMirrorFromJar(
+    public static DomainMirror initializeDomainMirror(Path path, Set<String> domainModelPackages) {
+        String fileName = path.getFileName().toString().toLowerCase();
+
+        if (fileName.endsWith(".jar")) {
+            return initializeDomainMirrorFromJar(path, domainModelPackages);
+        } else if (fileName.endsWith(".json")) {
+            return initializeDomainMirrorFromJson(path, domainModelPackages);
+        }
+        throw DiagramViewerException.fail("Could not initialize domain model. Specified file does not have valid file-type.");
+    }
+
+    private static DomainMirror initializeDomainMirrorFromJson(Path path, Set<String> domainModelPackages) {
+        String domainMirrorJsonString;
+
+        try {
+            domainMirrorJsonString = Files.readString(path);
+        } catch (IOException e) {
+            throw DiagramViewerException.fail("Could not read domain model json file.", e);
+        }
+
+        checkDomainModelPackagesEmpty(domainModelPackages);
+        FileDomainMirrorFactory fileDomainMirrorFactory = new FileDomainMirrorFactory(
+            domainModelPackages.toArray(String[]::new));
+        return fileDomainMirrorFactory.initializeDomainMirror(domainMirrorJsonString);
+    }
+
+    private static DomainMirror initializeDomainMirrorFromJar(
             Path path,
             Set<String> domainModelPackages){
-        if(domainModelPackages == null || domainModelPackages.isEmpty()) {
-            throw DiagramViewerException.fail("Domain model packages is null or empty!");
-        }
+        checkDomainModelPackagesEmpty(domainModelPackages);
         URL url = null;
         try{
             url = path.toUri().toURL();
@@ -62,6 +90,12 @@ public class DomainModelUtils {
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             return Optional.empty();
+        }
+    }
+
+    private static void checkDomainModelPackagesEmpty(Set<String> domainModelPackages) {
+        if(domainModelPackages == null || domainModelPackages.isEmpty()) {
+            throw DiagramViewerException.fail("Domain model packages is null or empty!");
         }
     }
 }

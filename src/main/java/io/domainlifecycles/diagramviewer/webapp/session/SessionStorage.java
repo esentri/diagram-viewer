@@ -9,9 +9,11 @@ import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -111,8 +113,8 @@ public class SessionStorage {
         createAndAddDomainMirrorContainer(project, projectDomainMirror);
     }
 
-    public void createOrUpdate(Project project, Path projectFilePath, Set<String> domainModelPackages) {
-        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, projectFilePath,
+    public void createOrUpdate(Project project, Path filePath, Set<String> domainModelPackages) {
+        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, filePath,
             domainModelPackages);
         createAndAddDomainMirrorContainer(project, projectDomainMirror);
     }

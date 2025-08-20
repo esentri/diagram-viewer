@@ -23,26 +23,26 @@ public interface ProjectService {
     Project getByName(final String projectName);
 
     @Transactional
+    Project create(String projectName, RegisteredUser registeredUser,
+                   InputStream jarFile,
+                   String jarFileName,
+                   Set<String> domainModelPackages);
+
+    @Transactional
     void update(Project project, String projectName, Set<String> domainModelPackages);
+
+    @Transactional
+    void updateJarFile(Project project, InputStream jarFile, String filename, Set<String> domainModelPackages);
+
+    @Transactional
+    void createOrUpdateDomainMirror(String projectName, String fileName, DomainMirrorUploadDto domainMirrorUploadDto);
+
+    @Transactional
+    void delete(Project project);
 
     void deleteDiagram(Project project, Diagram diagram);
 
     void deleteDiagramDirectory(Project project, DiagramDirectory diagramDirectory);
-
-    @Transactional
-    Project save(RegisteredUser registeredUser,
-                 InputStream fileContents,
-                 String fileName,
-                 Set<String> domainModelPackages);
-
-    @Transactional
-    void updateTargetFile(Project project, InputStream fileContents, String filename, Set<String> domainModelPackages);
-
-    @Transactional
-    void createOrUpdateDomainMirror(String projectName, DomainMirrorUploadDto domainMirrorUploadDto);
-
-    @Transactional
-    void delete(Project project);
 
     void assignUser(Project project, String emailAddress);
 

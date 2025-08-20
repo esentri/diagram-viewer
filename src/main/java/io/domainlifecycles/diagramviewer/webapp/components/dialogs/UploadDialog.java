@@ -27,6 +27,7 @@ public class UploadDialog extends Dialog {
     private UploadOptions uploadOptions;
     private Button uploadButton;
     private InputStream fileInputStream;
+    private String fileName;
 
     public UploadDialog(ProjectService projectService, SecurityService securityService) {
         this.projectService = projectService;
@@ -57,11 +58,11 @@ public class UploadDialog extends Dialog {
 
         uploadButton.addClickListener(e -> {
             binder.writeBeanIfValid(uploadOptions);
-            projectService.save(
-                    securityService.getCurrentlySignedInUser(),
+            projectService.create(
+                uploadOptions.getProjectName(), securityService.getCurrentlySignedInUser(),
                     fileInputStream,
-                    uploadOptions.getProjectName(),
-                    uploadOptions.getDomainModelPackages()
+                    fileName,
+                uploadOptions.getDomainModelPackages()
             );
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
@@ -106,9 +107,12 @@ public class UploadDialog extends Dialog {
         upload.setWidthFull();
 
         upload.setMaxFileSize(500000000); // 500MB
-        upload.setAcceptedFileTypes("application/java-archive");
+        upload.setAcceptedFileTypes("application/java-archive", "application/json");
 
-        upload.addSucceededListener(event -> fileInputStream = uploadBuffer.getInputStream());
+        upload.addSucceededListener(event -> {
+            fileInputStream = uploadBuffer.getInputStream();
+            fileName = uploadBuffer.getFileName();
+        });
         return upload;
     }
 

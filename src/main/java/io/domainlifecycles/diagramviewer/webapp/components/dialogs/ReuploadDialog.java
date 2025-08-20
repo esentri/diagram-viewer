@@ -64,7 +64,7 @@ public class ReuploadDialog extends Dialog {
 
         uploadButton.addClickListener(e -> {
             binder.writeBeanIfValid(uploadOptions);
-            projectService.updateTargetFile(
+            projectService.updateJarFile(
                     project,
                     fileInputStream,
                     uploadOptions.getProjectName(),

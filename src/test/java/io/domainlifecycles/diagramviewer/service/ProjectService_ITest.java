@@ -86,7 +86,7 @@ class ProjectService_ITest {
         var pack = new HashSet<String>();
         pack.add("com.esentri");
         // when
-        Project project = service.save(registeredUser,
+        Project project = service.create(registeredUser,
             new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", pack);
 
         // then

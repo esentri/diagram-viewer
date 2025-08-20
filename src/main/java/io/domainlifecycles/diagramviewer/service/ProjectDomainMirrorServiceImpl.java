@@ -9,6 +9,7 @@ import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -52,8 +53,8 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     }
 
     @Override
-    public ProjectDomainMirror createOrUpdate(Project project, Path projectFilePath, Set<String> domainModelPackages) {
-        DomainMirror domainMirror = generateDomainMirror(domainModelPackages, projectFilePath);
+    public ProjectDomainMirror createOrUpdate(Project project, Path filePath, Set<String> domainModelPackages) {
+        DomainMirror domainMirror = generateDomainMirror(domainModelPackages, filePath);
         return createOrUpdate(project, domainMirror);
     }
 
@@ -86,7 +87,7 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
 
     private DomainMirror generateDomainMirror(Set<String> domainModelPackages,
                                               Path projectFilePath) {
-        return DomainModelUtils.initializeDomainMirrorFromJar(
+        return DomainModelUtils.initializeDomainMirror(
             projectFilePath,
             domainModelPackages
         );
