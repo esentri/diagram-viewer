@@ -5,7 +5,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.ProjectFileType;
 import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.viewer.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
@@ -90,16 +89,15 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.setName(buildCleanProjectName(projectName));
         checkProjectValueRequirements(project);
-        Path projectFilePath = buildProjectFilePath(project);
 
         if(Objects.equals(project.getName(), projectName)) {
             Project persistedProject = repository.save(project);
-            sessionStorage.createOrUpdate(persistedProject, projectFilePath, domainModelPackages);
+            sessionStorage.createOrUpdate(persistedProject, domainModelPackages);
             return;
         }
 
         Project persistedProject = insert(project);
-        sessionStorage.createOrUpdate(persistedProject, projectFilePath, domainModelPackages);
+        sessionStorage.createOrUpdate(persistedProject, domainModelPackages);
     }
 
     @Override
@@ -134,7 +132,7 @@ public class ProjectServiceImpl implements ProjectService {
         Set<String> domainModelPackages) {
 
         final Project mappedProject = insert(mapProject(projectName, jarFileName, domainModelPackages, registeredUser, false));
-        return saveProjectFileAndCreateProjectAndDomainMirror(jarFile, domainModelPackages, mappedProject);
+        return createProjectAndDomainMirror(jarFile, domainModelPackages, mappedProject);
     }
 
     @Override
@@ -144,8 +142,7 @@ public class ProjectServiceImpl implements ProjectService {
             String filename,
             Set<String> domainModelPackages) {
 
-        deleteTargetFile(project);
-        saveProjectFileAndCreateProjectAndDomainMirror(jarFile, domainModelPackages, project);
+        createProjectAndDomainMirror(jarFile, domainModelPackages, project);
     }
 
     @Override
@@ -161,10 +158,6 @@ public class ProjectServiceImpl implements ProjectService {
             var registeredUser = (RegisteredUser)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             if(!project.getAssignedRegisteredUsers().contains(registeredUser)){
                 throw new IllegalStateException(String.format("User has no access to project '%s'",project.getName()));
-            }
-
-            if(!project.isApiUpload()) {
-                deleteTargetFile(project);
             }
 
             project.setChangedAt(Instant.now());
@@ -223,10 +216,6 @@ public class ProjectServiceImpl implements ProjectService {
         repository.delete(fetchedProject);
         sessionStorage.delete(fetchedProject.getId());
 
-        if(!project.isApiUpload()) {
-            deleteTargetFile(project);
-        }
-
         diagramService.deleteFilesFromFilesystem(project.getId().toString());
     }
 
@@ -242,13 +231,11 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.save(project);
     }
 
-    private Project mapProject(String projectName, String fileName, Set<String> domainModelPackages, RegisteredUser registeredUser, boolean apiUpload) {
+    private Project mapProject(String projectName, Set<String> domainModelPackages, RegisteredUser registeredUser) {
         return Project.builder()
             .name(buildCleanProjectName(projectName))
             .diagrams(new HashSet<>())
             .diagramDirectories(new HashSet<>())
-            .apiUpload(apiUpload)
-            .projectFileType(!apiUpload ? getFileType(fileName) : null)
             .creator(registeredUser)
             .domainModelPackages(domainModelPackages)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
@@ -256,45 +243,9 @@ public class ProjectServiceImpl implements ProjectService {
             .build();
     }
 
-    private Project saveProjectFileAndCreateProjectAndDomainMirror(InputStream fileContents, Set<String> domainModelPackages, Project project) {
-        Path projectFilePath = saveTargetFile(targetsDirectory, fileContents,
-            buildProjectFilename(project));
-
-        try {
+    private Project createProjectAndDomainMirror(Set<String> domainModelPackages, Project project) {
             sessionStorage.createOrUpdate(project, projectFilePath, domainModelPackages);
             return repository.save(project);
-        } catch(RuntimeException e) {
-            deleteTargetFile(project);
-            throw e;
-        }
-    }
-
-    private Path saveTargetFile(String targetsLocation, InputStream fileContents, String fileName) {
-        try {
-            Path filePath = FileIOUtils.saveFile(targetsLocation, fileName, fileContents);
-            LOGGER.info(String.format("Successfully uploaded file '%s' to '%s'.", fileName, targetsLocation));
-            return filePath;
-        } catch (IOException e) {
-            throw DiagramViewerException.fail(String.format("Couldn't save file '%s' to '%s'.", fileName,
-                targetsLocation), e);
-        }
-    }
-
-    private void deleteTargetFile(Project project) {
-        try {
-            String absolutePathToTarget = Path.of(targetsDirectory, buildProjectFilename(project)).toAbsolutePath().toString();
-            FileIOUtils.deleteFileByAbsolutePath(absolutePathToTarget);
-        } catch (IOException e) {
-            throw DiagramViewerException.fail("Couldn't finalize deleting project because some files couldn't be deleted from the filesystem.", e);
-        }
-    }
-
-    private Path buildProjectFilePath(Project project) {
-        return Path.of(targetsDirectory, buildProjectFilename(project));
-    }
-
-    private String buildProjectFilename(Project project) {
-        return project.getId() + project.getProjectFileType().getFileTypeEnding();
     }
 
     private boolean userIsAlreadyAssignedToProject(Project project, User user) {
@@ -314,14 +265,5 @@ public class ProjectServiceImpl implements ProjectService {
 
     private String buildCleanProjectName(final String projectName) {
         return projectName == null || projectName.isBlank() ? projectName : projectName.replaceAll("[.-]", "_");
-    }
-
-    private ProjectFileType getFileType(String fileName) {
-        if(fileName.endsWith(".jar")) {
-            return ProjectFileType.JAR;
-        } else if(fileName.endsWith(".json")) {
-            return ProjectFileType.JSON;
-        }
-        throw DiagramViewerException.fail(String.format("Uploaded project file '%s' has an unsupported file extension.", fileName));
     }
 }

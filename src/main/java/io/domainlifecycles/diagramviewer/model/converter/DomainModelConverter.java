@@ -6,7 +6,7 @@ import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-@Converter(autoApply = false)
+@Converter
 public class DomainModelConverter implements AttributeConverter<DomainMirror, String> {
 
     @Override

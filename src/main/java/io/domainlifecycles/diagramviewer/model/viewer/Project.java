@@ -51,11 +51,6 @@ public class Project {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> domainModelPackages;
 
-    @Column(nullable = false, updatable = false)
-    private boolean apiUpload;
-
-    private ProjectFileType projectFileType;
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_assigned_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<RegisteredUser> assignedRegisteredUsers;

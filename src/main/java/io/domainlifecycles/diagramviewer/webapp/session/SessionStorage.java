@@ -113,12 +113,6 @@ public class SessionStorage {
         createAndAddDomainMirrorContainer(project, projectDomainMirror);
     }
 
-    public void createOrUpdate(Project project, Path filePath, Set<String> domainModelPackages) {
-        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, filePath,
-            domainModelPackages);
-        createAndAddDomainMirrorContainer(project, projectDomainMirror);
-    }
-
     public void delete(UUID projectId) {
         projectDomainMirrorService.delete(projectId);
         domainMirrorContainers.remove(projectId);
