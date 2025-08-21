@@ -5,8 +5,8 @@ import com.vaadin.flow.server.auth.NavigationAccessChecker;
 import com.vaadin.flow.server.auth.NavigationContext;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
-import io.domainlifecycles.diagramviewer.webapp.views.SignInView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
+import io.domainlifecycles.diagramviewer.webapp.views.SignInView;
 import org.springframework.stereotype.Component;
 
 @Component

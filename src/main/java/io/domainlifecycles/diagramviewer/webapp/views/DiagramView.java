@@ -18,7 +18,6 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
-import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
@@ -44,7 +43,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -152,7 +150,13 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private Anchor getDiagramDownloadButton() {
-        Anchor downloadAnchor = new Anchor(buildDiagramDownloadStreamResource(), "Download Diagram");
+        Anchor downloadAnchor = new Anchor(download -> {
+            Path diagramLocation = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
+            byte[] diagramFileContents = FileIOUtils.readFile(diagramLocation.toAbsolutePath().toString());
+
+            download.setFileName(diagram.getFileName());
+            download.getOutputStream().write(diagramFileContents);
+        }, "Download Diagram");
 
         downloadAnchor.getStyle().set("cursor", "pointer");
         downloadAnchor.setId("diagramDownloadButton");
@@ -212,13 +216,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
         deleteDiagramButton.addClickListener(e -> confirmDialog.open());
         return deleteDiagramButton;
-    }
-
-    private StreamResource buildDiagramDownloadStreamResource() {
-        Path diagramLocation = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
-        byte[] fileContents = FileIOUtils.readFile(diagramLocation.toAbsolutePath().toString());
-
-        return new StreamResource(diagram.getFileName(), () -> new ByteArrayInputStream(fileContents));
     }
 
     @Override

@@ -11,7 +11,6 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.notes.Diagram
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.vaadin.addons.taefi.component.ToggleButtonGroup;
 

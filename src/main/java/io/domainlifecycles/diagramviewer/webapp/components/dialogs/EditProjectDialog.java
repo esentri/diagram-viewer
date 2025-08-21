@@ -12,11 +12,9 @@ import com.vaadin.flow.router.RouteParameters;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
-import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Map;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

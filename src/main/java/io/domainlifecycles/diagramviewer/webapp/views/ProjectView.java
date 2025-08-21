@@ -35,10 +35,9 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChanged
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-
-import java.util.Objects;
 
 @Route(value = "/project/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Project Viewer")

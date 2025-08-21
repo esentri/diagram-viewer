@@ -8,20 +8,15 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.server.streams.UploadHandler;
-import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
+import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageSelectChipField;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
@@ -67,15 +62,7 @@ public class UploadDialog extends Dialog {
         uploadButton.setEnabled(binder.isValid());
 
         uploadButton.addClickListener(e -> {
-            Path pathToFile;
-            try {
-                pathToFile = Files.createTempFile(
-                    fileName.substring(0, fileName.lastIndexOf('.')),
-                    fileName.substring(fileName.lastIndexOf('.')));
-                Files.write(pathToFile, fileContents);
-            } catch (IOException ex) {
-                throw DiagramViewerException.fail("Could not save temporary .jar file.", e);
-            }
+            Path pathToFile = FileIOUtils.saveTemporaryFile(fileName, fileContents);
 
             binder.writeBeanIfValid(uploadOptions);
             projectService.create(

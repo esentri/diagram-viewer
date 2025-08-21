@@ -1,15 +1,13 @@
 package io.domainlifecycles.diagramviewer.sql;
 
 import io.domainlifecycles.diagramviewer.plugin.SQLDDLGeneratorService;
-
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
+import java.lang.reflect.InvocationTargetException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.lang.reflect.InvocationTargetException;
 
 
 @Configuration

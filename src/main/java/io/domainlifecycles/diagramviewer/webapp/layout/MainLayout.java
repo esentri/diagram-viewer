@@ -43,13 +43,11 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
-//import io.domainlifecycles.diagramviewer.webapp.views.LoginView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Value;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")

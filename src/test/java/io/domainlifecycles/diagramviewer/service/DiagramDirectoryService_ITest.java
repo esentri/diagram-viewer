@@ -102,7 +102,6 @@ class DiagramDirectoryService_ITest {
     private Project setUpProject() {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
-            .apiUpload(false)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
             .assignedInvitedUsers(new HashSet<>())
             .diagramDirectories(new HashSet<>())

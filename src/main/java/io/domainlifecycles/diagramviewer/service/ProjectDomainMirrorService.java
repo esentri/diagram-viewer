@@ -6,7 +6,6 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Upload
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;

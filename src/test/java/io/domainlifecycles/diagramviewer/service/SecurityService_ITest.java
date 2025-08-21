@@ -125,7 +125,6 @@ class SecurityService_ITest {
     private Project setUpProject() {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
-            .apiUpload(false)
             .diagrams(new HashSet<>())
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
             .assignedInvitedUsers(new HashSet<>())
