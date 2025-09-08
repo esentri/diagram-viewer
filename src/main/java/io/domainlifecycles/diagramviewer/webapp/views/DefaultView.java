@@ -23,7 +23,7 @@ public class DefaultView extends FlexLayout {
     private VerticalLayout getPageContents() {
         VerticalLayout layout = new VerticalLayout();
 
-        layout.add(new H2("Select a Project/Diagram on the left or upload something new in the bottom left corner!"));
+        layout.add(new H2("Select a Project/Diagram on the left!"));
 
         layout.setAlignItems(Alignment.CENTER);
         return layout;

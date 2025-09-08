@@ -13,15 +13,15 @@ public interface DiagramService {
 
     Set<Diagram> findAll(UUID projectId);
 
-    Diagram update(Diagram diagram);
+    Diagram updateModel(Diagram diagram);
 
-    Diagram update(Diagram diagram, Project project);
+    Diagram updateModelAndImage(Diagram diagram);
 
-    Diagram rename(Diagram diagram, Project project, String fileName);
+    Diagram rename(Diagram diagram, String fileName);
 
     Diagram create(Project project, String fileName, FileType fileType, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
 
-    void regenerate(Diagram diagram, DomainMirror domainMirror);
+    void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram);
 
     void deleteFilesFromFilesystem(String projectId);
 }

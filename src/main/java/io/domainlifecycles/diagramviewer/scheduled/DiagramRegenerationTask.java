@@ -2,9 +2,8 @@ package io.domainlifecycles.diagramviewer.scheduled;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramRegenerationTaskException;
 import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
-import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
+import io.domainlifecycles.diagramviewer.service.DiagramRegenerationService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -25,12 +24,16 @@ public class DiagramRegenerationTask {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiagramRegenerationTask.class);
 
     private final RegenerateDiagramsJobService regenerateDiagramsJobService;
-    private final ProjectDomainMirrorService projectDomainMirrorService;
+    private final DiagramRegenerationService diagramRegenerationService;
     private final DiagramService diagramService;
 
-    public DiagramRegenerationTask(RegenerateDiagramsJobService regenerateDiagramsJobService, ProjectDomainMirrorService projectDomainMirrorService, DiagramService diagramService) {
+    public DiagramRegenerationTask(
+            RegenerateDiagramsJobService regenerateDiagramsJobService,
+            DiagramRegenerationService diagramRegenerationService,
+            DiagramService diagramService
+    ) {
         this.regenerateDiagramsJobService = regenerateDiagramsJobService;
-        this.projectDomainMirrorService = projectDomainMirrorService;
+        this.diagramRegenerationService = diagramRegenerationService;
         this.diagramService = diagramService;
     }
 
@@ -47,14 +50,13 @@ public class DiagramRegenerationTask {
             LOGGER.info(String.format("Regenerating diagrams for project '%s' ...", projectId));
 
             List<RegenerateDiagramsJob> regenerateDiagramsJobsForProject = jobsGroupedByProjectId.get(projectId);
-            ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.getByProjectId(projectId);
 
             regenerateDiagramsJobsForProject.forEach(job -> {
                 try {
                     var diagram = job.getDiagram();
                     diagram.setChangedAt(Instant.now());
-                    diagramService.update(diagram);
-                    diagramService.regenerate(job.getDiagram(), projectDomainMirror.getDomainMirror());
+                    diagramService.updateModel(diagram);
+                    diagramRegenerationService.regenerate(job.getDiagram());
                     regenerateDiagramsJobService.delete(job);
                 } catch(Exception e) {
                     LOGGER.error(

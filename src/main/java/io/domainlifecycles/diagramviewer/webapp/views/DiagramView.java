@@ -13,16 +13,16 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.server.StreamResource;
-import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.rest.api.ResourceController;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
@@ -33,26 +33,26 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagram
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramVisibilityAndNotesComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalEventListener;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
-import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import jakarta.annotation.security.PermitAll;
-import java.io.ByteArrayInputStream;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+
+import java.io.ByteArrayInputStream;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Objects;
 
 @Route(value = "/diagram/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER + "/:" + DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Diagram Viewer")
 @PermitAll
 @Slf4j
-public class DiagramView extends FlexLayout implements BeforeEnterObserver {
+public class DiagramView extends FlexLayout implements BeforeEnterObserver, AfterNavigationObserver {
 
     public static final String DIAGRAM_NAME_ROUTE_PARAMETER = "diagramName";
 
@@ -62,19 +62,25 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private final DiagramTypeNoteService diagramTypeNoteService;
     private final SessionStorage sessionStorage;
     private final SecurityService securityService;
+    private final GlobalUIEventBus globalUIEventBus;
     private String projectName;
     private String diagramName;
-    private Project project;
     private Diagram diagram;
-    private List<DomainTypeMirror> domainTypeMirrors;
-    private Registration registration;
+
+
+    private FlexLayout diagramViewerAndStylingContainer;
+    private DiagramZoomComponentContainer diagramZoomComponentContainer;
+    private DiagramVisibilityAndNotesComponentsContainer diagramVisibilityAndNotesComponentsContainer;
+    private HorizontalLayout buttonBar;
+    private RenameDiagramDialog renameDiagramDialog;
 
     public DiagramView(
-        @Value("${diagrams.location}") String diagramsLocation,
-        ProjectService projectService, DiagramService diagramService,
-        DiagramTypeNoteService diagramTypeNoteService,
-        SessionStorage sessionStorage,
-        SecurityService securityService) {
+            @Value("${diagrams.location}") String diagramsLocation,
+            ProjectService projectService,
+            DiagramService diagramService,
+            DiagramTypeNoteService diagramTypeNoteService,
+            SessionStorage sessionStorage,
+            SecurityService securityService, GlobalUIEventBus globalUIEventBus) {
 
         this.diagramsLocation = diagramsLocation;
         this.projectService = projectService;
@@ -82,10 +88,12 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         this.diagramTypeNoteService = diagramTypeNoteService;
         this.sessionStorage = sessionStorage;
         this.securityService = securityService;
+        this.globalUIEventBus = globalUIEventBus;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
         setId("diagram-viewer");
+        addPageContents();
     }
 
     @Override
@@ -95,42 +103,81 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         refreshPage();
     }
 
-    private void refreshPage() {
-        log.debug("Refreshing diagram view");
-        removeAll();
-        log.debug("Remove components from diagram view finished");
-        setProjectAndDiagramAndDomainTypeMirrors();
-        log.debug("SetProjectAndDiagramAndDomainTypeMirrors finished");
-        addPageContents();
-        log.debug("Refreshing diagram view finished");
+    @Override
+    public void afterNavigation(AfterNavigationEvent event) {
+        globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram, this));
     }
 
-    private void setProjectAndDiagramAndDomainTypeMirrors() {
-        project = projectService.getByName(projectName);
-        diagram = project.getDiagrams().stream().filter(foundDiagram ->
+    private void refreshPage() {
+        diagram = getDiagram();
+        log.debug("getDiagram finished");
+        log.debug("Refreshing diagram view");
+        refreshDiagramZoomComponentContainer(diagram);
+        log.debug("Refreshing diagram view finished");
+        buttonBar.removeAll();
+        buttonBar.add(
+            getRenameDiagramButton(),
+            getDiagramDownloadButton(diagram),
+            getCopyDiagramLinkButton(diagram),
+            getDeleteDiagramButton(diagram)
+        );
+    }
+
+
+
+    private void refreshDiagramZoomComponentContainer(Diagram diagram) {
+        if(this.diagramZoomComponentContainer != null) {
+            this.diagramViewerAndStylingContainer.remove(this.diagramZoomComponentContainer);
+        }
+        this.diagramZoomComponentContainer = new DiagramZoomComponentContainer(
+                diagram.getProject().getId().toString(),
+                diagramName,
+                diagram.getChangedAt(),
+                diagram.getDiagramStylingConfiguration().getChangedAt()
+        );
+        diagramViewerAndStylingContainer.add(diagramZoomComponentContainer);
+        diagramViewerAndStylingContainer.setOrder(1, diagramZoomComponentContainer);
+        diagramViewerAndStylingContainer.setOrder(2, diagramVisibilityAndNotesComponentsContainer);
+        log.debug("creating DiagramZoomComponentContainer finished");
+    }
+
+    private Diagram getDiagram() {
+        var project = projectService.getByName(projectName);
+        var diagram = project.getDiagrams().stream().filter(foundDiagram ->
                 Objects.equals(foundDiagram.getFileName(), diagramName))
             .findAny()
             .orElseThrow(
                 () -> DiagramViewerException.fail(String.format("No diagram found with name '%s' .", diagramName)));
-        domainTypeMirrors = sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(project.getId());
+        return diagram;
     }
 
     private void addPageContents() {
         log.debug("Add components to diagram view");
-        add(createAndGetButtonBar());
+        this.buttonBar = createAndGetButtonBar();
+        add(buttonBar);
         log.debug("Add Button bar finished");
+        renameDiagramDialog = new RenameDiagramDialog(diagramService, this.globalUIEventBus);
+        add(renameDiagramDialog);
+
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
-        diagramViewerAndStylingContainer.add(
-            new DiagramConfigurationButtonBarComponent(project, diagram, diagramService));
-        log.debug("creating DiagramConfigurationButtonBarComponent finished");
-        diagramViewerAndStylingContainer.add(new DiagramZoomComponentContainer(
-            project.getId().toString(), diagramName, diagram.getChangedAt(),
-            diagram.getDiagramStylingConfiguration().getChangedAt()));
-        log.debug("creating DiagramZoomComponentContainer finished");
-        diagramViewerAndStylingContainer.add(
-            new DiagramVisibilityAndNotesComponentsContainer(sessionStorage, project, diagram, domainTypeMirrors, diagramService, diagramTypeNoteService));
+        this.diagramViewerAndStylingContainer = diagramViewerAndStylingContainer;
+        DiagramConfigurationButtonBarComponent diagramConfigurationButtonBarComponent =
+        new DiagramConfigurationButtonBarComponent(
+            globalUIEventBus,
+            diagramService
+        );
+        this.diagramVisibilityAndNotesComponentsContainer =
+        new DiagramVisibilityAndNotesComponentsContainer(
+            globalUIEventBus,
+            sessionStorage,
+            diagramService,
+            diagramTypeNoteService
+        );
+        diagramViewerAndStylingContainer.add(diagramVisibilityAndNotesComponentsContainer);
         log.debug("creating DiagramVisibilityAndNotesComponentsContainer finished");
+        diagramViewerAndStylingContainer.add(diagramConfigurationButtonBarComponent);
+        log.debug("creating DiagramConfigurationButtonBarComponent finished");
         add(diagramViewerAndStylingContainer);
         log.debug("addPageContents finished");
     }
@@ -138,12 +185,10 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private HorizontalLayout createAndGetButtonBar() {
         HorizontalLayout buttonBar = new HorizontalLayout();
         buttonBar.getStyle().setMarginLeft("3.5rem");
-        buttonBar.add(getRenameDiagramButton(), getDiagramDownloadButton(), getCopyDiagramLinkButton(), getDeleteDiagramButton());
         return buttonBar;
     }
 
     private Button getRenameDiagramButton() {
-        RenameDiagramDialog renameDiagramDialog = new RenameDiagramDialog(diagramService, project, diagram);
         Button renameDiagramButton = new Button("Rename", new Icon(VaadinIcon.PENCIL));
         renameDiagramButton.getStyle().set("cursor", "pointer");
         renameDiagramButton.addClickListener(e -> renameDiagramDialog.open());
@@ -151,8 +196,8 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         return renameDiagramButton;
     }
 
-    private Anchor getDiagramDownloadButton() {
-        Anchor downloadAnchor = new Anchor(buildDiagramDownloadStreamResource(), "Download Diagram");
+    private Anchor getDiagramDownloadButton(Diagram diagram) {
+        Anchor downloadAnchor = new Anchor(buildDiagramDownloadStreamResource(diagram), "Download Diagram");
 
         downloadAnchor.getStyle().set("cursor", "pointer");
         downloadAnchor.setId("diagramDownloadButton");
@@ -166,7 +211,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         return downloadAnchor;
     }
 
-    private Button getCopyDiagramLinkButton() {
+    private Button getCopyDiagramLinkButton(Diagram diagram) {
         Button copyDiagramLinkButton = new Button("Copy External Link", new Icon(VaadinIcon.LINK));
         copyDiagramLinkButton.getStyle().set("cursor", "pointer");
 
@@ -176,7 +221,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
                 baseUrlWithTailingSlash = baseUrlWithTailingSlash.replace("?continue", "");
                 String baseUrl = baseUrlWithTailingSlash.substring(0, baseUrlWithTailingSlash.length() - 1);
                 String diagramUrl = baseUrl + ResourceController.RESOURCES_API_PATH +
-                    ResourceController.VIEW_API_PATH_SUFFIX + "/" + project.getId() + "/" + diagram.getFileName();
+                    ResourceController.VIEW_API_PATH_SUFFIX + "/" + diagram.getProject().getId() + "/" + diagram.getFileName();
                 UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0);", diagramUrl);
 
                 Notification.show("Diagram link has been copied to clipboard. Note: To successfully access the " +
@@ -186,7 +231,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         return copyDiagramLinkButton;
     }
 
-    private Button getDeleteDiagramButton() {
+    private Button getDeleteDiagramButton(Diagram diagram) {
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Delete Diagram");
         confirmDialog.setText(String.format(
@@ -197,6 +242,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         confirmDialog.setConfirmText("Delete");
         confirmDialog.setConfirmButtonTheme("error primary");
         confirmDialog.addConfirmListener(event -> {
+            var project = diagram.getProject();
             projectService.deleteDiagram(project, diagram);
             confirmDialog.close();
             UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName())));
@@ -209,32 +255,35 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         deleteDiagramButton.getElement().getStyle().set("margin-right", "1rem");
         deleteDiagramButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
         deleteDiagramButton.setEnabled(
-            Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
+            Objects.equals(diagram.getProject().getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
         deleteDiagramButton.addClickListener(e -> confirmDialog.open());
         return deleteDiagramButton;
     }
 
-    private StreamResource buildDiagramDownloadStreamResource() {
-        Path diagramLocation = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
+    private StreamResource buildDiagramDownloadStreamResource(Diagram diagram) {
+        Path diagramLocation = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getFileName());
         byte[] fileContents = FileIOUtils.readFile(diagramLocation.toAbsolutePath().toString());
 
         return new StreamResource(diagram.getFileName(), () -> new ByteArrayInputStream(fileContents));
     }
 
+    private GlobalEventListener<DiagramForDiagramViewChangedEvent> globalEventListener;
+
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        registration =
-            ComponentUtil.addListener(
-                attachEvent.getUI(),
-                DiagramStylingChangedEvent.class,
-                event -> refreshPage()
-            );
+        globalEventListener = new GlobalEventListener<>(this, DiagramForDiagramViewChangedEvent.class) {
+            @Override
+            public void onEvent(DiagramForDiagramViewChangedEvent event) {
+                refreshPage();
+            }
+        };
+        globalUIEventBus.register(globalEventListener);
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         super.onDetach(detachEvent);
-        registration.remove();
+        globalUIEventBus.unregister(globalEventListener);
     }
 }

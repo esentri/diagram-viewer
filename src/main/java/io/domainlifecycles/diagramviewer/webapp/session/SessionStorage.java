@@ -74,7 +74,6 @@ public class SessionStorage {
 
                 Instant containerLastUpdated = container.getLastUpdated();
                 if(containerLastUpdated != null && project.get().getLatestChangeInstant().isAfter(containerLastUpdated)){
-
                     add(project.get());
                 }
                 log.debug("Returning container for {}", projectId);

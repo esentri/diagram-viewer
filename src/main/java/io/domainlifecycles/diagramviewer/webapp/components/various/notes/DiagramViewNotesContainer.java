@@ -8,26 +8,26 @@ import com.vaadin.flow.component.textfield.TextArea;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DiagramViewNotesContainer extends VerticalLayout {
 
-    private final Diagram diagram;
+
     private final DiagramTypeNoteService diagramTypeNoteService;
 
-    public DiagramViewNotesContainer(Diagram diagram, DiagramTypeNoteService diagramTypeNoteService) {
-        this.diagram = diagram;
-        this.diagramTypeNoteService = diagramTypeNoteService;
+    public DiagramViewNotesContainer(
+            DiagramTypeNoteService diagramTypeNoteService
+    ) {
 
+        this.diagramTypeNoteService = diagramTypeNoteService;
         setPadding(false);
         setMargin(false);
-
-        refreshNotes();
     }
 
-    public void refreshNotes() {
+    public void refreshNotes(Diagram diagram) {
         removeAll();
         Map<String, String> allDiagramTypeNotesByDomainTypeMirrorName = diagramTypeNoteService.getNotes(diagram);
         Map<String, String> allDiagramTypeNotesByDomainTypeMirrorNameFilteredByIncludedPackages =
@@ -49,7 +49,7 @@ public class DiagramViewNotesContainer extends VerticalLayout {
             domainTypeMirrorName -> {
                 TextArea notesTextArea = new TextArea();
                 notesTextArea.setWidthFull();
-                notesTextArea.setLabel(domainTypeMirrorName);
+                notesTextArea.setLabel(domainTypeMirrorName.substring(domainTypeMirrorName.lastIndexOf('.') + 1));
                 notesTextArea.setReadOnly(true);
                 notesTextArea.setValue(allDiagramTypeNotesByDomainTypeMirrorName.get(domainTypeMirrorName));
                 notesTextArea.addClassName("notes-text-area");

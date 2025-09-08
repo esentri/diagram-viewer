@@ -39,7 +39,7 @@ public class DiagramDirectoryServiceImpl implements DiagramDirectoryService {
         project.addDiagramDirectory(diagramDirectory);
         diagrams.forEach(diagram -> {
             diagram.setDiagramDirectory(diagramDirectory);
-            diagramService.update(diagram);
+            diagramService.updateModel(diagram);
         });
     }
 
@@ -47,7 +47,7 @@ public class DiagramDirectoryServiceImpl implements DiagramDirectoryService {
     public void add(DiagramDirectory diagramDirectory, Diagram diagram) {
         diagramDirectory.addDiagram(diagram);
         repository.save(diagramDirectory);
-        diagramService.update(diagram);
+        diagramService.updateModel(diagram);
     }
 
     @Override

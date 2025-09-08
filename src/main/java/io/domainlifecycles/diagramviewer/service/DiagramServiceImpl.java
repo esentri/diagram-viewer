@@ -38,8 +38,8 @@ public class DiagramServiceImpl implements DiagramService {
         @Value("${diagrams.location}") String diagramsLocation,
         SessionStorage sessionStorage,
         DiagramRepository repository,
-        KrokiClient krokiClient) {
-
+        KrokiClient krokiClient
+    ) {
         this.diagramsLocation = diagramsLocation;
         this.sessionStorage = sessionStorage;
         this.repository = repository;
@@ -52,26 +52,26 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public Diagram update(Diagram diagram) {
-        return insert(diagram);
+    public Diagram updateModel(Diagram diagram) {
+        return save(diagram);
     }
 
     @Override
-    public Diagram update(Diagram diagram, Project project) {
-        final Diagram updatedDiagram = insert(diagram);
-        createAndSaveDiagramToFilesystem(project, updatedDiagram);
-
+    public Diagram updateModelAndImage(Diagram diagram) {
+        final Diagram updatedDiagram = save(diagram);
+        DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
+        createAndSaveDiagramToFilesystem(domainMirror, updatedDiagram);
         return updatedDiagram;
     }
 
     @Override
-    public Diagram rename(Diagram diagram, Project project, String fileName) {
-        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
+    public Diagram rename(Diagram diagram, String fileName) {
+        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getFileName());
         String newFilenameWithSuffix = fileName + diagram.getFileType().getFileSuffix();
         FileIOUtils.renameFile(diagramPath, newFilenameWithSuffix);
 
         diagram.setFileName(newFilenameWithSuffix);
-        return update(diagram, project);
+        return updateModelAndImage(diagram);
     }
 
     @Override
@@ -88,21 +88,15 @@ public class DiagramServiceImpl implements DiagramService {
             .project(project)
             .build();
 
-        final Diagram persistedDiagram = insert(diagram);
-        createAndSaveDiagramToFilesystem(project, persistedDiagram);
-
+        final Diagram persistedDiagram = save(diagram);
+        DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
+        createAndSaveDiagramToFilesystem(domainMirror, persistedDiagram);
         project.addDiagram(diagram);
 
         return persistedDiagram;
     }
 
-    @Override
-    public void regenerate(Diagram diagram, DomainMirror domainMirror) {
-        LOGGER.info(String.format("Regenerating diagram '%s'.", diagram.getFileName()));
-        createAndSaveDiagramToFilesystem(diagram.getProject(), diagram, domainMirror);
-    }
-
-    private Diagram insert(Diagram diagram) {
+    private Diagram save(Diagram diagram) {
         final String fileName = diagram.getFileName();
 
         if(diagramWithNameExists(diagram) && diagramNameHasChanged(diagram)) {
@@ -124,12 +118,9 @@ public class DiagramServiceImpl implements DiagramService {
         }
     }
 
-    private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram) {
-        DomainMirror domainMirror = sessionStorage.getDomainMirror(project.getId());
-        createAndSaveDiagramToFilesystem(project, diagram, domainMirror);
-    }
+    @Override
+    public void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram) {
 
-    private void createAndSaveDiagramToFilesystem(Project project, Diagram diagram, DomainMirror domainMirror) {
         final String nomnoml;
         try {
             nomnoml = DiagrammerUtils.generateNomnoml(
@@ -142,13 +133,15 @@ public class DiagramServiceImpl implements DiagramService {
 
         byte[] diagramFileContents = krokiClient.convertTo(nomnoml, diagram.getFileType());
 
-        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
+        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getFileName());
         try {
             FileIOUtils.saveFile(diagramPath.toAbsolutePath(), new ByteArrayInputStream(diagramFileContents));
         } catch (IOException e) {
             throw DiagramViewerException.fail(String.format("Could not save diagram to '%s'.", diagramsLocation), e);
         }
     }
+
+
 
     private boolean diagramWithNameExists(Diagram diagram) {
         Optional<Diagram> diagramWithName = repository.findByFileName(diagram.getFileName());

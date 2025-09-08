@@ -1,18 +1,19 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.ItemLabelGenerator;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
+import com.vaadin.flow.component.radiobutton.RadioGroupVariant;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import static java.util.stream.Collectors.groupingBy;
 
 @Slf4j
@@ -33,53 +35,62 @@ public class DiagramVisibilityComponent extends Div {
     private static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
 
     private final DiagramService diagramService;
-    private final Project project;
-    private final Diagram diagram;
     private final SessionStorage sessionStorage;
+    private final GlobalUIEventBus globalUIEventBus;
+    private Diagram currentDiagram;
 
-    public DiagramVisibilityComponent(SessionStorage sessionStorage,
-                                      Project project,
-                                      Diagram diagram,
-                                      List<DomainTypeMirror> domainTypeMirrors,
-                                      DiagramService diagramService) {
+    public DiagramVisibilityComponent(
+            GlobalUIEventBus globalUIEventBus,
+            SessionStorage sessionStorage,
+            DiagramService diagramService) {
         setWidthFull();
+        this.globalUIEventBus = globalUIEventBus;
         this.sessionStorage = sessionStorage;
         this.diagramService = diagramService;
-        this.project = project;
-        this.diagram = diagram;
-        createDetails(domainTypeMirrors);
     }
 
-    private void createDetails(List<DomainTypeMirror> domainTypeMirrors) {
-        log.debug("createDetails DiagramVisibilityComponent started");
-        List<DomainTypeMirror> directlyContained = domainTypeMirrors.stream().filter(dtm ->
-            diagram.getDomainModelVisibility()
-                .getExplicitlyIncludedPackagesNames()
-                .stream()
-                .anyMatch(p -> dtm.getTypeName().startsWith(p))
-        ).toList();
-        log.debug("createDetails mirrors filtered");
+    public void setDiagram(Diagram diagram) {
+        this.currentDiagram = diagram;
+        refreshDetails();
+    }
 
-        Map<DomainType, ? extends List<? extends DomainTypeMirror>> typeMirrorsGroupedByDomainMirrorType =
-            domainTypeMirrors
-                .stream()
-                .filter(dtm -> {
-                    Set<String> filteredPackageNames = diagram.getDomainModelVisibility()
-                        .getExplicitlyIncludedPackagesNames();
+    private void refreshDetails() {
+        removeAll();
+        if(currentDiagram != null) {
+            var domainTypeMirrors = sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(currentDiagram.getProject().getId());
 
-                    if(filteredPackageNames == null || filteredPackageNames.isEmpty()) return true;
+            log.debug("refreshDetails DiagramVisibilityComponent started");
+            List<DomainTypeMirror> directlyContained = domainTypeMirrors.stream().filter(dtm ->
+                    currentDiagram.getDomainModelVisibility()
+                            .getExplicitlyIncludedPackagesNames()
+                            .stream()
+                            .anyMatch(p -> dtm.getTypeName().startsWith(p))
+            ).toList();
+            log.debug("createDetails mirrors filtered");
 
-                    return directlyContained.contains(dtm);
-                })
-                .collect(groupingBy(DomainTypeMirror::getDomainType));
-        log.debug("createDetails mirrors grouped");
-        for (DomainType type : domainTypeOrdered()) {
-            List<? extends DomainTypeMirror> mirrors = filterConcreteMirrorsInterfaceAvailable(
-                typeMirrorsGroupedByDomainMirrorType.get(type));
+            Map<DomainType, ? extends List<? extends DomainTypeMirror>> typeMirrorsGroupedByDomainMirrorType =
+                    domainTypeMirrors
+                            .stream()
+                            .filter(dtm -> {
+                                Set<String> filteredPackageNames = currentDiagram.getDomainModelVisibility()
+                                        .getExplicitlyIncludedPackagesNames();
 
-            if (!mirrors.isEmpty()) {
-                Details details = createAndGetDetailsLayoutForDomainType(type, mirrors);
-                add(details);
+                                if (filteredPackageNames == null || filteredPackageNames.isEmpty()) return true;
+
+                                return directlyContained.contains(dtm);
+                            })
+                            .collect(groupingBy(DomainTypeMirror::getDomainType));
+            log.debug("createDetails mirrors grouped");
+            for (DomainType type : domainTypeOrdered()) {
+                List<? extends DomainTypeMirror> mirrors = filterConcreteMirrorsInterfaceAvailable(
+                        currentDiagram,
+                        typeMirrorsGroupedByDomainMirrorType.get(type)
+                );
+
+                if (!mirrors.isEmpty()) {
+                    Details details = createAndGetDetailsLayoutForDomainType(type, mirrors);
+                    add(details);
+                }
             }
         }
         log.debug("createDetails DiagramVisibilityComponent finished");
@@ -149,142 +160,132 @@ public class DiagramVisibilityComponent extends Div {
         blendingLayout.setOpened(false);
 
         if (domainTypeOrdered().contains(type) && !DomainType.ENUM.equals(type)) {
-            Checkbox visible = createAndGetDomainTypeVisibilityCheckbox(mirror, VisibilityFilterType.VISIBLE);
+            Checkbox visible = createAndGetDomainTypeVisibilityCheckbox(mirror);
             blendingLayout.add(visible);
             if(!DomainType.VALUE_OBJECT.equals(type) && !DomainType.ENTITY.equals(type)) {
-                Checkbox includeConnections = createAndGetDomainTypeVisibilityCheckbox(mirror, VisibilityFilterType.INCLUDE_CONNECTED);
-                blendingLayout.add(includeConnections);
-                Checkbox includeConnectionsIn = createAndGetDomainTypeVisibilityCheckbox(mirror, VisibilityFilterType.INCLUDE_CONNECTED_INGOING);
-                blendingLayout.add(includeConnectionsIn);
-                Checkbox includeConnectionsOut = createAndGetDomainTypeVisibilityCheckbox(mirror, VisibilityFilterType.INCLUDE_CONNECTED_OUTGOING);
-                blendingLayout.add(includeConnectionsOut);
-                Checkbox excludeConnectionsIn = createAndGetDomainTypeVisibilityCheckbox(mirror, VisibilityFilterType.EXCLUDE_CONNECTED_INGOING);
-                blendingLayout.add(excludeConnectionsIn);
-                Checkbox excludeConnectionsOut = createAndGetDomainTypeVisibilityCheckbox(mirror, VisibilityFilterType.EXCLUDE_CONNECTED_OUTGOING);
-                blendingLayout.add(excludeConnectionsOut);
+                RadioButtonGroup<VisibilityFilterType> radioGroup = new RadioButtonGroup<>();
+                radioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
+                radioGroup.setLabel("Trimming");
+                radioGroup.setItems(
+                        VisibilityFilterType.NO_TRIMMING,
+                        VisibilityFilterType.INCLUDE_CONNECTED,
+                        VisibilityFilterType.INCLUDE_CONNECTED_INGOING,
+                        VisibilityFilterType.INCLUDE_CONNECTED_OUTGOING,
+                        VisibilityFilterType.EXCLUDE_CONNECTED_INGOING,
+                        VisibilityFilterType.EXCLUDE_CONNECTED_OUTGOING
+                );
+                radioGroup.setItemLabelGenerator((ItemLabelGenerator<VisibilityFilterType>) item -> item.label);
+                radioGroup.setValue(calculateRadioValue(mirror));
+                radioGroup.addValueChangeListener(event -> {
+                    mirrorVisibilityChanged(mirror, event.getValue());
+                });
+                blendingLayout.add(radioGroup);
             }
+
         }
         typeMirrorVisibilityLayout.add(typeMirrorNameLabel);
         typeMirrorVisibilityLayout.add(blendingLayout);
         return typeMirrorVisibilityLayout;
     }
 
-    private Checkbox createAndGetDomainTypeVisibilityCheckbox(DomainTypeMirror mirror, VisibilityFilterType filterType) {
-        Checkbox visible = new Checkbox(filterType.label);
-
-        switch (filterType) {
-            case VISIBLE -> {
-                if (!diagram.getDomainModelVisibility().getBlacklistedClassNames().contains(
-                        mirror.getTypeName())) {
-                    visible.setValue(true);
-                }
-            }
-            case INCLUDE_CONNECTED -> {
-                if (diagram.getDomainModelVisibility().getIncludeConnectedToClassNames().contains(
-                        mirror.getTypeName())) {
-                    visible.setValue(true);
-                }
-            }
-            case INCLUDE_CONNECTED_INGOING -> {
-                if (diagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames().contains(
-                        mirror.getTypeName())) {
-                    visible.setValue(true);
-                }
-            }
-            case INCLUDE_CONNECTED_OUTGOING -> {
-                if (diagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames().contains(
-                        mirror.getTypeName())) {
-                    visible.setValue(true);
-                }
-            }
-            case EXCLUDE_CONNECTED_INGOING -> {
-                if (diagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames().contains(
-                        mirror.getTypeName())) {
-                    visible.setValue(true);
-                }
-            }
-            case EXCLUDE_CONNECTED_OUTGOING -> {
-                if (diagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames().contains(
-                        mirror.getTypeName())) {
-                    visible.setValue(true);
-                }
-            }
+    private VisibilityFilterType calculateRadioValue(DomainTypeMirror mirror) {
+        if(currentDiagram.getDomainModelVisibility().getIncludeConnectedToClassNames().contains(mirror.getTypeName())){
+            return VisibilityFilterType.INCLUDE_CONNECTED;
         }
+        if(currentDiagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames().contains(mirror.getTypeName())){
+            return VisibilityFilterType.INCLUDE_CONNECTED_INGOING;
+        }
+        if(currentDiagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames().contains(mirror.getTypeName())){
+            return VisibilityFilterType.INCLUDE_CONNECTED_OUTGOING;
+        }
+        if(currentDiagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames().contains(mirror.getTypeName())){
+            return VisibilityFilterType.EXCLUDE_CONNECTED_INGOING;
+        }
+        if(currentDiagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames().contains(mirror.getTypeName())){
+            return VisibilityFilterType.EXCLUDE_CONNECTED_OUTGOING;
+        }
+        return VisibilityFilterType.NO_TRIMMING;
+    }
 
-        visible.addClickListener(e -> mirrorVisibilityChanged(mirror, filterType));
+    private Checkbox createAndGetDomainTypeVisibilityCheckbox(DomainTypeMirror mirror) {
+        Checkbox visible = new Checkbox(VisibilityFilterType.VISIBLE.label);
+        if (!currentDiagram.getDomainModelVisibility().getBlacklistedClassNames().contains(
+                mirror.getTypeName())) {
+            visible.setValue(true);
+        }
+        visible.addClickListener(e -> mirrorVisibilityChanged(mirror, VisibilityFilterType.VISIBLE));
         return visible;
     }
 
     private void mirrorVisibilityChanged(DomainTypeMirror mirror, VisibilityFilterType filterType) {
         String typeName = mirror.getTypeName();
-        DomainModelVisibility visibility = diagram.getDomainModelVisibility();
+        DomainModelVisibility visibility = currentDiagram.getDomainModelVisibility();
 
         switch (filterType) {
             case VISIBLE -> {
-                boolean wasActivated = diagram.getDomainModelVisibility().getBlacklistedClassNames().contains(typeName);
-                Set<String> classNames = new HashSet<>(visibility.getBlacklistedClassNames());
+                boolean wasActivated = visibility.getBlacklistedClassNames().contains(typeName);
+                var newBlacklistedClassNames = new HashSet<>(visibility.getBlacklistedClassNames());
                 if(wasActivated) {
-                    classNames.remove(typeName);
+                    newBlacklistedClassNames.remove(typeName);
                 }else{
-                    classNames.add(typeName);
+                    newBlacklistedClassNames.add(typeName);
                 }
-                diagram.setDomainModelVisibility(visibility.replaceBlacklistedClassNames(classNames));
+                visibility = visibility.replaceBlacklistedClassNames(newBlacklistedClassNames);
             }
             case INCLUDE_CONNECTED -> {
-                boolean wasActivated = diagram.getDomainModelVisibility().getIncludeConnectedToClassNames().contains(typeName);
-                Set<String> classNames = new HashSet<>(visibility.getIncludeConnectedToClassNames());
-                if(wasActivated) {
-                    classNames.remove(typeName);
-                }else{
-                    classNames.add(typeName);
-                }
-                diagram.setDomainModelVisibility(visibility.replaceIncludeConnectedToClassNames(classNames));
+                visibility = removeFromVisibilityAndAdd(typeName, visibility, VisibilityFilterType.INCLUDE_CONNECTED);
             }
             case INCLUDE_CONNECTED_INGOING -> {
-                boolean wasActivated = diagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames().contains(typeName);
-                Set<String> classNames = new HashSet<>(visibility.getIncludeConnectedToIngoingClassNames());
-                if(wasActivated) {
-                    classNames.remove(typeName);
-                }else{
-                    classNames.add(typeName);
-                }
-                diagram.setDomainModelVisibility(visibility.replaceIncludeConnectedToIngoingClassNames(classNames));
+                visibility = removeFromVisibilityAndAdd(typeName, visibility, VisibilityFilterType.INCLUDE_CONNECTED_INGOING);
             }
             case INCLUDE_CONNECTED_OUTGOING -> {
-                boolean wasActivated = diagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames().contains(typeName);
-                Set<String> classNames = new HashSet<>(visibility.getIncludeConnectedToOutgoingClassNames());
-                if(wasActivated) {
-                    classNames.remove(typeName);
-                }else{
-                    classNames.add(typeName);
-                }
-                diagram.setDomainModelVisibility(visibility.replaceIncludeConnectedToOutgoingClassNames(classNames));
+                visibility = removeFromVisibilityAndAdd(typeName, visibility, VisibilityFilterType.INCLUDE_CONNECTED_OUTGOING);
             }
             case EXCLUDE_CONNECTED_INGOING -> {
-                boolean wasActivated = diagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames().contains(typeName);
-                Set<String> classNames = new HashSet<>(visibility.getExcludeConnectedToIngoingClassNames());
-                if(wasActivated) {
-                    classNames.remove(typeName);
-                }else{
-                    classNames.add(typeName);
-                }
-                diagram.setDomainModelVisibility(visibility.replaceExcludeConnectedToIngoingClassNames(classNames));
+                visibility = removeFromVisibilityAndAdd(typeName, visibility, VisibilityFilterType.EXCLUDE_CONNECTED_INGOING);
             }
             case EXCLUDE_CONNECTED_OUTGOING -> {
-                boolean wasActivated = diagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames().contains(typeName);
-                Set<String> classNames = new HashSet<>(visibility.getExcludeConnectedToOutgoingClassNames());
-                if(wasActivated) {
-                    classNames.remove(typeName);
-                }else{
-                    classNames.add(typeName);
-                }
-                diagram.setDomainModelVisibility(visibility.replaceExcludeConnectedToOutgoingClassNames(classNames));
+                visibility = removeFromVisibilityAndAdd(typeName, visibility, VisibilityFilterType.EXCLUDE_CONNECTED_OUTGOING);
+            }
+            case NO_TRIMMING -> {
+                visibility = removeFromVisibilityAndAdd(typeName, visibility, VisibilityFilterType.NO_TRIMMING);
             }
         }
+        currentDiagram.setDomainModelVisibility(visibility);
+        currentDiagram = diagramService.updateModelAndImage(currentDiagram);
+        globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(currentDiagram, this));
+    }
 
-        diagramService.update(diagram, project);
-        ComponentUtil.fireEvent(
-            UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+    private DomainModelVisibility removeFromVisibilityAndAdd(String typeName, DomainModelVisibility visibility, VisibilityFilterType addType){
+        var newConnected = new HashSet<>(visibility.getIncludeConnectedToClassNames());
+        newConnected.remove(typeName);
+
+        var newIncludeIngoing = new HashSet<>(visibility.getIncludeConnectedToIngoingClassNames());
+        newIncludeIngoing.remove(typeName);
+
+        var newIncludeOutgoing = new HashSet<>(visibility.getIncludeConnectedToOutgoingClassNames());
+        newIncludeOutgoing.remove(typeName);
+
+        var newExcludeIngoing = new HashSet<>(visibility.getExcludeConnectedToIngoingClassNames());
+        newExcludeIngoing.remove(typeName);
+
+        var newExcludeOutgoing = new HashSet<>(visibility.getExcludeConnectedToOutgoingClassNames());
+        newExcludeOutgoing.remove(typeName);
+
+        switch (addType) {
+            case INCLUDE_CONNECTED -> newConnected.add(typeName);
+            case INCLUDE_CONNECTED_INGOING -> newIncludeIngoing.add(typeName);
+            case INCLUDE_CONNECTED_OUTGOING -> newIncludeOutgoing.add(typeName);
+            case EXCLUDE_CONNECTED_INGOING -> newExcludeIngoing.add(typeName);
+            case EXCLUDE_CONNECTED_OUTGOING -> newExcludeOutgoing.add(typeName);
+        }
+
+        visibility = visibility.replaceIncludeConnectedToClassNames(newConnected);
+        visibility = visibility.replaceIncludeConnectedToIngoingClassNames(newIncludeIngoing);
+        visibility = visibility.replaceIncludeConnectedToOutgoingClassNames(newIncludeOutgoing);
+        visibility = visibility.replaceExcludeConnectedToIngoingClassNames(newExcludeIngoing);
+        visibility = visibility.replaceExcludeConnectedToOutgoingClassNames(newExcludeOutgoing);
+        return visibility;
     }
 
     private String shortClassName(String fullClassName) {
@@ -331,7 +332,9 @@ public class DiagramVisibilityComponent extends Div {
         return list;
     }
 
-    private List<? extends DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(List<? extends DomainTypeMirror> mirrors) {
+    private List<? extends DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(
+            Diagram diagram,
+            List<? extends DomainTypeMirror> mirrors) {
         List<DomainTypeMirror> domainTypeMirrors = new ArrayList<>();
 
         if (mirrors != null && mirrors.size() > 0) {
@@ -371,7 +374,8 @@ public class DiagramVisibilityComponent extends Div {
         INCLUDE_CONNECTED_INGOING ("include ingoing connections"),
         INCLUDE_CONNECTED_OUTGOING("include outgoing connections"),
         EXCLUDE_CONNECTED_INGOING("exclude ingoing connections"),
-        EXCLUDE_CONNECTED_OUTGOING("exclude outgoing connections");
+        EXCLUDE_CONNECTED_OUTGOING("exclude outgoing connections"),
+        NO_TRIMMING("no trimming");
 
         final String label;
 
@@ -379,4 +383,5 @@ public class DiagramVisibilityComponent extends Div {
             this.label = label;
         }
     }
+
 }

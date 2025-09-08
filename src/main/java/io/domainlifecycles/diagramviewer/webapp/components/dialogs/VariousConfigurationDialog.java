@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -10,25 +10,32 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycler;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalEventListener;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 
 public class VariousConfigurationDialog extends Dialog {
 
-    private final Diagram diagram;
-    private final Project project;
+    private Diagram diagram;
+
     private final DiagramService diagramService;
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
 
-    public VariousConfigurationDialog(Diagram diagram, Project project, DiagramService diagramService) {
+    private final GlobalUIEventBus globalUIEventBus;
+
+    private void refreshDiagram(Diagram diagram){
         this.diagram = diagram;
-        this.project = project;
+        diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
+    }
+
+    public VariousConfigurationDialog(DiagramService diagramService, GlobalUIEventBus globalUIEventBus) {
         this.diagramService = diagramService;
+        this.globalUIEventBus = globalUIEventBus;
         this.diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Various");
@@ -38,7 +45,7 @@ public class VariousConfigurationDialog extends Dialog {
         add(createDialogLayout());
 
         addOpenedChangeListener(e -> {
-            if(e.isOpened()) {
+            if(e.isOpened() && diagram != null) {
                 diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
             }
         });
@@ -52,8 +59,8 @@ public class VariousConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
-            diagramService.update(diagram, project);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+            diagram = diagramService.updateModelAndImage(diagram);
+            globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram,this));
             close();
         });
 
@@ -93,5 +100,25 @@ public class VariousConfigurationDialog extends Dialog {
         diagramConfigurationBinder.forField(acyclerSelect).bind(DiagramStylingConfiguration::getAcycler, DiagramStylingConfiguration::setAcycler);
 
         return formLayout;
+    }
+
+    private GlobalEventListener<DiagramForDiagramViewChangedEvent> globalEventListener;
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        globalEventListener = new GlobalEventListener<>(this, DiagramForDiagramViewChangedEvent.class) {
+            @Override
+            public void onEvent(DiagramForDiagramViewChangedEvent event) {
+                refreshDiagram(event.getDiagram());
+            }
+        };
+        globalUIEventBus.register(globalEventListener);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        globalUIEventBus.unregister(globalEventListener);
     }
 }

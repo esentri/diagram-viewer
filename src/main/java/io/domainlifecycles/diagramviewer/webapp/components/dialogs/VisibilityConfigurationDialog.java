@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
@@ -13,17 +13,18 @@ import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalEventListener;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 
 public class VisibilityConfigurationDialog extends Dialog {
 
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
     private final Binder<DomainModelVisibility> domainModelVisibilityBinder;
     private final DiagramService diagramService;
-    private final Project project;
-    private final Diagram diagram;
+    private final GlobalUIEventBus globalUIEventBus;
+    private Diagram diagram;
 
     private Checkbox showAllFieldsCheckbox;
     private Checkbox showAllMethodsCheckbox;
@@ -56,11 +57,9 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showAggregateFieldsCheckbox;
     private Checkbox showAggregateMethodsCheckbox;
 
-
-    public VisibilityConfigurationDialog(DiagramService diagramService, Project project, Diagram diagram) {
+    public VisibilityConfigurationDialog(DiagramService diagramService, GlobalUIEventBus globalUIEventBus) {
         this.diagramService = diagramService;
-        this.project = project;
-        this.diagram = diagram;
+        this.globalUIEventBus = globalUIEventBus;
         diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
         domainModelVisibilityBinder = new Binder<>(DomainModelVisibility.class);
 
@@ -71,7 +70,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         add(createDialogLayout());
 
         addOpenedChangeListener(e -> {
-            if(e.isOpened()) {
+            if(e.isOpened() && diagram != null) {
                 diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
                 domainModelVisibilityBinder.readBean(diagram.getDomainModelVisibility());
             }
@@ -87,13 +86,19 @@ public class VisibilityConfigurationDialog extends Dialog {
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             domainModelVisibilityBinder.writeBeanIfValid(diagram.getDomainModelVisibility());
-            diagramService.update(diagram, project);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+            diagram = diagramService.updateModelAndImage(diagram);
+            globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram,this));
             close();
         });
 
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         return saveButton;
+    }
+
+    private void refreshDiagram(Diagram diagram){
+        this.diagram = diagram;
+        diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
+        domainModelVisibilityBinder.readBean(diagram.getDomainModelVisibility());
     }
 
     private Button createCancelButton() {
@@ -454,4 +459,25 @@ public class VisibilityConfigurationDialog extends Dialog {
         showOutboundServiceMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showUnspecifiedServiceKindMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
     }
+
+    private GlobalEventListener<DiagramForDiagramViewChangedEvent> globalEventListener;
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        globalEventListener = new GlobalEventListener<>(this, DiagramForDiagramViewChangedEvent.class) {
+            @Override
+            public void onEvent(DiagramForDiagramViewChangedEvent event) {
+                refreshDiagram(event.getDiagram());
+            }
+        };
+        globalUIEventBus.register(globalEventListener);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        globalUIEventBus.unregister(globalEventListener);
+    }
+
 }

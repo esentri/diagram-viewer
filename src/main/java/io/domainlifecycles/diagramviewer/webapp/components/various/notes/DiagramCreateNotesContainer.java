@@ -1,6 +1,8 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.notes;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -10,40 +12,48 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 public class DiagramCreateNotesContainer extends VerticalLayout {
 
     private final static double STRING_LENGTH_TO_REM_FACTOR = 0.6;
 
-    private final List<DomainTypeMirror> domainTypeMirrors;
-    private final Diagram diagram;
+
     private final DiagramTypeNoteService diagramTypeNoteService;
+    private final SessionStorage sessionStorage;
     private final Binder<TypeNotes> binder;
+    private ComboBox<DomainTypeMirror> domainTypeComboBox;
 
     private TypeNotes typeNotes;
     private Button saveButton;
+    private Registration registrationDomainType;
 
-    public DiagramCreateNotesContainer(List<DomainTypeMirror> domainTypeMirrors, DiagramTypeNoteService diagramTypeNoteService, Diagram diagram) {
-        this.domainTypeMirrors = domainTypeMirrors;
-        this.diagram = diagram;
+    private Diagram diagram;
+
+    public DiagramCreateNotesContainer(
+            DiagramTypeNoteService diagramTypeNoteService,
+            SessionStorage sessionStorage
+    ) {
         this.diagramTypeNoteService = diagramTypeNoteService;
+        this.sessionStorage = sessionStorage;
         this.binder = new Binder<>();
 
         setPadding(false);
@@ -51,6 +61,20 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
 
         add(getButtonLayout(), createFormLayout());
         binder.addStatusChangeListener(event -> saveButton.setEnabled(binder.isValid()));
+    }
+
+    public void switchDiagram(Diagram diagram) {
+        this.diagram = diagram;
+        Set<DomainTypeMirror> allDomainTypeMirrorsInIncludedPackages = getAllDomainTypeMirrorsInIncludedPackages(
+                sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(diagram.getProject().getId()),
+                diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames()
+        );
+        int longestDomainTypeMirrorNameLength = allDomainTypeMirrorsInIncludedPackages.stream()
+                .map(DomainTypeMirror::getTypeName)
+                .max(Comparator.comparingInt(String::length))
+                .orElse("").length();
+        domainTypeComboBox.setItems(allDomainTypeMirrorsInIncludedPackages);
+        getStyle().set("--vaadin-combo-box-overlay-width", longestDomainTypeMirrorNameLength * STRING_LENGTH_TO_REM_FACTOR + "rem");
     }
 
     private FormLayout createFormLayout() {
@@ -70,17 +94,11 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
         binder.forField(typeNotesTextArea)
             .bind(TypeNotes::getNotes, TypeNotes::setNotes);
 
-        Set<DomainTypeMirror> allDomainTypeMirrorsInIncludedPackages = getAllDomainTypeMirrorsInIncludedPackages(domainTypeMirrors, diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames());
-        int longestDomainTypeMirrorNameLength = allDomainTypeMirrorsInIncludedPackages.stream()
-            .map(DomainTypeMirror::getTypeName)
-            .max(Comparator.comparingInt(String::length))
-            .orElse("").length();
+        domainTypeComboBox = new ComboBox<>();
 
-        ComboBox<DomainTypeMirror> domainTypeComboBox = new ComboBox<>();
-        domainTypeComboBox.setItems(allDomainTypeMirrorsInIncludedPackages);
         domainTypeComboBox.setItemLabelGenerator(DomainTypeMirror::getTypeName);
         domainTypeComboBox.setWidthFull();
-        getStyle().set("--vaadin-combo-box-overlay-width", longestDomainTypeMirrorNameLength * STRING_LENGTH_TO_REM_FACTOR + "rem");
+
         domainTypeComboBox.addValueChangeListener(e -> {
             DomainTypeMirror selectedDomainTypeMirror = e.getValue();
             String notes = diagramTypeNoteService.getNotes(diagram, selectedDomainTypeMirror);
@@ -129,9 +147,14 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
         return buttonLayout;
     }
 
-    public void setSelectedTypeMirrorName(String typeMirrorName) {
-        DomainTypeMirror foundDomainTypeMirrorByName = domainTypeMirrors.stream().filter(
-            domainTypeMirror -> Objects.equals(domainTypeMirror.getTypeName(), typeMirrorName)).findFirst().orElse(null);
+    private void setSelectedTypeMirrorName(String typeMirrorName) {
+
+        DomainTypeMirror foundDomainTypeMirrorByName = sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(
+                diagram.getProject().getId()
+            )
+            .stream()
+            .filter(domainTypeMirror -> Objects.equals(domainTypeMirror.getTypeName(), typeMirrorName))
+            .findFirst().orElse(null);
         this.typeNotes = new TypeNotes(diagramTypeNoteService.getNotes(diagram, foundDomainTypeMirrorByName), foundDomainTypeMirrorByName);
         binder.readBean(typeNotes);
     }
@@ -143,4 +166,22 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
         private String notes;
         private DomainTypeMirror selectedTypeMirror;
     }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        registrationDomainType =
+                ComponentUtil.addListener(
+                        UI.getCurrent(),
+                        DiagramTypeNotesChangedEvent.class,
+                        event ->  setSelectedTypeMirrorName(event.getTypeMirrorName())
+                );
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        registrationDomainType.remove();
+    }
+
 }

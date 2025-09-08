@@ -1,23 +1,20 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageMultiSelectComboBox;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -30,10 +27,11 @@ public class DiagramFilterComponent extends Div {
     public static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
 
     private final SessionStorage sessionStorage;
-    private final Diagram diagram;
-    private final Project project;
     private final DiagramService diagramService;
-    private final List<DomainTypeMirror> domainTypeMirrors;
+    private Diagram currentDiagram;
+    private final GlobalUIEventBus globalUIEventBus;
+
+
 
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnected;
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnectedIngoing;
@@ -43,90 +41,126 @@ public class DiagramFilterComponent extends Div {
     private MultiSelectComboBox<DomainTypeMirror> comboBoxInvisibleDomainObjects;
 
     public DiagramFilterComponent(
+            GlobalUIEventBus globalUIEventBus,
             SessionStorage sessionStorage,
-            Diagram diagram,
-            Project project,
-            List<DomainTypeMirror> domainTypeMirrors,
             DiagramService diagramService) {
         this.sessionStorage = sessionStorage;
-        this.diagram = diagram;
-        this.project = project;
         this.diagramService = diagramService;
-        this.domainTypeMirrors = domainTypeMirrors;
-
+        this.globalUIEventBus = globalUIEventBus;
         setWidthFull();
-        createDetails();
     }
 
-    private void createDetails() {
-        log.debug("createDetails DiagramVisibilityComponent started");
-        Details packageDetails = new Details("Explicitly included packages");
-        packageDetails.setWidthFull();
-        packageDetails.setOpened(sessionStorage.isPackageFilterOpen());
-
-        MultiSelectComboBox<String> packageMultiSelectComboBox =
-            new PackageMultiSelectComboBox(domainTypeMirrors, diagram);
-        packageMultiSelectComboBox.addValueChangeListener(e -> {
-            diagram.setDomainModelVisibility(diagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
-            diagramService.update(diagram, project);
-            ComponentUtil.fireEvent(
-                UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
-        });
-
-        packageDetails.add(packageMultiSelectComboBox);
-        packageDetails.addOpenedChangeListener(e -> sessionStorage.setPackageFilterOpen(e.isOpened()));
-
-        Details advancedFilterDetails = new Details("Advanced diagram trimming");
-        advancedFilterDetails.setWidthFull();
-        advancedFilterDetails.setOpened(sessionStorage.isAdvancedTrimmingOpen());
-        advancedFilterDetails.addOpenedChangeListener(e -> sessionStorage.setAdvancedTrimmingOpen(e.isOpened()));
-
-        List<DomainTypeMirror> items = filterConcreteMirrorsInterfaceAvailable();
-
-        comboBoxConnected = createAndConfigureComboBox("Include Connections to:", items,
-            diagram.getDomainModelVisibility().getIncludeConnectedToClassNames(), Collections.emptySet());
-        advancedFilterDetails.add(comboBoxConnected);
-
-        comboBoxConnectedIngoing = createAndConfigureComboBox("Include ingoing connections to:", items,
-            diagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames(),
-            diagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames());
-        advancedFilterDetails.add(comboBoxConnectedIngoing);
-
-        comboBoxConnectedOutgoing = createAndConfigureComboBox("Include outgoing connections from:", items,
-            diagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames(),
-            diagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames());
-        advancedFilterDetails.add(comboBoxConnectedOutgoing);
-
-        comboBoxConnectedExcludeIngoing = createAndConfigureComboBox("Exclude ingoing connections to:", items,
-            diagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames(),
-            diagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames());
-        advancedFilterDetails.add(comboBoxConnectedExcludeIngoing);
-
-        comboBoxConnectedExcludeOutgoing = createAndConfigureComboBox("Exclude outgoing connections from:", items,
-            diagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames(),
-            diagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames());
-        advancedFilterDetails.add(comboBoxConnectedExcludeOutgoing);
-
-        comboBoxInvisibleDomainObjects = createAndConfigureComboBox("Invisible domain objects:", items,
-            diagram.getDomainModelVisibility().getBlacklistedClassNames(), Collections.emptySet());
-        advancedFilterDetails.add(comboBoxInvisibleDomainObjects);
-
-        add(packageDetails);
-        add(advancedFilterDetails);
-        log.debug("createDetails DiagramVisibilityComponent finished");
+    public void setDiagram(Diagram diagram) {
+        this.currentDiagram = diagram;
+        refreshDetails();
     }
 
-    private MultiSelectComboBox<DomainTypeMirror> createAndConfigureComboBox(String label, List<DomainTypeMirror> items, Set<String> classNames, Set<String> complementaryClassNames) {
-        HashSet<DomainTypeMirror> complementDomainTypeMirrors = new HashSet<>(items);
-        complementDomainTypeMirrors.removeIf(
-            typeMirror -> complementaryClassNames.contains(typeMirror.getTypeName()));
+    private void refreshDetails() {
+        removeAll();
+        if(this.currentDiagram != null) {
+            var domainTypeMirrors = sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(currentDiagram.getProject().getId());
+            log.debug("refreshDetails DiagramVisibilityComponent started");
+            Details packageDetails = new Details("Explicitly included packages");
+            packageDetails.setWidthFull();
+            packageDetails.setOpened(sessionStorage.isPackageFilterOpen());
 
-        MultiSelectComboBox<DomainTypeMirror> multiSelectComboBox = new MultiSelectComboBox<>(label);
+            MultiSelectComboBox<String> packageMultiSelectComboBox =
+                    new PackageMultiSelectComboBox(domainTypeMirrors, currentDiagram);
+            packageMultiSelectComboBox.addValueChangeListener(e -> {
+                currentDiagram.setDomainModelVisibility(currentDiagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
+                var newDiagram = diagramService.updateModelAndImage(currentDiagram);
+                globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(newDiagram, this));
+            });
+
+            packageDetails.add(packageMultiSelectComboBox);
+            packageDetails.addOpenedChangeListener(e -> sessionStorage.setPackageFilterOpen(e.isOpened()));
+
+            Details advancedFilterDetails = new Details("Advanced diagram trimming");
+            advancedFilterDetails.setWidthFull();
+            advancedFilterDetails.setOpened(sessionStorage.isAdvancedTrimmingOpen());
+            advancedFilterDetails.addOpenedChangeListener(e -> sessionStorage.setAdvancedTrimmingOpen(e.isOpened()));
+
+            List<DomainTypeMirror> items = filterConcreteMirrorsInterfaceAvailable(currentDiagram, domainTypeMirrors);
+
+            comboBoxConnected = createAndConfigureComboBox(
+                    ComboBoxVisibilityType.INCLUDE_CONNECTED,
+                    items
+            );
+            advancedFilterDetails.add(comboBoxConnected);
+
+            comboBoxConnectedIngoing = createAndConfigureComboBox(
+                    ComboBoxVisibilityType.INCLUDE_CONNECTED_INGOING,
+                    items
+            );
+            advancedFilterDetails.add(comboBoxConnectedIngoing);
+
+            comboBoxConnectedOutgoing = createAndConfigureComboBox(
+                    ComboBoxVisibilityType.INCLUDE_CONNECTED_OUTGOING,
+                    items
+            );
+            advancedFilterDetails.add(comboBoxConnectedOutgoing);
+
+            comboBoxConnectedExcludeIngoing = createAndConfigureComboBox(
+                    ComboBoxVisibilityType.EXCLUDE_CONNECTED_INGOING,
+                    items
+            );
+            advancedFilterDetails.add(comboBoxConnectedExcludeIngoing);
+
+            comboBoxConnectedExcludeOutgoing = createAndConfigureComboBox(
+                    ComboBoxVisibilityType.EXCLUDE_CONNECTED_OUTGOING,
+                    items
+            );
+            advancedFilterDetails.add(comboBoxConnectedExcludeOutgoing);
+
+            comboBoxInvisibleDomainObjects = createAndConfigureComboBox(
+                    ComboBoxVisibilityType.INVISIBLE,
+                    items
+            );
+            advancedFilterDetails.add(comboBoxInvisibleDomainObjects);
+
+            add(packageDetails);
+            add(advancedFilterDetails);
+            log.debug("refreshDetails DiagramVisibilityComponent finished");
+        }
+    }
+
+    private MultiSelectComboBox<DomainTypeMirror> createAndConfigureComboBox(
+            ComboBoxVisibilityType comboBoxVisibilityType,
+            List<DomainTypeMirror> items
+    ) {
+        Set<String> selectedAnyWhere = new HashSet<>();
+        if(!comboBoxVisibilityType.equals(ComboBoxVisibilityType.INVISIBLE)) {
+            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getIncludeConnectedToClassNames());
+            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames());
+            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames());
+            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames());
+            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames());
+
+        }
+        Set<String> unavailable = new HashSet<>(selectedAnyWhere);
+        var selectedClassNames = switch (comboBoxVisibilityType){
+            case INCLUDE_CONNECTED -> currentDiagram.getDomainModelVisibility().getIncludeConnectedToClassNames();
+            case INCLUDE_CONNECTED_INGOING ->  currentDiagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames();
+            case INCLUDE_CONNECTED_OUTGOING ->   currentDiagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames();
+            case EXCLUDE_CONNECTED_INGOING ->   currentDiagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames();
+            case EXCLUDE_CONNECTED_OUTGOING ->   currentDiagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames();
+            case INVISIBLE -> currentDiagram.getDomainModelVisibility().getBlacklistedClassNames();
+        };
+        unavailable.removeAll(selectedClassNames);
+
+        var itemsRemovedUnavailable = items.stream()
+                .filter(it -> !unavailable.contains(it.getTypeName()))
+                .toList();
+
+        MultiSelectComboBox<DomainTypeMirror> multiSelectComboBox = new MultiSelectComboBox<>(comboBoxVisibilityType.label);
         multiSelectComboBox.setWidthFull();
-        multiSelectComboBox.setItems(complementDomainTypeMirrors);
+        multiSelectComboBox.setItems(itemsRemovedUnavailable);
         multiSelectComboBox.setItemLabelGenerator(this::name);
-        multiSelectComboBox.select(selected(classNames));
+
+        var selected = selected(items, selectedClassNames);
+        multiSelectComboBox.select(selected);
         multiSelectComboBox.addValueChangeListener(e -> regenerateDiagram(
+            currentDiagram,
             comboBoxConnected.getSelectedItems(),
             comboBoxConnectedIngoing.getSelectedItems(),
             comboBoxConnectedOutgoing.getSelectedItems(),
@@ -143,13 +177,14 @@ public class DiagramFilterComponent extends Div {
                 + " <" + translateDomainType(mirror.getDomainType())+">";
     }
 
-    private DomainTypeMirror[] selected(Set<String> typeNames){
-        return filterConcreteMirrorsInterfaceAvailable().stream()
+    private DomainTypeMirror[] selected(List<DomainTypeMirror> typeMirrors, Set<String> typeNames){
+        return typeMirrors.stream()
                 .filter(dt -> typeNames.contains(dt.getTypeName()))
                 .toArray(DomainTypeMirror[]::new);
     }
 
     private void regenerateDiagram(
+            Diagram diagram,
             Set<DomainTypeMirror> domainTypeMirrorsConnected,
             Set<DomainTypeMirror> domainTypeMirrorsConnectedIngoing,
             Set<DomainTypeMirror> domainTypeMirrorsConnectedOutgoing,
@@ -178,31 +213,31 @@ public class DiagramFilterComponent extends Div {
         );
 
         diagram.setDomainModelVisibility(newVisibility);
-        diagramService.update(diagram, project);
-        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+        diagram = diagramService.updateModelAndImage(diagram);
+        globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram, this));
     }
 
-    private List<DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable() {
+    private List<DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {
         List<DomainTypeMirror> domainTypeMirrorsFiltered = new ArrayList<>();
 
         if (domainTypeMirrors != null && domainTypeMirrors.size() > 0) {
             List<String> mirroredTypeNames = domainTypeMirrors.stream()
-                    .map(DomainTypeMirror::getTypeName)
-                    .filter(typeName -> !typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
+                .map(DomainTypeMirror::getTypeName)
+                .filter(typeName -> !typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
             domainTypeMirrorsFiltered.addAll(
-                    domainTypeMirrors
-                            .stream()
-                            .filter(type ->
-                                    diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()
-                                            || diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream()
-                                            .anyMatch(p -> type.getTypeName().startsWith(p)))
-                            .filter(m -> !m.getTypeName().startsWith(DOMAINLIFECYCLES_PACKAGE_NAME))
-                            .filter(m ->
-                                    !m.getDomainType().equals(DomainType.ENUM) &&
-                                            !m.getDomainType().equals(DomainType.IDENTITY)
-                                    && !m.getDomainType().equals(DomainType.VALUE_OBJECT)
-                            )
-                            .toList()
+                domainTypeMirrors
+                    .stream()
+                    .filter(type ->
+                        diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()
+                            || diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream()
+                            .anyMatch(p -> type.getTypeName().startsWith(p)))
+                    .filter(m -> !m.getTypeName().startsWith(DOMAINLIFECYCLES_PACKAGE_NAME))
+                    .filter(m ->
+                        !m.getDomainType().equals(DomainType.ENUM) &&
+                                !m.getDomainType().equals(DomainType.IDENTITY)
+                        && !m.getDomainType().equals(DomainType.VALUE_OBJECT)
+                    )
+                    .toList()
             );
 
             if(!diagram.getDiagramStylingConfiguration().isShowAllInheritanceStructures()){
@@ -246,4 +281,20 @@ public class DiagramFilterComponent extends Div {
             default -> "Object";
         };
     }
+
+    private enum ComboBoxVisibilityType {
+        INCLUDE_CONNECTED("Include Connections to:"),
+        INCLUDE_CONNECTED_INGOING ("Include ingoing connections to:"),
+        INCLUDE_CONNECTED_OUTGOING("Include outgoing connections from:"),
+        EXCLUDE_CONNECTED_INGOING("Exclude ingoing connections to:"),
+        EXCLUDE_CONNECTED_OUTGOING("Exclude outgoing connections from:"),
+        INVISIBLE("Invisible domain objects:");
+
+        final String label;
+
+        ComboBoxVisibilityType(String label) {
+            this.label = label;
+        }
+    }
+
 }

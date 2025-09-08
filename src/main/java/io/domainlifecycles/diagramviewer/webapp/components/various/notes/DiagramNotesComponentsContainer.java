@@ -3,6 +3,7 @@ package io.domainlifecycles.diagramviewer.webapp.components.various.notes;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -11,75 +12,81 @@ import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
-import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import java.util.List;
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 
 public class DiagramNotesComponentsContainer extends VerticalLayout {
 
-    private final Diagram diagram;
-    private final List<DomainTypeMirror> domainTypeMirrors;
-    private final DiagramTypeNoteService diagramTypeNoteService;
     private final DiagramViewNotesContainer notesViewContainer;
     private final DiagramCreateNotesContainer diagramCreateNotesContainer;
     private final Button addNotesButton;
+    private Diagram currentDiagram;
+    private Registration registrationDomainType;
 
-    private boolean isInViewMode;
-    private Button saveButton;
-    private Registration registration;
+    private boolean isInViewMode = false;
 
-    public DiagramNotesComponentsContainer(Diagram diagram, List<DomainTypeMirror> allDomainTypeMirrors, DiagramTypeNoteService diagramTypeNoteService) {
+    public DiagramNotesComponentsContainer(
+            DiagramTypeNoteService diagramTypeNoteService,
+            SessionStorage sessionStorage
+    ) {
         setPadding(false);
         setMargin(false);
         getStyle().set("overflow-x", "hidden");
 
-        this.isInViewMode = true;
-        this.diagram = diagram;
-        this.domainTypeMirrors = allDomainTypeMirrors;
-        this.diagramTypeNoteService = diagramTypeNoteService;
-
         addNotesButton = getAddNotesButton();
         add(addNotesButton);
-
-        notesViewContainer = new DiagramViewNotesContainer(diagram, diagramTypeNoteService);
-        diagramCreateNotesContainer = new DiagramCreateNotesContainer(domainTypeMirrors, diagramTypeNoteService, diagram);
-
+        diagramCreateNotesContainer = new DiagramCreateNotesContainer(diagramTypeNoteService, sessionStorage);
+        add(diagramCreateNotesContainer);
+        notesViewContainer = new DiagramViewNotesContainer(diagramTypeNoteService);
         add(notesViewContainer);
+        switchNotesView();
     }
 
     private Button getAddNotesButton() {
         Button addNotesButton = new Button("Add", new Icon(VaadinIcon.PLUS));
-        addNotesButton.addClickListener(e -> switchNotesView(null));
+        addNotesButton.addClickListener(e -> switchNotesView());
         return addNotesButton;
     }
 
-    private void switchNotesView(String typeMirrorName) {
-        this.removeAll();
-        if(isInViewMode) {
-            add(diagramCreateNotesContainer);
-            diagramCreateNotesContainer.setSelectedTypeMirrorName(typeMirrorName);
-        }
-        else {
-            add(addNotesButton);
-            add(notesViewContainer);
-            notesViewContainer.refreshNotes();
-        }
+    private void switchNotesView() {
         isInViewMode = !isInViewMode;
+        this.diagramCreateNotesContainer.setVisible(!isInViewMode);
+        this.addNotesButton.setVisible(isInViewMode);
+        this.notesViewContainer.setVisible(isInViewMode);
+        if(currentDiagram!=null) {
+            if (isInViewMode) {
+                this.notesViewContainer.refreshNotes(currentDiagram);
+            } else {
+                this.diagramCreateNotesContainer.switchDiagram(currentDiagram);
+            }
+        }
+    }
+
+    public void setDiagram(Diagram diagram) {
+        currentDiagram = diagram;
+        diagramCreateNotesContainer.switchDiagram(diagram);
+        notesViewContainer.refreshNotes(diagram);
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        registration =
-            ComponentUtil.addListener(
-                attachEvent.getUI(),
-                DiagramTypeNotesChangedEvent.class,
-                event ->  switchNotesView(event.getTypeMirrorName())
-            );
+        registrationDomainType =
+                ComponentUtil.addListener(
+                    UI.getCurrent(),
+                    DiagramTypeNotesChangedEvent.class,
+                    event ->  {
+                        if(event.getTypeMirrorName() == null){
+                            switchNotesView();
+                        }
+                    }
+                );
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         super.onDetach(detachEvent);
-        registration.remove();
+        registrationDomainType.remove();
     }
+
+
 }

@@ -3,19 +3,31 @@ package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
-import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import java.util.List;
 
 public class DiagramVisibilityComponentsContainer extends VerticalLayout {
 
-    public DiagramVisibilityComponentsContainer(SessionStorage sessionStorage, Project project, Diagram diagram, List<DomainTypeMirror> domainTypeMirrors,
-                                                DiagramService diagramService) {
+    private DiagramFilterComponent diagramFilterComponent;
+    private DiagramVisibilityComponent diagramVisibilityComponent;
+
+    public DiagramVisibilityComponentsContainer(
+            GlobalUIEventBus globalUIEventBus,
+            SessionStorage sessionStorage,
+            DiagramService diagramService
+    ) {
+
         setWidthFull();
-        add(new DiagramFilterComponent(sessionStorage, diagram, project, domainTypeMirrors, diagramService),
+        this.diagramFilterComponent = new DiagramFilterComponent(globalUIEventBus, sessionStorage, diagramService);
+        this.diagramVisibilityComponent = new DiagramVisibilityComponent(globalUIEventBus, sessionStorage, diagramService);
+        add(this.diagramFilterComponent,
             new Hr(),
-            new DiagramVisibilityComponent(sessionStorage, project, diagram, domainTypeMirrors, diagramService));
+            this.diagramVisibilityComponent);
+    }
+
+    public void setDiagram(Diagram diagram) {
+        this.diagramVisibilityComponent.setDiagram(diagram);
+        this.diagramFilterComponent.setDiagram(diagram);
     }
 }
