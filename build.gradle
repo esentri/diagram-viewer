@@ -64,10 +64,9 @@ dependencies {
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
 	implementation "io.domainlifecycles:diagram-viewer-plugin:1.0"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
-	/*if(isInternal){
+	if(isInternal){
 		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.0")
-	}*/
-	implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.0")
+	}
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
