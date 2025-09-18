@@ -21,8 +21,7 @@ ext {
 	javaDockerVersion = "3.4.0"
 	dlcVersion = "2.4.1"
 	classGraphVersion = "4.8.163"
-	isInternal = System.getenv('BUILD_PROFILE') == 'INTERNAL'
-	println("Build Profile: ${System.getenv('BUILD_PROFILE')}")
+	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
 }
 
 java {
