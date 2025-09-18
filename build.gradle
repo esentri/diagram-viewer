@@ -22,6 +22,7 @@ ext {
 	dlcVersion = "2.4.1"
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('BUILD_PROFILE') == 'INTERNAL'
+	println("Build Profile: ${System.getenv('BUILD_PROFILE')}")
 }
 
 java {
@@ -65,6 +66,7 @@ dependencies {
 	implementation "io.domainlifecycles:diagram-viewer-plugin:1.0"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	if(isInternal){
+		println "INTERNAL PROFILE ACTIVE"
 		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.0")
 	}
 	compileOnly 'org.projectlombok:lombok'

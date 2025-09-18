@@ -73,7 +73,8 @@ pipelines:
           script:
             - ls -R ~/.m2/repository/io/domainlifecycles
             - export TESTCONTAINERS_RYUK_DISABLED=true
-            - gradle clean build -Pvaadin.productionMode -DBUILD_PROFILE=$BUILD_PROFILE
+            - export BUILD_PROFILE=$BUILD_PROFILE
+            - gradle clean build -Pvaadin.productionMode
             - zip -r application.zip .platform
             - zip -j application.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
           after-script:
