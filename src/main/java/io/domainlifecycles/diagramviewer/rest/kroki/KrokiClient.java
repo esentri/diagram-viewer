@@ -38,7 +38,7 @@ public class KrokiClient {
 
         HttpRequest request = HttpRequest.newBuilder().version(HttpClient.Version.HTTP_1_1)
             .uri(URI.create(krokiContainerUrl + path))
-            .header("Accept", "text/plain")
+            .header("Content-Type", "text/plain")
             .timeout(Duration.ofSeconds(10))
             .POST(BodyPublishers.ofString(rawInputDiagramContent))
             .build();
