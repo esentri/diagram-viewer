@@ -39,6 +39,7 @@ import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -176,15 +177,14 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
         UI.getCurrent().getPage().fetchCurrentURL(url ->
             copyDiagramLinkButton.addClickListener(e -> {
-                String baseUrlWithTailingSlash = url.toString();
-                baseUrlWithTailingSlash = baseUrlWithTailingSlash.replace("?continue", "");
-                String baseUrl = baseUrlWithTailingSlash.substring(0, baseUrlWithTailingSlash.length() - 1);
-                String diagramUrl = baseUrl + ResourceController.RESOURCES_API_PATH +
+                String baseUrl = url.getProtocol() + "://" + url.getAuthority();
+                String externalDiagramUrl = baseUrl + ResourceController.RESOURCES_API_PATH +
                     ResourceController.VIEW_API_PATH_SUFFIX + "/" + project.getId() + "/" + diagram.getFileName();
-                UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0);", diagramUrl);
+
+                UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0);", externalDiagramUrl);
 
                 Notification.show("Diagram link has been copied to clipboard. Note: To successfully access the " +
-                    "resource, make sure you add your API-Key to the 'X-API-Key' header in your HTTP request.");
+                    "resource, make sure you add your API-Key to the 'X-API-KEY' header in your HTTP request.");
             }));
 
         return copyDiagramLinkButton;
