@@ -1,8 +1,9 @@
-package io.domainlifecycles.diagramviewer.service;
+package io.domainlifecycles.diagramviewer.service.registereduser;
 
 import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
 import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
+import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
 import java.util.HashSet;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
