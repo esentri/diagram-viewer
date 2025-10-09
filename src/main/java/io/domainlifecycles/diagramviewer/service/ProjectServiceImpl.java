@@ -76,7 +76,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public Project getByName(final String projectName) {
         return repository.findByName(buildCleanProjectName(projectName))
-            .orElseThrow(() -> DiagramViewerException.fail(String.format("No project found with name: %s",
+            .orElseThrow(() -> DiagramViewerException.fail(String.format("No project found with name: '%s'",
                 projectName)));
     }
 
@@ -91,11 +91,11 @@ public class ProjectServiceImpl implements ProjectService {
     public Project create(String projectName, Set<String> domainModelPackages, RegisteredUser registeredUser, Path pathToFile, UploadFileType uploadFileType) {
         final Project mappedProject = saveWithNameExistsCheck(mapProject(projectName, registeredUser));
         sessionStorage.createOrUpdate(mappedProject, domainModelPackages, pathToFile, uploadFileType);
-        return repository.save(mappedProject);
+        return mappedProject;
     }
 
     @Override
-    public Project save(String projectName, DomainMirror domainMirror) {
+    public void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror) {
 
         Optional<Project> foundProject = repository.findByName(buildCleanProjectName(projectName));
 
@@ -103,20 +103,19 @@ public class ProjectServiceImpl implements ProjectService {
             Project project = foundProject.get();
             RegisteredUser registeredUser = (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             if (!project.getAssignedRegisteredUsers().contains(registeredUser)) {
-                throw new IllegalStateException(String.format("User has no access to project '%s'", project.getName()));
+                throw DiagramViewerException.fail(String.format("User has no access to project '%s'", project.getName()));
             }
 
             project.setChangedAt(Instant.now());
-            Project persistedProject = repository.save(project);
+            repository.save(project);
             sessionStorage.createOrUpdate(project, domainMirror);
-            return persistedProject;
+            return;
         }
 
         Project project = mapProject(projectName,
             (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         Project persistedProject = repository.save(project);
         sessionStorage.createOrUpdate(persistedProject, domainMirror);
-        return persistedProject;
     }
 
     @Override

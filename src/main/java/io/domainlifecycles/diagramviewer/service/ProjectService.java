@@ -61,7 +61,7 @@ public interface ProjectService {
      * @return the saved {@link Project} entity
      */
     @Transactional
-    Project save(String projectName, DomainMirror domainMirror);
+    void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror);
 
     /**
      * Renames the specified project with a new name.

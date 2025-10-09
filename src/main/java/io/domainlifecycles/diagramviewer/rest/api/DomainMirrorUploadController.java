@@ -25,7 +25,7 @@ public class DomainMirrorUploadController {
     public ResponseEntity<String> createOrUpdateDomainModel(
         @PathVariable String projectName, @RequestBody DomainMirror domainMirror) {
 
-        projectService.save(projectName, domainMirror);
+        projectService.createOrUpdateDomainModel(projectName, domainMirror);
         return ResponseEntity.ok().build();
     }
 }
