@@ -281,7 +281,7 @@ public class DiagramVisibilityComponent extends Div {
             }
         }
 
-        diagramService.update(diagram, project);
+        diagramService.updateAndRegenerate(diagram, project);
         ComponentUtil.fireEvent(
             UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
     }

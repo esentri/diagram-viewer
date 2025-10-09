@@ -15,7 +15,7 @@ public interface DiagramService {
 
     Diagram update(Diagram diagram);
 
-    Diagram update(Diagram diagram, Project project);
+    Diagram updateAndRegenerate(Diagram diagram, Project project);
 
     Diagram rename(Diagram diagram, Project project, String fileName);
 

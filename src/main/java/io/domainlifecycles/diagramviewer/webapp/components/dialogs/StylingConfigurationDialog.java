@@ -62,7 +62,7 @@ public class StylingConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             binder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
-            diagramService.update(diagram, project);
+            diagramService.updateAndRegenerate(diagram, project);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });

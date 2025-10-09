@@ -53,43 +53,43 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram update(Diagram diagram) {
-        return insert(diagram);
+        return saveWithNameChecks(diagram);
     }
 
     @Override
-    public Diagram update(Diagram diagram, Project project) {
-        final Diagram updatedDiagram = insert(diagram);
+    public Diagram updateAndRegenerate(Diagram diagram, Project project) {
+        final Diagram updatedDiagram = update(diagram);
         createAndSaveDiagramToFilesystem(project, updatedDiagram);
 
         return updatedDiagram;
     }
 
     @Override
-    public Diagram rename(Diagram diagram, Project project, String fileName) {
+    public Diagram rename(Diagram diagram, Project project, String newName) {
         Path diagramPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getFileName());
-        String newFilenameWithSuffix = fileName + diagram.getFileType().getFileSuffix();
+        String newFilenameWithSuffix = newName + diagram.getFileType().getFileSuffix();
         FileIOUtils.renameFile(diagramPath, newFilenameWithSuffix);
 
         diagram.setFileName(newFilenameWithSuffix);
-        return update(diagram, project);
+        return updateAndRegenerate(diagram, project);
     }
 
     @Override
     public Diagram create(Project project,
-                          String fileName,
+                          String name,
                           FileType fileType,
                           DomainModelVisibility visibility,
                           DiagramStylingConfiguration diagramStylingConfiguration) {
 
         Diagram diagram = Diagram.builder()
-            .fileName(fileName + fileType.getFileSuffix())
+            .fileName(name + fileType.getFileSuffix())
             .fileType(fileType)
             .domainModelVisibility(visibility)
             .diagramStylingConfiguration(diagramStylingConfiguration)
             .project(project)
             .build();
 
-        final Diagram persistedDiagram = insert(diagram);
+        final Diagram persistedDiagram = saveWithNameChecks(diagram);
         createAndSaveDiagramToFilesystem(project, persistedDiagram);
 
         project.addDiagram(diagram);
@@ -103,13 +103,14 @@ public class DiagramServiceImpl implements DiagramService {
         createAndSaveDiagramToFilesystem(diagram.getProject(), diagram, domainMirror);
     }
 
-    private Diagram insert(Diagram diagram) {
+    private Diagram saveWithNameChecks(Diagram diagram) {
         final String fileName = diagram.getFileName();
 
         if(diagramWithNameExists(diagram) && diagramNameHasChanged(diagram)) {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
                 fileName));
         }
+
         return repository.save(diagram);
     }
 

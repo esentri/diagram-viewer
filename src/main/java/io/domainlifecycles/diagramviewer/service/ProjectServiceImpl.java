@@ -89,7 +89,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project create(String projectName, Set<String> domainModelPackages, RegisteredUser registeredUser, Path pathToFile, UploadFileType uploadFileType) {
-        final Project mappedProject = insertWithExistsCheck(mapProject(projectName, registeredUser));
+        final Project mappedProject = saveWithNameExistsCheck(mapProject(projectName, registeredUser));
         sessionStorage.createOrUpdate(mappedProject, domainModelPackages, pathToFile, uploadFileType);
         return repository.save(mappedProject);
     }
@@ -101,7 +101,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         if (foundProject.isPresent()) {
             Project project = foundProject.get();
-            var registeredUser = (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            RegisteredUser registeredUser = (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             if (!project.getAssignedRegisteredUsers().contains(registeredUser)) {
                 throw new IllegalStateException(String.format("User has no access to project '%s'", project.getName()));
             }
@@ -123,10 +123,10 @@ public class ProjectServiceImpl implements ProjectService {
     public Project rename(Project project, RegisteredUser registeredUser, String newName) {
         checkIsProjectCreator(project, registeredUser);
         project.setName(buildCleanProjectName(newName));
-        return insertWithExistsCheck(project);
+        return saveWithNameExistsCheck(project);
     }
 
-    private Project insertWithExistsCheck(Project project) {
+    private Project saveWithNameExistsCheck(Project project) {
         String projectName = project.getName();
         Optional<Project> fetchedProject = repository.findByName(projectName);
 

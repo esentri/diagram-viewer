@@ -87,7 +87,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             domainModelVisibilityBinder.writeBeanIfValid(diagram.getDomainModelVisibility());
-            diagramService.update(diagram, project);
+            diagramService.updateAndRegenerate(diagram, project);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });

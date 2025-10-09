@@ -67,7 +67,7 @@ public class DiagramFilterComponent extends Div {
             new PackageMultiSelectComboBox(domainTypeMirrors, diagram);
         packageMultiSelectComboBox.addValueChangeListener(e -> {
             diagram.setDomainModelVisibility(diagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
-            diagramService.update(diagram, project);
+            diagramService.updateAndRegenerate(diagram, project);
             ComponentUtil.fireEvent(
                 UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
         });
@@ -177,7 +177,7 @@ public class DiagramFilterComponent extends Div {
         );
 
         diagram.setDomainModelVisibility(newVisibility);
-        diagramService.update(diagram, project);
+        diagramService.updateAndRegenerate(diagram, project);
         ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
     }
 
