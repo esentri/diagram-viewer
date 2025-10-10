@@ -16,7 +16,6 @@ import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -160,7 +159,7 @@ public class MainLayout extends AppLayout {
             apiKeyLayout.add(copyApiKeyButton);
         } else {
             Button generateApiKeyButton = new Button("Generate API-Key", e -> {
-                registeredUserService.generateApiKeyForUser(registeredUser);
+                registeredUserService.generateAndSaveApiKey(registeredUser);
                 refreshPopover();
             });
 

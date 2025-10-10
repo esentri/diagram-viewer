@@ -39,5 +39,5 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
                 """,
         nativeQuery = true
     )
-    List<String> findProjectDomainTypesWithOutEnumsAndIds(@Param("id") UUID projectId);
+    List<String> findProjectDomainTypesWithoutEnumsAndIds(@Param("id") UUID projectId);
 }

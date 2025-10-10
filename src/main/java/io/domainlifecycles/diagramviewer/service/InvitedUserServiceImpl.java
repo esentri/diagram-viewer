@@ -4,6 +4,7 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import java.util.HashSet;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +23,8 @@ public class InvitedUserServiceImpl implements InvitedUserService {
 
     @Override
     public InvitedUser getOrCreate(String userEmailAddress) {
-        if(userKnown(userEmailAddress)) return get(userEmailAddress);
+        Optional<InvitedUser> foundInvitedUser = repository.findByEmailAddress(userEmailAddress);
+        if(foundInvitedUser.isPresent()) return foundInvitedUser.get();
 
         InvitedUser invitedUser = InvitedUser.builder()
             .emailAddress(userEmailAddress)

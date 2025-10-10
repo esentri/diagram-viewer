@@ -44,7 +44,7 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
     }
 
     @Override
-    public void generateApiKeyForUser(RegisteredUser registeredUser) {
+    public void generateAndSaveApiKey(RegisteredUser registeredUser) {
         registeredUser.setApiKey(UUID.randomUUID());
         repository.save(registeredUser);
     }

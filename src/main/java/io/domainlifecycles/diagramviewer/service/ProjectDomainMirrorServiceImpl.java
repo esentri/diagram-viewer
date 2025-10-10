@@ -38,7 +38,7 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
 
     @Override
     public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
-        return repository.findProjectDomainTypesWithOutEnumsAndIds(projectId)
+        return repository.findProjectDomainTypesWithoutEnumsAndIds(projectId)
                 .stream()
                 .map(m -> (DomainTypeMirror)serializer.deserializeTypeMirror(m))
                 .toList();
@@ -61,19 +61,19 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     @Override
     public ProjectDomainMirror createOrUpdate(Project project, DomainMirror domainMirror) {
         Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(project.getId());
+        ProjectDomainMirror projectDomainMirror;
 
         if(foundProjectDomainMirror.isPresent()) {
-            ProjectDomainMirror projectDomainMirror = foundProjectDomainMirror.get();
+            projectDomainMirror = foundProjectDomainMirror.get();
             projectDomainMirror.setDomainMirror(domainMirror);
-            ProjectDomainMirror persistedMirror = repository.save(projectDomainMirror);
             regenerateDiagramsJobService.create(project);
-            return persistedMirror;
         }
-
-        ProjectDomainMirror projectDomainMirror = ProjectDomainMirror.builder()
-            .projectId(project.getId())
-            .domainMirror(domainMirror)
-            .build();
+        else {
+            projectDomainMirror = ProjectDomainMirror.builder()
+                .projectId(project.getId())
+                .domainMirror(domainMirror)
+                .build();
+        }
 
         return repository.save(projectDomainMirror);
     }
