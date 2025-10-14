@@ -3,7 +3,7 @@ package io.domainlifecycles.diagramviewer.service;
 import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.repository.RegenerateDomainMirrorJobRepository;
+import io.domainlifecycles.diagramviewer.repository.RegenerateDiagramsJobRepository;
 import java.util.List;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
@@ -15,9 +15,9 @@ public class RegenerateDiagramsJobServiceImpl implements RegenerateDiagramsJobSe
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RegenerateDiagramsJobServiceImpl.class);
 
-    private final RegenerateDomainMirrorJobRepository repository;
+    private final RegenerateDiagramsJobRepository repository;
 
-    public RegenerateDiagramsJobServiceImpl(RegenerateDomainMirrorJobRepository repository) {
+    public RegenerateDiagramsJobServiceImpl(RegenerateDiagramsJobRepository repository) {
         this.repository = repository;
     }
 

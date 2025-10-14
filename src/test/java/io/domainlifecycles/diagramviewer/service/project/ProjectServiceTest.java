@@ -116,7 +116,6 @@ class ProjectServiceTest {
         String projectName = "projectName";
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getName()).thenReturn(projectName);
 
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
@@ -258,7 +257,6 @@ class ProjectServiceTest {
 
         String projectName = "projectName";
         Project projectMock = mock(Project.class);
-        when(projectMock.getName()).thenReturn(projectName);
         when(projectMock.getAssignedRegisteredUsers()).thenReturn(Set.of(registeredUserMock));
 
         DomainMirror domainMirrorMock = mock(DomainMirror.class);
@@ -445,8 +443,6 @@ class ProjectServiceTest {
 
         // given
         RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        String emailAddress = "max.mustermann@gmail.com";
-        when(registeredUserMock.getEmailAddress()).thenReturn(emailAddress);
 
         Project projectMock = mock(Project.class);
         when(projectMock.getCreator()).thenReturn(registeredUserMock);
@@ -463,15 +459,12 @@ class ProjectServiceTest {
 
         // given
         RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        String emailAddress = "max.mustermann@gmail.com";
-        when(registeredUserMock.getEmailAddress()).thenReturn(emailAddress);
 
         RegisteredUser anotherRegisteredUserMock = mock(RegisteredUser.class);
-        when(anotherRegisteredUserMock.getEmailAddress()).thenReturn("another.mail@gmail.com");
+        when(anotherRegisteredUserMock.getId()).thenReturn(new UUID(0, 0));
 
         Project projectMock = mock(Project.class);
         when(projectMock.getCreator()).thenReturn(anotherRegisteredUserMock);
-        when(projectMock.getAssignedRegisteredUsers()).thenReturn(Set.of(registeredUserMock, anotherRegisteredUserMock));
 
         doNothing().when(projectMock).unassignUser(eq(registeredUserMock));
         when(repository.save(eq(projectMock))).thenReturn(projectMock);

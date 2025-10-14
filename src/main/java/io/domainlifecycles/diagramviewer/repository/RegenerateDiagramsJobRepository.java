@@ -7,7 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RegenerateDomainMirrorJobRepository extends CrudRepository<RegenerateDiagramsJob, UUID> {
+public interface RegenerateDiagramsJobRepository extends CrudRepository<RegenerateDiagramsJob, UUID> {
 
     List<RegenerateDiagramsJob> findByDiagramId(UUID diagramId);
 }
