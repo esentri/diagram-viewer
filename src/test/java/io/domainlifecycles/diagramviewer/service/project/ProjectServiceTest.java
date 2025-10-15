@@ -31,6 +31,8 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,6 +46,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -107,6 +110,24 @@ class ProjectServiceTest {
         // then
         assertThat(result.toList().get(0)).isEqualTo(projectAssignedToRegisteredUserMock);
         verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    void Should_FindProjectById_When_ProjectIsPresent() {
+
+        // given
+        UUID projectId = UUID.randomUUID();
+        Project project = mock(Project.class);
+
+        when(repository.findById(projectId)).thenReturn(Optional.of(project));
+
+        // when
+        Optional<Project> result = projectService.findById(projectId);
+
+        // then
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isEqualTo(project);
+        verify(repository, times(1)).findById(projectId);
     }
 
     @Test
@@ -327,7 +348,7 @@ class ProjectServiceTest {
         // given
         RegisteredUser registeredUserMock = mock(RegisteredUser.class);
 
-        String projectName = "projectName";
+        String projectName = "testProjectName";
         Project projectMock = mock(Project.class);
         when(projectMock.getName()).thenReturn(projectName);
         when(projectMock.getCreator()).thenReturn(registeredUserMock);
@@ -335,11 +356,48 @@ class ProjectServiceTest {
         when(repository.findByName(eq(projectName))).thenReturn(Optional.empty());
 
         // when
-        projectService.rename(projectMock, registeredUserMock, "newProjectName");
+        projectService.rename(projectMock, registeredUserMock, "new-Project.Name");
 
         // then
         verify(repository, times(1)).findByName(eq(projectName));
-        verify(repository, times(1)).save(any(Project.class));
+        verify(projectMock, times(1)).setName("new_Project_Name");
+        verify(repository, times(1)).save(eq(projectMock));
+    }
+
+    @Test
+    void Should_ThrowDiagramViewerExceptionOnRenameProject_NameIsNull() {
+
+        // given
+        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+
+        Project projectMock = mock(Project.class);
+        when(projectMock.getCreator()).thenReturn(registeredUserMock);
+
+        // when
+        assertThatThrownBy(() -> projectService.rename(projectMock, registeredUserMock, null))
+            .isInstanceOf(DiagramViewerException.class)
+                .hasMessage("Project name may not be empty.");
+
+        // then
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void Should_ThrowDiagramViewerExceptionOnRenameProject_NameIsBlank() {
+
+        // given
+        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+
+        Project projectMock = mock(Project.class);
+        when(projectMock.getCreator()).thenReturn(registeredUserMock);
+
+        // when
+        assertThatThrownBy(() -> projectService.rename(projectMock, registeredUserMock, " "))
+            .isInstanceOf(DiagramViewerException.class)
+            .hasMessage("Project name may not be empty.");
+
+        // then
+        verify(repository, never()).save(any());
     }
 
     @Test
@@ -420,7 +478,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void Should_ThrowDiagramViewerExceptionOnAssignUser_When_UserIsAlreadyAssigned() {
+    void Should_ThrowDiagramViewerExceptionOnAssignUser_When_RegisteredUserIsAlreadyAssigned() {
 
         // given
         RegisteredUser registeredUserMock = mock(RegisteredUser.class);
@@ -432,6 +490,25 @@ class ProjectServiceTest {
 
         // when
         assertThatThrownBy(() -> projectService.assignUser(projectMock, registeredUserMock))
+            .hasMessage("User '" + emailAddress + "' is already assigned to project.");
+
+        // then
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void Should_ThrowDiagramViewerExceptionOnAssignUser_When_InvitedUserIsAlreadyAssigned() {
+
+        // given
+        InvitedUser invitedUserMock = mock(InvitedUser.class);
+        String emailAddress = "max.mustermann@gmail.com";
+        when(invitedUserMock.getEmailAddress()).thenReturn(emailAddress);
+
+        Project projectMock = mock(Project.class);
+        when(projectMock.getAssignedInvitedUsers()).thenReturn(Set.of(invitedUserMock));
+
+        // when
+        assertThatThrownBy(() -> projectService.assignUser(projectMock, invitedUserMock))
             .hasMessage("User '" + emailAddress + "' is already assigned to project.");
 
         // then
@@ -498,6 +575,27 @@ class ProjectServiceTest {
         verify(repository, times(1)).save(eq(projectMock));
         verify(invitedUserService, times(1)).checkForRemoval(eq(invitedUserMock));
         verify(invitedUserService, times(1)).delete(eq(invitedUserMock));
+    }
+
+    @Test
+    void Should_UnassignButNotDeleteUser_When_UserIsInvitedUserButAssignedToOtherProject() {
+
+        // given
+        InvitedUser invitedUserMock = mock(InvitedUser.class);
+
+        Project projectMock = mock(Project.class);
+
+        when(repository.save(eq(projectMock))).thenReturn(projectMock);
+        when(invitedUserService.checkForRemoval(eq(invitedUserMock))).thenReturn(false);
+
+        // when
+        projectService.unassignUser(projectMock, invitedUserMock);
+
+        // then
+        verify(projectMock, times(1)).unassignUser(eq(invitedUserMock));
+        verify(repository, times(1)).save(eq(projectMock));
+        verify(invitedUserService, times(1)).checkForRemoval(eq(invitedUserMock));
+        verify(invitedUserService, never()).delete(any());
     }
 
     @Test

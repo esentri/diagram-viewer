@@ -202,7 +202,7 @@ class ProjectService_ITest {
         // given
         Project project = setUpProject();
         Diagram diagram = Diagram.builder()
-            .fileName("diagram.svg")
+            .fileName("diagrams/diagram.svg")
             .fileType(FileType.SVG)
             .project(project)
             .build();

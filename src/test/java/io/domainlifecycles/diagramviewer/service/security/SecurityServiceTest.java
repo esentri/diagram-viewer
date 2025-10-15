@@ -224,6 +224,20 @@ class SecurityServiceTest {
     }
 
     @Test
+    void Should_HaveNoAccess_When_UserHasNullAssignedProjects() {
+
+        // given
+        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        when(registeredUserMock.getAssignedProjects()).thenReturn(null);
+
+        // when
+        boolean result = securityService.checkAccess("testProjectName", registeredUserMock);
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
     void Should_HaveNoAccess_When_UserIsNotAssignedToProject() {
 
         // given

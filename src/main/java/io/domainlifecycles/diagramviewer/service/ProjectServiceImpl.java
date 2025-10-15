@@ -213,8 +213,6 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private Project mapProject(String projectName, RegisteredUser registeredUser) {
-        checkProjectNameRequirements(projectName);
-
         return Project.builder()
             .name(buildCleanProjectName(projectName))
             .diagrams(new HashSet<>())
@@ -239,14 +237,10 @@ public class ProjectServiceImpl implements ProjectService {
                 ((RegisteredUser) user).getId(), registeredUser.getId()));
     }
 
-
-    private void checkProjectNameRequirements(String projectName) {
-        if (projectName == null || projectName.isBlank()) {
+    private String buildCleanProjectName(final String projectName) {
+        if(projectName == null || projectName.isBlank()) {
             throw DiagramViewerException.fail("Project name may not be empty.");
         }
-    }
-
-    private String buildCleanProjectName(final String projectName) {
-        return projectName == null || projectName.isBlank() ? projectName : projectName.replaceAll("[.-]", "_");
+        return projectName.replaceAll("[.-]", "_");
     }
 }

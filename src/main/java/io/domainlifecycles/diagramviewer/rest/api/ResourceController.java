@@ -37,7 +37,6 @@ public class ResourceController {
     public static final String DIAGRAM_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "diagramLastModified";
     public static final String STYLING_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "stylingLastModified";
 
-
     private final String diagramFolderLocation;
 
     public ResourceController(@Value("${diagrams.location}") String diagramFolderLocation) {
