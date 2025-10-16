@@ -5,6 +5,7 @@ import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,12 +18,7 @@ public class SQLDDLGeneratorConfig {
     @Bean
     public SQLDDLGeneratorService sqlddlGeneratorService() {
         var scannedService = scanSQLGeneratorImplementation();
-        if (scannedService == null){
-            return new NoOpSQLDDLGeneratorService();
-        }else{
-            return scannedService;
-        }
-
+        return Objects.requireNonNullElseGet(scannedService, NoOpSQLDDLGeneratorService::new);
     }
 
     private SQLDDLGeneratorService scanSQLGeneratorImplementation(){

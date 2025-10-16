@@ -56,7 +56,7 @@ class DomainMirrorUploadControllerTest {
 
         ObjectMapper mapper = new ObjectMapper();
         DomainSerializer serializer = new JacksonDomainSerializer(false);
-        String jsonObject = serializer.serialize(domainMirror); // returns JSON string
+        String jsonObject = serializer.serialize(domainMirror);
         String jsonBody = mapper.writeValueAsString(jsonObject);
 
         doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirror);
