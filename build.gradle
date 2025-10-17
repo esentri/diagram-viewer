@@ -88,8 +88,20 @@ tasks.named('test') {
 }
 
 test {
+	useJUnitPlatform()
 	finalizedBy jacocoTestReport
+	exclude '**/*_ITest.class'
 }
+
+tasks.register('integrationTest', Test) {
+	group = 'verification'
+	include '**/*_ITest.class'
+	maxParallelForks = 1
+	forkEvery = 1
+	jvmArgs '-Xmx1536m'
+	shouldRunAfter test
+}
+
 jacocoTestReport {
 	dependsOn test
 	reports {
