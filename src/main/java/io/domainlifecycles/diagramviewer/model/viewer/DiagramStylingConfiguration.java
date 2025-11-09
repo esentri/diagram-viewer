@@ -378,7 +378,7 @@ public class DiagramStylingConfiguration {
      */
     @Getter
     @Setter
-    @Builder.Default private boolean callApplicationServiceDriver = true;
+    @Builder.Default private boolean callApplicationServiceDriver = false;
 
     /**
      * Fields with named like elements of this black list are excluded

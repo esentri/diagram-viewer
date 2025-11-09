@@ -1,11 +1,13 @@
 package io.domainlifecycles.diagramviewer.service;
 
+import io.domainlifecycles.diagram.domain.notes.DomainClassNote;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
+import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
@@ -32,17 +34,20 @@ public class DiagramServiceImpl implements DiagramService {
     private final String diagramsLocation;
     private final SessionStorage sessionStorage;
     private final DiagramRepository repository;
+    private final DiagramTypeNoteRepository noteRepository;
     private final KrokiClient krokiClient;
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
         SessionStorage sessionStorage,
         DiagramRepository repository,
+        DiagramTypeNoteRepository noteRepository,
         KrokiClient krokiClient
     ) {
         this.diagramsLocation = diagramsLocation;
         this.sessionStorage = sessionStorage;
         this.repository = repository;
+        this.noteRepository = noteRepository;
         this.krokiClient = krokiClient;
     }
 
@@ -122,11 +127,16 @@ public class DiagramServiceImpl implements DiagramService {
     public void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram) {
 
         final String nomnoml;
+
+        var notes = noteRepository.findByDiagramId(diagram.getId());
+
         try {
             nomnoml = DiagrammerUtils.generateNomnoml(
                 domainMirror,
                 diagram.getDiagramStylingConfiguration(),
-                diagram.getDomainModelVisibility());
+                diagram.getDomainModelVisibility(),
+                notes
+            );
         } catch(IllegalStateException e) {
             throw DiagramViewerException.fail(e.getMessage(), e);
         }

@@ -54,3 +54,4 @@ index.html
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+/gradle.properties

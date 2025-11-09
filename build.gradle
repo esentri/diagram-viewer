@@ -11,7 +11,7 @@ version = '0.0.1-SNAPSHOT'
 ext {
 	set('vaadinVersion', "24.7.1")
 	javaDockerVersion = "3.4.0"
-	dlcVersion = "2.4.2rc"
+	dlcVersion = "2.5.0"
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('BUILD_PROFILE') == 'INTERNAL'
 }
@@ -50,11 +50,11 @@ dependencies {
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
 	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.0'
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
-	implementation "io.domainlifecycles:diagram-viewer-plugin:1.0"
+	implementation "io.domainlifecycles:diagram-viewer-plugin:1.1"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
-	if(isInternal){
-		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.0")
-	}
+	//if(isInternal){
+		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.1")
+	//}
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation ('org.springframework.boot:spring-boot-starter-test')

@@ -6,17 +6,27 @@ import io.domainlifecycles.diagram.domain.config.DomainDiagramConfig;
 import io.domainlifecycles.diagram.domain.config.GeneralVisualSettings;
 import io.domainlifecycles.diagram.domain.config.LayoutSettings;
 import io.domainlifecycles.diagram.domain.config.StyleSettings;
+import io.domainlifecycles.diagram.domain.notes.DomainClassNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import java.util.Collections;
+import java.util.List;
 
 public class DiagrammerUtils {
 
     public static String generateNomnoml(
             DomainMirror domainMirror,
             DiagramStylingConfiguration diagramStylingConfiguration,
-            DomainModelVisibility domainModelVisibility) {
+            DomainModelVisibility domainModelVisibility,
+            List<DiagramTypeNote> notes
+    ) {
+
+        var classNotes = notes
+                .stream()
+                .map(n -> new DomainClassNote(n.getDomainTypeMirrorName(), n.getNotes()))
+                .toList();
 
         DiagramTrimSettings trimSettings = DiagramTrimSettings.builder()
                 .withExplicitlyIncludedPackageNames(domainModelVisibility.getExplicitlyIncludedPackagesNames() == null ?
@@ -62,6 +72,7 @@ public class DiagrammerUtils {
                 .build();
 
         GeneralVisualSettings visualSettings = GeneralVisualSettings.builder()
+                .withShowNotes(true)
                 .withShowFields(diagramStylingConfiguration.isShowFields())
                 .withShowMethods(diagramStylingConfiguration.isShowMethods())
                 .withFieldStereotypes(diagramStylingConfiguration.isFieldStereotypes())
@@ -71,7 +82,7 @@ public class DiagrammerUtils {
                 .withShowAggregateFields(diagramStylingConfiguration.isShowAggregateFields())
                 .withShowAggregateMethods(diagramStylingConfiguration.isShowAggregateMethods())
                 .withMultiplicityInLabel(diagramStylingConfiguration.isMultiplicityInLabel())
-                .withCallApplicationServiceDriver(diagramStylingConfiguration.isCallApplicationServiceDriver())
+                .withCallApplicationServiceDriver(false)
                 .withShowAssertions(diagramStylingConfiguration.isShowAssertions())
                 .withShowApplicationServices(diagramStylingConfiguration.isShowApplicationServices())
                 .withShowApplicationServiceFields(diagramStylingConfiguration.isShowApplicationServiceFields())
@@ -120,7 +131,11 @@ public class DiagrammerUtils {
                 .withDiagramTrimSettings(trimSettings)
                 .build();
 
-        DomainDiagramGenerator generator = new DomainDiagramGenerator(diagramConfig, domainMirror);
+        DomainDiagramGenerator generator = new DomainDiagramGenerator(
+                diagramConfig,
+                domainMirror,
+                classNotes
+        );
         return generator.generateDiagramText();
     }
 }
