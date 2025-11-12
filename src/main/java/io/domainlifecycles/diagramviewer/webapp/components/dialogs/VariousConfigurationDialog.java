@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -15,9 +15,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycle
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
-import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalEventListener;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 
 public class VariousConfigurationDialog extends Dialog {
 
@@ -26,16 +24,13 @@ public class VariousConfigurationDialog extends Dialog {
     private final DiagramService diagramService;
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
 
-    private final GlobalUIEventBus globalUIEventBus;
-
-    private void refreshDiagram(Diagram diagram){
+    public void setDiagram(Diagram diagram){
         this.diagram = diagram;
         diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
     }
 
-    public VariousConfigurationDialog(DiagramService diagramService, GlobalUIEventBus globalUIEventBus) {
+    public VariousConfigurationDialog(DiagramService diagramService) {
         this.diagramService = diagramService;
-        this.globalUIEventBus = globalUIEventBus;
         this.diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Various");
@@ -60,7 +55,7 @@ public class VariousConfigurationDialog extends Dialog {
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             diagram = diagramService.updateModelAndImage(diagram);
-            globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram,this));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });
 
@@ -102,23 +97,4 @@ public class VariousConfigurationDialog extends Dialog {
         return formLayout;
     }
 
-    private GlobalEventListener<DiagramForDiagramViewChangedEvent> globalEventListener;
-
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        globalEventListener = new GlobalEventListener<>(this, DiagramForDiagramViewChangedEvent.class) {
-            @Override
-            public void onEvent(DiagramForDiagramViewChangedEvent event) {
-                refreshDiagram(event.getDiagram());
-            }
-        };
-        globalUIEventBus.register(globalEventListener);
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        super.onDetach(detachEvent);
-        globalUIEventBus.unregister(globalEventListener);
-    }
 }

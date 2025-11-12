@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
@@ -14,16 +14,14 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalEventListener;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+
 
 public class VisibilityConfigurationDialog extends Dialog {
 
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
     private final Binder<DomainModelVisibility> domainModelVisibilityBinder;
     private final DiagramService diagramService;
-    private final GlobalUIEventBus globalUIEventBus;
     private Diagram diagram;
 
     private Checkbox showAllFieldsCheckbox;
@@ -57,9 +55,8 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showAggregateFieldsCheckbox;
     private Checkbox showAggregateMethodsCheckbox;
 
-    public VisibilityConfigurationDialog(DiagramService diagramService, GlobalUIEventBus globalUIEventBus) {
+    public VisibilityConfigurationDialog(DiagramService diagramService) {
         this.diagramService = diagramService;
-        this.globalUIEventBus = globalUIEventBus;
         diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
         domainModelVisibilityBinder = new Binder<>(DomainModelVisibility.class);
 
@@ -86,8 +83,9 @@ public class VisibilityConfigurationDialog extends Dialog {
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             domainModelVisibilityBinder.writeBeanIfValid(diagram.getDomainModelVisibility());
+
             diagram = diagramService.updateModelAndImage(diagram);
-            globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram,this));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });
 
@@ -95,7 +93,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         return saveButton;
     }
 
-    private void refreshDiagram(Diagram diagram){
+    public void setDiagram(Diagram diagram){
         this.diagram = diagram;
         diagramConfigurationBinder.readBean(diagram.getDiagramStylingConfiguration());
         domainModelVisibilityBinder.readBean(diagram.getDomainModelVisibility());
@@ -459,25 +457,4 @@ public class VisibilityConfigurationDialog extends Dialog {
         showOutboundServiceMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showUnspecifiedServiceKindMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
     }
-
-    private GlobalEventListener<DiagramForDiagramViewChangedEvent> globalEventListener;
-
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        globalEventListener = new GlobalEventListener<>(this, DiagramForDiagramViewChangedEvent.class) {
-            @Override
-            public void onEvent(DiagramForDiagramViewChangedEvent event) {
-                refreshDiagram(event.getDiagram());
-            }
-        };
-        globalUIEventBus.register(globalEventListener);
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        super.onDetach(detachEvent);
-        globalUIEventBus.unregister(globalEventListener);
-    }
-
 }

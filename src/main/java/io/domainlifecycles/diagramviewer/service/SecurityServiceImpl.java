@@ -51,6 +51,10 @@ public class SecurityServiceImpl implements SecurityService {
             return registeredUserService.createUser(userEmailAddress, fullName);
         }
 
+        return transformInvitedUserToRegisteredUser(userEmailAddress, fullName);
+    }
+
+    private RegisteredUser transformInvitedUserToRegisteredUser(String userEmailAddress, String fullName) {
         final InvitedUser invitedUser = invitedUserService.get(userEmailAddress);
         List<Project> projectsWithUserAssigned = new ArrayList<>(invitedUser.getAssignedProjects());
 

@@ -36,9 +36,9 @@ public class KrokiClient {
     private byte[] convert(String rawInputDiagramContent, String path) {
         LOGGER.debug("Converting Nomnoml diagram to specified format via Kroki Docker container...");
 
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest request = HttpRequest.newBuilder().version(HttpClient.Version.HTTP_1_1)
             .uri(URI.create(krokiContainerUrl + path))
-            .header("Accept", "text/plain")
+            .header("Content-Type", "text/plain")
             .timeout(Duration.ofSeconds(10))
             .POST(BodyPublishers.ofString(rawInputDiagramContent))
             .build();

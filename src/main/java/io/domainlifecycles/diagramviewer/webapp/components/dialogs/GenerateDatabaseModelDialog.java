@@ -10,15 +10,13 @@ import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.streams.DownloadHandler;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.plugin.SQLDDLGeneratorService;
 import io.domainlifecycles.diagramviewer.plugin.SQLDialect;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.Data;
@@ -100,23 +98,23 @@ public class GenerateDatabaseModelDialog extends Dialog {
         generateButton = new Button("Download SQL-Script");
         generateButton.setEnabled(binder.isValid());
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        generateButton.getStyle().setCursor("pointer");
+
+        Anchor downloadSqlScriptAnchor = new Anchor((DownloadHandler) download -> {
+            binder.writeBeanIfValid(generateDatabaseModelOptions);
+            download.setFileName(buildScriptFilename());
+            download.setContentType(APPLICATION_SQL_MIME_TYPE);
+            download.getOutputStream().write(getSqlScriptFileContents());
+        }, "");
+
+        downloadSqlScriptAnchor.removeAll();
+        downloadSqlScriptAnchor.getElement().setAttribute("download", true);
+        downloadSqlScriptAnchor.getElement().setAttribute("hidden", true);
+        downloadSqlScriptAnchor.getStyle().setColor("white");
 
         generateButton.addClickListener(event -> {
-            binder.writeBeanIfValid(generateDatabaseModelOptions);
-            String scriptFilename = buildScriptFilename();
-            StreamResource streamResource = new StreamResource(scriptFilename, this::getStream);
-            streamResource.setContentType(APPLICATION_SQL_MIME_TYPE);
-            streamResource.setCacheTime(0);
-
-            Anchor tempLink = new Anchor(streamResource, "");
-            tempLink.removeAll();
-            tempLink.getElement().setAttribute("download", true);
-            tempLink.getElement().setAttribute("hidden", true);
-            tempLink.getStyle().setCursor("pointer");
-            tempLink.getStyle().setColor("white");
-
-            UI.getCurrent().getElement().appendChild(tempLink.getElement());
-            tempLink.getElement().callJsFunction("click");
+            UI.getCurrent().getElement().appendChild(downloadSqlScriptAnchor.getElement());
+            downloadSqlScriptAnchor.getElement().callJsFunction("click");
 
             close();
         });
@@ -132,7 +130,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
         return new Button("Close", e -> close());
     }
 
-    private InputStream getStream() {
+    private byte[] getSqlScriptFileContents() {
         final String ddl = sqlDDLGeneratorService.generateSQL(
             sessionStorage.getDomainMirror(project.getId()),
             generateDatabaseModelOptions.getSelectedAggregateRootMirror(),
@@ -141,7 +139,7 @@ public class GenerateDatabaseModelDialog extends Dialog {
             generateDatabaseModelOptions.getSchemaName()
         );
 
-        return new ByteArrayInputStream(ddl.getBytes(StandardCharsets.UTF_8));
+        return ddl.getBytes(StandardCharsets.UTF_8);
     }
 
     @Data

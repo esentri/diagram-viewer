@@ -5,6 +5,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.repository.ProjectDomainMirrorRepository;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -37,7 +38,7 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
 
     @Override
     public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
-        return repository.findProjectDomainTypesWithOutEnumsAndIds(projectId)
+        return repository.findProjectDomainTypesWithoutEnumsAndIds(projectId)
                 .stream()
                 .map(m -> (DomainTypeMirror)serializer.deserializeTypeMirror(m))
                 .toList();
@@ -52,28 +53,27 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     }
 
     @Override
-    public ProjectDomainMirror createOrUpdate(Project project, Path projectFilePath, Set<String> domainModelPackages) {
-        DomainMirror domainMirror = generateDomainMirror(domainModelPackages, projectFilePath);
+    public ProjectDomainMirror createOrUpdate(Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType) {
+        DomainMirror domainMirror = generateDomainMirror(pathToFile, domainModelPackages, uploadFileType);
         return createOrUpdate(project, domainMirror);
     }
 
     @Override
     public ProjectDomainMirror createOrUpdate(Project project, DomainMirror domainMirror) {
         Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(project.getId());
+        ProjectDomainMirror projectDomainMirror;
 
         if(foundProjectDomainMirror.isPresent()) {
-
-            ProjectDomainMirror projectDomainMirror = foundProjectDomainMirror.get();
+            projectDomainMirror = foundProjectDomainMirror.get();
             projectDomainMirror.setDomainMirror(domainMirror);
-            var mirror = repository.save(projectDomainMirror);
             regenerateDiagramsJobService.create(project);
-            return mirror;
         }
-
-        ProjectDomainMirror projectDomainMirror = ProjectDomainMirror.builder()
-            .projectId(project.getId())
-            .domainMirror(domainMirror)
-            .build();
+        else {
+            projectDomainMirror = ProjectDomainMirror.builder()
+                .projectId(project.getId())
+                .domainMirror(domainMirror)
+                .build();
+        }
 
         return repository.save(projectDomainMirror);
     }
@@ -84,11 +84,7 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
         repository.delete(projectDomainMirror);
     }
 
-    private DomainMirror generateDomainMirror(Set<String> domainModelPackages,
-                                              Path projectFilePath) {
-        return DomainModelUtils.initializeDomainMirrorFromJar(
-            projectFilePath,
-            domainModelPackages
-        );
+    private DomainMirror generateDomainMirror(Path pathToJarFile, Set<String> domainModelPackages, UploadFileType uploadFileType) {
+        return DomainModelUtils.initializeDomainMirrorFromFile(pathToJarFile, domainModelPackages, uploadFileType);
     }
 }

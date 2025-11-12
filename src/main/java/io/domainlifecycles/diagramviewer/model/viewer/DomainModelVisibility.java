@@ -1,10 +1,13 @@
 package io.domainlifecycles.diagramviewer.model.viewer;
 
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.HashSet;
@@ -38,18 +41,38 @@ public class DomainModelVisibility {
 
     @Getter
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_incl_ing", // short, unique table name
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "class_name")
     private Set<String> includeConnectedToIngoingClassNames;
 
     @Getter
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_incl_out",
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "class_name")
     private Set<String> includeConnectedToOutgoingClassNames;
 
     @Getter
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_excl_ing",
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "class_name")
     private Set<String> excludeConnectedToIngoingClassNames;
 
     @Getter
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_excl_out",
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "class_name")
     private Set<String> excludeConnectedToOutgoingClassNames;
 
     @Getter

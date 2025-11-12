@@ -1,44 +1,27 @@
 package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FileIOUtils {
 
-    public static Set<File> getFilesInDirectory(Path directory) {
-        File directoryFile = new File(directory.toUri());
-
-        if (!directoryFile.isDirectory() || directoryFile.listFiles() == null) {
-            return Collections.emptySet();
+    public static Path saveTemporaryFile(String fileName, byte[] fileContents) {
+        Path pathToFile;
+        try {
+            pathToFile = Files.createTempFile(
+                fileName.substring(0, fileName.lastIndexOf('.')),
+                fileName.substring(fileName.lastIndexOf('.')));
+            Files.write(pathToFile, fileContents);
+        } catch (IOException e) {
+            throw DiagramViewerException.fail("Could not save temporary .jar file.", e);
         }
-
-        return Stream.of(Objects.requireNonNull(directoryFile.listFiles()))
-            .filter(file -> !file.isDirectory())
-            .collect(Collectors.toSet());
-    }
-
-    public static Path saveFile(String locationPath, String filenameIncludingSuffix, InputStream inputStream) throws IOException {
-        final Path filePath = Path.of(locationPath, filenameIncludingSuffix);
-        saveFile(filePath, inputStream);
-        return filePath;
-    }
-
-    public static void saveFile(String path, InputStream inputStream) throws IOException {
-        final Path filePath = Path.of(path);
-        saveFile(filePath, inputStream);
+        return pathToFile;
     }
 
     public static void saveFile(Path path, InputStream inputStream) throws IOException {

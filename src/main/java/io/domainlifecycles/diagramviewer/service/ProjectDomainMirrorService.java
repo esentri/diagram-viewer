@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -18,7 +19,7 @@ public interface ProjectDomainMirrorService {
 
     List<AggregateRootMirror> getAllAggregateRootMirrors(final UUID projectId);
 
-    ProjectDomainMirror createOrUpdate(final Project project, Path projectFilePath, Set<String> domainModelPackages);
+    ProjectDomainMirror createOrUpdate(final Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType);
 
     ProjectDomainMirror createOrUpdate(final Project project, DomainMirror domainMirror);
 

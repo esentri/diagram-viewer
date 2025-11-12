@@ -13,14 +13,13 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.router.AfterNavigationEvent;
-import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.rest.api.ResourceController;
@@ -33,10 +32,8 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagram
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramVisibilityAndNotesComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalEventListener;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
@@ -52,7 +49,7 @@ import java.util.Objects;
 @PageTitle("DLC | Diagram Viewer")
 @PermitAll
 @Slf4j
-public class DiagramView extends FlexLayout implements BeforeEnterObserver, AfterNavigationObserver {
+public class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     public static final String DIAGRAM_NAME_ROUTE_PARAMETER = "diagramName";
 
@@ -62,7 +59,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
     private final DiagramTypeNoteService diagramTypeNoteService;
     private final SessionStorage sessionStorage;
     private final SecurityService securityService;
-    private final GlobalUIEventBus globalUIEventBus;
     private String projectName;
     private String diagramName;
     private Diagram diagram;
@@ -71,8 +67,11 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
     private FlexLayout diagramViewerAndStylingContainer;
     private DiagramZoomComponentContainer diagramZoomComponentContainer;
     private DiagramVisibilityAndNotesComponentsContainer diagramVisibilityAndNotesComponentsContainer;
+    private DiagramConfigurationButtonBarComponent diagramConfigurationButtonBarComponent;
     private HorizontalLayout buttonBar;
     private RenameDiagramDialog renameDiagramDialog;
+
+    private Registration registration;
 
     public DiagramView(
             @Value("${diagrams.location}") String diagramsLocation,
@@ -80,7 +79,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
             DiagramService diagramService,
             DiagramTypeNoteService diagramTypeNoteService,
             SessionStorage sessionStorage,
-            SecurityService securityService, GlobalUIEventBus globalUIEventBus) {
+            SecurityService securityService) {
 
         this.diagramsLocation = diagramsLocation;
         this.projectService = projectService;
@@ -88,7 +87,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
         this.diagramTypeNoteService = diagramTypeNoteService;
         this.sessionStorage = sessionStorage;
         this.securityService = securityService;
-        this.globalUIEventBus = globalUIEventBus;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
@@ -103,13 +101,11 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
         refreshPage();
     }
 
-    @Override
-    public void afterNavigation(AfterNavigationEvent event) {
-        globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram, this));
-    }
-
     private void refreshPage() {
         diagram = getDiagram();
+        diagramVisibilityAndNotesComponentsContainer.setDiagram(diagram);
+        renameDiagramDialog.setDiagram(diagram);
+        diagramConfigurationButtonBarComponent.setDiagram(diagram);
         log.debug("getDiagram finished");
         log.debug("Refreshing diagram view");
         refreshDiagramZoomComponentContainer(diagram);
@@ -122,8 +118,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
             getDeleteDiagramButton(diagram)
         );
     }
-
-
 
     private void refreshDiagramZoomComponentContainer(Diagram diagram) {
         if(this.diagramZoomComponentContainer != null) {
@@ -156,20 +150,18 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
         this.buttonBar = createAndGetButtonBar();
         add(buttonBar);
         log.debug("Add Button bar finished");
-        renameDiagramDialog = new RenameDiagramDialog(diagramService, this.globalUIEventBus);
+        renameDiagramDialog = new RenameDiagramDialog(diagramService);
         add(renameDiagramDialog);
 
         FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
         diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
         this.diagramViewerAndStylingContainer = diagramViewerAndStylingContainer;
-        DiagramConfigurationButtonBarComponent diagramConfigurationButtonBarComponent =
+        this.diagramConfigurationButtonBarComponent =
         new DiagramConfigurationButtonBarComponent(
-            globalUIEventBus,
             diagramService
         );
         this.diagramVisibilityAndNotesComponentsContainer =
         new DiagramVisibilityAndNotesComponentsContainer(
-            globalUIEventBus,
             sessionStorage,
             diagramService,
             diagramTypeNoteService
@@ -225,7 +217,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
                 UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0);", diagramUrl);
 
                 Notification.show("Diagram link has been copied to clipboard. Note: To successfully access the " +
-                    "resource, make sure you add your API-Key to the 'X-API-Key' header in your HTTP request.");
+                    "resource, make sure you add your API-Key to the 'X-API-KEY' header in your HTTP request.");
             }));
 
         return copyDiagramLinkButton;
@@ -267,23 +259,21 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver, Afte
         return new StreamResource(diagram.getFileName(), () -> new ByteArrayInputStream(fileContents));
     }
 
-    private GlobalEventListener<DiagramForDiagramViewChangedEvent> globalEventListener;
-
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        globalEventListener = new GlobalEventListener<>(this, DiagramForDiagramViewChangedEvent.class) {
-            @Override
-            public void onEvent(DiagramForDiagramViewChangedEvent event) {
-                refreshPage();
-            }
-        };
-        globalUIEventBus.register(globalEventListener);
+            registration = ComponentUtil.addListener(
+                attachEvent.getUI(),
+                DiagramStylingChangedEvent.class,
+                event -> refreshPage()
+            );
+
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         super.onDetach(detachEvent);
-        globalUIEventBus.unregister(globalEventListener);
+        registration.remove();
     }
+
 }

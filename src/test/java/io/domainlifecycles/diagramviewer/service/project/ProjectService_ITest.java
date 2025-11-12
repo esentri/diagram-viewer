@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.service;
+package io.domainlifecycles.diagramviewer.service.project;
 
 import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
 import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
@@ -10,7 +10,9 @@ import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
+import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -57,8 +59,6 @@ class ProjectService_ITest {
     @Autowired
     DiagramRepository diagramRepository;
 
-    @Value("${targets.location}") String targetsDirectory;
-
     @Value("${diagrams.location}") String diagramsLocation;
 
     private RegisteredUser registeredUser;
@@ -82,23 +82,30 @@ class ProjectService_ITest {
     }
 
     @Test
-    void Should_CreateProject_When_AllValuesAreValid() throws IOException {
-        var pack = new HashSet<String>();
-        pack.add("com.esentri");
+    void Should_CreateProjectFromJsonDomainMirror_When_AllValuesAreValid() throws IOException {
+        // given
+        Set<String> domainModelPackages = new HashSet<>();
+        domainModelPackages.add("com.esentri");
+
+        String projectName = "testProject";
+
+        byte[] jsonMirrorFileContents = getClass().getClassLoader()
+            .getResourceAsStream("mirror.json")
+            .readAllBytes();
+
+        Path path = FileIOUtils.saveTemporaryFile("test-mirror.json", jsonMirrorFileContents);
+
         // when
-        Project project = service.save(registeredUser,
-            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8)), "test-project-1.0.0-ÄÖÜ.txt", pack);
+        Project project = service.create(projectName, domainModelPackages, registeredUser, path, UploadFileType.JSON);
 
         // then
         assertThat(project).isNotNull();
-        assertThat(project.getName()).isEqualTo("test_project_1_0_0_ÄÖÜ_txt");
+        assertThat(project.getName()).isEqualTo(projectName);
         assertThat(project.getCreator().getId()).isEqualTo(registeredUser.getId());
         assertThat(project.getAssignedRegisteredUsers().size()).isEqualTo(1);
         assertThat(project.getAssignedRegisteredUsers().stream().findFirst().orElseThrow().getId()).isEqualTo(registeredUser.getId());
         assertThat(project.getCreator().getId()).isEqualTo(registeredUser.getId());
         assertThat(project.getAssignedInvitedUsers()).isEmpty();
-
-        FileIOUtils.deleteDirectoryRecursively(Path.of(targetsDirectory));
     }
 
     @Test
@@ -195,7 +202,7 @@ class ProjectService_ITest {
         // given
         Project project = setUpProject();
         Diagram diagram = Diagram.builder()
-            .fileName("diagram.svg")
+            .fileName("diagrams/diagram.svg")
             .fileType(FileType.SVG)
             .project(project)
             .build();
@@ -234,7 +241,6 @@ class ProjectService_ITest {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
             .diagrams(new HashSet<>())
-            .apiUpload(false)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
             .assignedInvitedUsers(new HashSet<>())
             .creator(registeredUser)

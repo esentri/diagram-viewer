@@ -16,8 +16,8 @@ import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -43,13 +43,11 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
-//import io.domainlifecycles.diagramviewer.webapp.views.LoginView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Value;
 
 @Layout
 @CssImport("./styles/diagram-viewer-styles.css")
@@ -122,7 +120,7 @@ public class MainLayout extends AppLayout {
     private HorizontalLayout createAndGetPopoverUserInfoLayout(RegisteredUser registeredUser) {
         HorizontalLayout userInfo = new HorizontalLayout();
         userInfo.getStyle().setPadding("0rem 1rem 0rem");
-        userInfo.getThemeList().remove("spacing");
+        userInfo.setSpacing(false);
 
         Avatar popoverAvatar = new Avatar();
         popoverAvatar.setName(registeredUser.getFullName());
@@ -131,7 +129,7 @@ public class MainLayout extends AppLayout {
         popoverAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
 
         VerticalLayout nameLayout = new VerticalLayout();
-        nameLayout.getThemeList().remove("spacing");
+        nameLayout.setSpacing(false);
         Div fullName = new Div(registeredUser.getFullName());
         fullName.getStyle().set("font-weight", "bold");
         Div nickName = new Div(registeredUser.getEmailAddress());
@@ -143,26 +141,31 @@ public class MainLayout extends AppLayout {
 
     private VerticalLayout createAndGetPopoverApiKeyLayout(RegisteredUser registeredUser) {
         VerticalLayout apiKeyLayout = new VerticalLayout();
-        apiKeyLayout.getThemeList().remove("spacing");
-        apiKeyLayout.getStyle().setPadding("0 --var(--lumo-space-m)");
+        apiKeyLayout.setSpacing(false);
 
         if(registeredUser.hasApiKey()) {
-            Paragraph apiKeyParagraph = new Paragraph("API-Key:");
-            apiKeyParagraph.getStyle().setMargin("0");
-            apiKeyParagraph.getStyle().setFontWeight("bold");
+            String apiKey = registeredUser.getApiKey().toString();
 
-            Paragraph apiKeyValueParagraph = new Paragraph(registeredUser.getApiKey().toString());
-            apiKeyValueParagraph.getStyle().setMargin("0");
+            Button copyApiKeyButton = new Button("Copy API-Key", e -> {
+                UI.getCurrent().getPage()
+                    .executeJs("navigator.clipboard.writeText($0)", apiKey);
+                Notification.show("Your API-Key has been copied to clipboard.");
+            });
 
-            apiKeyLayout.add(apiKeyParagraph, apiKeyValueParagraph);
+            copyApiKeyButton.getStyle().set("cursor", "pointer");
+            copyApiKeyButton.setPrefixComponent(new Icon("vaadin:key"));
+            copyApiKeyButton.setWidthFull();
+
+            apiKeyLayout.add(copyApiKeyButton);
         } else {
             Button generateApiKeyButton = new Button("Generate API-Key", e -> {
-                registeredUserService.generateApiKeyForUser(registeredUser);
+                registeredUserService.generateAndSaveApiKey(registeredUser);
                 refreshPopover();
             });
 
             generateApiKeyButton.setPrefixComponent(new Icon("vaadin:key-o"));
             generateApiKeyButton.setWidthFull();
+
             apiKeyLayout.add(generateApiKeyButton);
         }
         return apiKeyLayout;
@@ -186,10 +189,9 @@ public class MainLayout extends AppLayout {
 
     private VerticalLayout createAndGetSignOutButtonLayout() {
         VerticalLayout signOutButtonLayout = new VerticalLayout();
-        signOutButtonLayout.getThemeList().remove("spacing");
-        signOutButtonLayout.getStyle().setPadding("0 --var(--lumo-space-m)");
 
         Button signOutButton = new Button("Sign Out");
+        signOutButton.getStyle().set("cursor", "pointer");
         signOutButton.addThemeVariants(ButtonVariant.LUMO_WARNING);
         signOutButton.setWidthFull();
         signOutButton.getStyle().setMargin("0");

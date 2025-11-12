@@ -81,17 +81,19 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram create(Project project,
-                          String fileName,
+                          String name,
                           FileType fileType,
                           DomainModelVisibility visibility,
                           DiagramStylingConfiguration diagramStylingConfiguration) {
+
         Diagram diagram = Diagram.builder()
-            .fileName(fileName + fileType.getFileSuffix())
+            .fileName(name + fileType.getFileSuffix())
             .fileType(fileType)
             .domainModelVisibility(visibility)
             .diagramStylingConfiguration(diagramStylingConfiguration)
             .project(project)
             .build();
+
 
         final Diagram persistedDiagram = save(diagram);
         DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
@@ -108,6 +110,7 @@ public class DiagramServiceImpl implements DiagramService {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
                 fileName));
         }
+
         return repository.save(diagram);
     }
 
@@ -150,8 +153,6 @@ public class DiagramServiceImpl implements DiagramService {
             throw DiagramViewerException.fail(String.format("Could not save diagram to '%s'.", diagramsLocation), e);
         }
     }
-
-
 
     private boolean diagramWithNameExists(Diagram diagram) {
         Optional<Diagram> diagramWithName = repository.findByFileName(diagram.getFileName());

@@ -1,19 +1,28 @@
+buildscript {
+	repositories {
+		mavenCentral()
+		maven { setUrl("https://maven.vaadin.com/vaadin-prereleases") }
+		maven { setUrl("https://repo.spring.io/milestone") }
+	}
+}
+
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.1'
-	id 'io.spring.dependency-management' version '1.1.7'
-	id 'com.vaadin' version '24.7.1'
+	id 'org.springframework.boot' version '3.5.3'
+	id 'io.spring.dependency-management' version '1.1.6'
+	id 'com.vaadin'
+	id 'jacoco'
 }
 
 group = 'io.domainlifecycles'
 version = '0.0.1-SNAPSHOT'
 
 ext {
-	set('vaadinVersion', "24.7.1")
+	set('vaadinVersion', "24.8.6")
 	javaDockerVersion = "3.4.0"
 	dlcVersion = "2.5.0"
 	classGraphVersion = "4.8.163"
-	isInternal = System.getenv('BUILD_PROFILE') == 'INTERNAL'
+	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
 }
 
 java {
@@ -25,12 +34,17 @@ java {
 repositories {
 	mavenCentral()
 	mavenLocal()
-	maven {
-		url = uri("https://maven.vaadin.com/vaadin-addons")
-	}
+	maven { setUrl("https://maven.vaadin.com/vaadin-prereleases") }
+	maven { setUrl("https://repo.spring.io/milestone") }
+	maven { setUrl("https://maven.vaadin.com/vaadin-addons") }
 }
 
-
+configurations {
+	developmentOnly
+	runtimeClasspath {
+		extendsFrom developmentOnly
+	}
+}
 
 tasks.named('bootJar') {
 	enabled = true
@@ -38,13 +52,12 @@ tasks.named('bootJar') {
 
 dependencies {
 	implementation "io.github.classgraph:classgraph:${classGraphVersion}"
-	implementation ('org.springframework.boot:spring-boot-starter-web')
-	implementation ('com.vaadin:vaadin-spring-boot-starter')
-	implementation ('org.springframework.boot:spring-boot-starter-data-jpa')
+	implementation "com.vaadin:vaadin-spring-boot-starter"
+	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation ('org.postgresql:postgresql')
 	testImplementation ('org.testcontainers:postgresql:1.20.6')
-	implementation ('org.springframework.boot:spring-boot-starter-actuator')
-	implementation ('com.okta.spring:okta-spring-boot-starter:3.0.6')
+	implementation "org.springframework.boot:spring-boot-starter-actuator"
+	implementation ('com.okta.spring:okta-spring-boot-starter:3.0.7')
 	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"
 	implementation "com.github.docker-java:docker-java-transport-httpclient5:${javaDockerVersion}"
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
@@ -53,11 +66,14 @@ dependencies {
 	implementation "io.domainlifecycles:diagram-viewer-plugin:1.1"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	//if(isInternal){
+        println "INTERNAL PROFILE ACTIVE"
 		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.1")
 	//}
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation ('org.springframework.boot:spring-boot-starter-test')
+	testImplementation "org.springframework.boot:spring-boot-starter-test"
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.mockito:mockito-core'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -69,4 +85,35 @@ dependencyManagement {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+test {
+	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+	exclude '**/*_ITest.class'
+}
+
+tasks.register('integrationTest', Test) {
+	group = 'verification'
+	include '**/*_ITest.class'
+	maxParallelForks = 1
+	forkEvery = 1
+	jvmArgs '-Xmx1536m'
+	shouldRunAfter test
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = false
+		csv.required = false
+		html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+	}
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+					"**/webapp/*"
+			])
+		}))
+	}
 }

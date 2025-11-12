@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -39,6 +40,7 @@ public class Project {
     @GeneratedValue
     private UUID id;
 
+    @NotBlank
     @Column(nullable = false, unique = true)
     private String name;
 
@@ -50,9 +52,6 @@ public class Project {
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> domainModelPackages;
-
-    @Column(nullable = false, updatable = false)
-    private boolean apiUpload;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_assigned_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))

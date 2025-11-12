@@ -1,8 +1,5 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.Scroller.ScrollDirection;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -10,9 +7,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.notes.DiagramNotesComponentsContainer;
-import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalEventListener;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.vaadin.addons.taefi.component.ToggleButtonGroup;
@@ -25,18 +19,15 @@ public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout
     private final DiagramVisibilityComponentsContainer diagramVisibilityComponentsContainer;
     private final DiagramNotesComponentsContainer diagramNotesComponentsContainer;
     private final Scroller scroller;
-    private final GlobalUIEventBus globalUIEventBus;
     private Diagram currentDiagram;
 
 
     public DiagramVisibilityAndNotesComponentsContainer(
-            GlobalUIEventBus globalUIEventBus,
             SessionStorage sessionStorage,
             DiagramService diagramService,
             DiagramTypeNoteService diagramTypeNoteService
     ) {
         log.debug("creating DiagramVisibilityAndNotesComponentsContainer started");
-        this.globalUIEventBus = globalUIEventBus;
         setPadding(false);
         setMargin(false);
         setHeightFull();
@@ -45,7 +36,7 @@ public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout
         toggleButtonGroup.setItemLabelGenerator(SelectableView::getLabel);
         toggleButtonGroup.addValueChangeListener(e -> switchDisplayedContent(e.getValue()));
         log.debug("creating DiagramVisibilityComponentsContainer started");
-        diagramVisibilityComponentsContainer = new DiagramVisibilityComponentsContainer(globalUIEventBus, sessionStorage, diagramService);
+        diagramVisibilityComponentsContainer = new DiagramVisibilityComponentsContainer(sessionStorage, diagramService);
         log.debug("creating DiagramVisibilityComponentsContainer finished");
         log.debug("creating DiagramNotesComponentsContainer started");
         diagramNotesComponentsContainer = new DiagramNotesComponentsContainer(diagramTypeNoteService, sessionStorage);
@@ -76,7 +67,7 @@ public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout
         }
     }
 
-    private void setDiagram(Diagram diagram) {
+    public void setDiagram(Diagram diagram) {
         this.currentDiagram = diagram;
         diagramNotesComponentsContainer.setDiagram(currentDiagram);
         diagramVisibilityComponentsContainer.setDiagram(currentDiagram);
@@ -93,26 +84,5 @@ public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout
             this.label = label;
         }
     }
-
-    private GlobalEventListener<DiagramForDiagramViewChangedEvent> globalEventListener;
-
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        globalEventListener = new GlobalEventListener<>(this, DiagramForDiagramViewChangedEvent.class) {
-            @Override
-            public void onEvent(DiagramForDiagramViewChangedEvent event) {
-                setDiagram(event.getDiagram());
-            }
-        };
-        globalUIEventBus.register(globalEventListener);
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        super.onDetach(detachEvent);
-        globalUIEventBus.unregister(globalEventListener);
-    }
-
 
 }

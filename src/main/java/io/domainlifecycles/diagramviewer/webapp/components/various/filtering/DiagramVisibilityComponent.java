@@ -1,7 +1,9 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.ItemLabelGenerator;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
@@ -12,13 +14,10 @@ import com.vaadin.flow.component.radiobutton.RadioGroupVariant;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -26,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -36,15 +36,12 @@ public class DiagramVisibilityComponent extends Div {
 
     private final DiagramService diagramService;
     private final SessionStorage sessionStorage;
-    private final GlobalUIEventBus globalUIEventBus;
     private Diagram currentDiagram;
 
     public DiagramVisibilityComponent(
-            GlobalUIEventBus globalUIEventBus,
             SessionStorage sessionStorage,
             DiagramService diagramService) {
         setWidthFull();
-        this.globalUIEventBus = globalUIEventBus;
         this.sessionStorage = sessionStorage;
         this.diagramService = diagramService;
     }
@@ -253,10 +250,13 @@ public class DiagramVisibilityComponent extends Div {
         }
         currentDiagram.setDomainModelVisibility(visibility);
         currentDiagram = diagramService.updateModelAndImage(currentDiagram);
-        globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(currentDiagram, this));
+
+        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+
     }
 
-    private DomainModelVisibility removeFromVisibilityAndAdd(String typeName, DomainModelVisibility visibility, VisibilityFilterType addType){
+
+    private DomainModelVisibility removeFromVisibilityAndAdd(String typeName, DomainModelVisibility visibility, VisibilityFilterType addType) {
         var newConnected = new HashSet<>(visibility.getIncludeConnectedToClassNames());
         newConnected.remove(typeName);
 
@@ -287,6 +287,7 @@ public class DiagramVisibilityComponent extends Div {
         visibility = visibility.replaceExcludeConnectedToOutgoingClassNames(newExcludeOutgoing);
         return visibility;
     }
+
 
     private String shortClassName(String fullClassName) {
         return fullClassName.substring(fullClassName.lastIndexOf(".") + 1);

@@ -6,31 +6,37 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.StylingConfigurationDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.VariousConfigurationDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.VisibilityConfigurationDialog;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
 
 import java.util.List;
 
 public class DiagramConfigurationButtonBarComponent extends FlexLayout {
 
-    private final Dialog stylingConfigurationDialog;
-    private final Dialog visibilityConfigurationDialog;
-    private final Dialog variousConfigurationDialog;
+    private final StylingConfigurationDialog stylingConfigurationDialog;
+    private final VisibilityConfigurationDialog visibilityConfigurationDialog;
+    private final VariousConfigurationDialog variousConfigurationDialog;
 
-    public DiagramConfigurationButtonBarComponent(GlobalUIEventBus globalUIEventBus, DiagramService diagramService) {
+    public DiagramConfigurationButtonBarComponent(DiagramService diagramService) {
 
-        this.stylingConfigurationDialog = new StylingConfigurationDialog(diagramService, globalUIEventBus);
+        this.stylingConfigurationDialog = new StylingConfigurationDialog(diagramService);
         add(stylingConfigurationDialog);
-        this. visibilityConfigurationDialog = new VisibilityConfigurationDialog(diagramService, globalUIEventBus);
+        this. visibilityConfigurationDialog = new VisibilityConfigurationDialog(diagramService);
         add(visibilityConfigurationDialog);
-        this.variousConfigurationDialog = new VariousConfigurationDialog(diagramService, globalUIEventBus);
+        this.variousConfigurationDialog = new VariousConfigurationDialog(diagramService);
         add(variousConfigurationDialog);
         setJustifyContentMode(JustifyContentMode.CENTER);
         setFlexDirection(FlexDirection.COLUMN);
         add(createAndGetConfigurationButtons());
+    }
+
+    public void setDiagram(Diagram diagram){
+        stylingConfigurationDialog.setDiagram(diagram);
+        variousConfigurationDialog.setDiagram(diagram);
+        visibilityConfigurationDialog.setDiagram(diagram);
     }
 
     private List<Component> createAndGetConfigurationButtons() {

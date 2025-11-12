@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
@@ -15,9 +15,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguratio
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.ColorPickerComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Styling;
-import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalEventListener;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
@@ -37,11 +35,9 @@ public class StylingConfigurationDialog extends Dialog {
 
     private final DiagramService diagramService;
     private final Binder<DiagramStylingConfiguration> binder;
-    private final GlobalUIEventBus globalUIEventBus;
 
-    public StylingConfigurationDialog(DiagramService diagramService, GlobalUIEventBus globalUIEventBus) {
+    public StylingConfigurationDialog(DiagramService diagramService) {
         this.diagramService = diagramService;
-        this.globalUIEventBus = globalUIEventBus;
         this.binder = new Binder<>(DiagramStylingConfiguration.class);
 
         setHeaderTitle("Configuration | Styling");
@@ -61,8 +57,8 @@ public class StylingConfigurationDialog extends Dialog {
         getFooter().add(createCancelButton());
     }
 
-    private void refreshDiagram(Diagram diagram){
-        log.debug("Refreshing diagram");
+    public void setDiagram(Diagram diagram){
+        log.debug("Setting new diagram");
         this.diagram = diagram;
         binder.readBean(diagram.getDiagramStylingConfiguration());
     }
@@ -73,8 +69,7 @@ public class StylingConfigurationDialog extends Dialog {
         saveButton.addClickListener(e -> {
             binder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             diagram = diagramService.updateModelAndImage(diagram);
-
-            globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram, this));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             close();
         });
 
@@ -528,26 +523,6 @@ public class StylingConfigurationDialog extends Dialog {
         }
 
         return newConfiguration.toString();
-    }
-
-    private GlobalEventListener<DiagramForDiagramViewChangedEvent> globalEventListener;
-
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        globalEventListener = new GlobalEventListener<>(this, DiagramForDiagramViewChangedEvent.class) {
-            @Override
-            public void onEvent(DiagramForDiagramViewChangedEvent event) {
-                refreshDiagram(event.getDiagram());
-            }
-        };
-        globalUIEventBus.register(globalEventListener);
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        super.onDetach(detachEvent);
-        globalUIEventBus.unregister(globalEventListener);
     }
 
 }

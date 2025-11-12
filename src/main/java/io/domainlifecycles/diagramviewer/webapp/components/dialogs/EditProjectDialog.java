@@ -11,11 +11,10 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.RouteParameters;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageSelectChipField;
+import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Map;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -23,14 +22,16 @@ public class EditProjectDialog extends Dialog {
 
     private final Project project;
     private final ProjectService projectService;
+    private final SecurityService securityService;
     private final Binder<UploadOptions> binder;
 
     private UploadOptions uploadOptions;
     private Button saveButton;
 
-    public EditProjectDialog(Project project, ProjectService projectService) {
+    public EditProjectDialog(Project project, ProjectService projectService, SecurityService securityService) {
         this.project = project;
         this.projectService = projectService;
+        this.securityService = securityService;
         this.binder = new Binder<>();
 
         setHeaderTitle("Edit Project");
@@ -43,10 +44,7 @@ public class EditProjectDialog extends Dialog {
 
         addOpenedChangeListener(e -> {
             if(e.isOpened()) {
-                this.uploadOptions = new UploadOptions(
-                    project.getName(),
-                    project.getDomainModelPackages()
-                );
+                this.uploadOptions = new UploadOptions(project.getName());
                 binder.readBean(uploadOptions);
             }
         });
@@ -59,10 +57,10 @@ public class EditProjectDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             binder.writeBeanIfValid(uploadOptions);
-            projectService.update(
+            projectService.rename(
                     project,
-                    uploadOptions.getProjectName(),
-                    uploadOptions.getDomainModelPackages());
+                    securityService.getCurrentlySignedInUser(),
+                    uploadOptions.getProjectName());
             close();
             UI.getCurrent().navigate(ProjectView.class, new RouteParameters(Map.of(
                 ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName())));
@@ -88,13 +86,6 @@ public class EditProjectDialog extends Dialog {
             .bind(UploadOptions::getProjectName, UploadOptions::setProjectName);
         formLayout.addFormItem(projectNameTextField, "Name");
 
-        PackageSelectChipField domainModelPackageSelectChipField = new PackageSelectChipField();
-        domainModelPackageSelectChipField.setWidthFull();
-        binder.forField(domainModelPackageSelectChipField)
-            .asRequired("At least one package is required.")
-            .bind(UploadOptions::getDomainModelPackages, UploadOptions::setDomainModelPackages);
-        formLayout.addFormItem(domainModelPackageSelectChipField, "Packages");
-
         return formLayout;
     }
 
@@ -102,6 +93,5 @@ public class EditProjectDialog extends Dialog {
     @AllArgsConstructor
     private static class UploadOptions {
         private String projectName;
-        private Set<String> domainModelPackages;
     }
 }

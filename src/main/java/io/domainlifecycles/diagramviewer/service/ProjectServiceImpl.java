@@ -8,11 +8,11 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.model.viewer.User;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.rest.api.model.DomainMirrorUploadDto;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
+import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashSet;
@@ -33,7 +33,6 @@ public class ProjectServiceImpl implements ProjectService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
-    private final String targetsDirectory;
     private final String diagramsLocation;
     private final DiagramService diagramService;
     private final DiagramTypeNoteService diagramTypeNoteService;
@@ -44,15 +43,14 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository repository;
 
     public ProjectServiceImpl(
-        @Value("${targets.location}") String targetsDirectory,
         @Value("${diagrams.location}") String diagramsLocation,
         DiagramService diagramService,
-        DiagramTypeNoteService diagramTypeNoteService, RegenerateDiagramsJobService regenerateDiagramsJobService, RegisteredUserService registeredUserService,
+        DiagramTypeNoteService diagramTypeNoteService, RegenerateDiagramsJobService regenerateDiagramsJobService,
+        RegisteredUserService registeredUserService,
         InvitedUserService invitedUserService,
         SessionStorage sessionStorage,
         ProjectRepository repository) {
 
-        this.targetsDirectory = targetsDirectory;
         this.diagramsLocation = diagramsLocation;
         this.diagramService = diagramService;
         this.diagramTypeNoteService = diagramTypeNoteService;
@@ -77,28 +75,116 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project getByName(final String projectName) {
-        return repository.findByName(buildCleanFileName(projectName))
-            .orElseThrow(() -> DiagramViewerException.fail(String.format("No project found with name: %s",
+        return repository.findByName(buildCleanProjectName(projectName))
+            .orElseThrow(() -> DiagramViewerException.fail(String.format("No project found with name: '%s'",
                 projectName)));
     }
 
     @Override
-    public void update(Project project,
-                       String projectName,
-                       Set<String> domainModelPackages) {
+    public Project updateDomainMirror(Project project, Set<String> domainModelPackages, RegisteredUser registeredUser, Path pathToFile, UploadFileType uploadFileType) {
+        checkIsProjectCreator(project, registeredUser);
+        sessionStorage.createOrUpdate(project, domainModelPackages, pathToFile, uploadFileType);
+        return project;
+    }
 
-        project.setName(buildCleanFileName(projectName));
-        checkProjectValueRequirements(project);
-        Path projectFilePath = buildProjectFilePath(project);
+    @Override
+    public Project create(String projectName, Set<String> domainModelPackages, RegisteredUser registeredUser, Path pathToFile, UploadFileType uploadFileType) {
+        final Project mappedProject = saveWithNameExistsCheck(mapProject(projectName, registeredUser));
+        sessionStorage.createOrUpdate(mappedProject, domainModelPackages, pathToFile, uploadFileType);
+        return mappedProject;
+    }
 
-        if(Objects.equals(project.getName(), projectName)) {
-            Project persistedProject = repository.save(project);
-            sessionStorage.createOrUpdate(persistedProject, projectFilePath, domainModelPackages);
+    @Override
+    public void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror) {
+
+        Optional<Project> foundProject = repository.findByName(buildCleanProjectName(projectName));
+
+        if (foundProject.isPresent()) {
+            Project project = foundProject.get();
+            RegisteredUser registeredUser = (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (!project.getAssignedRegisteredUsers().contains(registeredUser)) {
+                throw DiagramViewerException.fail(String.format("User has no access to project '%s'", project.getName()));
+            }
+
+            project.setChangedAt(Instant.now());
+            repository.save(project);
+            sessionStorage.createOrUpdate(project, domainMirror);
             return;
         }
 
-        Project persistedProject = insert(project);
-        sessionStorage.createOrUpdate(persistedProject, projectFilePath, domainModelPackages);
+        Project project = mapProject(projectName,
+            (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        Project persistedProject = repository.save(project);
+        sessionStorage.createOrUpdate(persistedProject, domainMirror);
+    }
+
+    @Override
+    public Project rename(Project project, RegisteredUser registeredUser, String newName) {
+        checkIsProjectCreator(project, registeredUser);
+        project.setName(buildCleanProjectName(newName));
+        return saveWithNameExistsCheck(project);
+    }
+
+    private Project saveWithNameExistsCheck(Project project) {
+        String projectName = project.getName();
+        Optional<Project> fetchedProject = repository.findByName(projectName);
+
+        if (fetchedProject.isPresent()) {
+            throw DiagramViewerException.fail(
+                String.format("Project with name '%s' already exists. Please choose a different filename.",
+                    projectName));
+        }
+
+        return repository.save(project);
+    }
+
+    @Override
+    public void assignUser(Project project, String emailAddress) {
+        if (project.getAssignedRegisteredUsers().stream()
+            .anyMatch(user -> Objects.equals(user.getEmailAddress(), emailAddress))) return;
+
+        boolean userIsSignedUp = registeredUserService.userKnown(emailAddress);
+        final User user = userIsSignedUp ? registeredUserService.get(emailAddress) : invitedUserService.getOrCreate(
+            emailAddress);
+
+        assignUser(project, user);
+    }
+
+    @Override
+    public void assignUser(Project project, User user) {
+        if (userIsAlreadyAssignedToProject(project, user)) {
+            throw DiagramViewerException.fail(
+                String.format("User '%s' is already assigned to project.", user.getEmailAddress()));
+        }
+
+        project.assignUser(user);
+        repository.save(project);
+    }
+
+    @Override
+    public void unassignUser(Project project, User user) {
+        if (user instanceof RegisteredUser && Objects.equals(project.getCreator().getId(),
+            ((RegisteredUser) user).getId())) return;
+
+        project.unassignUser(user);
+        repository.save(project);
+
+        if (user instanceof InvitedUser && invitedUserService.checkForRemoval((InvitedUser) user))
+            invitedUserService.delete((InvitedUser) user);
+    }
+
+    @Override
+    public void delete(Project project) {
+        final String projectName = project.getName();
+        Project fetchedProject = getByName(projectName);
+        fetchedProject.unassignAllUsers();
+
+        project.getDiagrams().forEach(diagramTypeNoteService::delete);
+
+        repository.delete(fetchedProject);
+        sessionStorage.delete(fetchedProject.getId());
+
+        diagramService.deleteFilesFromFilesystem(project.getId().toString());
     }
 
     @Override
@@ -114,7 +200,8 @@ public class ProjectServiceImpl implements ProjectService {
         try {
             FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString());
         } catch (IOException e) {
-            throw DiagramViewerException.fail("Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
+            throw DiagramViewerException.fail(
+                "Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
         }
     }
 
@@ -125,172 +212,21 @@ public class ProjectServiceImpl implements ProjectService {
         repository.save(project);
     }
 
-    @Override
-    public Project save(
-            RegisteredUser registeredUser,
-            InputStream fileContents,
-            String fileName,
-            Set<String> domainModelPackages) {
-
-        final Project mappedProject = insert(mapProject(fileName, domainModelPackages, registeredUser, false));
-        return saveProjectFileAndCreateProjectAndDomainMirror(fileContents, domainModelPackages, mappedProject);
-    }
-
-    @Override
-    public void updateTargetFile(
-            Project project,
-            InputStream fileContents,
-            String filename,
-            Set<String> domainModelPackages) {
-
-        deleteTargetFile(project);
-        saveProjectFileAndCreateProjectAndDomainMirror(fileContents, domainModelPackages, project);
-    }
-
-    @Override
-    public void createOrUpdateDomainMirror(
-            String projectName,
-            DomainMirrorUploadDto domainMirrorUploadDto) {
-
-        Optional<Project> foundProject = repository.findByName(buildCleanFileName(projectName));
-
-        if(foundProject.isPresent()) {
-            Project project = foundProject.get();
-            var registeredUser = (RegisteredUser)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            if(!project.getAssignedRegisteredUsers().contains(registeredUser)){
-                throw new IllegalStateException(String.format("User has no access to project '%s'",project.getName()));
-            }
-
-            if(!project.isApiUpload()) {
-                deleteTargetFile(project);
-            }
-            project.setChangedAt(Instant.now());
-            repository.save(project);
-            sessionStorage.createOrUpdate(project, domainMirrorUploadDto.domainMirror());
-            return;
-        }
-
-        Project project = mapProject(projectName,
-            domainMirrorUploadDto.domainModelPackages(),
-            (RegisteredUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), true);
-        Project persistedProject = repository.save(project);
-        sessionStorage.createOrUpdate(persistedProject, domainMirrorUploadDto.domainMirror());
-    }
-
-    @Override
-    public void assignUser(Project project, String emailAddress) {
-        if(project.getAssignedRegisteredUsers().stream()
-            .anyMatch(user -> Objects.equals(user.getEmailAddress(), emailAddress))) return;
-
-        boolean userIsSignedUp = registeredUserService.userKnown(emailAddress);
-        final User user = userIsSignedUp ? registeredUserService.get(emailAddress) : invitedUserService.getOrCreate(emailAddress);
-
-        assignUser(project, user);
-    }
-
-    @Override
-    public void assignUser(Project project, User user) {
-        if(userIsAlreadyAssignedToProject(project, user)) {
-            throw DiagramViewerException.fail(String.format("User '%s' is already assigned to project.", user.getEmailAddress()));
-        }
-
-        project.assignUser(user);
-        repository.save(project);
-    }
-
-    @Override
-    public void unassignUser(Project project, User user) {
-        if(user instanceof RegisteredUser && Objects.equals(project.getCreator().getId(), ((RegisteredUser) user).getId())) return;
-
-        project.unassignUser(user);
-        repository.save(project);
-
-        if(user instanceof InvitedUser && invitedUserService.checkForRemoval((InvitedUser) user))
-            invitedUserService.delete((InvitedUser) user);
-    }
-
-    @Override
-    public void delete(Project project) {
-        final String projectName = project.getName();
-        Project fetchedProject = getByName(projectName);
-        fetchedProject.unassignAllUsers();
-
-        project.getDiagrams().forEach(diagramTypeNoteService::delete);
-
-        repository.delete(fetchedProject);
-        sessionStorage.delete(fetchedProject.getId());
-
-        if(!project.isApiUpload()) {
-            deleteTargetFile(project);
-        }
-
-        diagramService.deleteFilesFromFilesystem(project.getId().toString());
-    }
-
-    private Project insert(Project project) {
-        String projectName = project.getName();
-        Optional<Project> fetchedProject = repository.findByName(projectName);
-
-        if(fetchedProject.isPresent()) {
-            throw DiagramViewerException.fail(String.format("Project with name '%s' already exists. Please choose a different filename.",
-                projectName));
-        }
-
-        return repository.save(project);
-    }
-
-    private Project mapProject(String fileName, Set<String> domainModelPackages, RegisteredUser registeredUser, boolean apiUpload) {
+    private Project mapProject(String projectName, RegisteredUser registeredUser) {
         return Project.builder()
-            .name(buildCleanFileName(fileName))
+            .name(buildCleanProjectName(projectName))
             .diagrams(new HashSet<>())
             .diagramDirectories(new HashSet<>())
-            .apiUpload(apiUpload)
             .creator(registeredUser)
-            .domainModelPackages(domainModelPackages)
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
             .assignedInvitedUsers(new HashSet<>())
             .build();
     }
 
-    private Project saveProjectFileAndCreateProjectAndDomainMirror(InputStream fileContents, Set<String> domainModelPackages, Project project) {
-        Path projectFilePath = saveTargetFile(targetsDirectory, fileContents,
-            buildProjectFilename(project));
-
-        try {
-            sessionStorage.createOrUpdate(project, projectFilePath, domainModelPackages);
-            return repository.save(project);
-        } catch(RuntimeException e) {
-            deleteTargetFile(project);
-            throw e;
+    private void checkIsProjectCreator(Project project, RegisteredUser registeredUser) {
+        if (!Objects.equals(project.getCreator().getId(), registeredUser.getId())) {
+            throw DiagramViewerException.fail(String.format("User '%s' is not allowed to update the domain mirror of project '%s'. Only project admins are.", registeredUser.getEmailAddress(), project.getName()));
         }
-    }
-
-    private Path saveTargetFile(String targetsLocation, InputStream fileContents, String fileName) {
-        try {
-            Path filePath = FileIOUtils.saveFile(targetsLocation, fileName, fileContents);
-            LOGGER.info(String.format("Successfully uploaded file '%s' to '%s'.", fileName, targetsLocation));
-            return filePath;
-        } catch (IOException e) {
-            throw DiagramViewerException.fail(String.format("Couldn't save file '%s' to '%s'.", fileName,
-                targetsLocation), e);
-        }
-    }
-
-    private void deleteTargetFile(Project project) {
-        try {
-            String absolutePathToTarget = Path.of(targetsDirectory, buildProjectFilename(project)).toAbsolutePath().toString();
-            FileIOUtils.deleteFileByAbsolutePath(absolutePathToTarget);
-        } catch (IOException e) {
-            throw DiagramViewerException.fail("Couldn't finalize deleting project because some files couldn't be deleted from the filesystem.", e);
-        }
-    }
-
-    private Path buildProjectFilePath(Project project) {
-        return Path.of(targetsDirectory, buildProjectFilename(project));
-    }
-
-    private String buildProjectFilename(Project project) {
-        return project.getId() + ".jar";
     }
 
     private boolean userIsAlreadyAssignedToProject(Project project, User user) {
@@ -301,14 +237,10 @@ public class ProjectServiceImpl implements ProjectService {
                 ((RegisteredUser) user).getId(), registeredUser.getId()));
     }
 
-
-    private void checkProjectValueRequirements(Project project) {
-        if(project.getName() == null || project.getName().isBlank()) {
+    private String buildCleanProjectName(final String projectName) {
+        if(projectName == null || projectName.isBlank()) {
             throw DiagramViewerException.fail("Project name may not be empty.");
         }
-    }
-
-    private String buildCleanFileName(final String fileName) {
-        return fileName == null || fileName.isBlank() ? fileName : fileName.replaceAll("[.-]", "_");
+        return projectName.replaceAll("[.-]", "_");
     }
 }

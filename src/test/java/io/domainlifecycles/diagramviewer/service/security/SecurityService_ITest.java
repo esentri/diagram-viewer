@@ -1,4 +1,4 @@
-package io.domainlifecycles.diagramviewer.service;
+package io.domainlifecycles.diagramviewer.service.security;
 
 import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
 import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
@@ -7,6 +7,8 @@ import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
+import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.service.SecurityService;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
@@ -125,7 +127,6 @@ class SecurityService_ITest {
     private Project setUpProject() {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
-            .apiUpload(false)
             .diagrams(new HashSet<>())
             .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
             .assignedInvitedUsers(new HashSet<>())

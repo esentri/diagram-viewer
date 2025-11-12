@@ -1,5 +1,7 @@
 package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
@@ -7,19 +9,17 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageMultiSelectComboBox;
-import io.domainlifecycles.diagramviewer.webapp.events.global.DiagramForDiagramViewChangedEvent;
-import io.domainlifecycles.diagramviewer.webapp.events.global.GlobalUIEventBus;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DiagramFilterComponent extends Div {
@@ -29,9 +29,6 @@ public class DiagramFilterComponent extends Div {
     private final SessionStorage sessionStorage;
     private final DiagramService diagramService;
     private Diagram currentDiagram;
-    private final GlobalUIEventBus globalUIEventBus;
-
-
 
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnected;
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnectedIngoing;
@@ -41,14 +38,13 @@ public class DiagramFilterComponent extends Div {
     private MultiSelectComboBox<DomainTypeMirror> comboBoxInvisibleDomainObjects;
 
     public DiagramFilterComponent(
-            GlobalUIEventBus globalUIEventBus,
             SessionStorage sessionStorage,
             DiagramService diagramService) {
         this.sessionStorage = sessionStorage;
         this.diagramService = diagramService;
-        this.globalUIEventBus = globalUIEventBus;
         setWidthFull();
     }
+
 
     public void setDiagram(Diagram diagram) {
         this.currentDiagram = diagram;
@@ -69,7 +65,7 @@ public class DiagramFilterComponent extends Div {
             packageMultiSelectComboBox.addValueChangeListener(e -> {
                 currentDiagram.setDomainModelVisibility(currentDiagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
                 var newDiagram = diagramService.updateModelAndImage(currentDiagram);
-                globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(newDiagram, this));
+                ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
             });
 
             packageDetails.add(packageMultiSelectComboBox);
@@ -214,7 +210,7 @@ public class DiagramFilterComponent extends Div {
 
         diagram.setDomainModelVisibility(newVisibility);
         diagram = diagramService.updateModelAndImage(diagram);
-        globalUIEventBus.fireEvent(new DiagramForDiagramViewChangedEvent(diagram, this));
+        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
     }
 
     private List<DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {

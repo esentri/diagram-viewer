@@ -13,5 +13,5 @@ public interface RegisteredUserService {
 
     RegisteredUser createUser(String userEmailAddress, String fullName);
 
-    void generateApiKeyForUser(RegisteredUser registeredUser);
+    void generateAndSaveApiKey(RegisteredUser registeredUser);
 }
