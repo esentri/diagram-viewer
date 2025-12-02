@@ -14,7 +14,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 
 
 public class VisibilityConfigurationDialog extends Dialog {
@@ -85,7 +85,7 @@ public class VisibilityConfigurationDialog extends Dialog {
             domainModelVisibilityBinder.writeBeanIfValid(diagram.getDomainModelVisibility());
 
             diagram = diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
             close();
         });
 

@@ -32,7 +32,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagram
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramVisibilityAndNotesComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
@@ -264,7 +264,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         super.onAttach(attachEvent);
             registration = ComponentUtil.addListener(
                 attachEvent.getUI(),
-                DiagramStylingChangedEvent.class,
+                DiagramReRenderedEvent.class,
                 event -> refreshPage()
             );
 

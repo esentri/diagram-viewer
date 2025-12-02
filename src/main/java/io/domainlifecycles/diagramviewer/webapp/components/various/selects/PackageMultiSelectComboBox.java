@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.webapp.components.various.selects;
 
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramFilterComponent;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class PackageMultiSelectComboBox extends MultiSelectComboBox<String> {
         for (DomainTypeMirror type : domainTypeMirrors) {
             String typeName = type.getTypeName();
             int indexOfLastDot = typeName.lastIndexOf('.');
-            if (indexOfLastDot == -1 || typeName.startsWith(DiagramFilterComponent.DOMAINLIFECYCLES_PACKAGE_NAME)) continue;
+            if (indexOfLastDot == -1 || typeName.startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME)) continue;
 
             String fullPackage = typeName.substring(0, indexOfLastDot);
             String[] parts = fullPackage.split("\\.");

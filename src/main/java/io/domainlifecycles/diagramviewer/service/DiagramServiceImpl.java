@@ -17,6 +17,7 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -63,6 +64,7 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram updateModelAndImage(Diagram diagram) {
+        diagram.setChangedAt(Instant.now());
         final Diagram updatedDiagram = save(diagram);
         DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
         createAndSaveDiagramToFilesystem(domainMirror, updatedDiagram);

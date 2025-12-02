@@ -10,6 +10,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
@@ -25,6 +26,7 @@ public class DiagramNotesComponentsContainer extends VerticalLayout {
     private boolean isInViewMode = false;
 
     public DiagramNotesComponentsContainer(
+            DiagramService diagramService,
             DiagramTypeNoteService diagramTypeNoteService,
             SessionStorage sessionStorage
     ) {
@@ -34,7 +36,10 @@ public class DiagramNotesComponentsContainer extends VerticalLayout {
 
         addNotesButton = getAddNotesButton();
         add(addNotesButton);
-        diagramCreateNotesContainer = new DiagramCreateNotesContainer(diagramTypeNoteService, sessionStorage);
+        diagramCreateNotesContainer = new DiagramCreateNotesContainer(
+                diagramService,
+                diagramTypeNoteService,
+                sessionStorage);
         add(diagramCreateNotesContainer);
         notesViewContainer = new DiagramViewNotesContainer(diagramTypeNoteService);
         add(notesViewContainer);
@@ -42,7 +47,7 @@ public class DiagramNotesComponentsContainer extends VerticalLayout {
     }
 
     private Button getAddNotesButton() {
-        Button addNotesButton = new Button("Add", new Icon(VaadinIcon.PLUS));
+        Button addNotesButton = new Button("Add / Edit", new Icon(VaadinIcon.PLUS));
         addNotesButton.addClickListener(e -> switchNotesView());
         return addNotesButton;
     }

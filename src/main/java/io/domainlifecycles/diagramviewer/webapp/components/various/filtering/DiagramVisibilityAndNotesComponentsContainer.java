@@ -39,7 +39,11 @@ public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout
         diagramVisibilityComponentsContainer = new DiagramVisibilityComponentsContainer(sessionStorage, diagramService);
         log.debug("creating DiagramVisibilityComponentsContainer finished");
         log.debug("creating DiagramNotesComponentsContainer started");
-        diagramNotesComponentsContainer = new DiagramNotesComponentsContainer(diagramTypeNoteService, sessionStorage);
+        diagramNotesComponentsContainer = new DiagramNotesComponentsContainer(
+                diagramService,
+                diagramTypeNoteService,
+                sessionStorage
+        );
         log.debug("creating DiagramNotesComponentsContainer finished");
         scroller = new Scroller();
         scroller.setScrollDirection(ScrollDirection.BOTH);

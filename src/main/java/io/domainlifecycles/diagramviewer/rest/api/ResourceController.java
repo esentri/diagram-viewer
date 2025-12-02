@@ -36,6 +36,7 @@ public class ResourceController {
     public static final String VIEW_API_PATH_SUFFIX = "/view";
     public static final String DIAGRAM_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "diagramLastModified";
     public static final String STYLING_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "stylingLastModified";
+    public static final String NOTES_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "notesLastModified";
 
     private final String diagramFolderLocation;
 
