@@ -32,26 +32,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Checkout Bitbucket Nitrox-Kickstart Repo
-        uses: actions/checkout@v4
+      - name: Install Bitbucket SSH Keys
+        uses: shimataro/ssh-key-action@v2
         with:
-          repository: git@bitbucket.org:esentri/nitrox-kickstart
-          ssh-key: ${{ secrets.BITBUCKET_NITROX_KICKSTART_SSH_PRIVATE_KEY }}
-          path: nitrox-kickstart
+          key: |
+            ${{ secrets.BITBUCKET_NITROX_KICKSTART_SSH_PRIVATE_KEY }}
+            ${{ secrets.BITBUCKET_DIAGRAM_VIEWER_PLUGIN_SSH_PRIVATE_KEY }}
+            ${{ secrets.BITBUCKET_DIAGRAM_VIEWER_GENERATOR_PLUGIN_SSH_PRIVATE_KEY }}
+          known_hosts: "placeholder"
 
-      - name: Checkout Bitbucket Diagram-Viewer-Plugin Repo
-        uses: actions/checkout@v4
-        with:
-          repository: git@bitbucket.org:esentri/diagram-viewer-plugin
-          ssh-key: ${{ secrets.BITBUCKET_DIAGRAM_VIEWER_PLUGIN_SSH_PRIVATE_KEY }}
-          path: diagram-viewer-plugin
+      - name: Add Bitbucket to Known Hosts
+        run: ssh-keyscan bitbucket.org >> ~/.ssh/known_hosts
 
-      - name: Checkout Bitbucket Diagram-Viewer-Generator-Plugin Repo
-        uses: actions/checkout@v4
-        with:
-          repository: git@bitbucket.org:esentri/diagram-viewer-generator-plugin
-          ssh-key: ${{ secrets.BITBUCKET_DIAGRAM_VIEWER_GENERATOR_PLUGIN_SSH_PRIVATE_KEY }}
-          path: diagram-viewer-generator-plugin
+      - name: Clone Bitbucket Repos
+        run: |
+          git clone git@bitbucket.org:esentri/nitrox-kickstart.git nitrox-kickstart
+          git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git diagram-viewer-plugin
+          git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git diagram-viewer-generator-plugin
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
