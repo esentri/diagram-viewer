@@ -4,20 +4,14 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allows manual triggering for the deploy step
+  workflow_dispatch:
 
 env:
-  # Environment variables used in the script steps
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-  S3_BUCKET: ${{ secrets.S3_BUCKET }}
   APPLICATION_NAME: 'diagram-viewer'
   ENVIRONMENT_NAME: 'diagram-viewer-environment'
-  ZIP_FILE: 'application.zip'
-  VERSION_LABEL: '0.0.1-${{ github.run_number }}'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -58,5 +52,39 @@ jobs:
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
       - name: Build with Gradle Wrapper
-        run: gradle build
+        run: | 
+          export TESTCONTAINERS_RYUK_DISABLED=true
+          export IS_BUILD_PROFILE_INTERNAL=true
+          gradle clean build -Pvaadin.productionMode
 
+      - name: Package
+        run: |
+          zip -r ${{github.run_id}}.zip .platform
+          zip -j ${{github.run_id}}.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: deploy-files
+          path: ${{github.run_id}}.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/download-artifact@v4.1.7
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy to AWS EB
+        run: |
+          aws s3 cp "deploy-files/${{github.run_id}}.zip" s3://${{ vars.S3_BUCKET }}/artifact/diagram-viewer/
+          aws elasticbeanstalk create-application-version --application-name $APPLICATION_NAME --version-label ${{github.run_id}} --description ${{github.run_id}} --source-bundle S3Bucket="${{ vars.S3_BUCKET }}",S3Key="artifact/diagram-viewer/${{github.run_id}}.zip"
+          aws elasticbeanstalk update-environment --application-name $APPLICATION_NAME --environment-name $ENVIRONMENT_NAME --version-label ${{github.run_id}}
+          aws elasticbeanstalk wait environment-updated --application-name $APPLICATION_NAME --environment-name $ENVIRONMENT_NAME
+    
