@@ -35,21 +35,21 @@ jobs:
       - name: Checkout Bitbucket Nitrox-Kickstart Repo
         uses: actions/checkout@v4
         with:
-          repository: bitbucket.org/esentri/nitrox-kickstart
+          repository: git@bitbucket.org:esentri/nitrox-kickstart
           ssh-key: ${{ secrets.BITBUCKET_NITROX_KICKSTART_SSH_PRIVATE_KEY }}
           path: nitrox-kickstart
 
       - name: Checkout Bitbucket Diagram-Viewer-Plugin Repo
         uses: actions/checkout@v4
         with:
-          repository: bitbucket.org/esentri/diagram-viewer-plugin
+          repository: git@bitbucket.org:esentri/diagram-viewer-plugin
           ssh-key: ${{ secrets.BITBUCKET_DIAGRAM_VIEWER_PLUGIN_SSH_PRIVATE_KEY }}
           path: diagram-viewer-plugin
 
       - name: Checkout Bitbucket Diagram-Viewer-Generator-Plugin Repo
         uses: actions/checkout@v4
         with:
-          repository: bitbucket.org/esentri/diagram-viewer-generator-plugin
+          repository: git@bitbucket.org:esentri/diagram-viewer-generator-plugin
           ssh-key: ${{ secrets.BITBUCKET_DIAGRAM_VIEWER_GENERATOR_PLUGIN_SSH_PRIVATE_KEY }}
           path: diagram-viewer-generator-plugin
 
