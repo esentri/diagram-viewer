@@ -48,6 +48,12 @@ jobs:
           git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git diagram-viewer-plugin
           git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git diagram-viewer-generator-plugin
 
+      - name: Build and Publish Local Dependencies to MavenLocal
+        run: |
+          cd nitrox-kickstart && ./mvnw clean install && cd ..
+          cd diagram-viewer-plugin && ./gradlew publishToMavenLocal && cd ..
+          cd diagram-viewer-generator-plugin && ./gradlew publishToMavenLocal && cd ..
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
