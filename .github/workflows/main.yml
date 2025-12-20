@@ -35,23 +35,23 @@ jobs:
       - name: Checkout Bitbucket Nitrox-Kickstart Repo
         uses: actions/checkout@v4
         with:
-          repository: esentri/nitrox-kickstart
+          repository: bitbucket.org/esentri/nitrox-kickstart
           ssh-key: ${{ secrets.BITBUCKET_NITROX_KICKSTART_SSH_PRIVATE_KEY }}
           path: nitrox-kickstart
 
       - name: Checkout Bitbucket Diagram-Viewer-Plugin Repo
         uses: actions/checkout@v4
         with:
-          repository: esentri/diagram-viewer-plugin
+          repository: bitbucket.org/esentri/diagram-viewer-plugin
           ssh-key: ${{ secrets.BITBUCKET_DIAGRAM_VIEWER_PLUGIN_SSH_PRIVATE_KEY }}
           path: diagram-viewer-plugin
 
       - name: Checkout Bitbucket Diagram-Viewer-Generator-Plugin Repo
         uses: actions/checkout@v4
         with:
-          repository: diagram-viewer-generator-plugin
+          repository: bitbucket.org/esentri/diagram-viewer-generator-plugin
           ssh-key: ${{ secrets.BITBUCKET_DIAGRAM_VIEWER_GENERATOR_PLUGIN_SSH_PRIVATE_KEY }}
-          path: esentri/diagram-viewer-generator-plugin
+          path: diagram-viewer-generator-plugin
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
