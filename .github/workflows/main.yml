@@ -51,12 +51,12 @@ jobs:
       - name: Build and Publish Local Dependencies to MavenLocal
         run: |
           cd nitrox-kickstart && git checkout feature/roaster && mvn clean install && cd ..
-          cd diagram-viewer-plugin && ./gradlew publishToMavenLocal && cd ..
-          cd diagram-viewer-generator-plugin && ./gradlew publishToMavenLocal && cd ..
+          cd diagram-viewer-plugin && gradle publishToMavenLocal && cd ..
+          cd diagram-viewer-generator-plugin && gradle publishToMavenLocal && cd ..
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
       - name: Build with Gradle Wrapper
-        run: ./gradlew build
+        run: gradle build
 
