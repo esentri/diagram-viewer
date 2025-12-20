@@ -59,14 +59,14 @@ jobs:
 
       - name: Package
         run: |
-          zip -r ${{github.run_id}}.zip .platform
-          zip -j ${{github.run_id}}.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
+          zip -r ${{ github.run_id }}.zip .platform
+          zip -j ${{ github.run_id }}.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4.3.3
         with:
           name: deploy-files
-          path: ${{github.run_id}}.zip
+          path: ${{ github.run_id }}.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -83,8 +83,8 @@ jobs:
 
       - name: Deploy to AWS EB
         run: |
-          aws s3 cp "deploy-files/${{github.run_id}}.zip" s3://${{ vars.S3_BUCKET }}artifact/diagram-viewer/
-          aws elasticbeanstalk create-application-version --application-name $APPLICATION_NAME --version-label ${{github.run_id}} --description ${{github.run_id}} --source-bundle S3Bucket="${{ vars.S3_BUCKET }}",S3Key="artifact/diagram-viewer/${{github.run_id}}.zip"
-          aws elasticbeanstalk update-environment --application-name $APPLICATION_NAME --environment-name $ENVIRONMENT_NAME --version-label ${{github.run_id}}
-          aws elasticbeanstalk wait environment-updated --application-name $APPLICATION_NAME --environment-name $ENVIRONMENT_NAME
+          aws s3 cp "deploy-files/${{ github.run_id }}.zip" s3://${{ vars.S3_BUCKET }}artifact/diagram-viewer/
+          aws elasticbeanstalk create-application-version --application-name $APPLICATION_NAME --version-label ${{ github.run_id }} --description ${{ github.run_id }} --source-bundle S3Bucket="${{ vars.S3_BUCKET }}",S3Key="artifact/diagram-viewer/${{ github.run_id }}.zip"
+          aws elasticbeanstalk update-environment --application-name $APPLICATION_NAME --environment-name $ENVIRONMENT_NAME --version-label ${{ github.run_id }}
+          aws elasticbeanstalk wait environment-updated --application-name $APPLICATION_NAME --environment-name $ENVIRONMENT_NAME --cli-read-timeout 900
     
