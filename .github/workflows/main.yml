@@ -50,7 +50,7 @@ jobs:
 
       - name: Build and Publish Local Dependencies to MavenLocal
         run: |
-          cd nitrox-kickstart && ./mvnw clean install && cd ..
+          cd nitrox-kickstart && mvn clean install && cd ..
           cd diagram-viewer-plugin && ./gradlew publishToMavenLocal && cd ..
           cd diagram-viewer-generator-plugin && ./gradlew publishToMavenLocal && cd ..
 
