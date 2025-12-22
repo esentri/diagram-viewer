@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -69,15 +69,5 @@ class DomainMirrorUploadControllerTest {
         // then
         result.andExpect(status().isOk());
         verify(projectService).createOrUpdateDomainModel(projectName, domainMirror);
-    }
-
-    @Configuration
-    public static class JacksonConfig {
-        @Bean
-        public SimpleModule domainMirrorModule() {
-            SimpleModule module = new SimpleModule();
-            module.addDeserializer(DomainMirror.class, new DomainMirrorDeserializer());
-            return module;
-        }
     }
 }
