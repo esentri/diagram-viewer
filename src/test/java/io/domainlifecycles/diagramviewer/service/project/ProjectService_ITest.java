@@ -9,7 +9,6 @@ import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
-import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
@@ -194,8 +193,7 @@ class ProjectService_ITest extends BaseIntegrationTest {
         // given
         Project project = setUpProject();
         Diagram diagram = Diagram.builder()
-            .fileName("diagrams/diagram.svg")
-            .fileType(FileType.SVG)
+            .name("diagram")
             .project(project)
             .build();
         diagramRepository.save(diagram);

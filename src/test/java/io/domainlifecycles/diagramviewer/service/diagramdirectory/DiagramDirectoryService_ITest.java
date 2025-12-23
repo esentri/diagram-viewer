@@ -9,7 +9,6 @@ import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
-import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import java.util.HashSet;
 import java.util.Set;
@@ -66,13 +65,11 @@ class DiagramDirectoryService_ITest extends BaseIntegrationTest {
         // given
         Project project = setUpProject();
         Diagram firstDiagram = Diagram.builder()
-            .fileName("first.svg")
-            .fileType(FileType.SVG)
+            .name("first")
             .project(project)
             .build();
         Diagram secondDiagram = Diagram.builder()
-            .fileName("second.svg")
-            .fileType(FileType.SVG)
+            .name("second")
             .project(project)
             .build();
 

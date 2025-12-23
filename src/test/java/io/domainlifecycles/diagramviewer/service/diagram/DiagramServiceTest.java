@@ -8,7 +8,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
-import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.service.DiagramRegenerationService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
@@ -185,7 +184,7 @@ class DiagramServiceTest {
         when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
         when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
-        when(krokiClient.convertTo(any(), any())).thenReturn("filedata".getBytes());
+        when(krokiClient.convert(any())).thenReturn("filedata".getBytes());
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
@@ -199,7 +198,7 @@ class DiagramServiceTest {
             verify(repository, times(1)).findByName(any());
             verify(repository, times(1)).save(eq(diagram));
             verify(sessionStorage, times(1)).getDomainMirror(any());
-            verify(krokiClient, times(1)).convertTo(any(), any());
+            verify(krokiClient, times(1)).convert(any());
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
 
@@ -217,14 +216,13 @@ class DiagramServiceTest {
         Diagram diagram = mock(Diagram.class);
         when(diagram.getProject()).thenReturn(project);
         when(diagram.getName()).thenReturn("diagramName.svg");
-        when(diagram.getFileType()).thenReturn(FileType.SVG);
         when(diagram.getDiagramStylingConfiguration()).thenReturn(mock(DiagramStylingConfiguration.class));
         when(diagram.getDomainModelVisibility()).thenReturn(mock(DomainModelVisibility.class));
 
         when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
         when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
-        when(krokiClient.convertTo(any(), any())).thenReturn("filedata".getBytes());
+        when(krokiClient.convert(any())).thenReturn("filedata".getBytes());
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
@@ -238,7 +236,7 @@ class DiagramServiceTest {
             verify(repository, times(1)).findByName(any());
             verify(repository, times(1)).save(eq(diagram));
             verify(sessionStorage, times(1)).getDomainMirror(any());
-            verify(krokiClient, times(1)).convertTo(any(), any());
+            verify(krokiClient, times(1)).convert(any());
 
             fileIOUtilsMocked.verify(() -> FileIOUtils.renameFile(any(), any()));
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
@@ -261,7 +259,7 @@ class DiagramServiceTest {
         when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
-        when(krokiClient.convertTo(any(), any())).thenReturn("filedata".getBytes());
+        when(krokiClient.convert(any())).thenReturn("filedata".getBytes());
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
@@ -273,14 +271,13 @@ class DiagramServiceTest {
             Diagram result = diagramService.create(
                 projectMock,
                 "diagramName",
-                FileType.SVG,
                 domainModelVisibilityMock,
                 diagramStylingConfigurationMock
             );
 
             // then
             verify(repository).save(any());
-            verify(krokiClient).convertTo(any(), any());
+            verify(krokiClient).convert(any());
             verify(projectMock).addDiagram(any());
 
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
@@ -302,7 +299,7 @@ class DiagramServiceTest {
         when(diagramMock.getProject()).thenReturn(projectMock);
         when(diagramMock.getId()).thenReturn(UUID.randomUUID());
 
-        when(krokiClient.convertTo(any(), any())).thenReturn("img".getBytes());
+        when(krokiClient.convert(any())).thenReturn("img".getBytes());
 
         ProjectDomainMirror projectDomainMirrorMock = mock(ProjectDomainMirror.class);
         DomainMirror domainMirrorMock = mock(DomainMirror.class);
@@ -319,7 +316,7 @@ class DiagramServiceTest {
             diagramRegenerationService.regenerate(diagramMock);
 
             // then
-            verify(krokiClient).convertTo(any(), any());
+            verify(krokiClient).convert(any());
 
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
@@ -367,7 +364,7 @@ class DiagramServiceTest {
 
         when(repository.save(diagramMock)).thenReturn(diagramMock);
 
-        when(krokiClient.convertTo(any(), any())).thenReturn("img".getBytes());
+        when(krokiClient.convert(any())).thenReturn("img".getBytes());
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
@@ -383,7 +380,7 @@ class DiagramServiceTest {
                 .hasCauseInstanceOf(IOException.class);
 
             // then
-            verify(krokiClient).convertTo(any(), any());
+            verify(krokiClient).convert(any());
 
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));

@@ -59,7 +59,6 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
             .build();
 
         registeredUserRepository.save(registeredUser);
-        registeredUserService.generateAndSaveApiKey(registeredUser);
 
         project = setUpProject();
     }

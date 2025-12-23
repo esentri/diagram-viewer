@@ -50,7 +50,6 @@ class ResourceController_ITest extends BaseIntegrationTest {
             .build();
 
         registeredUserRepository.save(registeredUser);
-        registeredUserService.generateAndSaveApiKey(registeredUser);
     }
 
     @AfterEach

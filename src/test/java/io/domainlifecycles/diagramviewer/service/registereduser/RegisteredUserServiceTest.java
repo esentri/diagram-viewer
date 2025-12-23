@@ -130,19 +130,4 @@ class RegisteredUserServiceTest {
         assertThat(registeredUserArgumentCaptor.getValue().getFullName()).isEqualTo(fullName);
         assertThat(registeredUserArgumentCaptor.getValue().getAssignedProjects()).isEmpty();
     }
-
-    @Test
-    void Should_GenerateAndSaveApiKey() {
-
-        // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-
-        // when
-        service.generateAndSaveApiKey(registeredUserMock);
-
-        // then
-        verify(registeredUserMock, times(1)).setApiKey(any());
-        verify(repository, times(1)).save(registeredUserArgumentCaptor.capture());
-        assertThat(registeredUserArgumentCaptor.getValue().getApiKey()).isEqualTo(registeredUserMock.getApiKey());
-    }
 }
