@@ -16,6 +16,7 @@ import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
@@ -25,6 +26,7 @@ public class RenameDiagramDialog extends Dialog {
 
     private final DiagramService diagramService;
     private final Binder<RenameDiagramOptions> binder;
+    @Setter
     private Diagram diagram;
 
     private RenameDiagramOptions renameDiagramOptions;
@@ -43,18 +45,12 @@ public class RenameDiagramDialog extends Dialog {
 
         addOpenedChangeListener(e -> {
             if(e.isOpened()) {
-                this.renameDiagramOptions = new RenameDiagramOptions(
-                        diagram.getFileName().replaceAll(diagram.getFileType().getFileSuffix(), ""));
+                this.renameDiagramOptions = new RenameDiagramOptions(diagram.getName());
                 binder.readBean(renameDiagramOptions);
             }
         });
 
         binder.addStatusChangeListener(event -> createButton.setEnabled(binder.isValid()));
-    }
-
-    public void setDiagram(Diagram diagram) {
-        this.diagram = diagram;
-        log.debug("new diagram set!");
     }
 
     private Button createSaveButton() {
@@ -66,7 +62,7 @@ public class RenameDiagramDialog extends Dialog {
             close();
             UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
                     Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, diagram.getProject().getName(),
-                        DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, diagram.getFileName())));
+                        DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, diagram.getName())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 
@@ -85,7 +81,7 @@ public class RenameDiagramDialog extends Dialog {
         binder.forField(diagramNameTextField)
             .asRequired("Name is required.")
             .bind(RenameDiagramOptions::getFileName, RenameDiagramOptions::setFileName);
-        formLayout.addFormItem(diagramNameTextField, "File-Name");
+        formLayout.addFormItem(diagramNameTextField, "Name");
 
         return formLayout;
     }

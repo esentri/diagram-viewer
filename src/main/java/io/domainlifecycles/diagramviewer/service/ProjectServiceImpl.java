@@ -195,7 +195,7 @@ public class ProjectServiceImpl implements ProjectService {
         repository.save(project);
 
         Path diagramPath = Path.of(diagramsLocation, project.getId().toString(),
-            diagram.getFileName());
+            diagram.getName());
 
         try {
             FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString());

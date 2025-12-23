@@ -24,7 +24,7 @@ public class DiagramRegenerationService {
     }
 
     public void regenerate(Diagram diagram) {
-        LOGGER.info(String.format("Regenerating diagram '%s'.", diagram.getFileName()));
+        LOGGER.info(String.format("Regenerating diagram '%s'.", diagram.getName()));
         var projectDomainMirror = projectDomainMirrorService.getByProjectId(diagram.getProject().getId());
         DomainMirror domainMirror = projectDomainMirror.getDomainMirror();
         diagramService.createAndSaveDiagramToFilesystem(domainMirror, diagram);

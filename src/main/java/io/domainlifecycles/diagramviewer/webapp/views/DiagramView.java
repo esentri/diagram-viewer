@@ -18,16 +18,18 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
-import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.rest.api.ResourceController;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.service.DiagramServiceImpl;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.DownloadDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramVisibilityAndNotesComponentsContainer;
@@ -63,13 +65,13 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private String diagramName;
     private Diagram diagram;
 
-
     private FlexLayout diagramViewerAndStylingContainer;
     private DiagramZoomComponentContainer diagramZoomComponentContainer;
     private DiagramVisibilityAndNotesComponentsContainer diagramVisibilityAndNotesComponentsContainer;
     private DiagramConfigurationButtonBarComponent diagramConfigurationButtonBarComponent;
     private HorizontalLayout buttonBar;
     private RenameDiagramDialog renameDiagramDialog;
+    private DownloadDiagramDialog downloadDiagramDialog;
 
     private Registration registration;
 
@@ -105,15 +107,13 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         diagram = getDiagram();
         diagramVisibilityAndNotesComponentsContainer.setDiagram(diagram);
         renameDiagramDialog.setDiagram(diagram);
+        downloadDiagramDialog.setDiagram(diagram);
         diagramConfigurationButtonBarComponent.setDiagram(diagram);
-        log.debug("getDiagram finished");
-        log.debug("Refreshing diagram view");
         refreshDiagramZoomComponentContainer(diagram);
-        log.debug("Refreshing diagram view finished");
         buttonBar.removeAll();
         buttonBar.add(
             getRenameDiagramButton(),
-            getDiagramDownloadButton(diagram),
+            getDiagramDownloadButton(),
             getCopyDiagramLinkButton(diagram),
             getDeleteDiagramButton(diagram)
         );
@@ -132,30 +132,30 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         diagramViewerAndStylingContainer.add(diagramZoomComponentContainer);
         diagramViewerAndStylingContainer.setOrder(1, diagramZoomComponentContainer);
         diagramViewerAndStylingContainer.setOrder(2, diagramVisibilityAndNotesComponentsContainer);
-        log.debug("creating DiagramZoomComponentContainer finished");
     }
 
     private Diagram getDiagram() {
-        var project = projectService.getByName(projectName);
-        var diagram = project.getDiagrams().stream().filter(foundDiagram ->
-                Objects.equals(foundDiagram.getFileName(), diagramName))
+        Project project = projectService.getByName(projectName);
+        return project.getDiagrams().stream().filter(foundDiagram ->
+                Objects.equals(foundDiagram.getName(), diagramName))
             .findAny()
             .orElseThrow(
                 () -> DiagramViewerException.fail(String.format("No diagram found with name '%s' .", diagramName)));
-        return diagram;
     }
 
     private void addPageContents() {
-        log.debug("Add components to diagram view");
         this.buttonBar = createAndGetButtonBar();
         add(buttonBar);
-        log.debug("Add Button bar finished");
-        renameDiagramDialog = new RenameDiagramDialog(diagramService);
+
+        this.renameDiagramDialog = new RenameDiagramDialog(diagramService);
         add(renameDiagramDialog);
 
-        FlexLayout diagramViewerAndStylingContainer = new FlexLayout();
-        diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
-        this.diagramViewerAndStylingContainer = diagramViewerAndStylingContainer;
+        this.downloadDiagramDialog = new DownloadDiagramDialog(diagramsLocation);
+        add(downloadDiagramDialog);
+
+        this.diagramViewerAndStylingContainer = new FlexLayout();
+        this.diagramViewerAndStylingContainer.setId("diagram-viewer-and-styling-container");
+
         this.diagramConfigurationButtonBarComponent =
         new DiagramConfigurationButtonBarComponent(
             diagramService
@@ -166,12 +166,9 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             diagramService,
             diagramTypeNoteService
         );
-        diagramViewerAndStylingContainer.add(diagramVisibilityAndNotesComponentsContainer);
-        log.debug("creating DiagramVisibilityAndNotesComponentsContainer finished");
-        diagramViewerAndStylingContainer.add(diagramConfigurationButtonBarComponent);
-        log.debug("creating DiagramConfigurationButtonBarComponent finished");
-        add(diagramViewerAndStylingContainer);
-        log.debug("addPageContents finished");
+        this.diagramViewerAndStylingContainer.add(diagramVisibilityAndNotesComponentsContainer);
+        this.diagramViewerAndStylingContainer.add(diagramConfigurationButtonBarComponent);
+        add(this.diagramViewerAndStylingContainer);
     }
 
     private HorizontalLayout createAndGetButtonBar() {
@@ -188,19 +185,12 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         return renameDiagramButton;
     }
 
-    private Anchor getDiagramDownloadButton(Diagram diagram) {
-        Anchor downloadAnchor = new Anchor(buildDiagramDownloadStreamResource(diagram), "Download Diagram");
+    private Button getDiagramDownloadButton() {
+        Button renameDiagramButton = new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD));
+        renameDiagramButton.getStyle().set("cursor", "pointer");
+        renameDiagramButton.addClickListener(e -> downloadDiagramDialog.open());
 
-        downloadAnchor.getStyle().set("cursor", "pointer");
-        downloadAnchor.setId("diagramDownloadButton");
-        downloadAnchor.getElement().setAttribute("download", true);
-        downloadAnchor.removeAll();
-
-        Button downloadDiagramButton = new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD_ALT));
-        downloadDiagramButton.getStyle().set("cursor", "pointer");
-        downloadAnchor.add(downloadDiagramButton);
-
-        return downloadAnchor;
+        return renameDiagramButton;
     }
 
     private Button getCopyDiagramLinkButton(Diagram diagram) {
@@ -213,7 +203,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
                 baseUrlWithTailingSlash = baseUrlWithTailingSlash.replace("?continue", "");
                 String baseUrl = baseUrlWithTailingSlash.substring(0, baseUrlWithTailingSlash.length() - 1);
                 String diagramUrl = baseUrl + ResourceController.RESOURCES_API_PATH +
-                    ResourceController.VIEW_API_PATH_SUFFIX + "/" + diagram.getProject().getId() + "/" + diagram.getFileName();
+                    ResourceController.VIEW_API_PATH_SUFFIX + "/" + diagram.getProject().getId() + "/" + diagram.getName();
                 UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0);", diagramUrl);
 
                 Notification.show("Diagram link has been copied to clipboard. Note: To successfully access the " +
@@ -227,7 +217,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Delete Diagram");
         confirmDialog.setText(String.format(
-            "Are you sure you want to delete diagram '%s' from your project?", diagram.getFileName()));
+            "Are you sure you want to delete diagram '%s' from your project?", diagram.getName()));
 
         confirmDialog.setCancelable(true);
 
@@ -250,13 +240,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             Objects.equals(diagram.getProject().getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
         deleteDiagramButton.addClickListener(e -> confirmDialog.open());
         return deleteDiagramButton;
-    }
-
-    private StreamResource buildDiagramDownloadStreamResource(Diagram diagram) {
-        Path diagramLocation = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getFileName());
-        byte[] fileContents = FileIOUtils.readFile(diagramLocation.toAbsolutePath().toString());
-
-        return new StreamResource(diagram.getFileName(), () -> new ByteArrayInputStream(fileContents));
     }
 
     @Override

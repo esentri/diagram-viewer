@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DiagramRepository extends CrudRepository<Diagram, UUID> {
 
-    Optional<Diagram> findByFileName(String fileName);
+    Optional<Diagram> findByName(String name);
 
     Set<Diagram> findByProjectId(UUID projectId);
 }

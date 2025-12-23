@@ -87,7 +87,7 @@ class DiagramServiceTest {
 
         // given
         Diagram diagram = mock(Diagram.class);
-        when(repository.findByFileName(any())).thenReturn(Optional.empty());
+        when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
 
         // when
@@ -109,15 +109,15 @@ class DiagramServiceTest {
 
         Diagram newDiagramState = mock(Diagram.class);
         when(newDiagramState.getId()).thenReturn(diagramId);
-        when(newDiagramState.getFileName()).thenReturn(newDiagramName);
+        when(newDiagramState.getName()).thenReturn(newDiagramName);
 
         Diagram oldDiagramState = mock(Diagram.class);
-        when(oldDiagramState.getFileName()).thenReturn(oldDiagramName);
+        when(oldDiagramState.getName()).thenReturn(oldDiagramName);
 
         Diagram existingDiagramWithSameNameAsNew = mock(Diagram.class);
-        when(existingDiagramWithSameNameAsNew.getFileName()).thenReturn(newDiagramName);
+        when(existingDiagramWithSameNameAsNew.getName()).thenReturn(newDiagramName);
 
-        when(repository.findByFileName(eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
+        when(repository.findByName(eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
         when(repository.findById(eq(diagramId))).thenReturn(Optional.of(oldDiagramState));
 
         // when
@@ -133,12 +133,12 @@ class DiagramServiceTest {
         String newDiagramName = "newDiagramName.svg";
 
         Diagram newDiagramState = mock(Diagram.class);
-        when(newDiagramState.getFileName()).thenReturn(newDiagramName);
+        when(newDiagramState.getName()).thenReturn(newDiagramName);
 
         Diagram existingDiagramWithSameNameAsNew = mock(Diagram.class);
-        when(existingDiagramWithSameNameAsNew.getFileName()).thenReturn(newDiagramName);
+        when(existingDiagramWithSameNameAsNew.getName()).thenReturn(newDiagramName);
 
-        when(repository.findByFileName(eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
+        when(repository.findByName(eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
 
         // when
         assertThatThrownBy(() -> diagramService.updateModel(newDiagramState))
@@ -154,12 +154,12 @@ class DiagramServiceTest {
 
         Diagram diagram = mock(Diagram.class);
         when(diagram.getId()).thenReturn(UUID.randomUUID());
-        when(diagram.getFileName()).thenReturn(diagramFileName);
+        when(diagram.getName()).thenReturn(diagramFileName);
 
         Diagram existing = mock(Diagram.class);
-        when(existing.getFileName()).thenReturn(diagramFileName);
+        when(existing.getName()).thenReturn(diagramFileName);
 
-        when(repository.findByFileName(diagramFileName)).thenReturn(Optional.of(existing));
+        when(repository.findByName(diagramFileName)).thenReturn(Optional.of(existing));
         when(repository.findById(any())).thenReturn(Optional.of(mock(Diagram.class)));
 
         // when
@@ -177,12 +177,12 @@ class DiagramServiceTest {
         when(project.getId()).thenReturn(UUID.randomUUID());
 
         Diagram diagram = mock(Diagram.class);
-        when(diagram.getFileName()).thenReturn("diagramName.svg");
+        when(diagram.getName()).thenReturn("diagramName.svg");
         when(diagram.getDiagramStylingConfiguration()).thenReturn(mock(DiagramStylingConfiguration.class));
         when(diagram.getDomainModelVisibility()).thenReturn(mock(DomainModelVisibility.class));
         when(diagram.getProject()).thenReturn(project);
 
-        when(repository.findByFileName(any())).thenReturn(Optional.empty());
+        when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
         when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
         when(krokiClient.convertTo(any(), any())).thenReturn("filedata".getBytes());
@@ -196,7 +196,7 @@ class DiagramServiceTest {
             Diagram result = diagramService.updateModelAndImage(diagram);
 
             // then
-            verify(repository, times(1)).findByFileName(any());
+            verify(repository, times(1)).findByName(any());
             verify(repository, times(1)).save(eq(diagram));
             verify(sessionStorage, times(1)).getDomainMirror(any());
             verify(krokiClient, times(1)).convertTo(any(), any());
@@ -216,12 +216,12 @@ class DiagramServiceTest {
 
         Diagram diagram = mock(Diagram.class);
         when(diagram.getProject()).thenReturn(project);
-        when(diagram.getFileName()).thenReturn("diagramName.svg");
+        when(diagram.getName()).thenReturn("diagramName.svg");
         when(diagram.getFileType()).thenReturn(FileType.SVG);
         when(diagram.getDiagramStylingConfiguration()).thenReturn(mock(DiagramStylingConfiguration.class));
         when(diagram.getDomainModelVisibility()).thenReturn(mock(DomainModelVisibility.class));
 
-        when(repository.findByFileName(any())).thenReturn(Optional.empty());
+        when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
         when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
         when(krokiClient.convertTo(any(), any())).thenReturn("filedata".getBytes());
@@ -235,7 +235,7 @@ class DiagramServiceTest {
             Diagram result = diagramService.rename(diagram, "newDiagramName");
 
             // then
-            verify(repository, times(1)).findByFileName(any());
+            verify(repository, times(1)).findByName(any());
             verify(repository, times(1)).save(eq(diagram));
             verify(sessionStorage, times(1)).getDomainMirror(any());
             verify(krokiClient, times(1)).convertTo(any(), any());
@@ -258,7 +258,7 @@ class DiagramServiceTest {
         DomainModelVisibility domainModelVisibilityMock = mock(DomainModelVisibility.class);
         DiagramStylingConfiguration diagramStylingConfigurationMock = mock(DiagramStylingConfiguration.class);
 
-        when(repository.findByFileName(any())).thenReturn(Optional.empty());
+        when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
         when(krokiClient.convertTo(any(), any())).thenReturn("filedata".getBytes());
@@ -286,7 +286,7 @@ class DiagramServiceTest {
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
 
-            assertThat(result.getFileName()).isEqualTo("diagramName.svg");
+            assertThat(result.getName()).isEqualTo("diagramName.svg");
         }
     }
 
@@ -298,7 +298,7 @@ class DiagramServiceTest {
         when(projectMock.getId()).thenReturn(UUID.randomUUID());
 
         Diagram diagramMock = mock(Diagram.class);
-        when(diagramMock.getFileName()).thenReturn("diagramName.svg");
+        when(diagramMock.getName()).thenReturn("diagramName.svg");
         when(diagramMock.getProject()).thenReturn(projectMock);
         when(diagramMock.getId()).thenReturn(UUID.randomUUID());
 
@@ -362,7 +362,7 @@ class DiagramServiceTest {
 
         Diagram diagramMock = mock(Diagram.class);
         when(diagramMock.getProject()).thenReturn(projectMock);
-        when(diagramMock.getFileName()).thenReturn("diagramName.svg");
+        when(diagramMock.getName()).thenReturn("diagramName.svg");
         when(diagramMock.getProject()).thenReturn(projectMock);
 
         when(repository.save(diagramMock)).thenReturn(diagramMock);

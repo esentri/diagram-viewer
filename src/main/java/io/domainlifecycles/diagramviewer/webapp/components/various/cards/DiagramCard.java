@@ -16,9 +16,9 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChanged
 public class DiagramCard extends Card implements DragSource<CardLinkWrapper>, DropTarget<CardLinkWrapper> {
 
     public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final Diagram diagram, final String diagramSrc) {
-        setTitle(diagram.getFileName());
+        setTitle(diagram.getName());
 
-        Image image = new Image(diagramSrc, diagram.getFileName());
+        Image image = new Image(diagramSrc, diagram.getName());
         image.setHeight("200px");
         image.setWidth("95%");
         setMedia(image);

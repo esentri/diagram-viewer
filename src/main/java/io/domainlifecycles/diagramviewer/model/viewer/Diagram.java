@@ -1,6 +1,5 @@
 package io.domainlifecycles.diagramviewer.model.viewer;
 
-import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,10 +35,7 @@ public class Diagram {
     private UUID id;
 
     @Column(nullable = false)
-    private String fileName;
-
-    @Column(nullable = false)
-    private FileType fileType;
+    private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="project_id", nullable=false)

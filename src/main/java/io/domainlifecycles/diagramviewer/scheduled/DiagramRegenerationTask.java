@@ -60,11 +60,11 @@ public class DiagramRegenerationTask {
                     regenerateDiagramsJobService.delete(job);
                 } catch(Exception e) {
                     LOGGER.error("Error occurred while regenerating diagram '{}'. Continuing with others...",
-                        job.getDiagram().getFileName());
+                        job.getDiagram().getName());
 
                     caughtErrors.add(DiagramRegenerationError.builder()
                             .diagramId(job.getDiagram().getId())
-                            .diagramName(job.getDiagram().getFileName())
+                            .diagramName(job.getDiagram().getName())
                             .caughtException(e)
                         .build());
                 }

@@ -17,7 +17,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageMultiSelectComboBox;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
@@ -56,7 +55,7 @@ public class CreateDiagramDialog extends Dialog {
 
         addOpenedChangeListener(e -> {
             if(e.isOpened()) {
-                this.createDiagramOptions = new CreateDiagramOptions(FileType.SVG);
+                this.createDiagramOptions = new CreateDiagramOptions();
                 binder.readBean(createDiagramOptions);
             }
         });
@@ -72,7 +71,6 @@ public class CreateDiagramDialog extends Dialog {
             diagramService.create(
                     project,
                     createDiagramOptions.getFileName(),
-                    createDiagramOptions.getFileType(),
                     createDiagramOptions.getDomainModelVisibility(),
                     createDiagramOptions.getDiagramStylingConfiguration());
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
@@ -106,14 +104,6 @@ public class CreateDiagramDialog extends Dialog {
             .bind(CreateDiagramOptions::getFileName, CreateDiagramOptions::setFileName);
         formLayout.addFormItem(diagramNameTextField, "File-Name");
 
-        Select<FileType> formatSelect = new Select<>();
-        formatSelect.setItems(FileType.values());
-        formatSelect.setItemEnabledProvider(item -> item.equals(FileType.SVG));
-        binder.forField(formatSelect)
-            .asRequired("Format is required.")
-            .bind(CreateDiagramOptions::getFileType, CreateDiagramOptions::setFileType);
-        formLayout.addFormItem(formatSelect, "Format");
-
         return formLayout;
     }
 
@@ -138,7 +128,7 @@ public class CreateDiagramDialog extends Dialog {
         diagramTemplateSelect.setWidthFull();
         diagramTemplateSelect.setEmptySelectionAllowed(true);
         diagramTemplateSelect.setItems(project.getDiagrams());
-        diagramTemplateSelect.setItemLabelGenerator(diagram -> diagram == null ? "" : diagram.getFileName());
+        diagramTemplateSelect.setItemLabelGenerator(diagram -> diagram == null ? "" : diagram.getName());
 
         diagramTemplateSelect.addValueChangeListener(e -> {
             Diagram templateDiagram = e.getValue();
@@ -199,12 +189,10 @@ public class CreateDiagramDialog extends Dialog {
     @AllArgsConstructor
     private static class CreateDiagramOptions {
         private String fileName;
-        private FileType fileType;
         private DomainModelVisibility domainModelVisibility;
         private DiagramStylingConfiguration diagramStylingConfiguration;
 
-        public CreateDiagramOptions(FileType fileType) {
-            this.fileType = fileType;
+        public CreateDiagramOptions() {
             this.domainModelVisibility = new DomainModelVisibility();
             this.diagramStylingConfiguration = new DiagramStylingConfiguration();
         }

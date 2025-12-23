@@ -251,10 +251,10 @@ public class MainLayout extends AppLayout {
         diagrams
             .stream().sorted(Comparator.comparing(Diagram::getCreatedAt))
             .forEach(diagram -> {
-                SideNavItem sideNavItem = new SideNavItem(diagram.getFileName(), DiagramView.class,
+                SideNavItem sideNavItem = new SideNavItem(diagram.getName(), DiagramView.class,
                     new RouteParameters(
                         Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(), "diagramName",
-                        diagram.getFileName())));
+                        diagram.getName())));
 
                 sideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
                 parentSideNavItem.addItem(sideNavItem);

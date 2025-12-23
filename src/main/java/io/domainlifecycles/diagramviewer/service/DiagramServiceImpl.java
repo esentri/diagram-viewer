@@ -1,14 +1,13 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagram.domain.notes.DomainClassNote;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
-import io.domainlifecycles.diagramviewer.rest.kroki.FileType;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
@@ -17,6 +16,7 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 public class DiagramServiceImpl implements DiagramService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DiagramServiceImpl.class);
+    public static final String SVG_FILE_SUFFIX = ".svg";
 
     private final String diagramsLocation;
     private final SessionStorage sessionStorage;
@@ -63,32 +64,29 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram updateModelAndImage(Diagram diagram) {
-        final Diagram updatedDiagram = save(diagram);
+        final Diagram updatedDiagram = updateModel(diagram);
         DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
         createAndSaveDiagramToFilesystem(domainMirror, updatedDiagram);
         return updatedDiagram;
     }
 
     @Override
-    public Diagram rename(Diagram diagram, String fileName) {
-        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getFileName());
-        String newFilenameWithSuffix = fileName + diagram.getFileType().getFileSuffix();
-        FileIOUtils.renameFile(diagramPath, newFilenameWithSuffix);
+    public Diagram rename(Diagram diagram, String newName) {
+        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName());
+        FileIOUtils.renameFile(diagramPath, newName + SVG_FILE_SUFFIX);
 
-        diagram.setFileName(newFilenameWithSuffix);
-        return updateModelAndImage(diagram);
+        diagram.setName(newName);
+        return updateModel(diagram);
     }
 
     @Override
     public Diagram create(Project project,
                           String name,
-                          FileType fileType,
                           DomainModelVisibility visibility,
                           DiagramStylingConfiguration diagramStylingConfiguration) {
 
         Diagram diagram = Diagram.builder()
-            .fileName(name + fileType.getFileSuffix())
-            .fileType(fileType)
+            .name(name)
             .domainModelVisibility(visibility)
             .diagramStylingConfiguration(diagramStylingConfiguration)
             .project(project)
@@ -103,7 +101,7 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private Diagram save(Diagram diagram) {
-        final String fileName = diagram.getFileName();
+        final String fileName = diagram.getName();
 
         if(diagramWithNameExists(diagram) && diagramNameHasChanged(diagram)) {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
@@ -129,8 +127,7 @@ public class DiagramServiceImpl implements DiagramService {
     public void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram) {
 
         final String nomnoml;
-
-        var notes = noteRepository.findByDiagramId(diagram.getId());
+        List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
 
         try {
             nomnoml = DiagrammerUtils.generateNomnoml(
@@ -139,13 +136,13 @@ public class DiagramServiceImpl implements DiagramService {
                 diagram.getDomainModelVisibility(),
                 notes
             );
-        } catch(IllegalStateException e) {
+        } catch (IllegalStateException e) {
             throw DiagramViewerException.fail(e.getMessage(), e);
         }
 
-        byte[] diagramFileContents = krokiClient.convertTo(nomnoml, diagram.getFileType());
+        byte[] diagramFileContents = krokiClient.convert(nomnoml);
 
-        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getFileName());
+        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
         try {
             FileIOUtils.saveFile(diagramPath.toAbsolutePath(), new ByteArrayInputStream(diagramFileContents));
         } catch (IOException e) {
@@ -154,13 +151,13 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private boolean diagramWithNameExists(Diagram diagram) {
-        Optional<Diagram> diagramWithName = repository.findByFileName(diagram.getFileName());
-        return diagramWithName.isPresent() && Objects.equals(diagram.getFileName(), diagramWithName.get().getFileName());
+        Optional<Diagram> diagramWithName = repository.findByName(diagram.getName());
+        return diagramWithName.isPresent() && Objects.equals(diagram.getName(), diagramWithName.get().getName());
     }
 
     private boolean diagramNameHasChanged(Diagram diagram) {
         if(diagram.getId() == null) return true;
         Optional<Diagram> oldDiagram = repository.findById(diagram.getId());
-        return oldDiagram.isPresent() && !Objects.equals(oldDiagram.get().getFileName(), diagram.getFileName());
+        return oldDiagram.isPresent() && !Objects.equals(oldDiagram.get().getName(), diagram.getName());
     }
 }

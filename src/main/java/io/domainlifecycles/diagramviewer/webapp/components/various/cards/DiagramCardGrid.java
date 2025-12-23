@@ -46,7 +46,7 @@ public class DiagramCardGrid extends FormLayout {
             .stream()
             .sorted(Comparator.comparing(DiagramDirectory::getCreatedAt))
             .forEach(diagramDirectory -> {
-                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, project, diagramDirectory);
+                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, diagramDirectory);
                 add(cardLinkWrapper);
             });
 

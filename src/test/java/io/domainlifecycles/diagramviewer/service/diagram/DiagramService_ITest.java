@@ -77,7 +77,7 @@ class DiagramService_ITest extends BaseIntegrationTest {
             new DiagramStylingConfiguration());
 
         // then
-        assertThat(diagramRepository.findByFileName(diagramName)).isNotNull();
+        assertThat(diagramRepository.findByName(diagramName)).isNotNull();
     }
 
     @AfterEach

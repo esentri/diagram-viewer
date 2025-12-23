@@ -28,16 +28,11 @@ public class KrokiClient {
         this.krokiContainerUrl = krokiContainerUrl;
     }
 
-    public byte[] convertTo(final String rawNomNomlContent, final FileType fileType) {
-        final String path = getKrokiPath(fileType);
-        return convert(rawNomNomlContent, path);
-    }
-
-    private byte[] convert(String rawInputDiagramContent, String path) {
+    public byte[] convert(String rawInputDiagramContent) {
         LOGGER.debug("Converting Nomnoml diagram to specified format via Kroki Docker container...");
 
         HttpRequest request = HttpRequest.newBuilder().version(HttpClient.Version.HTTP_1_1)
-            .uri(URI.create(krokiContainerUrl + path))
+            .uri(URI.create(krokiContainerUrl + KROKI_NOMNOML_SVG_PATH))
             .header("Content-Type", "text/plain")
             .timeout(Duration.ofSeconds(10))
             .POST(BodyPublishers.ofString(rawInputDiagramContent))
@@ -67,15 +62,5 @@ public class KrokiClient {
             throw DiagramViewerException.fail("Nomnoml conversion with Kroki Server failed.", e);
         }
         throw DiagramViewerException.fail("Kroki server couldn't be reached.");
-    }
-
-    private String getKrokiPath(final FileType fileType) {
-        String krokiPath;
-        switch (fileType) {
-            case SVG -> krokiPath = KROKI_NOMNOML_SVG_PATH;
-            default -> throw DiagramViewerException.fail(
-                String.format("Filetype '%s' not allowed for Kroki conversion.", fileType));
-        }
-        return krokiPath;
     }
 }
