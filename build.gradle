@@ -95,11 +95,24 @@ test {
 
 tasks.register('integrationTest', Test) {
 	group = 'verification'
+	description = 'Runs integration tests'
+
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+
 	include '**/*_ITest.class'
+
+	useJUnitPlatform()
+
 	maxParallelForks = 1
 	forkEvery = 1
 	jvmArgs '-Xmx1536m'
+
 	shouldRunAfter test
+}
+
+tasks.named("check") {
+	dependsOn(tasks.named("integrationTest"))
 }
 
 jacocoTestReport {

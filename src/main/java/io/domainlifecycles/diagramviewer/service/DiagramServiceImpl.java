@@ -94,13 +94,12 @@ public class DiagramServiceImpl implements DiagramService {
             .project(project)
             .build();
 
-
-        final Diagram persistedDiagram = save(diagram);
+        save(diagram);
         DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
-        createAndSaveDiagramToFilesystem(domainMirror, persistedDiagram);
+        createAndSaveDiagramToFilesystem(domainMirror, diagram);
         project.addDiagram(diagram);
 
-        return persistedDiagram;
+        return diagram;
     }
 
     private Diagram save(Diagram diagram) {

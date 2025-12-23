@@ -39,9 +39,6 @@ class DiagramDirectoryService_ITest {
     DiagramDirectoryService service;
 
     @Autowired
-    DiagramService diagramService;
-
-    @Autowired
     ProjectRepository projectRepository;
 
     @Autowired

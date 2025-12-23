@@ -37,7 +37,9 @@ public class CreateDiagramDialog extends Dialog {
 
     private CreateDiagramOptions createDiagramOptions;
     private Button createButton;
-    private TextField diagramNameTextField;
+    private Select<Diagram> diagramTemplateSelect;
+    private PackageMultiSelectComboBox packageMultiSelectComboBox;
+    private MultiSelectComboBox<String> blacklistedClassnamesMultiSelectComboBox;
 
     public CreateDiagramDialog(DiagramService diagramService, Project project, List<DomainTypeMirror> domainTypeMirrors) {
         this.diagramService = diagramService;
@@ -95,80 +97,10 @@ public class CreateDiagramDialog extends Dialog {
         return dialogLayout;
     }
 
-    private Accordion createAndGetDialogAdvancedConfigurationAccordion() {
-        Accordion advancedConfigurationAccordion = new Accordion();
-        AccordionPanel advancedConfigurationPanel = new AccordionPanel("Advanced configuration");
-
-        FormLayout advancedConfigurationFormLayout = new FormLayout();
-        advancedConfigurationFormLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
-
-        Select<Diagram> diagramTemplateSelect = new Select<>();
-        diagramTemplateSelect.setWidthFull();
-        diagramTemplateSelect.setEmptySelectionAllowed(true);
-        diagramTemplateSelect.setItems(project.getDiagrams());
-        diagramTemplateSelect.setItemLabelGenerator(diagram -> diagram == null ? "" : diagram.getFileName());
-        advancedConfigurationFormLayout.addFormItem(diagramTemplateSelect, "Template");
-
-        PackageMultiSelectComboBox packageMultiSelectComboBox = new PackageMultiSelectComboBox(domainTypeMirrors);
-        packageMultiSelectComboBox.setWidthFull();
-        binder.forField(packageMultiSelectComboBox)
-            .bind(opt -> opt.getDomainModelVisibility().getExplicitlyIncludedPackagesNames(),
-                    (opt, v) -> opt.setDomainModelVisibility(opt.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(v)));
-        advancedConfigurationFormLayout.addFormItem(packageMultiSelectComboBox, "Explicitly included packages");
-
-        MultiSelectComboBox<String> blacklistedClassnamesMultiSelectComboBox = new MultiSelectComboBox<>();
-        blacklistedClassnamesMultiSelectComboBox.setWidthFull();
-        blacklistedClassnamesMultiSelectComboBox.setPlaceholder("Classnames...");
-        blacklistedClassnamesMultiSelectComboBox.setItems(domainTypeMirrors.stream().map(DomainTypeMirror::getTypeName).collect(
-            Collectors.toSet()));
-        binder.forField(blacklistedClassnamesMultiSelectComboBox)
-            .bind(opt -> opt.getDomainModelVisibility().getBlacklistedClassNames(),
-                    (opt, v) -> opt.setDomainModelVisibility(opt.getDomainModelVisibility().replaceBlacklistedClassNames(v)));
-        advancedConfigurationFormLayout.addFormItem(blacklistedClassnamesMultiSelectComboBox, "Excluded classes");
-
-        diagramTemplateSelect.addValueChangeListener(e -> {
-            Diagram templateDiagram = e.getValue();
-            DomainModelVisibility visibility = new DomainModelVisibility();
-            DiagramStylingConfiguration styling = new DiagramStylingConfiguration();
-
-            boolean templateDiagramSelected = templateDiagram != null;
-            if(templateDiagramSelected) {
-
-                // Use new visibility/styling instances but map values
-                visibility = e.getValue().getDomainModelVisibility().toBuilder()
-                        .id(null)
-                        .createdAt(null)
-                        .changedAt(null)
-                        .build();
-                styling = e.getValue().getDiagramStylingConfiguration().toBuilder()
-                        .id(null)
-                        .createdAt(null)
-                        .changedAt(null)
-                        .build();
-            }
-
-            blacklistedClassnamesMultiSelectComboBox.setEnabled(!templateDiagramSelected);
-            packageMultiSelectComboBox.setEnabled(!templateDiagramSelected);
-
-            createDiagramOptions = CreateDiagramOptions.builder()
-                .fileType(FileType.SVG)
-                .fileName(diagramNameTextField.getValue())
-                .domainModelVisibility(visibility)
-                .diagramStylingConfiguration(styling)
-                .build();
-
-            binder.readBean(createDiagramOptions);
-        });
-
-        advancedConfigurationPanel.add(advancedConfigurationFormLayout);
-        advancedConfigurationAccordion.add(advancedConfigurationPanel);
-        return advancedConfigurationAccordion;
-    }
-
     private FormLayout createAndGetDialogFormLayout() {
         FormLayout formLayout = new FormLayout();
 
-        diagramNameTextField = new TextField();
+        TextField diagramNameTextField = new TextField();
         binder.forField(diagramNameTextField)
             .asRequired("Name is required.")
             .bind(CreateDiagramOptions::getFileName, CreateDiagramOptions::setFileName);
@@ -183,6 +115,83 @@ public class CreateDiagramDialog extends Dialog {
         formLayout.addFormItem(formatSelect, "Format");
 
         return formLayout;
+    }
+
+    private Accordion createAndGetDialogAdvancedConfigurationAccordion() {
+        Accordion advancedConfigurationAccordion = new Accordion();
+        AccordionPanel advancedConfigurationPanel = new AccordionPanel("Advanced configuration");
+
+        FormLayout advancedConfigurationFormLayout = new FormLayout();
+        advancedConfigurationFormLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
+
+        createAndAddDiagramTemplateSelect(advancedConfigurationFormLayout);
+        createAndAddPackageMultiSelectComboBox(advancedConfigurationFormLayout);
+        createAndAddBlacklistedClassnamesMultiSelectComboBox(advancedConfigurationFormLayout);
+
+        advancedConfigurationPanel.add(advancedConfigurationFormLayout);
+        advancedConfigurationAccordion.add(advancedConfigurationPanel);
+        return advancedConfigurationAccordion;
+    }
+
+    private void createAndAddDiagramTemplateSelect(FormLayout advancedConfigurationFormLayout) {
+        diagramTemplateSelect = new Select<>();
+        diagramTemplateSelect.setWidthFull();
+        diagramTemplateSelect.setEmptySelectionAllowed(true);
+        diagramTemplateSelect.setItems(project.getDiagrams());
+        diagramTemplateSelect.setItemLabelGenerator(diagram -> diagram == null ? "" : diagram.getFileName());
+
+        diagramTemplateSelect.addValueChangeListener(e -> {
+            Diagram templateDiagram = e.getValue();
+
+            DomainModelVisibility visibility = new DomainModelVisibility();
+            DiagramStylingConfiguration diagramStyling = new DiagramStylingConfiguration();
+
+            boolean templateDiagramSelected = templateDiagram != null;
+            if(templateDiagramSelected) {
+
+                // Use new visibility/styling instances but map values
+                visibility = templateDiagram.getDomainModelVisibility().toBuilder()
+                    .id(null)
+                    .createdAt(null)
+                    .changedAt(null)
+                    .build();
+                diagramStyling = templateDiagram.getDiagramStylingConfiguration().toBuilder()
+                    .id(null)
+                    .createdAt(null)
+                    .changedAt(null)
+                    .build();
+            }
+            advancedConfigurationFormLayout.addFormItem(diagramTemplateSelect, "Template");
+
+            blacklistedClassnamesMultiSelectComboBox.setEnabled(!templateDiagramSelected);
+            packageMultiSelectComboBox.setEnabled(!templateDiagramSelected);
+
+            createDiagramOptions.setDomainModelVisibility(visibility);
+            createDiagramOptions.setDiagramStylingConfiguration(diagramStyling);
+
+            binder.readBean(createDiagramOptions);
+        });
+    }
+
+    private void createAndAddPackageMultiSelectComboBox(FormLayout advancedConfigurationFormLayout) {
+        packageMultiSelectComboBox = new PackageMultiSelectComboBox(domainTypeMirrors);
+        packageMultiSelectComboBox.setWidthFull();
+        binder.forField(packageMultiSelectComboBox)
+            .bind(opt -> opt.getDomainModelVisibility().getExplicitlyIncludedPackagesNames(),
+                    (opt, v) -> opt.setDomainModelVisibility(opt.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(v)));
+        advancedConfigurationFormLayout.addFormItem(packageMultiSelectComboBox, "Explicitly included packages");
+    }
+
+    private void createAndAddBlacklistedClassnamesMultiSelectComboBox(FormLayout advancedConfigurationFormLayout) {
+        blacklistedClassnamesMultiSelectComboBox = new MultiSelectComboBox<>();
+        blacklistedClassnamesMultiSelectComboBox.setWidthFull();
+        blacklistedClassnamesMultiSelectComboBox.setPlaceholder("Classnames...");
+        blacklistedClassnamesMultiSelectComboBox.setItems(domainTypeMirrors.stream().map(DomainTypeMirror::getTypeName).collect(
+            Collectors.toSet()));
+        binder.forField(blacklistedClassnamesMultiSelectComboBox)
+            .bind(opt -> opt.getDomainModelVisibility().getBlacklistedClassNames(),
+                    (opt, v) -> opt.setDomainModelVisibility(opt.getDomainModelVisibility().replaceBlacklistedClassNames(v)));
+        advancedConfigurationFormLayout.addFormItem(blacklistedClassnamesMultiSelectComboBox, "Excluded classes");
     }
 
     @Data

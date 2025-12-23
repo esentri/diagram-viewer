@@ -41,13 +41,13 @@ public class DiagramRegenerationTask {
     public void regenerateUpdatedDomainMirrors() {
         List<DiagramRegenerationError> caughtErrors = new ArrayList<>();
         List<RegenerateDiagramsJob> allJobs = regenerateDiagramsJobService.getAll();
-        LOGGER.debug(String.format("Found %s diagrams to regenerate after DomainMirror update.", allJobs.size()));
+        LOGGER.debug("Found {} diagrams to regenerate after DomainMirror update.", allJobs.size());
 
         Map<UUID, List<RegenerateDiagramsJob>> jobsGroupedByProjectId = allJobs.stream()
             .collect(Collectors.groupingBy(job -> job.getDiagram().getProject().getId()));
 
         jobsGroupedByProjectId.forEach((projectId, value) -> {
-            LOGGER.info(String.format("Regenerating diagrams for project '%s' ...", projectId));
+            LOGGER.info("Regenerating diagrams for project '{}' ...", projectId);
 
             List<RegenerateDiagramsJob> regenerateDiagramsJobsForProject = jobsGroupedByProjectId.get(projectId);
 
@@ -59,9 +59,8 @@ public class DiagramRegenerationTask {
                     diagramRegenerationService.regenerate(job.getDiagram());
                     regenerateDiagramsJobService.delete(job);
                 } catch(Exception e) {
-                    LOGGER.error(
-                        String.format("Error occurred while regenerating diagram '%s'. Continuing with others...",
-                            job.getDiagram().getFileName()));
+                    LOGGER.error("Error occurred while regenerating diagram '{}'. Continuing with others...",
+                        job.getDiagram().getFileName());
 
                     caughtErrors.add(DiagramRegenerationError.builder()
                             .diagramId(job.getDiagram().getId())
