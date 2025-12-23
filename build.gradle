@@ -55,7 +55,8 @@ dependencies {
 	implementation "com.vaadin:vaadin-spring-boot-starter"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation ('org.postgresql:postgresql')
-	testImplementation ('org.testcontainers:postgresql:1.20.6')
+	testImplementation "org.testcontainers:junit-jupiter:1.20.6"
+	testImplementation "org.testcontainers:postgresql:1.20.6"
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
 	implementation ('com.okta.spring:okta-spring-boot-starter:3.0.7')
 	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"

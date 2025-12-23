@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.service.registereduser;
 
-import io.domainlifecycles.diagramviewer.configuration.TestContainersInitializer;
+import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
 import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
 import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
@@ -8,20 +8,12 @@ import java.util.HashSet;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@DirtiesContext
-@ExtendWith(TestContainersInitializer.class)
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ContextConfiguration(initializers = TestContainersInitializer.class)
-class RegisteredUserService_ITest {
+class RegisteredUserService_ITest extends BaseIntegrationTest {
 
     private static final String TEST_USER_MAIL_ADDRESS = "test-user@gmail.com";
     private static final String TEST_USER_FULL_NAME = "Max Mustermann";

@@ -7,7 +7,6 @@ import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteServiceImpl;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
