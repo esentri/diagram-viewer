@@ -12,6 +12,4 @@ public interface RegisteredUserService {
     Optional<RegisteredUser> findByApiKey(final String apiKey);
 
     RegisteredUser createUser(String userEmailAddress, String fullName);
-
-    void generateAndSaveApiKey(RegisteredUser registeredUser);
 }

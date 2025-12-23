@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.webapp.views;
 
-import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -23,7 +23,10 @@ public class DefaultView extends FlexLayout {
     private VerticalLayout getPageContents() {
         VerticalLayout layout = new VerticalLayout();
 
-        layout.add(new H2("Select a Project/Diagram on the left!"));
+        Image dlcLogo = new Image("frontend/icons/favicon.png", "dlc-logo");
+        dlcLogo.setHeight("15%");
+        dlcLogo.setWidth("15%");
+        layout.add(dlcLogo);
 
         layout.setAlignItems(Alignment.CENTER);
         return layout;

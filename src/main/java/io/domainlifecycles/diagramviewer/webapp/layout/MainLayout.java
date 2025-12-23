@@ -143,31 +143,19 @@ public class MainLayout extends AppLayout {
         VerticalLayout apiKeyLayout = new VerticalLayout();
         apiKeyLayout.setSpacing(false);
 
-        if(registeredUser.hasApiKey()) {
-            String apiKey = registeredUser.getApiKey().toString();
+        String apiKey = registeredUser.getApiKey().toString();
 
-            Button copyApiKeyButton = new Button("Copy API-Key", e -> {
-                UI.getCurrent().getPage()
-                    .executeJs("navigator.clipboard.writeText($0)", apiKey);
-                Notification.show("Your API-Key has been copied to clipboard.");
-            });
+        Button copyApiKeyButton = new Button("Copy API-Key", e -> {
+            UI.getCurrent().getPage()
+                .executeJs("navigator.clipboard.writeText($0)", apiKey);
+            Notification.show("Your API-Key has been copied to clipboard.");
+        });
 
-            copyApiKeyButton.getStyle().set("cursor", "pointer");
-            copyApiKeyButton.setPrefixComponent(new Icon("vaadin:key"));
-            copyApiKeyButton.setWidthFull();
+        copyApiKeyButton.getStyle().set("cursor", "pointer");
+        copyApiKeyButton.setPrefixComponent(new Icon("vaadin:key"));
+        copyApiKeyButton.setWidthFull();
 
-            apiKeyLayout.add(copyApiKeyButton);
-        } else {
-            Button generateApiKeyButton = new Button("Generate API-Key", e -> {
-                registeredUserService.generateAndSaveApiKey(registeredUser);
-                refreshPopover();
-            });
-
-            generateApiKeyButton.setPrefixComponent(new Icon("vaadin:key-o"));
-            generateApiKeyButton.setWidthFull();
-
-            apiKeyLayout.add(generateApiKeyButton);
-        }
+        apiKeyLayout.add(copyApiKeyButton);
         return apiKeyLayout;
     }
 

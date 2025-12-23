@@ -37,15 +37,10 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
         final RegisteredUser registeredUser = RegisteredUser.builder()
             .emailAddress(userEmailAddress)
             .fullName(fullName)
+            .apiKey(UUID.randomUUID())
             .assignedProjects(new HashSet<>())
             .build();
 
         return repository.save(registeredUser);
-    }
-
-    @Override
-    public void generateAndSaveApiKey(RegisteredUser registeredUser) {
-        registeredUser.setApiKey(UUID.randomUUID());
-        repository.save(registeredUser);
     }
 }
