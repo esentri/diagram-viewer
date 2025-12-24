@@ -33,6 +33,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -216,18 +217,12 @@ class DiagramServiceTest {
         Diagram diagram = mock(Diagram.class);
         when(diagram.getProject()).thenReturn(project);
         when(diagram.getName()).thenReturn("diagramName.svg");
-        when(diagram.getDiagramStylingConfiguration()).thenReturn(mock(DiagramStylingConfiguration.class));
-        when(diagram.getDomainModelVisibility()).thenReturn(mock(DomainModelVisibility.class));
 
         when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
-        when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
-        when(krokiClient.convert(any())).thenReturn("filedata".getBytes());
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
-
-            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any())).thenReturn("testNomnoml");
 
             // when
             Diagram result = diagramService.rename(diagram, "newDiagramName");
@@ -235,12 +230,10 @@ class DiagramServiceTest {
             // then
             verify(repository, times(1)).findByName(any());
             verify(repository, times(1)).save(eq(diagram));
-            verify(sessionStorage, times(1)).getDomainMirror(any());
-            verify(krokiClient, times(1)).convert(any());
 
             fileIOUtilsMocked.verify(() -> FileIOUtils.renameFile(any(), any()));
-            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
-            fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
+            fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()), never());
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()), never());
 
             assertThat(result).isEqualTo(diagram);
         }
@@ -283,7 +276,7 @@ class DiagramServiceTest {
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
 
-            assertThat(result.getName()).isEqualTo("diagramName.svg");
+            assertThat(result.getName()).isEqualTo("diagramName");
         }
     }
 
