@@ -1,13 +1,16 @@
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.function.SerializableConsumer;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
@@ -27,7 +30,12 @@ public class DownloadDiagramDialog extends Dialog {
     private final DownloadDiagramOptions downloadDiagramOptions;
     private final Binder<DownloadDiagramOptions> binder;
 
+    private final ProgressBar progressBar;
+
     private Diagram diagram;
+
+    private Select<FileType> fileTypeSelect;
+    private Button downloadDiagramButton;
 
     public DownloadDiagramDialog(String diagramsLocation) {
         setHeaderTitle("Download Diagram");
@@ -39,12 +47,17 @@ public class DownloadDiagramDialog extends Dialog {
         binder.setBean(downloadDiagramOptions);
 
         add(createDialogLayout());
+
+        progressBar = new ProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setVisible(false);
+        add(progressBar);
     }
 
     private FormLayout createDialogLayout() {
         FormLayout formLayout = new FormLayout();
 
-        Select<FileType> fileTypeSelect = new Select<>();
+        fileTypeSelect = new Select<>();
         fileTypeSelect.setItems(FileType.values());
 
         binder.forField(fileTypeSelect)
@@ -66,8 +79,15 @@ public class DownloadDiagramDialog extends Dialog {
         downloadAnchor.getElement().setAttribute("download", true);
         downloadAnchor.removeAll();
 
-        Button downloadDiagramButton = new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD_ALT));
+        downloadDiagramButton = new Button("Download Diagram", new Icon(VaadinIcon.DOWNLOAD_ALT));
         downloadDiagramButton.getStyle().set("cursor", "pointer");
+
+        downloadDiagramButton.addClickListener(e -> {
+            progressBar.setVisible(true);
+            fileTypeSelect.setEnabled(false);
+            downloadDiagramButton.setEnabled(false);
+        });
+
         downloadAnchor.add(downloadDiagramButton);
 
         return downloadAnchor;
@@ -93,7 +113,12 @@ public class DownloadDiagramDialog extends Dialog {
                     fileContents.length
                 );
             }
-        );
+        ).whenComplete(success -> {
+            this.close();
+            progressBar.setVisible(false);
+            fileTypeSelect.setEnabled(true);
+            downloadDiagramButton.setEnabled(true);
+        });
     }
 
     private byte[] convertImage(byte[] svgFileContents, FileType fileType) {
