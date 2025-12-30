@@ -4,11 +4,11 @@ import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
+import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
@@ -42,7 +42,7 @@ class ProjectService_ITest extends BaseIntegrationTest {
     ProjectRepository projectRepository;
 
     @Autowired
-    RegisteredUserRepository registeredUserRepository;
+    AppUserRepository appUserRepository;
 
     @Autowired
     InvitedUserRepository invitedUserRepository;
@@ -52,23 +52,23 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
     @Value("${diagrams.location}") String diagramsLocation;
 
-    private RegisteredUser registeredUser;
+    private AppUser appUser;
 
     @BeforeEach
     void setUp() {
-        registeredUser = RegisteredUser.builder()
+        appUser = AppUser.builder()
             .fullName(REGISTERED_USER_FULL_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();
 
-        registeredUserRepository.save(registeredUser);
+        appUserRepository.save(appUser);
     }
 
     @AfterEach
     void tearDown() {
         projectRepository.deleteAll();
-        registeredUserRepository.deleteAll();
+        appUserRepository.deleteAll();
         invitedUserRepository.deleteAll();
     }
 
@@ -87,15 +87,15 @@ class ProjectService_ITest extends BaseIntegrationTest {
         Path path = FileIOUtils.saveTemporaryFile("test-mirror.json", jsonMirrorFileContents);
 
         // when
-        Project project = service.create(projectName, domainModelPackages, registeredUser, path, UploadFileType.JSON);
+        Project project = service.create(projectName, domainModelPackages, appUser, path, UploadFileType.JSON);
 
         // then
         assertThat(project).isNotNull();
         assertThat(project.getName()).isEqualTo(projectName);
-        assertThat(project.getCreator().getId()).isEqualTo(registeredUser.getId());
-        assertThat(project.getAssignedRegisteredUsers().size()).isEqualTo(1);
-        assertThat(project.getAssignedRegisteredUsers().stream().findFirst().orElseThrow().getId()).isEqualTo(registeredUser.getId());
-        assertThat(project.getCreator().getId()).isEqualTo(registeredUser.getId());
+        assertThat(project.getCreator().getId()).isEqualTo(appUser.getId());
+        assertThat(project.getAssignedUsers().size()).isEqualTo(1);
+        assertThat(project.getAssignedUsers().stream().findFirst().orElseThrow().getId()).isEqualTo(appUser.getId());
+        assertThat(project.getCreator().getId()).isEqualTo(appUser.getId());
         assertThat(project.getAssignedInvitedUsers()).isEmpty();
     }
 
@@ -112,7 +112,7 @@ class ProjectService_ITest extends BaseIntegrationTest {
         assertThat(project.getAssignedInvitedUsers())
             .anySatisfy(invitedUser -> assertThat(invitedUser.getEmailAddress())
                 .isEqualTo(INVITED_USER_MAIL_ADDRESS));
-        assertThat(project.getAssignedRegisteredUsers())
+        assertThat(project.getAssignedUsers())
             .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
                 .isEqualTo(REGISTERED_USER_MAIL_ADDRESS));
     }
@@ -122,21 +122,21 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
         // given
         Project project = setUpProject();
-        RegisteredUser anotherRegisteredUser = setUpRegisteredUser();
+        AppUser anotherAppUser = setUpRegisteredUser();
 
         // when
-        service.assignUser(project, anotherRegisteredUser.getEmailAddress());
+        service.assignUser(project, anotherAppUser.getEmailAddress());
 
         // then
         assertThat(project).isNotNull();
         assertThat(project.getAssignedInvitedUsers()).isEmpty();
-        assertThat(project.getAssignedRegisteredUsers().size()).isEqualTo(2);
-        assertThat(project.getAssignedRegisteredUsers())
+        assertThat(project.getAssignedUsers().size()).isEqualTo(2);
+        assertThat(project.getAssignedUsers())
             .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
                 .isEqualTo(REGISTERED_USER_MAIL_ADDRESS));
-        assertThat(project.getAssignedRegisteredUsers())
+        assertThat(project.getAssignedUsers())
             .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
-                .isEqualTo(anotherRegisteredUser.getEmailAddress()));
+                .isEqualTo(anotherAppUser.getEmailAddress()));
     }
 
     @Test
@@ -144,21 +144,21 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
         // given
         Project project = setUpProject();
-        RegisteredUser anotherRegisteredUser = setUpRegisteredUser();
-        Set<RegisteredUser> updatedRegisteredUsers = new HashSet<>(project.getAssignedRegisteredUsers());
-        updatedRegisteredUsers.add(anotherRegisteredUser);
+        AppUser anotherAppUser = setUpRegisteredUser();
+        Set<AppUser> updatedAppUsers = new HashSet<>(project.getAssignedUsers());
+        updatedAppUsers.add(anotherAppUser);
 
-        project.setAssignedRegisteredUsers(updatedRegisteredUsers);
+        project.setAssignedUsers(updatedAppUsers);
         projectRepository.save(project);
 
         // when
-        service.unassignUser(project, anotherRegisteredUser);
+        service.unassignUser(project, anotherAppUser);
 
         // then
         assertThat(project).isNotNull();
         assertThat(project.getAssignedInvitedUsers()).isEmpty();
-        assertThat(project.getAssignedRegisteredUsers().size()).isEqualTo(1);
-        assertThat(project.getAssignedRegisteredUsers())
+        assertThat(project.getAssignedUsers().size()).isEqualTo(1);
+        assertThat(project.getAssignedUsers())
             .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
                 .isEqualTo(REGISTERED_USER_MAIL_ADDRESS));
     }
@@ -181,8 +181,8 @@ class ProjectService_ITest extends BaseIntegrationTest {
         // then
         assertThat(project).isNotNull();
         assertThat(project.getAssignedInvitedUsers()).isEmpty();
-        assertThat(project.getAssignedRegisteredUsers().size()).isEqualTo(1);
-        assertThat(project.getAssignedRegisteredUsers())
+        assertThat(project.getAssignedUsers().size()).isEqualTo(1);
+        assertThat(project.getAssignedUsers())
             .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
                 .isEqualTo(REGISTERED_USER_MAIL_ADDRESS));
     }
@@ -207,14 +207,14 @@ class ProjectService_ITest extends BaseIntegrationTest {
         assertThat(project.getDiagrams()).isEmpty();
     }
 
-    private RegisteredUser setUpRegisteredUser() {
-        RegisteredUser registeredUser = RegisteredUser.builder()
+    private AppUser setUpRegisteredUser() {
+        AppUser appUser = AppUser.builder()
             .fullName(REGISTERED_USER_FULL_NAME + " (2)")
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS + " (2)")
             .assignedProjects(new HashSet<>())
             .build();
 
-        return registeredUserRepository.save(registeredUser);
+        return appUserRepository.save(appUser);
     }
 
     private InvitedUser setUpInvitedUser() {
@@ -231,9 +231,9 @@ class ProjectService_ITest extends BaseIntegrationTest {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
             .diagrams(new HashSet<>())
-            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
+            .assignedAppUsers(new HashSet<>(Set.of(appUser)))
             .assignedInvitedUsers(new HashSet<>())
-            .creator(registeredUser)
+            .creator(appUser)
             .build();
 
         return projectRepository.save(project);

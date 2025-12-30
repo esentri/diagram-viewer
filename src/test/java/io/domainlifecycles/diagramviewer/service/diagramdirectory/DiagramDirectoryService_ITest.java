@@ -4,11 +4,11 @@ import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
+import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,7 +32,7 @@ class DiagramDirectoryService_ITest extends BaseIntegrationTest {
     ProjectRepository projectRepository;
 
     @Autowired
-    RegisteredUserRepository registeredUserRepository;
+    AppUserRepository appUserRepository;
 
     @Autowired
     InvitedUserRepository invitedUserRepository;
@@ -40,23 +40,23 @@ class DiagramDirectoryService_ITest extends BaseIntegrationTest {
     @Autowired
     DiagramRepository diagramRepository;
 
-    private RegisteredUser registeredUser;
+    private AppUser appUser;
 
     @BeforeEach
     void setUp() {
-        registeredUser = RegisteredUser.builder()
+        appUser = AppUser.builder()
             .fullName(TEST_USER_FULL_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();
 
-        registeredUserRepository.save(registeredUser);
+        appUserRepository.save(appUser);
     }
 
     @AfterEach
     void tearDown() {
         projectRepository.deleteAll();
-        registeredUserRepository.deleteAll();
+        appUserRepository.deleteAll();
         invitedUserRepository.deleteAll();
     }
 
@@ -89,10 +89,10 @@ class DiagramDirectoryService_ITest extends BaseIntegrationTest {
     private Project setUpProject() {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
-            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
+            .assignedAppUsers(new HashSet<>(Set.of(appUser)))
             .assignedInvitedUsers(new HashSet<>())
             .diagramDirectories(new HashSet<>())
-            .creator(registeredUser)
+            .creator(appUser)
             .build();
 
         return projectRepository.save(project);

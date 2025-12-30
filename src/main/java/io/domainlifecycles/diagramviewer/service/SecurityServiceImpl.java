@@ -1,35 +1,75 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
-import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
-import java.util.ArrayList;
-import java.util.List;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
+import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import java.util.Objects;
+import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SecurityServiceImpl implements SecurityService {
 
-    private final RegisteredUserService registeredUserService;
-    private final InvitedUserService invitedUserService;
-    private final ProjectService projectService;
+    private final AppUserService appUserService;
+    private final PasswordEncoder passwordEncoder;
 
-    public SecurityServiceImpl(RegisteredUserService registeredUserService, InvitedUserService invitedUserService, ProjectService projectService) {
-        this.registeredUserService = registeredUserService;
-        this.invitedUserService = invitedUserService;
-        this.projectService = projectService;
+    public SecurityServiceImpl(AppUserService appUserService,
+                               PasswordEncoder passwordEncoder) {
+        this.appUserService = appUserService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    public RegisteredUser getCurrentlySignedInUser() {
+    public AppUser getCurrentlySignedInUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+        if (authentication.getPrincipal() instanceof OAuth2User oAuth2User) {
+            String email = getEmailOfOAuth2User(oAuth2User);
+            return appUserService.get(email);
+        }
+
+        return appUserService.get(authentication.getName());
+    }
+
+    @Override
+    public AppUser acknowledgeOAuth2UserAuthentication(String userEmailAddress, String firstName, String lastName, String sub) {
+        Optional<AppUser> foundUser = appUserService.find(userEmailAddress);
+
+        if (foundUser.isPresent()) {
+            return getUserWhenActiveOrActivateUser(firstName, lastName, sub, foundUser.get());
+        } else {
+            return appUserService.createOktaUser(userEmailAddress, firstName, lastName, sub);
+        }
+    }
+
+    private AppUser getUserWhenActiveOrActivateUser(String firstName, String lastName, String sub, AppUser oktaUser) {
+        if (UserStatus.ACTIVE.equals(oktaUser.getStatus())) {
+            return oktaUser;
+        }
+        else {
+            return appUserService.activateOktaUser(oktaUser, firstName, lastName, sub);
+        }
+    }
+
+    @Transactional
+    public void registerSelfServiceUser(String email, String firstName, String lastName, String rawPassword) {
+        appUserService.createSelfServiceUser(email, firstName, lastName, passwordEncoder.encode(rawPassword));
+    }
+
+    @Override
+    public boolean checkAccess(String projectName, AppUser appUser) {
+        if (appUser == null || appUser.getAssignedProjects() == null) return false;
+
+        return appUser.getAssignedProjects().stream()
+            .anyMatch(project -> Objects.equals(project.getName(), projectName));
+    }
+
+    private String getEmailOfOAuth2User(OAuth2User oAuth2User) {
         String email = oAuth2User.getAttribute("email");
 
         if (email == null) {
@@ -39,40 +79,6 @@ public class SecurityServiceImpl implements SecurityService {
         if (email == null) {
             throw DiagramViewerException.fail("Email or username not found in OAuth2 response.");
         }
-
-        return registeredUserService.get(email);
-    }
-
-    @Override
-    public RegisteredUser acknowledgeUserAuthentication(String userEmailAddress, String fullName) {
-        if(registeredUserService.userKnown(userEmailAddress)) return registeredUserService.get(userEmailAddress);
-
-        if(!invitedUserService.userKnown(userEmailAddress)) {
-            return registeredUserService.createUser(userEmailAddress, fullName);
-        }
-
-        return transformInvitedUserToRegisteredUser(userEmailAddress, fullName);
-    }
-
-    private RegisteredUser transformInvitedUserToRegisteredUser(String userEmailAddress, String fullName) {
-        final InvitedUser invitedUser = invitedUserService.get(userEmailAddress);
-        List<Project> projectsWithUserAssigned = new ArrayList<>(invitedUser.getAssignedProjects());
-
-        RegisteredUser newRegisteredUser = registeredUserService.createUser(userEmailAddress, fullName);
-
-        projectsWithUserAssigned.forEach(project -> {
-            projectService.unassignUser(project, invitedUser);
-            projectService.assignUser(project, newRegisteredUser);
-        });
-
-        return newRegisteredUser;
-    }
-
-    @Override
-    public boolean checkAccess(String projectName, RegisteredUser registeredUser) {
-        if(registeredUser == null || registeredUser.getAssignedProjects() == null) return false;
-
-        return registeredUser.getAssignedProjects().stream()
-            .anyMatch(project -> Objects.equals(project.getName(), projectName));
+        return email;
     }
 }

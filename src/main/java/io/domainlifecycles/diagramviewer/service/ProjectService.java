@@ -1,10 +1,10 @@
 package io.domainlifecycles.diagramviewer.service;
 
+import com.vaadin.open.App;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
-import io.domainlifecycles.diagramviewer.model.viewer.User;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import java.nio.file.Path;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ProjectService {
 
     @Transactional
-    Stream<Project> getAll(RegisteredUser registeredUser);
+    Stream<Project> getAll(AppUser appUser);
 
     Optional<Project> findById(UUID id);
 
@@ -30,27 +30,27 @@ public interface ProjectService {
      * @param project the {@link Project} entity to be updated, must not be null
      * @param domainModelPackages a set of domain model package paths associated with the project,
      *                            must not be null
-     * @param registeredUser the {@link RegisteredUser} who is performing the update, must not be null
+     * @param appUser the {@link AppUser} who is performing the update, must not be null
      * @param pathToFile the file path containing the updated project data, must not be null
      * @param uploadFileType the type of the uploaded file, must not be null and should match supported
      *                       file types
      * @return the updated {@link Project} entity
      */
     @Transactional
-    Project updateDomainMirror(Project project, Set<String> domainModelPackages, RegisteredUser registeredUser, Path pathToFile, UploadFileType uploadFileType);
+    Project updateDomainMirror(Project project, Set<String> domainModelPackages, AppUser appUser, Path pathToFile, UploadFileType uploadFileType);
 
     /**
      * Creates a new project based on the given parameters.
      *
      * @param projectName the name of the project to be created, must not be null or empty
      * @param domainModelPackages a set of domain model package paths associated with the project, must not be null
-     * @param registeredUser the registered user who is creating the project, must not be null
+     * @param appUser the registered user who is creating the project, must not be null
      * @param pathToFile the file path containing the project's uploaded file, must not be null
      * @param uploadFileType the type of the uploaded file, must not be null and should match supported file types
      * @return the newly created {@link Project} instance
      */
     @Transactional
-    Project create(String projectName, Set<String> domainModelPackages, RegisteredUser registeredUser, Path pathToFile, UploadFileType uploadFileType);
+    Project create(String projectName, Set<String> domainModelPackages, AppUser appUser, Path pathToFile, UploadFileType uploadFileType);
 
     /**
      * Saves a project with the given name and domain mirror configuration.
@@ -71,13 +71,13 @@ public interface ProjectService {
      * @return the updated {@link Project} entity with the new name
      */
     @Transactional
-    Project rename(Project project, RegisteredUser registeredUser, String newName);
+    Project rename(Project project, AppUser appUser, String newName);
 
     void assignUser(Project project, String emailAddress);
 
-    void assignUser(Project project, User user);
+    void assignUser(Project project, AppUser appUser);
 
-    void unassignUser(Project project, User user);
+    void unassignUser(Project project, AppUser appUser);
 
     @Transactional
     void delete(Project project);

@@ -1,12 +1,14 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 
 public interface SecurityService {
 
-    RegisteredUser getCurrentlySignedInUser();
+    AppUser getCurrentlySignedInUser();
 
-    RegisteredUser acknowledgeUserAuthentication(String userEmailAddress, String fullName);
+    AppUser acknowledgeOAuth2UserAuthentication(String userEmailAddress, String firstName, String lastName, String sub);
 
-    boolean checkAccess(String projectName, RegisteredUser registeredUser);
+    void registerSelfServiceUser(String email, String firstName, String lastName, String rawPassword);
+
+    boolean checkAccess(String projectName, AppUser appUser);
 }

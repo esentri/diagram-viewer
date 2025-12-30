@@ -35,9 +35,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility.LineHeight;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
+import io.domainlifecycles.diagramviewer.service.AppUserService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
@@ -57,7 +57,6 @@ public class MainLayout extends AppLayout {
 
     private final ProjectService projectService;
     private final SecurityService securityService;
-    private final RegisteredUserService registeredUserService;
     private final UploadDialog uploadDialog;
     private SideNav sideNav;
     private Registration registration;
@@ -67,12 +66,10 @@ public class MainLayout extends AppLayout {
 
     public MainLayout(@Value("${jar.upload.enabled}") boolean jarUploadEnabled,
                       ProjectService projectService,
-                      SecurityService securityService,
-                      RegisteredUserService registeredUserService) {
+                      SecurityService securityService) {
         this.jarUploadEnabled = jarUploadEnabled;
         this.projectService = projectService;
         this.securityService = securityService;
-        this.registeredUserService = registeredUserService;
         if(jarUploadEnabled){
             this.uploadDialog = new UploadDialog(projectService, securityService);
         }else{
@@ -84,19 +81,12 @@ public class MainLayout extends AppLayout {
         buildDrawerContent();
     }
 
-    private void refreshPopover() {
-        final RegisteredUser registeredUser = securityService.getCurrentlySignedInUser();
-
-        userInfoPopover.removeAll();
-        addPopoverContents(registeredUser);
-    }
-
     private void createAndAddUserInfoPopoverWithButton() {
-        final RegisteredUser registeredUser = securityService.getCurrentlySignedInUser();
+        final AppUser appUser = securityService.getCurrentlySignedInUser();
 
-        Button userInfoPopoverButton = createAndGetUserInfoPopoverButton(registeredUser);
+        Button userInfoPopoverButton = createAndGetUserInfoPopoverButton(appUser);
         userInfoPopover = createAndGetUserInfoPopover(userInfoPopoverButton);
-        addPopoverContents(registeredUser);
+        addPopoverContents(appUser);
         addToNavbar(userInfoPopoverButton, userInfoPopover);
     }
 
@@ -112,38 +102,38 @@ public class MainLayout extends AppLayout {
         return popover;
     }
 
-    private void addPopoverContents(RegisteredUser registeredUser) {
-        userInfoPopover.add(createAndGetPopoverUserInfoLayout(registeredUser), new Hr(),
-            createAndGetPopoverApiKeyLayout(registeredUser), new Hr(), createAndGetSignOutButtonLayout());
+    private void addPopoverContents(AppUser appUser) {
+        userInfoPopover.add(createAndGetPopoverUserInfoLayout(appUser), new Hr(),
+            createAndGetPopoverApiKeyLayout(appUser), new Hr(), createAndGetSignOutButtonLayout());
     }
 
-    private HorizontalLayout createAndGetPopoverUserInfoLayout(RegisteredUser registeredUser) {
+    private HorizontalLayout createAndGetPopoverUserInfoLayout(AppUser appUser) {
         HorizontalLayout userInfo = new HorizontalLayout();
         userInfo.getStyle().setPadding("0rem 1rem 0rem");
         userInfo.setSpacing(false);
 
         Avatar popoverAvatar = new Avatar();
-        popoverAvatar.setName(registeredUser.getFullName());
+        popoverAvatar.setName(String.join(" ", appUser.getFirstName(), appUser.getLastName()));
         popoverAvatar.getStyle().set("margin", "auto");
         popoverAvatar.getElement().setAttribute("tabindex", "-1");
         popoverAvatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
 
         VerticalLayout nameLayout = new VerticalLayout();
         nameLayout.setSpacing(false);
-        Div fullName = new Div(registeredUser.getFullName());
+        Div fullName = new Div(String.join(" ", appUser.getFirstName(), appUser.getLastName()));
         fullName.getStyle().set("font-weight", "bold");
-        Div nickName = new Div(registeredUser.getEmailAddress());
+        Div nickName = new Div(appUser.getEmailAddress());
         nameLayout.add(fullName, nickName);
 
         userInfo.add(popoverAvatar, nameLayout);
         return userInfo;
     }
 
-    private VerticalLayout createAndGetPopoverApiKeyLayout(RegisteredUser registeredUser) {
+    private VerticalLayout createAndGetPopoverApiKeyLayout(AppUser appUser) {
         VerticalLayout apiKeyLayout = new VerticalLayout();
         apiKeyLayout.setSpacing(false);
 
-        String apiKey = registeredUser.getApiKey().toString();
+        String apiKey = appUser.getApiKey().toString();
 
         Button copyApiKeyButton = new Button("Copy API-Key", e -> {
             UI.getCurrent().getPage()
@@ -159,9 +149,9 @@ public class MainLayout extends AppLayout {
         return apiKeyLayout;
     }
 
-    private Button createAndGetUserInfoPopoverButton(RegisteredUser registeredUser) {
+    private Button createAndGetUserInfoPopoverButton(AppUser appUser) {
         Avatar avatar = new Avatar();
-        avatar.setName(registeredUser.getFullName());
+        avatar.setName(String.join(" ", appUser.getFirstName(), appUser.getLastName()));
         avatar.getStyle().set("display", "block");
         avatar.getStyle().set("cursor", "pointer");
         avatar.getElement().setAttribute("tabindex", "-1");

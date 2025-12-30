@@ -1,9 +1,9 @@
 package io.domainlifecycles.diagramviewer.service.registereduser;
 
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
-import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
-import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
-import io.domainlifecycles.diagramviewer.service.RegisteredUserServiceImpl;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
+import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
+import io.domainlifecycles.diagramviewer.service.AppUserService;
+import io.domainlifecycles.diagramviewer.service.AppUserServiceImpl;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,19 +23,19 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class RegisteredUserServiceTest {
+class AppUserServiceTest {
 
     @Captor
-    ArgumentCaptor<RegisteredUser> registeredUserArgumentCaptor;
+    ArgumentCaptor<AppUser> registeredUserArgumentCaptor;
 
     @Mock
-    RegisteredUserRepository repository;
+    AppUserRepository repository;
 
-    RegisteredUserService service;
+    AppUserService service;
 
     @BeforeEach
     void setUp() {
-        service = new RegisteredUserServiceImpl(repository);
+        service = new AppUserServiceImpl(repository);
     }
 
     @Test
@@ -44,10 +44,10 @@ class RegisteredUserServiceTest {
         // given
         String emailAddress = "test-mail@gmail.com";
 
-        when(repository.findByEmailAddress(eq(emailAddress))).thenReturn(Optional.of(mock(RegisteredUser.class)));
+        when(repository.findByEmailAddress(eq(emailAddress))).thenReturn(Optional.of(mock(AppUser.class)));
 
         // when
-        boolean result = service.userKnown(emailAddress);
+        boolean result = service.userKnownAndActive(emailAddress);
 
         // then
         assertThat(result).isTrue();
@@ -63,7 +63,7 @@ class RegisteredUserServiceTest {
         when(repository.findByEmailAddress(eq(emailAddress))).thenReturn(Optional.empty());
 
         // when
-        boolean result = service.userKnown(emailAddress);
+        boolean result = service.userKnownAndActive(emailAddress);
 
         // then
         assertThat(result).isFalse();
@@ -75,16 +75,16 @@ class RegisteredUserServiceTest {
 
         // given
         UUID apiKey = new UUID(0, 0);
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
-        when(repository.findByApiKey(eq(apiKey))).thenReturn(Optional.of(registeredUserMock));
+        when(repository.findByApiKey(eq(apiKey))).thenReturn(Optional.of(appUserMock));
 
         // when
-        Optional<RegisteredUser> result = service.findByApiKey(apiKey.toString());
+        Optional<AppUser> result = service.findByApiKey(apiKey.toString());
 
         // then
         assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo(registeredUserMock);
+        assertThat(result.get()).isEqualTo(appUserMock);
         verify(repository, times(1)).findByApiKey(eq(apiKey));
     }
 
@@ -92,7 +92,7 @@ class RegisteredUserServiceTest {
     void Should_ReturnEmptyOptionalOnFindByApiKey_When_ApiKeyIsNull() {
 
         // when
-        Optional<RegisteredUser> result = service.findByApiKey(null);
+        Optional<AppUser> result = service.findByApiKey(null);
 
         // then
         assertThat(result).isEmpty();
@@ -103,7 +103,7 @@ class RegisteredUserServiceTest {
     void Should_ReturnEmptyOptionalOnFindByApiKey_When_ApiKeyIsBlank() {
 
         // when
-        Optional<RegisteredUser> result = service.findByApiKey("");
+        Optional<AppUser> result = service.findByApiKey("");
 
         // then
         assertThat(result).isEmpty();
@@ -111,23 +111,23 @@ class RegisteredUserServiceTest {
     }
 
     @Test
-    void Should_CreateUser() {
+    void Should_CreateOktaUser() {
 
         // given
         String emailAddress = "test-mail@gmail.com";
         String fullName = "Max Mustermann";
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(repository.save(any())).thenReturn(registeredUserMock);
+        AppUser appUserMock = mock(AppUser.class);
+        when(repository.save(any())).thenReturn(appUserMock);
 
         // when
-        RegisteredUser result = service.createUser(emailAddress, fullName);
+        AppUser result = service.createOktaUser(emailAddress, fullName);
 
         // then
-        assertThat(result).isEqualTo(registeredUserMock);
+        assertThat(result).isEqualTo(appUserMock);
         verify(repository, times(1)).save(registeredUserArgumentCaptor.capture());
         assertThat(registeredUserArgumentCaptor.getValue().getEmailAddress()).isEqualTo(emailAddress);
-        assertThat(registeredUserArgumentCaptor.getValue().getFullName()).isEqualTo(fullName);
+        assertThat(registeredUserArgumentCaptor.getValue().getFirstName()).isEqualTo(fullName);
         assertThat(registeredUserArgumentCaptor.getValue().getAssignedProjects()).isEmpty();
     }
 }

@@ -21,7 +21,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
-@Table(name = "DiagramDirectory")
+@Table(name = "diagram_directory")
 @Data
 @ToString(exclude = {"project", "diagrams"})
 @Builder

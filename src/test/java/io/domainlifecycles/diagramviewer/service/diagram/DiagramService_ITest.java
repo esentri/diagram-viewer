@@ -4,11 +4,11 @@ import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
+import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
@@ -42,7 +42,7 @@ class DiagramService_ITest extends BaseIntegrationTest {
     ProjectRepository projectRepository;
 
     @Autowired
-    RegisteredUserRepository registeredUserRepository;
+    AppUserRepository appUserRepository;
 
     @Autowired
     InvitedUserRepository invitedUserRepository;
@@ -50,18 +50,18 @@ class DiagramService_ITest extends BaseIntegrationTest {
     @Autowired
     DiagramRepository diagramRepository;
 
-    private RegisteredUser registeredUser;
+    private AppUser appUser;
     private UUID projectId;
 
     @BeforeEach
     void setUp() {
-        registeredUser = RegisteredUser.builder()
+        appUser = AppUser.builder()
             .fullName(TEST_USER_FULL_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();
 
-        registeredUserRepository.save(registeredUser);
+        appUserRepository.save(appUser);
     }
 
     @Test
@@ -84,7 +84,7 @@ class DiagramService_ITest extends BaseIntegrationTest {
         sessionStorage.delete(projectId);
         projectRepository.deleteAll();
         diagramRepository.deleteAll();
-        registeredUserRepository.deleteAll();
+        appUserRepository.deleteAll();
         invitedUserRepository.deleteAll();
     }
 
@@ -93,10 +93,10 @@ class DiagramService_ITest extends BaseIntegrationTest {
 
         Project project = Project.builder()
             .name("test-project")
-            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
+            .assignedAppUsers(new HashSet<>(Set.of(appUser)))
             .assignedInvitedUsers(new HashSet<>())
             .diagrams(new HashSet<>())
-            .creator(registeredUser)
+            .creator(appUser)
             .build();
 
         Project persistedProject = projectRepository.save(project);

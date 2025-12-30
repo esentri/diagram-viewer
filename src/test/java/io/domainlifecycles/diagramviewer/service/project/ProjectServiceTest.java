@@ -5,7 +5,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
@@ -13,7 +13,7 @@ import io.domainlifecycles.diagramviewer.service.InvitedUserService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.ProjectServiceImpl;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
-import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
+import io.domainlifecycles.diagramviewer.service.AppUserService;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
@@ -59,7 +59,7 @@ class ProjectServiceTest {
     RegenerateDiagramsJobService regenerateDiagramsJobService;
 
     @Mock
-    RegisteredUserService registeredUserService;
+    AppUserService appUserService;
 
     @Mock
     InvitedUserService invitedUserService;
@@ -75,31 +75,31 @@ class ProjectServiceTest {
     @BeforeEach
     void setUp() {
         projectService = new ProjectServiceImpl("/tmp/diagrams", diagramService, diagramTypeNoteService,
-            regenerateDiagramsJobService, registeredUserService, invitedUserService, sessionStorage, repository);
+            regenerateDiagramsJobService, appUserService, invitedUserService, sessionStorage, repository);
     }
 
     @Test
     void Should_GetAllProjectsAssignedToUser() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getId()).thenReturn(new UUID(0, 0));
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getId()).thenReturn(new UUID(0, 0));
 
-        RegisteredUser anotherRegisteredUserMock = mock(RegisteredUser.class);
-        when(anotherRegisteredUserMock.getId()).thenReturn(new UUID(0, 0));
+        AppUser anotherAppUserMock = mock(AppUser.class);
+        when(anotherAppUserMock.getId()).thenReturn(new UUID(0, 0));
 
         Project projectAssignedToRegisteredUserMock = mock(Project.class);
-        when(projectAssignedToRegisteredUserMock.getAssignedRegisteredUsers()).thenReturn(Set.of(registeredUserMock));
+        when(projectAssignedToRegisteredUserMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
 
         Project projectAssignedToAnotherRegisteredUserMock = mock(Project.class);
-        when(projectAssignedToAnotherRegisteredUserMock.getAssignedRegisteredUsers()).thenReturn(
-            Set.of(anotherRegisteredUserMock));
+        when(projectAssignedToAnotherRegisteredUserMock.getAssignedUsers()).thenReturn(
+            Set.of(anotherAppUserMock));
 
         when(repository.findAll()).thenReturn(
             List.of(projectAssignedToRegisteredUserMock, projectAssignedToAnotherRegisteredUserMock));
 
         // when
-        Stream<Project> result = projectService.getAll(registeredUserMock);
+        Stream<Project> result = projectService.getAll(appUserMock);
 
         // then
         assertThat(result.toList().get(0)).isEqualTo(projectAssignedToRegisteredUserMock);
@@ -167,17 +167,17 @@ class ProjectServiceTest {
         Path pathToFile = mock(Path.class);
         UploadFileType uploadFileType = UploadFileType.JAR;
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getId()).thenReturn(new UUID(0, 0));
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getId()).thenReturn(new UUID(0, 0));
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getCreator()).thenReturn(registeredUserMock);
+        when(projectMock.getCreator()).thenReturn(appUserMock);
 
         doNothing().when(sessionStorage).createOrUpdate(eq(projectMock), eq(domainModelPackages), eq(pathToFile),
             eq(uploadFileType));
 
         // when
-        Project result = projectService.updateDomainMirror(projectMock, domainModelPackages, registeredUserMock,
+        Project result = projectService.updateDomainMirror(projectMock, domainModelPackages, appUserMock,
             pathToFile, uploadFileType);
 
         // then
@@ -195,19 +195,19 @@ class ProjectServiceTest {
         UploadFileType uploadFileType = UploadFileType.JAR;
 
         String userMailAddress = "max.mustermann@gmail.com";
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getId()).thenReturn(new UUID(0, 0));
-        when(registeredUserMock.getEmailAddress()).thenReturn(userMailAddress);
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getId()).thenReturn(new UUID(0, 0));
+        when(appUserMock.getEmailAddress()).thenReturn(userMailAddress);
 
-        RegisteredUser anotherRegisteredUserMock = mock(RegisteredUser.class);
+        AppUser anotherAppUserMock = mock(AppUser.class);
 
         String projectName = "projectName";
         Project projectMock = mock(Project.class);
         when(projectMock.getName()).thenReturn(projectName);
-        when(projectMock.getCreator()).thenReturn(anotherRegisteredUserMock);
+        when(projectMock.getCreator()).thenReturn(anotherAppUserMock);
 
         // when
-        assertThatThrownBy(() -> projectService.updateDomainMirror(projectMock, domainModelPackages, registeredUserMock,
+        assertThatThrownBy(() -> projectService.updateDomainMirror(projectMock, domainModelPackages, appUserMock,
             pathToFile, uploadFileType))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage(
@@ -223,7 +223,7 @@ class ProjectServiceTest {
         Set<String> domainModelPackages = Set.of("com.esentri");
         Path pathToFile = mock(Path.class);
         UploadFileType uploadFileType = UploadFileType.JAR;
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
         when(repository.findByName(eq(projectName))).thenReturn(Optional.empty());
         when(repository.save(any())).thenReturn(mock(Project.class));
@@ -231,7 +231,7 @@ class ProjectServiceTest {
             eq(uploadFileType));
 
         // when
-        projectService.create(projectName, domainModelPackages, registeredUserMock, pathToFile, uploadFileType);
+        projectService.create(projectName, domainModelPackages, appUserMock, pathToFile, uploadFileType);
 
         // then
         verify(repository, times(1)).findByName(eq(projectName));
@@ -247,12 +247,12 @@ class ProjectServiceTest {
         Set<String> domainModelPackages = Set.of("com.esentri");
         Path pathToFile = mock(Path.class);
         UploadFileType uploadFileType = UploadFileType.JAR;
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(mock(Project.class)));
 
         // when
-        assertThatThrownBy(() -> projectService.create(projectName, domainModelPackages, registeredUserMock, pathToFile,
+        assertThatThrownBy(() -> projectService.create(projectName, domainModelPackages, appUserMock, pathToFile,
             uploadFileType))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage(String.format("Project with name '%s' already exists. Please choose a different filename.",
@@ -266,13 +266,13 @@ class ProjectServiceTest {
     void Should_UpdateDomainModel_When_ProjectWithNameAlreadyExists() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
         SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(registeredUserMock, null));
+            new UsernamePasswordAuthenticationToken(appUserMock, null));
 
         String projectName = "projectName";
         Project projectMock = mock(Project.class);
-        when(projectMock.getAssignedRegisteredUsers()).thenReturn(Set.of(registeredUserMock));
+        when(projectMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
 
         DomainMirror domainMirrorMock = mock(DomainMirror.class);
 
@@ -292,9 +292,9 @@ class ProjectServiceTest {
     void Should_ThrowDiagramViewerExceptionOnCreateOrUpdateDomainModel_When_UserIsNotAssignedToProject() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
         SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(registeredUserMock, null));
+            new UsernamePasswordAuthenticationToken(appUserMock, null));
 
         String projectName = "projectName";
         Project projectMock = mock(Project.class);
@@ -317,9 +317,9 @@ class ProjectServiceTest {
     void Should_CreateDomainModel_When_ProjectWithNameDoesNotAlreadyExist() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
         SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(registeredUserMock, null));
+            new UsernamePasswordAuthenticationToken(appUserMock, null));
 
         String projectName = "projectName";
         DomainMirror domainMirrorMock = mock(DomainMirror.class);
@@ -340,17 +340,17 @@ class ProjectServiceTest {
     void Should_RenameProject_When_UserIsProjectCreatorAndProjectWithNameDoesNotAlreadyExist() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
         String projectName = "testProjectName";
         Project projectMock = mock(Project.class);
         when(projectMock.getName()).thenReturn(projectName);
-        when(projectMock.getCreator()).thenReturn(registeredUserMock);
+        when(projectMock.getCreator()).thenReturn(appUserMock);
 
         when(repository.findByName(eq(projectName))).thenReturn(Optional.empty());
 
         // when
-        projectService.rename(projectMock, registeredUserMock, "new-Project.Name");
+        projectService.rename(projectMock, appUserMock, "new-Project.Name");
 
         // then
         verify(repository, times(1)).findByName(eq(projectName));
@@ -362,13 +362,13 @@ class ProjectServiceTest {
     void Should_ThrowDiagramViewerExceptionOnRenameProject_NameIsNull() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getCreator()).thenReturn(registeredUserMock);
+        when(projectMock.getCreator()).thenReturn(appUserMock);
 
         // when
-        assertThatThrownBy(() -> projectService.rename(projectMock, registeredUserMock, null))
+        assertThatThrownBy(() -> projectService.rename(projectMock, appUserMock, null))
             .isInstanceOf(DiagramViewerException.class)
                 .hasMessage("Project name may not be empty.");
 
@@ -380,13 +380,13 @@ class ProjectServiceTest {
     void Should_ThrowDiagramViewerExceptionOnRenameProject_NameIsBlank() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getCreator()).thenReturn(registeredUserMock);
+        when(projectMock.getCreator()).thenReturn(appUserMock);
 
         // when
-        assertThatThrownBy(() -> projectService.rename(projectMock, registeredUserMock, " "))
+        assertThatThrownBy(() -> projectService.rename(projectMock, appUserMock, " "))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage("Project name may not be empty.");
 
@@ -400,26 +400,26 @@ class ProjectServiceTest {
         // given
         String emailAddress = "max.mustermann@gmail.com";
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getId()).thenReturn(new UUID(0, 0));
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getId()).thenReturn(new UUID(0, 0));
 
-        RegisteredUser anotherRegisteredUserMock = mock(RegisteredUser.class);
-        when(anotherRegisteredUserMock.getId()).thenReturn(new UUID(1, 1));
-        when(anotherRegisteredUserMock.getEmailAddress()).thenReturn("another.mail@gmail.com");
+        AppUser anotherAppUserMock = mock(AppUser.class);
+        when(anotherAppUserMock.getId()).thenReturn(new UUID(1, 1));
+        when(anotherAppUserMock.getEmailAddress()).thenReturn("another.mail@gmail.com");
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getAssignedRegisteredUsers()).thenReturn(Set.of(anotherRegisteredUserMock));
+        when(projectMock.getAssignedUsers()).thenReturn(Set.of(anotherAppUserMock));
 
-        when(registeredUserService.userKnown(eq(emailAddress))).thenReturn(true);
-        when(registeredUserService.get(eq(emailAddress))).thenReturn(registeredUserMock);
+        when(appUserService.userKnownAndActive(eq(emailAddress))).thenReturn(true);
+        when(appUserService.get(eq(emailAddress))).thenReturn(appUserMock);
         when(repository.save(eq(projectMock))).thenReturn(projectMock);
 
         // when
         projectService.assignUser(projectMock, emailAddress);
 
         // then
-        verify(registeredUserService, times(1)).userKnown(eq(emailAddress));
-        verify(registeredUserService, times(1)).get(eq(emailAddress));
+        verify(appUserService, times(1)).userKnownAndActive(eq(emailAddress));
+        verify(appUserService, times(1)).get(eq(emailAddress));
         verify(projectMock, times(1)).assignUser(any());
         verify(repository, times(1)).save(projectMock);
     }
@@ -430,17 +430,17 @@ class ProjectServiceTest {
         // given
         String emailAddress = "max.mustermann@gmail.com";
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getEmailAddress()).thenReturn(emailAddress);
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getEmailAddress()).thenReturn(emailAddress);
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getAssignedRegisteredUsers()).thenReturn(Set.of(registeredUserMock));
+        when(projectMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
 
         // when
         projectService.assignUser(projectMock, emailAddress);
 
         // then
-        verifyNoInteractions(registeredUserService);
+        verifyNoInteractions(appUserService);
     }
 
     @Test
@@ -451,13 +451,13 @@ class ProjectServiceTest {
 
         InvitedUser invitedUserMock = mock(InvitedUser.class);
 
-        RegisteredUser anotherRegisteredUserMock = mock(RegisteredUser.class);
-        when(anotherRegisteredUserMock.getEmailAddress()).thenReturn("another.mail@gmail.com");
+        AppUser anotherAppUserMock = mock(AppUser.class);
+        when(anotherAppUserMock.getEmailAddress()).thenReturn("another.mail@gmail.com");
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getAssignedRegisteredUsers()).thenReturn(Set.of(anotherRegisteredUserMock));
+        when(projectMock.getAssignedUsers()).thenReturn(Set.of(anotherAppUserMock));
 
-        when(registeredUserService.userKnown(eq(emailAddress))).thenReturn(false);
+        when(appUserService.userKnownAndActive(eq(emailAddress))).thenReturn(false);
         when(invitedUserService.getOrCreate(eq(emailAddress))).thenReturn(invitedUserMock);
         when(repository.save(eq(projectMock))).thenReturn(projectMock);
 
@@ -465,7 +465,7 @@ class ProjectServiceTest {
         projectService.assignUser(projectMock, emailAddress);
 
         // then
-        verify(registeredUserService, times(1)).userKnown(eq(emailAddress));
+        verify(appUserService, times(1)).userKnownAndActive(eq(emailAddress));
         verify(invitedUserService, times(1)).getOrCreate(eq(emailAddress));
         verify(projectMock, times(1)).assignUser(any());
         verify(repository, times(1)).save(projectMock);
@@ -475,15 +475,15 @@ class ProjectServiceTest {
     void Should_ThrowDiagramViewerExceptionOnAssignUser_When_RegisteredUserIsAlreadyAssigned() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
         String emailAddress = "max.mustermann@gmail.com";
-        when(registeredUserMock.getEmailAddress()).thenReturn(emailAddress);
+        when(appUserMock.getEmailAddress()).thenReturn(emailAddress);
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getAssignedRegisteredUsers()).thenReturn(Set.of(registeredUserMock));
+        when(projectMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
 
         // when
-        assertThatThrownBy(() -> projectService.assignUser(projectMock, registeredUserMock))
+        assertThatThrownBy(() -> projectService.assignUser(projectMock, appUserMock))
             .hasMessage("User '" + emailAddress + "' is already assigned to project.");
 
         // then
@@ -513,13 +513,13 @@ class ProjectServiceTest {
     void Should_NotUnassignUser_When_UserIsCreator() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getCreator()).thenReturn(registeredUserMock);
+        when(projectMock.getCreator()).thenReturn(appUserMock);
 
         // when
-        projectService.unassignUser(projectMock, registeredUserMock);
+        projectService.unassignUser(projectMock, appUserMock);
 
         // then
         verifyNoInteractions(repository);
@@ -529,22 +529,22 @@ class ProjectServiceTest {
     void Should_UnassignUser_When_UserIsNotCreator() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
-        RegisteredUser anotherRegisteredUserMock = mock(RegisteredUser.class);
-        when(anotherRegisteredUserMock.getId()).thenReturn(new UUID(0, 0));
+        AppUser anotherAppUserMock = mock(AppUser.class);
+        when(anotherAppUserMock.getId()).thenReturn(new UUID(0, 0));
 
         Project projectMock = mock(Project.class);
-        when(projectMock.getCreator()).thenReturn(anotherRegisteredUserMock);
+        when(projectMock.getCreator()).thenReturn(anotherAppUserMock);
 
-        doNothing().when(projectMock).unassignUser(eq(registeredUserMock));
+        doNothing().when(projectMock).unassignUser(eq(appUserMock));
         when(repository.save(eq(projectMock))).thenReturn(projectMock);
 
         // when
-        projectService.unassignUser(projectMock, registeredUserMock);
+        projectService.unassignUser(projectMock, appUserMock);
 
         // then
-        verify(projectMock, times(1)).unassignUser(eq(registeredUserMock));
+        verify(projectMock, times(1)).unassignUser(eq(appUserMock));
         verify(repository, times(1)).save(eq(projectMock));
         verifyNoInteractions(invitedUserService);
     }

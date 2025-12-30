@@ -1,10 +1,10 @@
 package io.domainlifecycles.diagramviewer.rest.api;
 
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
-import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
+import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
+import io.domainlifecycles.diagramviewer.service.AppUserService;
 import java.util.HashSet;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -28,34 +28,34 @@ class ResourceController_ITest extends BaseIntegrationTest {
     private static final String REGISTERED_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
 
     @Autowired
-    RegisteredUserService registeredUserService;
+    AppUserService appUserService;
 
     @Autowired
     ProjectRepository projectRepository;
 
     @Autowired
-    RegisteredUserRepository registeredUserRepository;
+    AppUserRepository appUserRepository;
 
     @Autowired
     MockMvc mockMvc;
 
-    private RegisteredUser registeredUser;
+    private AppUser appUser;
 
     @BeforeEach
     void setUp() {
-        registeredUser = RegisteredUser.builder()
+        appUser = AppUser.builder()
             .fullName(REGISTERED_USER_FULL_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();
 
-        registeredUserRepository.save(registeredUser);
+        appUserRepository.save(appUser);
     }
 
     @AfterEach
     void tearDown() {
         projectRepository.deleteAll();
-        registeredUserRepository.deleteAll();
+        appUserRepository.deleteAll();
     }
 
     @Test
@@ -65,7 +65,7 @@ class ResourceController_ITest extends BaseIntegrationTest {
         ResultActions result = mockMvc.perform(get("/api/resources/view/{directoryName}/{fileName}", "diagrams", "diagram.svg")
             .param("diagramLastModified", "ignored")
             .param("stylingLastModified", "ignored")
-            .header("X-API-KEY", registeredUser.getApiKey().toString()));
+            .header("X-API-KEY", appUser.getApiKey().toString()));
 
         // then
         result.andExpect(status().isOk());
@@ -76,7 +76,7 @@ class ResourceController_ITest extends BaseIntegrationTest {
 
         // when
         ResultActions result = mockMvc.perform(get("/api/resources/view/{directoryName}/{fileName}", "diagrams", "diagram.svg")
-            .header("X-API-KEY", registeredUser.getApiKey().toString()));
+            .header("X-API-KEY", appUser.getApiKey().toString()));
 
         // then
         result.andExpect(status().isOk());

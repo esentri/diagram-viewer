@@ -42,3 +42,7 @@
 img {
     -webkit-user-drag: none;
 }
+
+#vaadinLoginOverlayWrapper::part(brand) {
+    display: none;
+}

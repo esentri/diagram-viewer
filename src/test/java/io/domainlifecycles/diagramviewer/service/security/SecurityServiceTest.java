@@ -3,10 +3,10 @@ package io.domainlifecycles.diagramviewer.service.security;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.service.InvitedUserService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
+import io.domainlifecycles.diagramviewer.service.AppUserService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.service.SecurityServiceImpl;
 import java.util.Set;
@@ -32,10 +32,7 @@ import static org.mockito.Mockito.when;
 class SecurityServiceTest {
 
     @Mock
-    RegisteredUserService registeredUserService;
-
-    @Mock
-    InvitedUserService invitedUserService;
+    AppUserService appUserService;
 
     @Mock
     ProjectService projectService;
@@ -44,7 +41,7 @@ class SecurityServiceTest {
 
     @BeforeEach
     void setUp() {
-        securityService = new SecurityServiceImpl(registeredUserService, invitedUserService, projectService);
+        securityService = new SecurityServiceImpl(appUserService, projectService);
     }
 
     @Test
@@ -56,18 +53,18 @@ class SecurityServiceTest {
         OAuth2User oAuth2UserMock = mock(OAuth2User.class);
         when(oAuth2UserMock.getAttribute(eq("email"))).thenReturn(emailAddress);
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserService.get(eq(emailAddress))).thenReturn(registeredUserMock);
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserService.get(eq(emailAddress))).thenReturn(appUserMock);
 
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken(oAuth2UserMock, null));
 
         // when
-        RegisteredUser result = securityService.getCurrentlySignedInUser();
+        AppUser result = securityService.getCurrentlySignedInUser();
 
         // then
-        assertThat(result).isEqualTo(registeredUserMock);
-        verify(registeredUserService, times(1)).get(eq(emailAddress));
+        assertThat(result).isEqualTo(appUserMock);
+        verify(appUserService, times(1)).get(eq(emailAddress));
     }
 
     @Test
@@ -80,18 +77,18 @@ class SecurityServiceTest {
         when(oAuth2UserMock.getAttribute(eq("email"))).thenReturn(null);
         when(oAuth2UserMock.getAttribute(eq("preferred_username"))).thenReturn(emailAddress);
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserService.get(eq(emailAddress))).thenReturn(registeredUserMock);
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserService.get(eq(emailAddress))).thenReturn(appUserMock);
 
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken(oAuth2UserMock, null));
 
         // when
-        RegisteredUser result = securityService.getCurrentlySignedInUser();
+        AppUser result = securityService.getCurrentlySignedInUser();
 
         // then
-        assertThat(result).isEqualTo(registeredUserMock);
-        verify(registeredUserService, times(1)).get(eq(emailAddress));
+        assertThat(result).isEqualTo(appUserMock);
+        verify(appUserService, times(1)).get(eq(emailAddress));
     }
 
     @Test
@@ -118,18 +115,18 @@ class SecurityServiceTest {
         String emailAddress = "test-email@gmail.com";
         String fullName = "Max Mustermann";
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
-        when(registeredUserService.userKnown(eq(emailAddress))).thenReturn(true);
-        when(registeredUserService.get(eq(emailAddress))).thenReturn(registeredUserMock);
+        when(appUserService.userKnownAndActive(eq(emailAddress))).thenReturn(true);
+        when(appUserService.get(eq(emailAddress))).thenReturn(appUserMock);
 
         // when
-        RegisteredUser result = securityService.acknowledgeUserAuthentication(emailAddress, fullName);
+        AppUser result = securityService.acknowledgeOAuth2UserAuthentication(emailAddress, fullName);
 
         // then
-        assertThat(result).isEqualTo(registeredUserMock);
-        verify(registeredUserService, times(1)).userKnown(eq(emailAddress));
-        verify(registeredUserService, times(1)).get(eq(emailAddress));
+        assertThat(result).isEqualTo(appUserMock);
+        verify(appUserService, times(1)).userKnownAndActive(eq(emailAddress));
+        verify(appUserService, times(1)).get(eq(emailAddress));
     }
 
     @Test
@@ -139,20 +136,20 @@ class SecurityServiceTest {
         String emailAddress = "test-email@gmail.com";
         String fullName = "Max Mustermann";
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
-        when(registeredUserService.userKnown(eq(emailAddress))).thenReturn(false);
+        when(appUserService.userKnownAndActive(eq(emailAddress))).thenReturn(false);
         when(invitedUserService.userKnown(eq(emailAddress))).thenReturn(false);
-        when(registeredUserService.createUser(eq(emailAddress), eq(fullName))).thenReturn(registeredUserMock);
+        when(appUserService.createOktaUser(eq(emailAddress), eq(fullName))).thenReturn(appUserMock);
 
         // when
-        RegisteredUser result = securityService.acknowledgeUserAuthentication(emailAddress, fullName);
+        AppUser result = securityService.acknowledgeOAuth2UserAuthentication(emailAddress, fullName);
 
         // then
-        assertThat(result).isEqualTo(registeredUserMock);
-        verify(registeredUserService, times(1)).userKnown(eq(emailAddress));
+        assertThat(result).isEqualTo(appUserMock);
+        verify(appUserService, times(1)).userKnownAndActive(eq(emailAddress));
         verify(invitedUserService, times(1)).userKnown(eq(emailAddress));
-        verify(registeredUserService, times(1)).createUser(eq(emailAddress), eq(fullName));
+        verify(appUserService, times(1)).createOktaUser(eq(emailAddress), eq(fullName));
     }
 
     @Test
@@ -163,35 +160,35 @@ class SecurityServiceTest {
         String fullName = "Max Mustermann";
 
         InvitedUser invitedUserMock = mock(InvitedUser.class);
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
+        AppUser appUserMock = mock(AppUser.class);
 
         Project firstProjectMock = mock(Project.class);
         Project secondProjectMock = mock(Project.class);
 
         when(invitedUserMock.getAssignedProjects()).thenReturn(Set.of(firstProjectMock, secondProjectMock));
 
-        when(registeredUserService.userKnown(eq(emailAddress))).thenReturn(false);
+        when(appUserService.userKnownAndActive(eq(emailAddress))).thenReturn(false);
         when(invitedUserService.userKnown(eq(emailAddress))).thenReturn(true);
         when(invitedUserService.get(eq(emailAddress))).thenReturn(invitedUserMock);
-        when(registeredUserService.createUser(eq(emailAddress), eq(fullName))).thenReturn(registeredUserMock);
+        when(appUserService.createOktaUser(eq(emailAddress), eq(fullName))).thenReturn(appUserMock);
 
         doNothing().when(projectService).unassignUser(any(), any());
-        doNothing().when(projectService).assignUser(any(), any(RegisteredUser.class));
+        doNothing().when(projectService).assignUser(any(), any(AppUser.class));
 
         // when
-        RegisteredUser result = securityService.acknowledgeUserAuthentication(emailAddress, fullName);
+        AppUser result = securityService.acknowledgeOAuth2UserAuthentication(emailAddress, fullName);
 
         // then
-        assertThat(result).isEqualTo(registeredUserMock);
-        verify(registeredUserService, times(1)).userKnown(eq(emailAddress));
+        assertThat(result).isEqualTo(appUserMock);
+        verify(appUserService, times(1)).userKnownAndActive(eq(emailAddress));
         verify(invitedUserService, times(1)).userKnown(eq(emailAddress));
         verify(invitedUserService, times(1)).get(eq(emailAddress));
-        verify(registeredUserService, times(1)).createUser(eq(emailAddress), eq(fullName));
+        verify(appUserService, times(1)).createOktaUser(eq(emailAddress), eq(fullName));
 
         verify(projectService, times(1)).unassignUser(eq(firstProjectMock), eq(invitedUserMock));
-        verify(projectService, times(1)).assignUser(eq(firstProjectMock), eq(registeredUserMock));
+        verify(projectService, times(1)).assignUser(eq(firstProjectMock), eq(appUserMock));
         verify(projectService, times(1)).unassignUser(eq(secondProjectMock), eq(invitedUserMock));
-        verify(projectService, times(1)).assignUser(eq(secondProjectMock), eq(registeredUserMock));
+        verify(projectService, times(1)).assignUser(eq(secondProjectMock), eq(appUserMock));
     }
 
     @Test
@@ -208,11 +205,11 @@ class SecurityServiceTest {
     void Should_HaveNoAccess_When_UserHasNoAssignedProjects() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getAssignedProjects()).thenReturn(Set.of());
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getAssignedProjects()).thenReturn(Set.of());
 
         // when
-        boolean result = securityService.checkAccess("testProjectName", registeredUserMock);
+        boolean result = securityService.checkAccess("testProjectName", appUserMock);
 
         // then
         assertThat(result).isFalse();
@@ -222,11 +219,11 @@ class SecurityServiceTest {
     void Should_HaveNoAccess_When_UserHasNullAssignedProjects() {
 
         // given
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getAssignedProjects()).thenReturn(null);
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getAssignedProjects()).thenReturn(null);
 
         // when
-        boolean result = securityService.checkAccess("testProjectName", registeredUserMock);
+        boolean result = securityService.checkAccess("testProjectName", appUserMock);
 
         // then
         assertThat(result).isFalse();
@@ -241,11 +238,11 @@ class SecurityServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getName()).thenReturn("project");
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getAssignedProjects()).thenReturn(Set.of(projectMock));
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getAssignedProjects()).thenReturn(Set.of(projectMock));
 
         // when
-        boolean result = securityService.checkAccess(anotherProjectName, registeredUserMock);
+        boolean result = securityService.checkAccess(anotherProjectName, appUserMock);
 
         // then
         assertThat(result).isFalse();
@@ -259,11 +256,11 @@ class SecurityServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getName()).thenReturn(projectName);
 
-        RegisteredUser registeredUserMock = mock(RegisteredUser.class);
-        when(registeredUserMock.getAssignedProjects()).thenReturn(Set.of(projectMock));
+        AppUser appUserMock = mock(AppUser.class);
+        when(appUserMock.getAssignedProjects()).thenReturn(Set.of(projectMock));
 
         // when
-        boolean result = securityService.checkAccess(projectName, registeredUserMock);
+        boolean result = securityService.checkAccess(projectName, appUserMock);
 
         // then
         assertThat(result).isTrue();

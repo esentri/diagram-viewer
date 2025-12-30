@@ -15,13 +15,13 @@ import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CustomAuthenticationSuccessHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2AuthenticationSuccessHandler.class);
 
     private final SecurityService securityService;
 
-    public CustomAuthenticationSuccessHandler(SecurityService securityService) {
+    public OAuth2AuthenticationSuccessHandler(SecurityService securityService) {
         this.securityService = securityService;
     }
 
@@ -40,9 +40,11 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             throw DiagramViewerException.fail("Email or username not found in OAuth2 response.");
         }
 
-        final String fullName = oAuth2User.getAttribute("name");
+        final String firstName = oAuth2User.getAttribute("given_name");
+        final String lastName = oAuth2User.getAttribute("family_name");
+        final String sub = oAuth2User.getAttribute("sub");
 
-        securityService.acknowledgeUserAuthentication(email, fullName);
+        securityService.acknowledgeOAuth2UserAuthentication(email, firstName, lastName, sub);
 
         SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
 

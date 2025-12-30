@@ -22,7 +22,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
-@Table(name = "Diagram")
+@Table(name = "diagram")
 @Data
 @ToString(exclude = "project")
 @Builder(toBuilder = true)
