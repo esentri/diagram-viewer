@@ -2,11 +2,9 @@ package io.domainlifecycles.diagramviewer.service.project;
 
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
-import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
-import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
@@ -29,11 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 class ProjectService_ITest extends BaseIntegrationTest {
 
-    private static final String REGISTERED_USER_FULL_NAME = "Max Mustermann";
-    private static final String REGISTERED_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
-
-    private static final String INVITED_USER_FULL_NAME = "Moritz Mustermann";
-    private static final String INVITED_USER_MAIL_ADDRESS = "moritz.mustermann@gmail.com";
+    private static final String TEST_USER_MAIL_ADDRESS = "test-user@gmail.com";
+    private static final String TEST_USER_FIRST_NAME = "Max";
+    private static final String TEST_USER_LAST_NAME = "Mustermann";
 
     @Autowired
     ProjectService service;
@@ -43,10 +39,6 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
     @Autowired
     AppUserRepository appUserRepository;
-
-    @Autowired
-    InvitedUserRepository invitedUserRepository;
-
     @Autowired
     DiagramRepository diagramRepository;
 
@@ -57,8 +49,9 @@ class ProjectService_ITest extends BaseIntegrationTest {
     @BeforeEach
     void setUp() {
         appUser = AppUser.builder()
-            .fullName(REGISTERED_USER_FULL_NAME)
-            .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
+            .firstName(TEST_USER_FIRST_NAME)
+            .lastName(TEST_USER_LAST_NAME)
+            .emailAddress(TEST_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();
 
@@ -69,7 +62,6 @@ class ProjectService_ITest extends BaseIntegrationTest {
     void tearDown() {
         projectRepository.deleteAll();
         appUserRepository.deleteAll();
-        invitedUserRepository.deleteAll();
     }
 
     @Test
@@ -96,7 +88,6 @@ class ProjectService_ITest extends BaseIntegrationTest {
         assertThat(project.getAssignedUsers().size()).isEqualTo(1);
         assertThat(project.getAssignedUsers().stream().findFirst().orElseThrow().getId()).isEqualTo(appUser.getId());
         assertThat(project.getCreator().getId()).isEqualTo(appUser.getId());
-        assertThat(project.getAssignedInvitedUsers()).isEmpty();
     }
 
     @Test
@@ -106,15 +97,12 @@ class ProjectService_ITest extends BaseIntegrationTest {
         Project project = setUpProject();
 
         // when
-        service.assignUser(project, INVITED_USER_MAIL_ADDRESS);
+        service.assignUser(project, TEST_USER_MAIL_ADDRESS);
 
         // then
-        assertThat(project.getAssignedInvitedUsers())
-            .anySatisfy(invitedUser -> assertThat(invitedUser.getEmailAddress())
-                .isEqualTo(INVITED_USER_MAIL_ADDRESS));
         assertThat(project.getAssignedUsers())
-            .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
-                .isEqualTo(REGISTERED_USER_MAIL_ADDRESS));
+            .anySatisfy(invitedUser -> assertThat(invitedUser.getEmailAddress())
+                .isEqualTo(TEST_USER_MAIL_ADDRESS));
     }
 
     @Test
@@ -129,11 +117,10 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
         // then
         assertThat(project).isNotNull();
-        assertThat(project.getAssignedInvitedUsers()).isEmpty();
         assertThat(project.getAssignedUsers().size()).isEqualTo(2);
         assertThat(project.getAssignedUsers())
             .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
-                .isEqualTo(REGISTERED_USER_MAIL_ADDRESS));
+                .isEqualTo(TEST_USER_MAIL_ADDRESS));
         assertThat(project.getAssignedUsers())
             .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
                 .isEqualTo(anotherAppUser.getEmailAddress()));
@@ -156,35 +143,10 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
         // then
         assertThat(project).isNotNull();
-        assertThat(project.getAssignedInvitedUsers()).isEmpty();
         assertThat(project.getAssignedUsers().size()).isEqualTo(1);
         assertThat(project.getAssignedUsers())
             .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
-                .isEqualTo(REGISTERED_USER_MAIL_ADDRESS));
-    }
-
-    @Test
-    void Should_UnassignUserFromProject_When_UserIsInvited() {
-
-        // given
-        Project project = setUpProject();
-        InvitedUser invitedUser = setUpInvitedUser();
-        Set<InvitedUser> updatedInvitedUsers = new HashSet<>(project.getAssignedInvitedUsers());
-        updatedInvitedUsers.add(invitedUser);
-
-        project.setAssignedInvitedUsers(updatedInvitedUsers);
-        projectRepository.save(project);
-
-        // when
-        service.unassignUser(project, invitedUser);
-
-        // then
-        assertThat(project).isNotNull();
-        assertThat(project.getAssignedInvitedUsers()).isEmpty();
-        assertThat(project.getAssignedUsers().size()).isEqualTo(1);
-        assertThat(project.getAssignedUsers())
-            .anySatisfy(registeredUser -> assertThat(registeredUser.getEmailAddress())
-                .isEqualTo(REGISTERED_USER_MAIL_ADDRESS));
+                .isEqualTo(TEST_USER_MAIL_ADDRESS));
     }
 
     @Test
@@ -209,30 +171,20 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
     private AppUser setUpRegisteredUser() {
         AppUser appUser = AppUser.builder()
-            .fullName(REGISTERED_USER_FULL_NAME + " (2)")
-            .emailAddress(REGISTERED_USER_MAIL_ADDRESS + " (2)")
+            .firstName(TEST_USER_FIRST_NAME + " (2)")
+            .lastName(TEST_USER_LAST_NAME + " (2)")
+            .emailAddress(TEST_USER_MAIL_ADDRESS + " (2)")
             .assignedProjects(new HashSet<>())
             .build();
 
         return appUserRepository.save(appUser);
     }
 
-    private InvitedUser setUpInvitedUser() {
-        InvitedUser invitedUser = InvitedUser.builder()
-            .fullName(INVITED_USER_FULL_NAME)
-            .emailAddress(INVITED_USER_MAIL_ADDRESS)
-            .assignedProjects(new HashSet<>())
-            .build();
-
-        return invitedUserRepository.save(invitedUser);
-    }
-
     private Project setUpProject() {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
             .diagrams(new HashSet<>())
-            .assignedAppUsers(new HashSet<>(Set.of(appUser)))
-            .assignedInvitedUsers(new HashSet<>())
+            .assignedUsers(new HashSet<>(Set.of(appUser)))
             .creator(appUser)
             .build();
 

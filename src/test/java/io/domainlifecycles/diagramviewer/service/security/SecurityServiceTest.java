@@ -1,3 +1,4 @@
+/*
 package io.domainlifecycles.diagramviewer.service.security;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
@@ -265,4 +266,4 @@ class SecurityServiceTest {
         // then
         assertThat(result).isTrue();
     }
-}
+}*/

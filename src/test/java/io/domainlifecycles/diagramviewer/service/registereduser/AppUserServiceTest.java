@@ -115,19 +115,21 @@ class AppUserServiceTest {
 
         // given
         String emailAddress = "test-mail@gmail.com";
-        String fullName = "Max Mustermann";
+        String firstName = "Max";
+        String lastName = "Mustermann";
 
         AppUser appUserMock = mock(AppUser.class);
         when(repository.save(any())).thenReturn(appUserMock);
 
         // when
-        AppUser result = service.createOktaUser(emailAddress, fullName);
+        AppUser result = service.createOktaUser(emailAddress, firstName, lastName, "poivnwiopvneivn");
 
         // then
         assertThat(result).isEqualTo(appUserMock);
         verify(repository, times(1)).save(registeredUserArgumentCaptor.capture());
         assertThat(registeredUserArgumentCaptor.getValue().getEmailAddress()).isEqualTo(emailAddress);
-        assertThat(registeredUserArgumentCaptor.getValue().getFirstName()).isEqualTo(fullName);
+        assertThat(registeredUserArgumentCaptor.getValue().getFirstName()).isEqualTo(firstName);
+        assertThat(registeredUserArgumentCaptor.getValue().getLastName()).isEqualTo(lastName);
         assertThat(registeredUserArgumentCaptor.getValue().getAssignedProjects()).isEmpty();
     }
 }

@@ -24,7 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = "diagrams.location=src/test/resources")
 class ResourceController_ITest extends BaseIntegrationTest {
 
-    private static final String REGISTERED_USER_FULL_NAME = "Max Mustermann";
+    private static final String TEST_USER_FIRST_NAME = "Max";
+    private static final String TEST_USER_LAST_NAME = "Mustermann";
     private static final String REGISTERED_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
 
     @Autowired
@@ -44,7 +45,8 @@ class ResourceController_ITest extends BaseIntegrationTest {
     @BeforeEach
     void setUp() {
         appUser = AppUser.builder()
-            .fullName(REGISTERED_USER_FULL_NAME)
+            .firstName(TEST_USER_FIRST_NAME)
+            .lastName(TEST_USER_LAST_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();

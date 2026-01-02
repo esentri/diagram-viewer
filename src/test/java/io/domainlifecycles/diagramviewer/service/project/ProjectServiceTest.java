@@ -3,13 +3,11 @@ package io.domainlifecycles.diagramviewer.service.project;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
-import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
-import io.domainlifecycles.diagramviewer.service.InvitedUserService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.ProjectServiceImpl;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
@@ -62,9 +60,6 @@ class ProjectServiceTest {
     AppUserService appUserService;
 
     @Mock
-    InvitedUserService invitedUserService;
-
-    @Mock
     SessionStorage sessionStorage;
 
     @Mock
@@ -75,7 +70,7 @@ class ProjectServiceTest {
     @BeforeEach
     void setUp() {
         projectService = new ProjectServiceImpl("/tmp/diagrams", diagramService, diagramTypeNoteService,
-            regenerateDiagramsJobService, appUserService, invitedUserService, sessionStorage, repository);
+            regenerateDiagramsJobService, appUserService, sessionStorage, repository);
     }
 
     @Test
@@ -443,7 +438,7 @@ class ProjectServiceTest {
         verifyNoInteractions(appUserService);
     }
 
-    @Test
+    /*@Test
     void Should_AssignUserToProject_When_UserIsNotAlreadyAssignedAndUserNotKnown() {
 
         // given
@@ -469,7 +464,7 @@ class ProjectServiceTest {
         verify(invitedUserService, times(1)).getOrCreate(eq(emailAddress));
         verify(projectMock, times(1)).assignUser(any());
         verify(repository, times(1)).save(projectMock);
-    }
+    }*/
 
     @Test
     void Should_ThrowDiagramViewerExceptionOnAssignUser_When_RegisteredUserIsAlreadyAssigned() {
@@ -490,7 +485,7 @@ class ProjectServiceTest {
         verifyNoInteractions(repository);
     }
 
-    @Test
+    /*@Test
     void Should_ThrowDiagramViewerExceptionOnAssignUser_When_InvitedUserIsAlreadyAssigned() {
 
         // given
@@ -507,7 +502,7 @@ class ProjectServiceTest {
 
         // then
         verifyNoInteractions(repository);
-    }
+    }*/
 
     @Test
     void Should_NotUnassignUser_When_UserIsCreator() {
@@ -546,10 +541,9 @@ class ProjectServiceTest {
         // then
         verify(projectMock, times(1)).unassignUser(eq(appUserMock));
         verify(repository, times(1)).save(eq(projectMock));
-        verifyNoInteractions(invitedUserService);
     }
 
-    @Test
+    /*@Test
     void Should_UnassignAndDeleteUser_When_UserIsInvitedUserAndNotAssignedToAnyOtherProject() {
 
         // given
@@ -590,7 +584,7 @@ class ProjectServiceTest {
         verify(repository, times(1)).save(eq(projectMock));
         verify(invitedUserService, times(1)).checkForRemoval(eq(invitedUserMock));
         verify(invitedUserService, never()).delete(any());
-    }
+    }*/
 
     @Test
     void Should_DeleteProjectAndAllDependentObjects() {

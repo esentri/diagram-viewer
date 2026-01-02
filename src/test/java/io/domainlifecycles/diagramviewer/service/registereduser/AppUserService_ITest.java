@@ -16,7 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AppUserService_ITest extends BaseIntegrationTest {
 
     private static final String TEST_USER_MAIL_ADDRESS = "test-user@gmail.com";
-    private static final String TEST_USER_FULL_NAME = "Max Mustermann";
+    private static final String TEST_USER_FIRST_NAME = "Max";
+    private static final String TEST_USER_LAST_NAME = "Mustermann";
 
     @Autowired
     private AppUserService service;
@@ -27,7 +28,8 @@ class AppUserService_ITest extends BaseIntegrationTest {
     @BeforeEach
     void setUp() {
         AppUser appUser = AppUser.builder()
-            .fullName(TEST_USER_FULL_NAME)
+            .firstName(TEST_USER_FIRST_NAME)
+            .lastName(TEST_USER_LAST_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();

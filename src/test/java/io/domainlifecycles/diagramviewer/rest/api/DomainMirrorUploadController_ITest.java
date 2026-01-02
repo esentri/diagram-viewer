@@ -32,11 +32,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
 
-    private static final String REGISTERED_USER_FULL_NAME = "Max Mustermann";
+    private static final String TEST_USER_FIRST_NAME = "Max";
+    private static final String TEST_USER_LAST_NAME = "Mustermann";
     private static final String REGISTERED_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
-
-    @Autowired
-    AppUserService appUserService;
 
     @Autowired
     ProjectRepository projectRepository;
@@ -53,7 +51,8 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
     @BeforeEach
     void setUp() {
         appUser = AppUser.builder()
-            .fullName(REGISTERED_USER_FULL_NAME)
+            .firstName(TEST_USER_FIRST_NAME)
+            .lastName(TEST_USER_LAST_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();
@@ -114,8 +113,7 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
             .diagrams(new HashSet<>())
-            .assignedAppUsers(new HashSet<>(Set.of(appUser)))
-            .assignedInvitedUsers(new HashSet<>())
+            .assignedUsers(new HashSet<>(Set.of(appUser)))
             .creator(appUser)
             .build();
 

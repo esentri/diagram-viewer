@@ -6,7 +6,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
-import io.domainlifecycles.diagramviewer.repository.InvitedUserRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
@@ -30,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DiagramService_ITest extends BaseIntegrationTest {
 
     private static final String TEST_USER_MAIL_ADDRESS = "test-user@gmail.com";
-    private static final String TEST_USER_FULL_NAME = "Max Mustermann";
+    private static final String TEST_USER_FIRST_NAME = "Max";
+    private static final String TEST_USER_LAST_NAME = "Mustermann";
 
     @Autowired
     DiagramService service;
@@ -45,9 +45,6 @@ class DiagramService_ITest extends BaseIntegrationTest {
     AppUserRepository appUserRepository;
 
     @Autowired
-    InvitedUserRepository invitedUserRepository;
-
-    @Autowired
     DiagramRepository diagramRepository;
 
     private AppUser appUser;
@@ -56,7 +53,8 @@ class DiagramService_ITest extends BaseIntegrationTest {
     @BeforeEach
     void setUp() {
         appUser = AppUser.builder()
-            .fullName(TEST_USER_FULL_NAME)
+            .firstName(TEST_USER_FIRST_NAME)
+            .lastName(TEST_USER_LAST_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
             .assignedProjects(new HashSet<>())
             .build();
@@ -85,7 +83,6 @@ class DiagramService_ITest extends BaseIntegrationTest {
         projectRepository.deleteAll();
         diagramRepository.deleteAll();
         appUserRepository.deleteAll();
-        invitedUserRepository.deleteAll();
     }
 
     private Project setUpProjectAndDomainMirror() throws IOException {
@@ -93,8 +90,7 @@ class DiagramService_ITest extends BaseIntegrationTest {
 
         Project project = Project.builder()
             .name("test-project")
-            .assignedAppUsers(new HashSet<>(Set.of(appUser)))
-            .assignedInvitedUsers(new HashSet<>())
+            .assignedUsers(new HashSet<>(Set.of(appUser)))
             .diagrams(new HashSet<>())
             .creator(appUser)
             .build();
