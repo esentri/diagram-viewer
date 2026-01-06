@@ -48,7 +48,7 @@ class SecurityService_ITest extends BaseIntegrationTest {
         appUser = AppUser.builder()
             .fullName(REGISTERED_USER_FULL_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
-            .assignedProjects(new HashSet<>())
+            .status(UserStatus.ACTIVE)
             .build();
 
         appUserRepository.save(appUser);

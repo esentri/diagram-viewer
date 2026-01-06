@@ -5,6 +5,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguratio
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
+import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
@@ -56,7 +57,7 @@ class DiagramService_ITest extends BaseIntegrationTest {
             .firstName(TEST_USER_FIRST_NAME)
             .lastName(TEST_USER_LAST_NAME)
             .emailAddress(TEST_USER_MAIL_ADDRESS)
-            .assignedProjects(new HashSet<>())
+            .status(UserStatus.ACTIVE)
             .build();
 
         appUserRepository.save(appUser);

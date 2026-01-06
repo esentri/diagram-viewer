@@ -53,6 +53,7 @@ public class AppUser {
     private UUID apiKey;
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedUsers")
+    @Builder.Default
     private Set<Project> assignedProjects = new HashSet<>();
 
     @CreationTimestamp
@@ -62,7 +63,7 @@ public class AppUser {
     private Instant changedAt;
 
     public void addAssignedProject(Project project) {
-        assignedProjects.add(project);
+        this.assignedProjects.add(project);
         this.assignedProjects = new HashSet<>(assignedProjects);
     }
 
@@ -72,7 +73,7 @@ public class AppUser {
     }
 
     public void addUserIdentity(UserIdentity userIdentity) {
-        identities.add(userIdentity);
+        this.identities.add(userIdentity);
         this.identities = new HashSet<>(identities);
         userIdentity.setUser(this);
     }

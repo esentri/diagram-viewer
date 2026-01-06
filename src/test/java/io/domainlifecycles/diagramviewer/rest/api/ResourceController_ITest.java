@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.rest.api;
 
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
+import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.AppUserService;
@@ -48,7 +49,7 @@ class ResourceController_ITest extends BaseIntegrationTest {
             .firstName(TEST_USER_FIRST_NAME)
             .lastName(TEST_USER_LAST_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
-            .assignedProjects(new HashSet<>())
+            .status(UserStatus.ACTIVE)
             .build();
 
         appUserRepository.save(appUser);

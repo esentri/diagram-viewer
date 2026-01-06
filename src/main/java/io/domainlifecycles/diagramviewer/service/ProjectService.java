@@ -75,8 +75,6 @@ public interface ProjectService {
 
     void assignUser(Project project, String emailAddress);
 
-    void assignUser(Project project, AppUser appUser);
-
     void unassignUser(Project project, AppUser appUser);
 
     @Transactional

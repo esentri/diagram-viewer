@@ -72,7 +72,7 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram rename(Diagram diagram, String newName) {
-        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName());
+        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
         FileIOUtils.renameFile(diagramPath, newName + SVG_FILE_SUFFIX);
 
         diagram.setName(newName);

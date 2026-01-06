@@ -1,5 +1,4 @@
-/*
-package io.domainlifecycles.diagramviewer.service.security;
+/*package io.domainlifecycles.diagramviewer.service.security;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;

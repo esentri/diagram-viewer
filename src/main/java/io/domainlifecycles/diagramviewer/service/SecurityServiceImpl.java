@@ -56,7 +56,6 @@ public class SecurityServiceImpl implements SecurityService {
         }
     }
 
-    @Transactional
     public void registerSelfServiceUser(String email, String firstName, String lastName, String rawPassword) {
         appUserService.createSelfServiceUser(email, firstName, lastName, passwordEncoder.encode(rawPassword));
     }

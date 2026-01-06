@@ -34,7 +34,7 @@ public class AppUserServiceImpl implements AppUserService {
     }
 
     @Override
-    public Optional<AppUser> find(String userEmailAddress) {
+    public Optional<AppUser> find(final String userEmailAddress) {
         return repository.findByEmailAddress(userEmailAddress);
     }
 
@@ -77,10 +77,10 @@ public class AppUserServiceImpl implements AppUserService {
     @Override
     public AppUser createSelfServiceUser(String userEmailAddress, String firstName, String lastName, String passwordHash) {
 
-        boolean userHasSelfServiceAccount = find(userEmailAddress)
+        Optional<AppUser> foundAppUser = find(userEmailAddress);
+        boolean userHasSelfServiceAccount = foundAppUser
             .map(user -> user.getIdentities().stream()
-                .anyMatch(id -> id.getProvider() == IdentityProvider.LOCAL)
-            )
+                .anyMatch(id -> id.getProvider() == IdentityProvider.LOCAL))
             .orElse(false);
 
         if(userHasSelfServiceAccount) {
@@ -101,10 +101,9 @@ public class AppUserServiceImpl implements AppUserService {
 
         localUserIdentity.setLocalCredential(localCredential);
 
-        Optional<AppUser> foundAppUser = find(userEmailAddress);
         AppUser.AppUserBuilder<?, ?> appUserBuilder = AppUser.builder();
-
         if(foundAppUser.isPresent()) {
+            // reuse properties of found user to keep assigned projects
             appUserBuilder = foundAppUser.get().toBuilder();
         }
 
@@ -118,9 +117,7 @@ public class AppUserServiceImpl implements AppUserService {
             .provider(IdentityProvider.OKTA)
             .build();
 
-        AppUserBuilder<?, ?> appUserBuilder = appUser.toBuilder();
-
-        return createActiveUserWithNewUserIdentity(appUser.getEmailAddress(), firstName, lastName, appUserBuilder, oktaUserIdentity);
+        return createActiveUserWithNewUserIdentity(appUser.getEmailAddress(), firstName, lastName, appUser.toBuilder(), oktaUserIdentity);
     }
 
     private AppUser createActiveUserWithNewUserIdentity(String userEmailAddress, String firstName, String lastName, AppUserBuilder<?, ?> appUserBuilder, UserIdentity userIdentity) {

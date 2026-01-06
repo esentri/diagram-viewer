@@ -135,16 +135,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void assignUser(Project project, String emailAddress) {
-        if (userEmailIsAlreadyAssignedToProject(project, emailAddress)) return;
-
         Optional<AppUser> foundAppUser = appUserService.find(emailAddress);
+        AppUser appUser = foundAppUser.orElseGet(() -> appUserService.createInvitedUser(emailAddress));
 
-        AppUser appUser  = foundAppUser.orElseGet(() -> appUserService.createInvitedUser(emailAddress));
-        assignUser(project, appUser);
-    }
-
-    @Override
-    public void assignUser(Project project, AppUser appUser) {
         if (userIsAlreadyAssignedToProject(project, appUser)) {
             throw DiagramViewerException.fail(
                 String.format("User '%s' is already assigned to project.", appUser.getEmailAddress()));
@@ -223,13 +216,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private boolean userIsAlreadyAssignedToProject(Project project, AppUser user) {
         return user != null && project.getAssignedUsers().stream().anyMatch(
-            registeredUser -> Objects.equals(
-                user.getId(), registeredUser.getId()));
-    }
-
-    private boolean userEmailIsAlreadyAssignedToProject(Project project, String emailAddress) {
-        return project.getAssignedUsers().stream()
-            .anyMatch(user -> Objects.equals(user.getEmailAddress(), emailAddress));
+            appUser -> Objects.equals(user.getId(), appUser.getId()));
     }
 
     private String buildCleanProjectName(final String projectName) {

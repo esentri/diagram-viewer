@@ -83,21 +83,21 @@ class ProjectServiceTest {
         AppUser anotherAppUserMock = mock(AppUser.class);
         when(anotherAppUserMock.getId()).thenReturn(new UUID(0, 0));
 
-        Project projectAssignedToRegisteredUserMock = mock(Project.class);
-        when(projectAssignedToRegisteredUserMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
+        Project projectAssignedToUserMock = mock(Project.class);
+        when(projectAssignedToUserMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
 
-        Project projectAssignedToAnotherRegisteredUserMock = mock(Project.class);
-        when(projectAssignedToAnotherRegisteredUserMock.getAssignedUsers()).thenReturn(
+        Project projectAssignedToAnotherUserMock = mock(Project.class);
+        when(projectAssignedToAnotherUserMock.getAssignedUsers()).thenReturn(
             Set.of(anotherAppUserMock));
 
         when(repository.findAll()).thenReturn(
-            List.of(projectAssignedToRegisteredUserMock, projectAssignedToAnotherRegisteredUserMock));
+            List.of(projectAssignedToUserMock, projectAssignedToAnotherUserMock));
 
         // when
         Stream<Project> result = projectService.getAll(appUserMock);
 
         // then
-        assertThat(result.toList().get(0)).isEqualTo(projectAssignedToRegisteredUserMock);
+        assertThat(result.toList().get(0)).isEqualTo(projectAssignedToUserMock);
         verify(repository, times(1)).findAll();
     }
 
@@ -390,119 +390,85 @@ class ProjectServiceTest {
     }
 
     @Test
+    void Should_CreateInvitedUserAndAssignUserToProject_When_UserIsNotAlreadyAssignedAndUserKnown() {
+
+        // given
+        String emailAddress = "max.mustermann@gmail.com";
+
+        AppUser anotherAppUserMock = mock(AppUser.class);
+        when(anotherAppUserMock.getId()).thenReturn(new UUID(0, 0));
+
+        AppUser userToAssignMock = mock(AppUser.class);
+        when(userToAssignMock.getId()).thenReturn(new UUID(1, 1));
+
+        Project projectMock = mock(Project.class);
+        when(projectMock.getAssignedUsers()).thenReturn(Set.of(anotherAppUserMock));
+
+        when(appUserService.find(eq(emailAddress))).thenReturn(Optional.empty());
+        when(appUserService.createInvitedUser(eq(emailAddress))).thenReturn(userToAssignMock);
+        when(repository.save(eq(projectMock))).thenReturn(projectMock);
+
+        // when
+        projectService.assignUser(projectMock, emailAddress);
+
+        // then
+        verify(appUserService, times(1)).find(eq(emailAddress));
+        verify(appUserService, times(1)).createInvitedUser(eq(emailAddress));
+        verify(projectMock, times(1)).assignUser(eq(userToAssignMock));
+        verify(repository, times(1)).save(projectMock);
+    }
+
+    @Test
     void Should_AssignUserToProject_When_UserIsNotAlreadyAssignedAndUserKnown() {
 
         // given
         String emailAddress = "max.mustermann@gmail.com";
 
-        AppUser appUserMock = mock(AppUser.class);
-        when(appUserMock.getId()).thenReturn(new UUID(0, 0));
-
         AppUser anotherAppUserMock = mock(AppUser.class);
-        when(anotherAppUserMock.getId()).thenReturn(new UUID(1, 1));
-        when(anotherAppUserMock.getEmailAddress()).thenReturn("another.mail@gmail.com");
+        when(anotherAppUserMock.getId()).thenReturn(new UUID(0, 0));
+
+        AppUser userToAssignMock = mock(AppUser.class);
+        when(userToAssignMock.getId()).thenReturn(new UUID(1, 1));
 
         Project projectMock = mock(Project.class);
         when(projectMock.getAssignedUsers()).thenReturn(Set.of(anotherAppUserMock));
 
-        when(appUserService.userKnownAndActive(eq(emailAddress))).thenReturn(true);
-        when(appUserService.get(eq(emailAddress))).thenReturn(appUserMock);
+        when(appUserService.find(eq(emailAddress))).thenReturn(Optional.of(userToAssignMock));
         when(repository.save(eq(projectMock))).thenReturn(projectMock);
 
         // when
         projectService.assignUser(projectMock, emailAddress);
 
         // then
-        verify(appUserService, times(1)).userKnownAndActive(eq(emailAddress));
-        verify(appUserService, times(1)).get(eq(emailAddress));
-        verify(projectMock, times(1)).assignUser(any());
+        verify(appUserService, times(1)).find(eq(emailAddress));
+        verify(appUserService, never()).createInvitedUser(any());
+        verify(projectMock, times(1)).assignUser(eq(userToAssignMock));
         verify(repository, times(1)).save(projectMock);
     }
 
     @Test
-    void Should_NotAssignUserToProject_When_UserIsAlreadyAssigned() {
+    void Should_ThrowDiagramViewerExceptionOnAssignUser_When_UserIsAlreadyAssigned() {
 
         // given
-        String emailAddress = "max.mustermann@gmail.com";
-
         AppUser appUserMock = mock(AppUser.class);
+
+        UUID appUserId = new UUID(0, 0);
+        String emailAddress = "max.mustermann@gmail.com";
+        when(appUserMock.getId()).thenReturn(appUserId);
         when(appUserMock.getEmailAddress()).thenReturn(emailAddress);
 
         Project projectMock = mock(Project.class);
         when(projectMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
 
-        // when
-        projectService.assignUser(projectMock, emailAddress);
-
-        // then
-        verifyNoInteractions(appUserService);
-    }
-
-    /*@Test
-    void Should_AssignUserToProject_When_UserIsNotAlreadyAssignedAndUserNotKnown() {
-
-        // given
-        String emailAddress = "max.mustermann@gmail.com";
-
-        InvitedUser invitedUserMock = mock(InvitedUser.class);
-
-        AppUser anotherAppUserMock = mock(AppUser.class);
-        when(anotherAppUserMock.getEmailAddress()).thenReturn("another.mail@gmail.com");
-
-        Project projectMock = mock(Project.class);
-        when(projectMock.getAssignedUsers()).thenReturn(Set.of(anotherAppUserMock));
-
-        when(appUserService.userKnownAndActive(eq(emailAddress))).thenReturn(false);
-        when(invitedUserService.getOrCreate(eq(emailAddress))).thenReturn(invitedUserMock);
-        when(repository.save(eq(projectMock))).thenReturn(projectMock);
+        when(appUserService.find(eq(emailAddress))).thenReturn(Optional.of(appUserMock));
 
         // when
-        projectService.assignUser(projectMock, emailAddress);
-
-        // then
-        verify(appUserService, times(1)).userKnownAndActive(eq(emailAddress));
-        verify(invitedUserService, times(1)).getOrCreate(eq(emailAddress));
-        verify(projectMock, times(1)).assignUser(any());
-        verify(repository, times(1)).save(projectMock);
-    }*/
-
-    @Test
-    void Should_ThrowDiagramViewerExceptionOnAssignUser_When_RegisteredUserIsAlreadyAssigned() {
-
-        // given
-        AppUser appUserMock = mock(AppUser.class);
-        String emailAddress = "max.mustermann@gmail.com";
-        when(appUserMock.getEmailAddress()).thenReturn(emailAddress);
-
-        Project projectMock = mock(Project.class);
-        when(projectMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
-
-        // when
-        assertThatThrownBy(() -> projectService.assignUser(projectMock, appUserMock))
+        assertThatThrownBy(() -> projectService.assignUser(projectMock, emailAddress))
             .hasMessage("User '" + emailAddress + "' is already assigned to project.");
 
         // then
         verifyNoInteractions(repository);
     }
-
-    /*@Test
-    void Should_ThrowDiagramViewerExceptionOnAssignUser_When_InvitedUserIsAlreadyAssigned() {
-
-        // given
-        InvitedUser invitedUserMock = mock(InvitedUser.class);
-        String emailAddress = "max.mustermann@gmail.com";
-        when(invitedUserMock.getEmailAddress()).thenReturn(emailAddress);
-
-        Project projectMock = mock(Project.class);
-        when(projectMock.getAssignedInvitedUsers()).thenReturn(Set.of(invitedUserMock));
-
-        // when
-        assertThatThrownBy(() -> projectService.assignUser(projectMock, invitedUserMock))
-            .hasMessage("User '" + emailAddress + "' is already assigned to project.");
-
-        // then
-        verifyNoInteractions(repository);
-    }*/
 
     @Test
     void Should_NotUnassignUser_When_UserIsCreator() {
