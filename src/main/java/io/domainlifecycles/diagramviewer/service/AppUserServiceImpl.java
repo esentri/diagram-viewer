@@ -78,16 +78,7 @@ public class AppUserServiceImpl implements AppUserService {
     public AppUser createSelfServiceUser(String userEmailAddress, String firstName, String lastName, String passwordHash) {
 
         Optional<AppUser> foundAppUser = find(userEmailAddress);
-        boolean userHasSelfServiceAccount = foundAppUser
-            .map(user -> user.getIdentities().stream()
-                .anyMatch(id -> id.getProvider() == IdentityProvider.LOCAL))
-            .orElse(false);
-
-        if(userHasSelfServiceAccount) {
-            throw DiagramViewerException.fail(
-                String.format("E-Mail '%s' is already taken. Please choose a different mail or sign in to your account.",
-                    userEmailAddress));
-        }
+        checkSelfServiceUserWithMailAlreadyExists(userEmailAddress, foundAppUser);
 
         UserIdentity localUserIdentity = UserIdentity.builder()
             .provider(IdentityProvider.LOCAL)
@@ -132,5 +123,18 @@ public class AppUserServiceImpl implements AppUserService {
         appUser.addUserIdentity(userIdentity);
 
         return repository.save(appUser);
+    }
+
+    private void checkSelfServiceUserWithMailAlreadyExists(String userEmailAddress, Optional<AppUser> foundAppUser) {
+        boolean userHasSelfServiceAccount = foundAppUser
+            .map(user -> user.getIdentities().stream()
+                .anyMatch(id -> id.getProvider() == IdentityProvider.LOCAL))
+            .orElse(false);
+
+        if(userHasSelfServiceAccount) {
+            throw DiagramViewerException.fail(
+                String.format("E-Mail '%s' is already taken. Please choose a different mail or sign in to your account.",
+                    userEmailAddress));
+        }
     }
 }

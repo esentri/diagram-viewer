@@ -41,8 +41,10 @@ public class SecurityServiceImpl implements SecurityService {
         Optional<AppUser> foundUser = appUserService.find(userEmailAddress);
 
         if (foundUser.isPresent()) {
+            // Okta User is either active already or has been invited to at least one project
             return getUserWhenActiveOrActivateUser(firstName, lastName, sub, foundUser.get());
         } else {
+            // Okta User is new to the system
             return appUserService.createOktaUser(userEmailAddress, firstName, lastName, sub);
         }
     }
