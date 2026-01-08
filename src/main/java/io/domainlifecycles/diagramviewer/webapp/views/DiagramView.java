@@ -236,8 +236,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         deleteDiagramButton.getElement().getStyle().set("margin-left", "auto");
         deleteDiagramButton.getElement().getStyle().set("margin-right", "1rem");
         deleteDiagramButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        deleteDiagramButton.setEnabled(
-            Objects.equals(diagram.getProject().getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
         deleteDiagramButton.addClickListener(e -> confirmDialog.open());
         return deleteDiagramButton;
     }

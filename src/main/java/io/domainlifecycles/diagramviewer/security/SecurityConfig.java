@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -22,12 +21,15 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final AuthenticationSuccessHandler successHandler;
+    private final AuthenticationSuccessHandler oAuth2SuccessHandler;
+    private final AuthenticationSuccessHandler selfServiceSuccessHandler;
     private final NavigationAccessChecker navigationAccessChecker;
 
-    public SecurityConfig(CustomAuthenticationSuccessHandler successHandler,
+    public SecurityConfig(OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler,
+                          SelfServiceAuthenticationSuccessHandler selfServiceSuccessHandler,
                           ProjectAndDiagramNavigationAccessChecker navigationAccessChecker) {
-        this.successHandler = successHandler;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+        this.selfServiceSuccessHandler = selfServiceSuccessHandler;
         this.navigationAccessChecker = navigationAccessChecker;
     }
 
@@ -36,8 +38,11 @@ public class SecurityConfig {
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .logout((logout) -> logout.logoutSuccessUrl(SignInView.VIEW_PATH))
+
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(SignInView.VIEW_PATH)).anonymous()
+                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/register")).permitAll()
+                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/login")).permitAll()
                 .requestMatchers(
                     PathPatternRequestMatcher.withDefaults().matcher("/actuator/**"),
                     PathPatternRequestMatcher.withDefaults().matcher("/api/domain-model/**"),
@@ -57,10 +62,27 @@ public class SecurityConfig {
                 .permitAll()
                 .anyRequest().authenticated()
             )
-            .oauth2Login((login) -> login.successHandler(successHandler).loginPage(SignInView.VIEW_PATH))
+
+            .formLogin(form -> form
+                .loginPage(SignInView.VIEW_PATH)
+                .loginProcessingUrl("/login")
+                .successHandler(selfServiceSuccessHandler)
+                .failureUrl(SignInView.VIEW_PATH + "?error")
+                .permitAll()
+            )
+
+            .oauth2Login(login -> login
+                .loginPage(SignInView.VIEW_PATH)
+                .successHandler(oAuth2SuccessHandler)
+                .permitAll()
+            )
+
             .exceptionHandling(
-                httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(
-                    (request, response, authException) -> response.sendRedirect(SignInView.VIEW_PATH)))
+                ex -> ex.authenticationEntryPoint(
+                    (request, response, authException) ->
+                        response.sendRedirect(SignInView.VIEW_PATH))
+            )
+
             .addFilterAfter(apiKeyAuthFilter, BasicAuthenticationFilter.class)
             .build();
     }

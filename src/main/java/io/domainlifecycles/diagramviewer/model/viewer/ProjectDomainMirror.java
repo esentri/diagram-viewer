@@ -19,7 +19,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Data
-@Table(name = "ProjectDomainMirror")
+@Table(name = "project_domain_mirror")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

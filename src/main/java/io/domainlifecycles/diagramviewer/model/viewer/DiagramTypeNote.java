@@ -19,7 +19,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Data
-@Table(name = "DiagramTypeNote", uniqueConstraints = {
+@Table(name = "diagram_type_note", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"notes", "diagram_id"})
 })
 @Builder

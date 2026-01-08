@@ -29,7 +29,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Data
-@Table(name = "Project")
+@Table(name = "project")
 @ToString(exclude = "diagrams")
 @Builder
 @AllArgsConstructor
@@ -54,16 +54,12 @@ public class Project {
     private Set<String> domainModelPackages;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "project_assigned_registered_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<RegisteredUser> assignedRegisteredUsers;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "project_assigned_invited_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<InvitedUser> assignedInvitedUsers;
+    @JoinTable(name = "project_assigned_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<AppUser> assignedUsers;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="creator_user_id", nullable=false)
-    private RegisteredUser creator;
+    private AppUser creator;
 
     @CreationTimestamp
     private Instant createdAt;
@@ -71,31 +67,24 @@ public class Project {
     @UpdateTimestamp
     private Instant changedAt;
 
-    public void unassignUser(User user) {
-        if(user instanceof RegisteredUser) {
-            assignedRegisteredUsers.remove((RegisteredUser) user);
-            this.assignedRegisteredUsers = new HashSet<>(assignedRegisteredUsers);
-        } else {
-            assignedInvitedUsers.remove((InvitedUser) user);
-            this.assignedInvitedUsers = new HashSet<>(assignedInvitedUsers);
+    public void unassignUser(AppUser user) {
+        if(user != null) {
+            assignedUsers.remove(user);
+            this.assignedUsers = new HashSet<>(assignedUsers);
+            user.removeAssignedProject(this);
         }
-        user.removeAssignedProject(this);
     }
 
-    public void assignUser(User user) {
-        if(user instanceof RegisteredUser) {
-            assignedRegisteredUsers.add((RegisteredUser) user);
-            this.assignedRegisteredUsers = new HashSet<>(assignedRegisteredUsers);
-        } else {
-            assignedInvitedUsers.add((InvitedUser) user);
-            this.assignedInvitedUsers = new HashSet<>(assignedInvitedUsers);
+    public void assignUser(AppUser user) {
+        if(user != null) {
+            assignedUsers.add(user);
+            this.assignedUsers = new HashSet<>(assignedUsers);
+            user.addAssignedProject(this);
         }
-        user.addAssignedProject(this);
     }
 
     public void unassignAllUsers() {
-        new HashSet<>(assignedRegisteredUsers).forEach(this::unassignUser);
-        new HashSet<>(assignedInvitedUsers).forEach(this::unassignUser);
+        new HashSet<>(assignedUsers).forEach(this::unassignUser);
     }
 
     public void addDiagram(Diagram diagram) {

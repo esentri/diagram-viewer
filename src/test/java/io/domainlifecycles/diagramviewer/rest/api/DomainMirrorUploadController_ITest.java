@@ -4,10 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
+import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
-import io.domainlifecycles.diagramviewer.repository.RegisteredUserRepository;
-import io.domainlifecycles.diagramviewer.service.RegisteredUserService;
+import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
+import io.domainlifecycles.diagramviewer.service.AppUserService;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.model.DomainModel;
 import io.domainlifecycles.mirror.serialize.api.DomainSerializer;
@@ -32,33 +33,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
 
-    private static final String REGISTERED_USER_FULL_NAME = "Max Mustermann";
+    private static final String TEST_USER_FIRST_NAME = "Max";
+    private static final String TEST_USER_LAST_NAME = "Mustermann";
     private static final String REGISTERED_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
-
-    @Autowired
-    RegisteredUserService registeredUserService;
 
     @Autowired
     ProjectRepository projectRepository;
 
     @Autowired
-    RegisteredUserRepository registeredUserRepository;
+    AppUserRepository appUserRepository;
 
     @Autowired
     MockMvc mockMvc;
 
-    private RegisteredUser registeredUser;
+    private AppUser appUser;
     private Project project;
 
     @BeforeEach
     void setUp() {
-        registeredUser = RegisteredUser.builder()
-            .fullName(REGISTERED_USER_FULL_NAME)
+        appUser = AppUser.builder()
+            .firstName(TEST_USER_FIRST_NAME)
+            .lastName(TEST_USER_LAST_NAME)
             .emailAddress(REGISTERED_USER_MAIL_ADDRESS)
-            .assignedProjects(new HashSet<>())
+            .status(UserStatus.ACTIVE)
             .build();
 
-        registeredUserRepository.save(registeredUser);
+        appUserRepository.save(appUser);
 
         project = setUpProject();
     }
@@ -66,7 +66,7 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
     @AfterEach
     void tearDown() {
         projectRepository.deleteAll();
-        registeredUserRepository.deleteAll();
+        appUserRepository.deleteAll();
     }
 
     @Test
@@ -78,7 +78,7 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
         // when
         ResultActions result = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", project.getName())
             .contentType(MediaType.APPLICATION_JSON)
-                .header("X-API-KEY", registeredUser.getApiKey().toString())
+                .header("X-API-KEY", appUser.getApiKey().toString())
             .content(jsonBody));
 
         // then
@@ -114,9 +114,8 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
         Project project = Project.builder()
             .name("project-1.0.0.jar")
             .diagrams(new HashSet<>())
-            .assignedRegisteredUsers(new HashSet<>(Set.of(registeredUser)))
-            .assignedInvitedUsers(new HashSet<>())
-            .creator(registeredUser)
+            .assignedUsers(new HashSet<>(Set.of(appUser)))
+            .creator(appUser)
             .build();
 
         return projectRepository.save(project);

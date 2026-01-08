@@ -102,6 +102,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         Button editProjectButton = new Button(new Icon(VaadinIcon.PENCIL), e -> editProjectDialog.open());
         editProjectButton.addThemeName("icon");
         editProjectButton.getStyle().set("cursor", "pointer");
+        editProjectButton.setEnabled(isCurrentlySignedInUserProjectAdmin());
 
         horizontalNameAndEditButtonAndReuploadButtonLayout.add(new H2(project.getName()), editProjectButton);
 
@@ -110,6 +111,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
             Button reuploadProjectButton = new Button(new Icon("vaadin:cloud-upload-o"), e -> reuploadDialog.open());
             reuploadProjectButton.addThemeName("icon");
             reuploadProjectButton.getStyle().set("cursor", "pointer");
+            reuploadProjectButton.setEnabled(isCurrentlySignedInUserProjectAdmin());
             horizontalNameAndEditButtonAndReuploadButtonLayout.add(reuploadProjectButton);
         }
 
@@ -165,7 +167,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         Button shareProjectButton = new Button("Share Project", new Icon("vaadin:tools"));
         shareProjectButton.getStyle().set("cursor", "pointer");
-        shareProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
+        shareProjectButton.setEnabled(isCurrentlySignedInUserProjectAdmin());
         shareProjectButton.addClickListener(e -> shareProjectDialog.open());
         return shareProjectButton;
     }
@@ -191,9 +193,13 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         deleteProjectButton.getStyle().set("cursor", "pointer");
         deleteProjectButton.getElement().getStyle().set("margin-left", "auto");
         deleteProjectButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        deleteProjectButton.setEnabled(Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId()));
+        deleteProjectButton.setEnabled(isCurrentlySignedInUserProjectAdmin());
         deleteProjectButton.addClickListener(e -> confirmDialog.open());
         return deleteProjectButton;
+    }
+
+    private boolean isCurrentlySignedInUserProjectAdmin() {
+        return Objects.equals(project.getCreator().getId(), securityService.getCurrentlySignedInUser().getId());
     }
 
     @Override

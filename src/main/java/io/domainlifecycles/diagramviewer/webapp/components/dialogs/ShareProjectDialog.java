@@ -15,12 +15,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.shared.Registration;
-import io.domainlifecycles.diagramviewer.model.viewer.InvitedUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.RegisteredUser;
-import io.domainlifecycles.diagramviewer.model.viewer.User;
+import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,7 +29,7 @@ public class ShareProjectDialog extends Dialog {
 
     private final ProjectService projectService;
     private final Project project;
-    private Grid<User> userGrid;
+    private Grid<AppUser> userGrid;
     private Registration registration;
 
     public ShareProjectDialog(ProjectService projectService, Project project) {
@@ -72,12 +71,9 @@ public class ShareProjectDialog extends Dialog {
         return dialogLayout;
     }
 
-    private Set<User> getRegisteredAndInvitedUsersForProject() {
-        Set<RegisteredUser> assignedRegisteredUsers = project.getAssignedRegisteredUsers();
-        Set<InvitedUser> assignedInvitedUsers = project.getAssignedInvitedUsers();
-
-        return Stream.concat(assignedRegisteredUsers.stream(), assignedInvitedUsers.stream())
-            .collect(Collectors.toSet());
+    private Set<AppUser> getRegisteredAndInvitedUsersForProject() {
+        Set<AppUser> assignedAppUsers = project.getAssignedUsers();
+        return new HashSet<>(assignedAppUsers);
     }
 
     private void refreshUsers() {
@@ -90,8 +86,8 @@ public class ShareProjectDialog extends Dialog {
      *
      * @return Rendered HTML
      */
-    private Renderer<User> createEmployeeRenderer() {
-        return LitRenderer.<User> of(
+    private Renderer<AppUser> createEmployeeRenderer() {
+        return LitRenderer.<AppUser> of(
                       "<vaadin-horizontal-layout style=\"align-items: center;\" theme=\"spacing\">"
                     + "  <vaadin-avatar name=\"${item.displayName}\"></vaadin-avatar>"
                     + "  <vaadin-vertical-layout style=\"line-height: var(--lumo-line-height-m);\">"
@@ -102,19 +98,19 @@ public class ShareProjectDialog extends Dialog {
                     + "  </vaadin-vertical-layout>"
                     + "</vaadin-horizontal-layout>")
             .withProperty("displayName", user -> {
-                String fullName = user.getFullName();
+                String fullName = String.join(" ", user.getFirstName(), user.getLastName());
                 return (fullName != null && !fullName.isEmpty()) ? fullName : user.getEmailAddress();
             })
-            .withProperty("email", User::getEmailAddress)
+            .withProperty("email", AppUser::getEmailAddress)
             .withProperty("showEmail", user -> {
-                String fullName = user.getFullName();
-                return (fullName != null && !fullName.isEmpty());
+                String fullName = String.join(" ", user.getFirstName(), user.getLastName());
+                return !fullName.isEmpty();
             });
     }
 
-    private Button createAndGetUnassignButtonWithConfirmDialog(final User user) {
-        if((user instanceof RegisteredUser)
-            && Objects.equals(((RegisteredUser) user).getId(),
+    private Button createAndGetUnassignButtonWithConfirmDialog(final AppUser user) {
+        if((user != null)
+            && Objects.equals(user.getId(),
                 project.getCreator().getId())) {
             return null;
         }
@@ -126,7 +122,7 @@ public class ShareProjectDialog extends Dialog {
         return unassignButton;
     }
 
-    private ConfirmDialog getUnassignConfirmDialog(User user) {
+    private ConfirmDialog getUnassignConfirmDialog(AppUser user) {
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Unassign User");
         confirmDialog.setText(String.format(

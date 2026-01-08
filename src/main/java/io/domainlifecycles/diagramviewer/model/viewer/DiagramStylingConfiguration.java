@@ -22,7 +22,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
-@Table(name = "DiagramStylingConfiguration")
+@Table(name = "diagram_styling_configuration")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder(toBuilder = true)
