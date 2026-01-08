@@ -14,7 +14,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @ToString(exclude = "user")
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class UserIdentity {
 
     @Id

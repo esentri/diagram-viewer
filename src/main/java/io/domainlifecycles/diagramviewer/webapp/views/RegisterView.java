@@ -19,7 +19,6 @@ import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.events.UserRegisteredEvent;
 import lombok.Getter;
 import lombok.Setter;
-import org.jspecify.annotations.NonNull;
 
 @Route(value = RegisterView.VIEW_PATH, autoLayout = false)
 @PageTitle("DLC | Register")
@@ -136,7 +135,7 @@ public class RegisterView extends VerticalLayout {
 
         registerButton.addClickListener(e -> {
             binder.writeBeanIfValid(registerOptions);
-            securityService.registerSelfServiceUser(
+            securityService.registerInternalUser(
                 registerOptions.getEmail(),
                 registerOptions.getFirstName(),
                 registerOptions.getLastName(),

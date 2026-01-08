@@ -6,7 +6,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.AppUserService;
-import java.util.HashSet;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

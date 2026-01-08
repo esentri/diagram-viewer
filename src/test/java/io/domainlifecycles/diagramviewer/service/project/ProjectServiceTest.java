@@ -74,31 +74,23 @@ class ProjectServiceTest {
     }
 
     @Test
-    void Should_GetAllProjectsAssignedToUser() {
+    void Should_GetAllAssignedSortedByCreationDateProjectsAssignedToUser() {
 
         // given
         AppUser appUserMock = mock(AppUser.class);
-        when(appUserMock.getId()).thenReturn(new UUID(0, 0));
-
-        AppUser anotherAppUserMock = mock(AppUser.class);
-        when(anotherAppUserMock.getId()).thenReturn(new UUID(0, 0));
 
         Project projectAssignedToUserMock = mock(Project.class);
-        when(projectAssignedToUserMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
-
         Project projectAssignedToAnotherUserMock = mock(Project.class);
-        when(projectAssignedToAnotherUserMock.getAssignedUsers()).thenReturn(
-            Set.of(anotherAppUserMock));
 
-        when(repository.findAll()).thenReturn(
+        when(repository.findByAssignedUsersContainingOrderByCreatedAtAsc(eq(appUserMock))).thenReturn(
             List.of(projectAssignedToUserMock, projectAssignedToAnotherUserMock));
 
         // when
-        Stream<Project> result = projectService.getAll(appUserMock);
+        List<Project> result = projectService.getAllAssignedSortedByCreationDate(appUserMock);
 
         // then
-        assertThat(result.toList().get(0)).isEqualTo(projectAssignedToUserMock);
-        verify(repository, times(1)).findAll();
+        assertThat(result.get(0)).isEqualTo(projectAssignedToUserMock);
+        verify(repository, times(1)).findByAssignedUsersContainingOrderByCreatedAtAsc(eq(appUserMock));
     }
 
     @Test
@@ -508,49 +500,6 @@ class ProjectServiceTest {
         verify(projectMock, times(1)).unassignUser(eq(appUserMock));
         verify(repository, times(1)).save(eq(projectMock));
     }
-
-    /*@Test
-    void Should_UnassignAndDeleteUser_When_UserIsInvitedUserAndNotAssignedToAnyOtherProject() {
-
-        // given
-        InvitedUser invitedUserMock = mock(InvitedUser.class);
-
-        Project projectMock = mock(Project.class);
-
-        when(repository.save(eq(projectMock))).thenReturn(projectMock);
-        when(invitedUserService.checkForRemoval(eq(invitedUserMock))).thenReturn(true);
-        doNothing().when(invitedUserService).delete(eq(invitedUserMock));
-
-        // when
-        projectService.unassignUser(projectMock, invitedUserMock);
-
-        // then
-        verify(projectMock, times(1)).unassignUser(eq(invitedUserMock));
-        verify(repository, times(1)).save(eq(projectMock));
-        verify(invitedUserService, times(1)).checkForRemoval(eq(invitedUserMock));
-        verify(invitedUserService, times(1)).delete(eq(invitedUserMock));
-    }
-
-    @Test
-    void Should_UnassignButNotDeleteUser_When_UserIsInvitedUserButAssignedToOtherProject() {
-
-        // given
-        InvitedUser invitedUserMock = mock(InvitedUser.class);
-
-        Project projectMock = mock(Project.class);
-
-        when(repository.save(eq(projectMock))).thenReturn(projectMock);
-        when(invitedUserService.checkForRemoval(eq(invitedUserMock))).thenReturn(false);
-
-        // when
-        projectService.unassignUser(projectMock, invitedUserMock);
-
-        // then
-        verify(projectMock, times(1)).unassignUser(eq(invitedUserMock));
-        verify(repository, times(1)).save(eq(projectMock));
-        verify(invitedUserService, times(1)).checkForRemoval(eq(invitedUserMock));
-        verify(invitedUserService, never()).delete(any());
-    }*/
 
     @Test
     void Should_DeleteProjectAndAllDependentObjects() {

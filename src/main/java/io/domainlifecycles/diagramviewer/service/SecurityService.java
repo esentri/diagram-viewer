@@ -6,9 +6,9 @@ public interface SecurityService {
 
     AppUser getCurrentlySignedInUser();
 
-    AppUser acknowledgeOAuth2UserAuthentication(String userEmailAddress, String firstName, String lastName, String sub);
+    AppUser acknowledgeOktaUserAuthentication(String userEmailAddress, String firstName, String lastName, String sub);
 
-    void registerSelfServiceUser(String email, String firstName, String lastName, String rawPassword);
+    void registerInternalUser(String email, String firstName, String lastName, String rawPassword);
 
     boolean checkAccess(String projectName, AppUser appUser);
 }

@@ -37,7 +37,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.diagramviewer.service.AppUserService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.UploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
@@ -204,8 +203,8 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem[] createSideNavLinks() {
-        return projectService.getAll(securityService.getCurrentlySignedInUser())
-            .sorted(Comparator.comparing(Project::getCreatedAt))
+        return projectService.getAllAssignedSortedByCreationDate(securityService.getCurrentlySignedInUser())
+            .stream()
             .map(this::createAndGetProjectSideNavItem)
             .toArray(SideNavItem[]::new);
     }

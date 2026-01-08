@@ -75,7 +75,7 @@ public class AppUserServiceImpl implements AppUserService {
     }
 
     @Override
-    public AppUser createSelfServiceUser(String userEmailAddress, String firstName, String lastName, String passwordHash) {
+    public AppUser createInternalUser(String userEmailAddress, String firstName, String lastName, String passwordHash) {
 
         Optional<AppUser> foundAppUser = find(userEmailAddress);
         checkSelfServiceUserWithMailAlreadyExists(userEmailAddress, foundAppUser);

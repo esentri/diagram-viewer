@@ -44,7 +44,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         final String lastName = oAuth2User.getAttribute("family_name");
         final String sub = oAuth2User.getAttribute("sub");
 
-        securityService.acknowledgeOAuth2UserAuthentication(email, firstName, lastName, sub);
+        securityService.acknowledgeOktaUserAuthentication(email, firstName, lastName, sub);
 
         SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
 

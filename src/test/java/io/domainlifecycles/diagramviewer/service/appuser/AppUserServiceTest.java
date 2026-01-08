@@ -231,7 +231,7 @@ class AppUserServiceTest {
     }
 
     @Test
-    void Should_CreateSelfServiceUser_When_NoUserWithEmailExists() {
+    void Should_CreateInternalUser_When_NoUserWithEmailExists() {
 
         // given
         String emailAddress = "test-mail@gmail.com";
@@ -244,7 +244,7 @@ class AppUserServiceTest {
         when(repository.findByEmailAddress(eq(emailAddress))).thenReturn(Optional.empty());
 
         // when
-        AppUser result = service.createSelfServiceUser(emailAddress, firstName, lastName, passwordHash);
+        AppUser result = service.createInternalUser(emailAddress, firstName, lastName, passwordHash);
 
         // then
         assertThat(result).isEqualTo(appUserMock);
@@ -272,7 +272,7 @@ class AppUserServiceTest {
     }
 
     @Test
-    void Should_CreateSelfServiceUser_When_NoUserWithEmailButOktaIdentityExists() {
+    void Should_CreateInternalUser_When_NoUserWithEmailButOktaIdentityExists() {
 
         // given
         String emailAddress = "test-mail@gmail.com";
@@ -293,7 +293,7 @@ class AppUserServiceTest {
         when(repository.save(any(AppUser.class))).thenReturn(appUserMock);
 
         // when
-        AppUser result = service.createSelfServiceUser(emailAddress, firstName, lastName, passwordHash);
+        AppUser result = service.createInternalUser(emailAddress, firstName, lastName, passwordHash);
 
         // then
         assertThat(result).isEqualTo(appUserMock);
@@ -326,7 +326,7 @@ class AppUserServiceTest {
     }
 
     @Test
-    void Should_ThrowDiagramViewerExceptionOnCreateSelfServiceUser_When_UserWithEmailAndLocalIdentityExists() {
+    void Should_ThrowDiagramViewerExceptionOnCreateInternalUser_When_UserWithEmailAndLocalIdentityExists() {
 
         // given
         String emailAddress = "test-mail@gmail.com";
@@ -344,7 +344,7 @@ class AppUserServiceTest {
         when(repository.findByEmailAddress(eq(emailAddress))).thenReturn(Optional.of(existingAppUser));
 
         // when
-        assertThatThrownBy(() -> service.createSelfServiceUser(emailAddress, firstName, lastName, passwordHash))
+        assertThatThrownBy(() -> service.createInternalUser(emailAddress, firstName, lastName, passwordHash))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage("E-Mail 'test-mail@gmail.com' is already taken. Please choose a different mail or sign in to your account.");
 

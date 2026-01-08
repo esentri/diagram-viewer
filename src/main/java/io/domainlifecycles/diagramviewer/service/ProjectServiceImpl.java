@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -57,10 +58,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Stream<Project> getAll(AppUser appUser) {
-        return StreamSupport.stream(repository.findAll().spliterator(), false)
-            .filter(project -> project.getAssignedUsers().stream()
-                .anyMatch(assignedUser -> Objects.equals(assignedUser.getId(), appUser.getId())));
+    public List<Project> getAllAssignedSortedByCreationDate(AppUser appUser) {
+        return repository.findByAssignedUsersContainingOrderByCreatedAtAsc(appUser);
     }
 
     @Override
@@ -215,7 +214,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private boolean userIsAlreadyAssignedToProject(Project project, AppUser user) {
-        return user != null && project.getAssignedUsers().stream().anyMatch(
+        return project.getAssignedUsers().stream().anyMatch(
             appUser -> Objects.equals(user.getId(), appUser.getId()));
     }
 

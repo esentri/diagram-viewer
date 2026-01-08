@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,6 +91,19 @@ class ProjectService_ITest extends BaseIntegrationTest {
         assertThat(project.getAssignedUsers().size()).isEqualTo(1);
         assertThat(project.getAssignedUsers().stream().findFirst().orElseThrow().getId()).isEqualTo(appUser.getId());
         assertThat(project.getCreator().getId()).isEqualTo(appUser.getId());
+    }
+
+    @Test
+    void Should_FindProjectAssignedToUser_When_ProjectWithUserAssignedExists() {
+
+        // given
+        Project project = setUpProject();
+
+        // when
+        List<Project> result = service.getAllAssignedSortedByCreationDate(appUser);
+
+        // then
+        assertThat(result.get(0)).isEqualTo(project);
     }
 
     @Test

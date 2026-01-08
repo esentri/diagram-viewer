@@ -1,6 +1,5 @@
 package io.domainlifecycles.diagramviewer.service;
 
-import com.vaadin.open.App;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
@@ -8,6 +7,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface ProjectService {
 
-    @Transactional
-    Stream<Project> getAll(AppUser appUser);
+    @Transactional(readOnly = true)
+    List<Project> getAllAssignedSortedByCreationDate(AppUser appUser);
 
     Optional<Project> findById(UUID id);
 

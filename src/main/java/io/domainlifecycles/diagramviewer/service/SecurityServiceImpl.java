@@ -10,7 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SecurityServiceImpl implements SecurityService {
@@ -37,7 +36,7 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public AppUser acknowledgeOAuth2UserAuthentication(String userEmailAddress, String firstName, String lastName, String sub) {
+    public AppUser acknowledgeOktaUserAuthentication(String userEmailAddress, String firstName, String lastName, String sub) {
         Optional<AppUser> foundUser = appUserService.find(userEmailAddress);
 
         if (foundUser.isPresent()) {
@@ -58,8 +57,9 @@ public class SecurityServiceImpl implements SecurityService {
         }
     }
 
-    public void registerSelfServiceUser(String email, String firstName, String lastName, String rawPassword) {
-        appUserService.createSelfServiceUser(email, firstName, lastName, passwordEncoder.encode(rawPassword));
+    @Override
+    public void registerInternalUser(String email, String firstName, String lastName, String rawPassword) {
+        appUserService.createInternalUser(email, firstName, lastName, passwordEncoder.encode(rawPassword));
     }
 
     @Override

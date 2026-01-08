@@ -15,9 +15,9 @@ public interface AppUserService {
 
     AppUser createInvitedUser(String emailAddress);
 
-    AppUser createOktaUser(String userEmailAddress, String fullName, String lastName, String sub);
+    AppUser createOktaUser(String userEmailAddress, String firstName, String lastName, String sub);
 
-    AppUser createSelfServiceUser(String userEmailAddress, String fullName, String lastName, String passwordHash);
+    AppUser createInternalUser(String userEmailAddress, String firstName, String lastName, String passwordHash);
 
     AppUser activateOktaUser(AppUser appUser, String firstName, String lastName, String sub);
 }
