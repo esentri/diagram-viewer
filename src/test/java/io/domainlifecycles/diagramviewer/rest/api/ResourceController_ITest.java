@@ -5,7 +5,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
-import io.domainlifecycles.diagramviewer.service.AppUserService;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,9 +26,6 @@ class ResourceController_ITest extends BaseIntegrationTest {
     private static final String TEST_USER_FIRST_NAME = "Max";
     private static final String TEST_USER_LAST_NAME = "Mustermann";
     private static final String REGISTERED_USER_MAIL_ADDRESS = "max.mustermann@gmail.com";
-
-    @Autowired
-    AppUserService appUserService;
 
     @Autowired
     ProjectRepository projectRepository;

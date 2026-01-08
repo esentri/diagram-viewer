@@ -1,6 +1,7 @@
 package io.domainlifecycles.diagramviewer.service.project;
 
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
+import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
@@ -18,7 +19,6 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class ProjectService_ITest extends BaseIntegrationTest {
@@ -107,13 +108,15 @@ class ProjectService_ITest extends BaseIntegrationTest {
     }
 
     @Test
-    void Should_AssignUserToProject_When_UserIsInvited() {
+    void Should_ThrowDiagramViewerExceptionOnAssignUser_When_UserIsAlreadyAssigned() {
 
         // given
         Project project = setUpProject();
 
         // when
-        service.assignUser(project, TEST_USER_MAIL_ADDRESS);
+        assertThatThrownBy(() -> service.assignUser(project, TEST_USER_MAIL_ADDRESS))
+            .isInstanceOf(DiagramViewerException.class)
+            .hasMessage("User 'test-user@gmail.com' is already assigned to project.");
 
         // then
         assertThat(project.getAssignedUsers())
@@ -126,7 +129,7 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
         // given
         Project project = setUpProject();
-        AppUser anotherAppUser = setUpRegisteredUser();
+        AppUser anotherAppUser = setUpAnotherUser();
 
         // when
         service.assignUser(project, anotherAppUser.getEmailAddress());
@@ -147,7 +150,7 @@ class ProjectService_ITest extends BaseIntegrationTest {
 
         // given
         Project project = setUpProject();
-        AppUser anotherAppUser = setUpRegisteredUser();
+        AppUser anotherAppUser = setUpAnotherUser();
         Set<AppUser> updatedAppUsers = new HashSet<>(project.getAssignedUsers());
         updatedAppUsers.add(anotherAppUser);
 
@@ -185,12 +188,12 @@ class ProjectService_ITest extends BaseIntegrationTest {
         assertThat(project.getDiagrams()).isEmpty();
     }
 
-    private AppUser setUpRegisteredUser() {
+    private AppUser setUpAnotherUser() {
         AppUser appUser = AppUser.builder()
             .firstName(TEST_USER_FIRST_NAME + " (2)")
             .lastName(TEST_USER_LAST_NAME + " (2)")
             .emailAddress(TEST_USER_MAIL_ADDRESS + " (2)")
-            .assignedProjects(new HashSet<>())
+            .status(UserStatus.ACTIVE)
             .build();
 
         return appUserRepository.save(appUser);

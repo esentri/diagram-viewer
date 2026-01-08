@@ -65,7 +65,6 @@ public class AppUserServiceImpl implements AppUserService {
             .emailAddress(userEmailAddress)
             .firstName(firstName)
             .lastName(lastName)
-            .apiKey(UUID.randomUUID())
             .status(UserStatus.ACTIVE)
             .build();
 
@@ -116,7 +115,6 @@ public class AppUserServiceImpl implements AppUserService {
             .emailAddress(userEmailAddress)
             .firstName(firstName)
             .lastName(lastName)
-            .apiKey(UUID.randomUUID())
             .status(UserStatus.ACTIVE)
             .build();
 

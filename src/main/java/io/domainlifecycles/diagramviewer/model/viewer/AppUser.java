@@ -50,7 +50,8 @@ public class AppUser {
     @Builder.Default
     private Set<UserIdentity> identities = new HashSet<>();
 
-    private UUID apiKey;
+    @Builder.Default
+    private UUID apiKey = UUID.randomUUID();
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedUsers")
     @Builder.Default
