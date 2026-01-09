@@ -1,0 +1,45 @@
+services:
+  kroki:
+    image: yuzutech/kroki:latest
+    ports:
+      - "8000:8000"
+    networks:
+      - diagram-viewer-network
+
+  database:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: diagram-viewer-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d diagram-viewer-db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - diagram-viewer-network
+
+  diagram-viewer-app:
+    image: esentri/diagram-viewer:0.0.1-SNAPSHOT
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/diagram-viewer-db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      KROKI_CONTAINER_URL: http://kroki:8000
+
+      IS_BUILD_PROFILE_INTERNAL: "true"
+
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - diagram-viewer-network
+
+networks:
+  diagram-viewer-network:
+    driver: bridge

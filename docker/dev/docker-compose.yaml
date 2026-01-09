@@ -4,7 +4,7 @@ services:
     ports:
       - "8000:8000"
     networks:
-      - my-network
+      - diagram-viewer-network
 
   database:
     image: postgres
@@ -15,8 +15,8 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: diagram-viewer-db
     networks:
-      - my-network
+      - diagram-viewer-network
 
 networks:
-  my-network:
+  diagram-viewer-network:
     driver: bridge

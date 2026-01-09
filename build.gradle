@@ -46,7 +46,15 @@ configurations {
 	}
 }
 
+bootBuildImage {
+	imageName = "esentri/diagram-viewer:${project.version}"
+	vaadin {
+		productionMode = true
+	}
+}
+
 tasks.named('bootJar') {
+	mainClass = "io.domainlifecycles.diagramviewer.DiagramViewerApplication"
 	enabled = true
 }
 
@@ -112,6 +120,10 @@ tasks.register('integrationTest', Test) {
 	jvmArgs '-Xmx1536m'
 
 	shouldRunAfter test
+}
+
+tasks.named("build") {
+	finalizedBy(tasks.named("bootBuildImage"))
 }
 
 tasks.named("check") {
