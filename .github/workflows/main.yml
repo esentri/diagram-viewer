@@ -9,7 +9,7 @@ on:
 env:
   APPLICATION_NAME: 'diagram-viewer'
   ENVIRONMENT_NAME: 'diagram-viewer-environment'
-  VERSION: $VERSION
+  VERSION: 1.0.0-${{ github.run_number }}
 
 jobs:
   build:
