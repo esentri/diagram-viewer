@@ -23,6 +23,10 @@ ext {
 	dlcVersion = "2.5.0"
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
+
+	postgresImage = "postgres:16"
+	krokiImage = "yuzutech/kroki"
+	appImage = "domainlifecycles/diagram-viewer:${project.version}"
 }
 
 java {
@@ -47,7 +51,7 @@ configurations {
 }
 
 bootBuildImage {
-	imageName = "esentri/diagram-viewer:${project.version}"
+	imageName = appImage
 	vaadin {
 		productionMode = true
 	}
@@ -143,5 +147,47 @@ jacocoTestReport {
 					"**/webapp/*"
 			])
 		}))
+	}
+}
+
+def containerDir = layout.buildDirectory.dir("container")
+
+tasks.register("pullBaseImages", Exec) {
+	group = "container"
+	commandLine "sh", "-lc", """
+    set -e
+    docker pull ${postgresImage}
+    docker pull ${krokiImage}
+  """
+}
+
+tasks.register("saveContainerImages", Exec) {
+	group = "container"
+	dependsOn tasks.named("bootBuildImage")
+	dependsOn tasks.named("pullBaseImages")
+
+	doFirst { containerDir.get().asFile.mkdirs() }
+
+	commandLine "sh", "-lc", """
+    set -euo pipefail
+
+    docker save '${appImage}' '${postgresImage}' '${krokiImage}' \
+      -o '${containerDir.get().asFile}/diagram-viewer-images.tar'
+  """
+}
+
+tasks.register("buildContainerImages", Tar) {
+	group = "container"
+	dependsOn tasks.named("saveContainerImages")
+
+	archiveFileName = "diagram-viewer-bundle.tar.gz"
+	destinationDirectory = containerDir.get().asFile
+	compression = Compression.GZIP
+
+	from("docker/run/docker-compose.yml") {
+		into(".")
+	}
+	from(containerDir.map { it.file("diagram-viewer-images.tar") }) {
+		into(".")
 	}
 }

@@ -23,7 +23,10 @@ services:
       - diagram-viewer-network
 
   diagram-viewer-app:
-    image: esentri/diagram-viewer:0.0.1-SNAPSHOT
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    image: domainlifecycles/diagram-viewer:0.0.1-SNAPSHOT
     ports:
       - "8090:8090"
     environment:
