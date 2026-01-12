@@ -126,10 +126,6 @@ tasks.register('integrationTest', Test) {
 	shouldRunAfter test
 }
 
-tasks.named("build") {
-	finalizedBy(tasks.named("bootBuildImage"))
-}
-
 tasks.named("check") {
 	dependsOn(tasks.named("integrationTest"))
 }
