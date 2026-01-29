@@ -12,6 +12,8 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.6'
 	id 'com.vaadin'
 	id 'jacoco'
+	id 'checkstyle'
+	id 'dev.yumi.gradle.licenser' version '2.2.2'
 }
 
 group = 'io.domainlifecycles'
@@ -106,6 +108,28 @@ test {
 	useJUnitPlatform()
 	finalizedBy jacocoTestReport
 	exclude '**/*_ITest.class'
+}
+
+plugins.withId('checkstyle') {
+	checkstyle {
+		toolVersion = '10.12.4'
+		configFile = rootProject.file('./checkstyle/checkstyle.xml')
+		ignoreFailures = true
+		showViolations = true
+
+		checkstyleMain.source = "src/main/java"
+	}
+}
+
+plugins.withId('dev.yumi.gradle.licenser') {
+	checkLicenseMain.enabled = true
+	checkLicenseTest.enabled = false
+	license {
+		rule(file("./copyright/HEADER"))
+
+		include("**/*.java")
+		exclude("**/tests/**/*.java", "*.svg")
+	}
 }
 
 tasks.register('integrationTest', Test) {
