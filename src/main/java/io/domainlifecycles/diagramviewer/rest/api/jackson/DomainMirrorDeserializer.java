@@ -1,8 +1,8 @@
 package io.domainlifecycles.diagramviewer.rest.api.jackson;
 
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.serialize.api.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.mirror.serialize.Jackson3DomainSerializer;
 import org.springframework.boot.jackson.JacksonComponent;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
@@ -14,7 +14,7 @@ public class DomainMirrorDeserializer extends ValueDeserializer<DomainMirror> {
 
     @Override
     public DomainMirror deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
-        DomainSerializer domainSerializer = new JacksonDomainSerializer(false);
+        DomainSerializer domainSerializer = new Jackson3DomainSerializer(false);
         return domainSerializer.deserialize(p.getValueAsString());
     }
 }

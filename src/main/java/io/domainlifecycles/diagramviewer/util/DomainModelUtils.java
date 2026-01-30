@@ -6,8 +6,8 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.exception.MirrorException;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
-import io.domainlifecycles.mirror.serialize.api.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.mirror.serialize.Jackson3DomainSerializer;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -87,7 +87,7 @@ public class DomainModelUtils {
     }
 
     private static DomainMirror serializeDomainMirror(String domainMirrorJson) {
-        DomainSerializer domainSerializer = new JacksonDomainSerializer(false);
+        DomainSerializer domainSerializer = new Jackson3DomainSerializer(false);
         return domainSerializer.deserialize(domainMirrorJson);
     }
 

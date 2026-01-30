@@ -1,7 +1,6 @@
 buildscript {
 	repositories {
 		mavenCentral()
-		maven { setUrl("https://maven.vaadin.com/vaadin-prereleases") }
 		maven { setUrl("https://repo.spring.io/milestone") }
 	}
 }
@@ -18,9 +17,9 @@ group = 'io.domainlifecycles'
 version = '0.0.1-SNAPSHOT'
 
 ext {
-	set('vaadinVersion', "25.0.0-beta8")
+	set('vaadinVersion', "25.0.4")
 	javaDockerVersion = "3.4.0"
-	dlcVersion = "2.5.0"
+	dlcVersion = "3.0.0"
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
 }
@@ -34,7 +33,6 @@ java {
 repositories {
 	mavenCentral()
 	mavenLocal()
-	maven { setUrl("https://maven.vaadin.com/vaadin-prereleases") }
 	maven { setUrl("https://repo.spring.io/milestone") }
 	maven { setUrl("https://maven.vaadin.com/vaadin-addons") }
 }
@@ -59,11 +57,11 @@ dependencies {
 	implementation "org.postgresql:postgresql"
 	testImplementation "org.testcontainers:postgresql:1.20.6"
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
-	implementation "com.okta.spring:okta-spring-boot-starter:3.0.8"
+	implementation "com.okta.spring:okta-spring-boot-starter:3.0.9"
 	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"
 	implementation "com.github.docker-java:docker-java-transport-httpclient5:${javaDockerVersion}"
-	implementation "com.flowingcode.vaadin.addons:zoomist-addon:1.0.1"
-	implementation "org.vaadin.addons.taefi:toggle-button-group:2.2.0"
+	implementation "com.flowingcode.vaadin.addons:zoomist-addon:1.1.0"
+	implementation "org.vaadin.addons.taefi:toggle-button-group:2.2.1"
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
 	implementation "io.domainlifecycles:diagram-viewer-plugin:1.1"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
@@ -71,7 +69,10 @@ dependencies {
         //println "INTERNAL PROFILE ACTIVE"
 		implementation "io.domainlifecycles:diagram-viewer-generator-plugin:1.1"
 	//}
+
 	compileOnly "org.projectlombok:lombok"
+	compileOnly "com.vaadin:vaadin-dev-server:${vaadinVersion}"
+
 	annotationProcessor "org.projectlombok:lombok"
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
 	testImplementation "org.springframework.security:spring-security-test"

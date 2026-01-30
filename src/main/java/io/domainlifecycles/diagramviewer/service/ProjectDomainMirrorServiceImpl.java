@@ -9,7 +9,8 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Upload
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.mirror.serialize.Jackson3DomainSerializer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -22,12 +23,12 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
 
     private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final ProjectDomainMirrorRepository repository;
-    private final JacksonDomainSerializer serializer;
+    private final DomainSerializer serializer;
 
     public ProjectDomainMirrorServiceImpl(RegenerateDiagramsJobService regenerateDiagramsJobService, ProjectDomainMirrorRepository repository) {
         this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.repository = repository;
-        this.serializer = new JacksonDomainSerializer(false);
+        this.serializer = new Jackson3DomainSerializer(false);
     }
 
     @Override
@@ -40,7 +41,7 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
         return repository.findProjectDomainTypesWithoutEnumsAndIds(projectId)
                 .stream()
-                .map(m -> (DomainTypeMirror)serializer.deserializeTypeMirror(m))
+                .map(m -> (DomainTypeMirror)serializer.deserialize(m))
                 .toList();
     }
 
@@ -48,7 +49,7 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     public List<AggregateRootMirror> getAllAggregateRootMirrors(UUID projectId) {
         return repository.findProjectAggregateTypes(projectId)
                 .stream()
-                .map(m -> (AggregateRootMirror)serializer.deserializeTypeMirror(m))
+                .map(m -> (AggregateRootMirror)serializer.deserialize(m))
                 .toList();
     }
 
