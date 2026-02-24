@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,7 +45,9 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+
 import java.util.List;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -93,7 +95,8 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram updateModelAndImage(Diagram diagram) {
-        final Diagram updatedDiagram = updateModel(diagram);
+        diagram.setChangedAt(Instant.now());
+        final Diagram updatedDiagram = save(diagram);
         DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
         createAndSaveDiagramToFilesystem(domainMirror, updatedDiagram);
         return updatedDiagram;

@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,8 +37,9 @@ import com.vaadin.flow.component.html.Div;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageMultiSelectComboBox;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -52,8 +53,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DiagramFilterComponent extends Div {
-
-    public static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
 
     private final SessionStorage sessionStorage;
     private final DiagramService diagramService;
@@ -94,7 +93,7 @@ public class DiagramFilterComponent extends Div {
             packageMultiSelectComboBox.addValueChangeListener(e -> {
                 currentDiagram.setDomainModelVisibility(currentDiagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
                 var newDiagram = diagramService.updateModelAndImage(currentDiagram);
-                ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+                ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
             });
 
             packageDetails.add(packageMultiSelectComboBox);
@@ -180,7 +179,7 @@ public class DiagramFilterComponent extends Div {
         MultiSelectComboBox<DomainTypeMirror> multiSelectComboBox = new MultiSelectComboBox<>(comboBoxVisibilityType.label);
         multiSelectComboBox.setWidthFull();
         multiSelectComboBox.setItems(itemsRemovedUnavailable);
-        multiSelectComboBox.setItemLabelGenerator(this::name);
+        multiSelectComboBox.setItemLabelGenerator(DomainModelUtils::nameWithStereoType);
 
         var selected = selected(items, selectedClassNames);
         multiSelectComboBox.select(selected);
@@ -195,11 +194,6 @@ public class DiagramFilterComponent extends Div {
         ));
 
         return multiSelectComboBox;
-    }
-
-    private String name(DomainTypeMirror mirror) {
-        return mirror.getTypeName().substring(mirror.getTypeName().lastIndexOf('.') + 1)
-                + " <" + translateDomainType(mirror.getDomainType())+">";
     }
 
     private DomainTypeMirror[] selected(List<DomainTypeMirror> typeMirrors, Set<String> typeNames){
@@ -239,7 +233,7 @@ public class DiagramFilterComponent extends Div {
 
         diagram.setDomainModelVisibility(newVisibility);
         diagram = diagramService.updateModelAndImage(diagram);
-        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
     }
 
     private List<DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {
@@ -248,7 +242,7 @@ public class DiagramFilterComponent extends Div {
         if (domainTypeMirrors != null && domainTypeMirrors.size() > 0) {
             List<String> mirroredTypeNames = domainTypeMirrors.stream()
                 .map(DomainTypeMirror::getTypeName)
-                .filter(typeName -> !typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
+                .filter(typeName -> !typeName.startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
             domainTypeMirrorsFiltered.addAll(
                 domainTypeMirrors
                     .stream()
@@ -256,7 +250,7 @@ public class DiagramFilterComponent extends Div {
                         diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()
                             || diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream()
                             .anyMatch(p -> type.getTypeName().startsWith(p)))
-                    .filter(m -> !m.getTypeName().startsWith(DOMAINLIFECYCLES_PACKAGE_NAME))
+                    .filter(m -> !m.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME))
                     .filter(m ->
                         !m.getDomainType().equals(DomainType.ENUM) &&
                                 !m.getDomainType().equals(DomainType.IDENTITY)
@@ -270,7 +264,7 @@ public class DiagramFilterComponent extends Div {
                     switch (mirror.getDomainType()) {
                         case SERVICE_KIND, OUTBOUND_SERVICE, APPLICATION_SERVICE, DOMAIN_SERVICE, REPOSITORY, QUERY_HANDLER -> {
                             for (String interfaceTypeName : mirror.getAllInterfaceTypeNames()) {
-                                if (!interfaceTypeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME) && !diagram.getDiagramStylingConfiguration().isShowInheritanceStructuresForServiceKinds()) {
+                                if (!interfaceTypeName.startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME) && !diagram.getDiagramStylingConfiguration().isShowInheritanceStructuresForServiceKinds()) {
                                     if (mirroredTypeNames.contains(interfaceTypeName)) {
                                         domainTypeMirrorsFiltered.remove(mirror);
                                     }
@@ -285,26 +279,6 @@ public class DiagramFilterComponent extends Div {
 
         return domainTypeMirrorsFiltered.stream().sorted(
                 Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
-    }
-
-    private String translateDomainType(DomainType domainType) {
-        return switch (domainType) {
-            case ENUM -> "Enum";
-            case AGGREGATE_ROOT -> "AggregateRoot";
-            case ENTITY -> "Entity";
-            case IDENTITY -> "Identity";
-            case READ_MODEL -> "ReadModel";
-            case REPOSITORY -> "Repository";
-            case DOMAIN_EVENT -> "DomainEvent";
-            case SERVICE_KIND -> "Service";
-            case VALUE_OBJECT -> "ValueObject";
-            case QUERY_HANDLER -> "QueryHandler";
-            case DOMAIN_COMMAND -> "DomainCommand";
-            case OUTBOUND_SERVICE -> "OutboundService";
-            case DOMAIN_SERVICE -> "DomainService";
-            case APPLICATION_SERVICE -> "ApplicationService";
-            default -> "Object";
-        };
     }
 
     private enum ComboBoxVisibilityType {

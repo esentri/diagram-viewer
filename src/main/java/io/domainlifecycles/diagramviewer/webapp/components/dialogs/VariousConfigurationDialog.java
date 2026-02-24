@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycle
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 
 public class VariousConfigurationDialog extends Dialog {
 
@@ -84,7 +84,7 @@ public class VariousConfigurationDialog extends Dialog {
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             diagram = diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
             close();
         });
 

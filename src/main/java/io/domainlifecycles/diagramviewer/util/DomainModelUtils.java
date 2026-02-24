@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ package io.domainlifecycles.diagramviewer.util;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.api.DomainType;
+import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.mirror.exception.MirrorException;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
@@ -52,6 +54,33 @@ import org.slf4j.LoggerFactory;
 public class DomainModelUtils {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DomainModelUtils.class);
+
+    public static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
+
+    public static String nameWithStereoType(DomainTypeMirror mirror) {
+        return mirror.getTypeName().substring(mirror.getTypeName().lastIndexOf('.') + 1)
+                + " <" + translateDomainType(mirror.getDomainType())+">";
+    }
+
+    public static String translateDomainType(DomainType domainType) {
+        return switch (domainType) {
+            case ENUM -> "Enum";
+            case AGGREGATE_ROOT -> "AggregateRoot";
+            case ENTITY -> "Entity";
+            case IDENTITY -> "Identity";
+            case READ_MODEL -> "ReadModel";
+            case REPOSITORY -> "Repository";
+            case DOMAIN_EVENT -> "DomainEvent";
+            case SERVICE_KIND -> "Service";
+            case VALUE_OBJECT -> "ValueObject";
+            case QUERY_HANDLER -> "QueryHandler";
+            case DOMAIN_COMMAND -> "DomainCommand";
+            case OUTBOUND_SERVICE -> "OutboundService";
+            case DOMAIN_SERVICE -> "DomainService";
+            case APPLICATION_SERVICE -> "ApplicationService";
+            default -> "Object";
+        };
+    }
 
     public static DomainMirror initializeDomainMirrorFromFile(Path pathToFile, Set<String> domainModelPackages, UploadFileType uploadFileType) {
         if (pathToFile == null || !Files.exists(pathToFile)) {
