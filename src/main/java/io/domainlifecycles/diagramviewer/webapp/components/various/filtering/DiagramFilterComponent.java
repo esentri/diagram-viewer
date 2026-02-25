@@ -99,7 +99,7 @@ public class DiagramFilterComponent extends Div {
             packageDetails.add(packageMultiSelectComboBox);
             packageDetails.addOpenedChangeListener(e -> sessionStorage.setPackageFilterOpen(e.isOpened()));
 
-            Details advancedFilterDetails = new Details("Advanced diagram trimming");
+            Details advancedFilterDetails = new Details("Advanced view filters");
             advancedFilterDetails.setWidthFull();
             advancedFilterDetails.setOpened(sessionStorage.isAdvancedTrimmingOpen());
             advancedFilterDetails.addOpenedChangeListener(e -> sessionStorage.setAdvancedTrimmingOpen(e.isOpened()));
@@ -287,7 +287,7 @@ public class DiagramFilterComponent extends Div {
         INCLUDE_CONNECTED_OUTGOING("Include outgoing connections from:"),
         EXCLUDE_CONNECTED_INGOING("Exclude ingoing connections to:"),
         EXCLUDE_CONNECTED_OUTGOING("Exclude outgoing connections from:"),
-        INVISIBLE("Invisible domain objects:");
+        INVISIBLE("Invisible Objects:");
 
         final String label;
 

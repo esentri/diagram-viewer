@@ -30,8 +30,8 @@
 package io.domainlifecycles.diagramviewer.model.converter;
 
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.serialize.api.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

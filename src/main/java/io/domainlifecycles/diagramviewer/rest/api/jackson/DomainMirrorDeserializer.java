@@ -35,8 +35,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.serialize.api.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

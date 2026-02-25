@@ -30,6 +30,8 @@
 package io.domainlifecycles.diagramviewer.rest.api.jackson;
 
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,5 +43,10 @@ public class JacksonConfig {
     public Jackson2ObjectMapperBuilderCustomizer externalDataDeserializerCustomizer() {
         return builder -> builder
             .deserializerByType(DomainMirror.class, new DomainMirrorDeserializer());
+    }
+
+    @Bean
+    public DomainSerializer getDomainSerializer() {
+        return new JacksonDomainSerializer(false);
     }
 }

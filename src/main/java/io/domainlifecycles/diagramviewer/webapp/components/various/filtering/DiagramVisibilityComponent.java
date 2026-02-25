@@ -180,7 +180,7 @@ public class DiagramVisibilityComponent extends Div {
         NativeLabel typeMirrorNameLabel = new NativeLabel(shortClassName(mirror.getTypeName()));
         typeMirrorNameLabel.getStyle().set("font-weight", "bold");
 
-        Details blendingLayout = new Details("Trim settings");
+        Details blendingLayout = new Details("View filter settings");
         blendingLayout.addClassName("diagram-styling-details");
         blendingLayout.setOpened(false);
 
@@ -190,7 +190,7 @@ public class DiagramVisibilityComponent extends Div {
             if(!DomainType.VALUE_OBJECT.equals(type) && !DomainType.ENTITY.equals(type)) {
                 RadioButtonGroup<VisibilityFilterType> radioGroup = new RadioButtonGroup<>();
                 radioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
-                radioGroup.setLabel("Trimming");
+                radioGroup.setLabel("View filters");
                 radioGroup.setItems(
                         VisibilityFilterType.NO_TRIMMING,
                         VisibilityFilterType.INCLUDE_CONNECTED,
@@ -404,7 +404,7 @@ public class DiagramVisibilityComponent extends Div {
         INCLUDE_CONNECTED_OUTGOING("include outgoing connections"),
         EXCLUDE_CONNECTED_INGOING("exclude ingoing connections"),
         EXCLUDE_CONNECTED_OUTGOING("exclude outgoing connections"),
-        NO_TRIMMING("no trimming");
+        NO_TRIMMING("no advanced view filter");
 
         final String label;
 

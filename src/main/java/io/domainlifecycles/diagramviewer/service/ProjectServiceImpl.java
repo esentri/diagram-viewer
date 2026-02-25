@@ -208,7 +208,7 @@ public class ProjectServiceImpl implements ProjectService {
             diagram.getName());
 
         try {
-            FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString());
+            FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString()+".svg");
         } catch (IOException e) {
             throw DiagramViewerException.fail(
                 "Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);

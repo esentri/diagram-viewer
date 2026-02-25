@@ -11,8 +11,8 @@ import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.AppUserService;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.model.DomainModel;
-import io.domainlifecycles.mirror.serialize.api.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -107,7 +107,8 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
         ObjectMapper mapper = new ObjectMapper();
         DomainSerializer serializer = new JacksonDomainSerializer(false);
         String jsonObject = serializer.serialize(domainMirror);
-        return mapper.writeValueAsString(jsonObject);
+        jsonObject = "{\"domainMirror\":" + jsonObject + "}";
+        return jsonObject;
     }
 
     private Project setUpProject() {

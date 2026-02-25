@@ -89,7 +89,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
         domainModelVisibilityBinder = new Binder<>(DomainModelVisibility.class);
 
-        setHeaderTitle("Configuration | Visibility");
+        setHeaderTitle("Configuration | General Visibility");
         setWidth("40%");
         setHeight("60%");
 

@@ -62,7 +62,7 @@ public class VariousConfigurationDialog extends Dialog {
         this.diagramService = diagramService;
         this.diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
 
-        setHeaderTitle("Configuration | Various");
+        setHeaderTitle("Configuration | Font & Layout");
         setWidth("40%");
         setHeight("60%");
 

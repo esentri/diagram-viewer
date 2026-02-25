@@ -7,8 +7,8 @@ import io.domainlifecycles.diagramviewer.security.ApiKeyAuthFilter;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.model.DomainModel;
-import io.domainlifecycles.mirror.serialize.api.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,11 +47,9 @@ class DomainMirrorUploadControllerTest {
         String projectName = "testProjectName";
         DomainMirror domainMirror = new DomainModel(Map.of(), "test.package");
 
-        ObjectMapper mapper = new ObjectMapper();
         DomainSerializer serializer = new JacksonDomainSerializer(false);
-        String jsonObject = serializer.serialize(domainMirror);
-        String jsonBody = mapper.writeValueAsString(jsonObject);
-
+        String jsonBody = serializer.serialize(domainMirror);
+        jsonBody = "{\"domainMirror\": " + jsonBody + "}";
         doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirror);
 
         // when

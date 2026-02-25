@@ -38,7 +38,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Upload
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -51,12 +51,15 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
 
     private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final ProjectDomainMirrorRepository repository;
-    private final JacksonDomainSerializer serializer;
+    private final DomainSerializer serializer;
 
-    public ProjectDomainMirrorServiceImpl(RegenerateDiagramsJobService regenerateDiagramsJobService, ProjectDomainMirrorRepository repository) {
+    public ProjectDomainMirrorServiceImpl(
+            RegenerateDiagramsJobService regenerateDiagramsJobService,
+            ProjectDomainMirrorRepository repository,
+            DomainSerializer serializer) {
         this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.repository = repository;
-        this.serializer = new JacksonDomainSerializer(false);
+        this.serializer = serializer;
     }
 
     @Override

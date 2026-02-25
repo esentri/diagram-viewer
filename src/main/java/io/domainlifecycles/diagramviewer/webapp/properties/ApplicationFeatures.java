@@ -27,32 +27,20 @@
  *  limitations under the License.
  */
 
-package io.domainlifecycles.diagramviewer;
+package io.domainlifecycles.diagramviewer.webapp.properties;
 
-import com.vaadin.flow.component.page.AppShellConfigurator;
-import com.vaadin.flow.component.page.Push;
-import com.vaadin.flow.server.AppShellSettings;
-import io.domainlifecycles.diagramviewer.webapp.properties.ApplicationFeatures;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
-@SpringBootApplication
-@EnableScheduling
-@Push
-@EnableConfigurationProperties(ApplicationFeatures.class)
-public class DiagramViewerApplication implements AppShellConfigurator {
+@ConfigurationProperties(prefix = "app")
+public record ApplicationFeatures(
+    @DefaultValue Features features
+) {
+    public record Features(
+        @DefaultValue OktaConfig oktaLogin
+    ) {}
 
-    public static void main(String[] args) {
-        SpringApplication.run(DiagramViewerApplication.class, args);
-    }
-
-    @Override
-    public void configurePage(AppShellSettings settings) {
-        settings.setViewport("width=device-width, initial-scale=1");
-        settings.setPageTitle("DLC | Diagram Viewer");
-        settings.addFavIcon("icon", "frontend/icons/favicon.png", "192x192");
-        settings.addLink("shortcut icon", "frontend/icons/favicon.ico");
-    }
+    public record OktaConfig(
+        @DefaultValue("false") boolean enabled
+    ) {}
 }

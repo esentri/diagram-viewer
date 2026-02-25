@@ -69,7 +69,7 @@ public class StylingConfigurationDialog extends Dialog {
         this.diagramService = diagramService;
         this.binder = new Binder<>(DiagramStylingConfiguration.class);
 
-        setHeaderTitle("Configuration | Styling");
+        setHeaderTitle("Configuration | Diagram node styles");
 
         setWidth("40%");
         setHeight("60%");

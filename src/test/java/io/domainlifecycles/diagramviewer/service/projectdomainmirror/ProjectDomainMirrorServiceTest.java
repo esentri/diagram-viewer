@@ -12,7 +12,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Upload
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +54,7 @@ class ProjectDomainMirrorServiceTest {
 
     @BeforeEach
     void setUp() {
-        projectDomainMirrorService = new ProjectDomainMirrorServiceImpl(regenerateDiagramsJobService, repository);
+        projectDomainMirrorService = new ProjectDomainMirrorServiceImpl(regenerateDiagramsJobService, repository, new JacksonDomainSerializer(false));
     }
 
     @Test
@@ -91,10 +91,9 @@ class ProjectDomainMirrorServiceTest {
 
     @Test
     void Should_GetAllDomainTypeMirrorsWithoutEnumsAndIds() {
-
         // given
         JacksonDomainSerializer domainSerializerMock = mock(JacksonDomainSerializer.class);
-        ReflectionTestUtils.setField(projectDomainMirrorService, "serializer", domainSerializerMock);
+        projectDomainMirrorService = new ProjectDomainMirrorServiceImpl(regenerateDiagramsJobService, repository, domainSerializerMock);
 
         String firstDomainTypeMirrorStringMock = "firstDomainTypeMirrorMock";
         String secondDomainTypeMirrorStringMock = "secondDomainTypeMirrorMock";
