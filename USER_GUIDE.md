@@ -1,6 +1,10 @@
 # DLC Diagram Viewer User Guide
+This User Guide describes how to use the DLC Diagram Viewer. 
+It is structured along the steps all the user needs to create a new diagram from scratch.
+So, if you follow the steps in the given order, it works like a tutorial. 
+For the basic setup, just follow the steps A) to D).
 
-## Register User
+## A) Register User
 
 1. Create an Account
 
@@ -14,12 +18,12 @@
 
 Click on ``Register``
 
-## Login
+## B) Login
 ![Login](./images/login.png)
 - Enter your email adress form registration as username and password
 - Click on ``Log in``
 
-## Upload Domain Model
+## C) Upload Domain Model
 
 1. Get your API Key
 - After login, you can open the user menu (circle in upper right corner)
@@ -54,7 +58,7 @@ dlcGradlePlugin {
 3. After a successful upload, refresh the diagram viewer page and you can see the new project on the left side.
 ![Uploaded](./images/uploaded.png)
 
-## Add New Diagram
+## D) Add New Diagram
 
 1. Click on the project first
 2. Then click ``Create new Diagram``
@@ -64,7 +68,7 @@ dlcGradlePlugin {
 4. After creating the diagram, you can see the diagram name in the menu on the left side. If you click there, you can see the diagram.
 ![Diagram created](./images/diagram_created.png)
 
-## Share Project
+## E) Share Project
 
 1. Click on the project on the left side, then click on ``Share Project``
 ![Share Project](./images/share_project.png)
@@ -74,7 +78,7 @@ The user must have registered with the diagram viewer before!
 4. If that user now logs in, he can see the project on the left side and all the corresponding diagrams.
 He can also edit the diagrams and create new ones, which are automatically shared amon all project users.
 
-## Analyzing The Model
+## F) Analyzing The Model
 For a large project containing a large domain model one diagram with all details my be overwhelming.
 There are several options to filter the model and only show the relevant parts in new diagrams.
 
@@ -115,7 +119,7 @@ For example, to show the model elements, that are connected with the use cases i
 one might enter the ApplicationService class ``ServiceLeistungUseCases`` in ``Include outgoing connections from`` and see:
 ![user_case_filter](./images/use_case_filter.png)
 
-## Add Notes
+## G) Add Notes
 There is the option to add notes to the diagram and add information, for discussion or documentation purposes. 
 
 1. When a diagram is selected, on the right side click on ``Notes``.
@@ -133,7 +137,7 @@ if it's similar to the existing one.
    ![template](./images/template.png)
 
 
-## Layout options
+## H) Layout options
 Left to the current diagram, there is a button with a small gears icon. 
 This opens the general layout and fonts settings of the diagram.
 
@@ -144,12 +148,12 @@ But in some case left to right is better (``Right`)
 
 ![LExample left right](./images/example_left_right.png)
 
-## Styling Options
+## I) Styling Options
 Left to the current diagram, there is a button with a small paintbrush icon.
 This opens the general style settings for the node types (supported DDD stereotypes) of the diagram.
 Colors and other style settings of each node type can be changed.
 
-## Download diagrams as images
+## J) Download diagrams as images
 
 When a diagram is selected, there is a Download button right above. SVG, PBG and JPEG exports are supported.
 ![Diagram created](./images/diagram_created.png)

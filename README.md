@@ -21,6 +21,19 @@ Check our [User Guide](./USER_GUIDE.md) for more information.
 - Docker and Docker Compose
 - Gradle (wrapper included)
 
+The diagram viewer depends on a inner plugin lib. 
+It must be cloned and built first for a local build of the diagram viewer:
+
+- git clone https://github.com/esentri/diagram-viewer-plugin.git
+- cd diagram-viewer-plugin
+- ./gradlew build publishToMavenLocal
+
+Then clone this repository and build the diagram viewer:
+- git clone https://github.com/esentri/diagram-viewer.git
+- cd diagram-viewer
+- ./gradlew build
+
+
 #### Quickstart (local deployment)
 1) Start required services (Kroki and PostgreSQL)
 ```
