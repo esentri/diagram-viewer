@@ -31,6 +31,7 @@ package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
@@ -64,6 +65,7 @@ public class DiagramFilterComponent extends Div {
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnectedExcludeIngoing;
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnectedExcludeOutgoing;
     private MultiSelectComboBox<DomainTypeMirror> comboBoxInvisibleDomainObjects;
+    private MultiSelectComboBox<DomainTypeMirror> comboBoxInlinedValueObjects;
 
     public DiagramFilterComponent(
             SessionStorage sessionStorage,
@@ -106,6 +108,8 @@ public class DiagramFilterComponent extends Div {
 
             List<DomainTypeMirror> items = filterConcreteMirrorsInterfaceAvailable(currentDiagram, domainTypeMirrors);
 
+            List<DomainTypeMirror> valueObjects = filterValueObjectMirrorAvailable(currentDiagram, domainTypeMirrors);
+
             comboBoxConnected = createAndConfigureComboBox(
                     ComboBoxVisibilityType.INCLUDE_CONNECTED,
                     items
@@ -141,6 +145,11 @@ public class DiagramFilterComponent extends Div {
                     items
             );
             advancedFilterDetails.add(comboBoxInvisibleDomainObjects);
+            comboBoxInlinedValueObjects = createAndConfigureComboBox(
+                    ComboBoxVisibilityType.INLINED_VALUE_OBJECTS,
+                    valueObjects
+            );
+            advancedFilterDetails.add(comboBoxInlinedValueObjects);
 
             add(packageDetails);
             add(advancedFilterDetails);
@@ -169,6 +178,7 @@ public class DiagramFilterComponent extends Div {
             case EXCLUDE_CONNECTED_INGOING ->   currentDiagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames();
             case EXCLUDE_CONNECTED_OUTGOING ->   currentDiagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames();
             case INVISIBLE -> currentDiagram.getDomainModelVisibility().getBlacklistedClassNames();
+            case INLINED_VALUE_OBJECTS -> currentDiagram.getDomainModelVisibility().getInlinedValueObjects();
         };
         unavailable.removeAll(selectedClassNames);
 
@@ -190,7 +200,8 @@ public class DiagramFilterComponent extends Div {
             comboBoxConnectedOutgoing.getSelectedItems(),
             comboBoxConnectedExcludeIngoing.getSelectedItems(),
             comboBoxConnectedExcludeOutgoing.getSelectedItems(),
-            comboBoxInvisibleDomainObjects.getSelectedItems()
+            comboBoxInvisibleDomainObjects.getSelectedItems(),
+            comboBoxInlinedValueObjects.getSelectedItems()
         ));
 
         return multiSelectComboBox;
@@ -209,7 +220,8 @@ public class DiagramFilterComponent extends Div {
             Set<DomainTypeMirror> domainTypeMirrorsConnectedOutgoing,
             Set<DomainTypeMirror> domainTypeMirrorsExcludedIngoing,
             Set<DomainTypeMirror> domainTypeMirrorsExcludedOutgoing,
-            Set<DomainTypeMirror> invisibleDomainObjects
+            Set<DomainTypeMirror> invisibleDomainObjects,
+            Set<DomainTypeMirror> inlinedValueObjects
     ) {
         DomainModelVisibility newVisibility = diagram.getDomainModelVisibility();
         newVisibility = newVisibility.replaceIncludeConnectedToClassNames(
@@ -230,6 +242,9 @@ public class DiagramFilterComponent extends Div {
         newVisibility = newVisibility.replaceBlacklistedClassNames(
                 invisibleDomainObjects.stream().map(DomainTypeMirror::getTypeName).collect(Collectors.toSet())
         );
+        newVisibility = newVisibility.replaceInlinedValueObjects(
+                inlinedValueObjects.stream().map(DomainTypeMirror::getTypeName).collect(Collectors.toSet())
+        );
 
         diagram.setDomainModelVisibility(newVisibility);
         diagram = diagramService.updateModelAndImage(diagram);
@@ -239,7 +254,7 @@ public class DiagramFilterComponent extends Div {
     private List<DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {
         List<DomainTypeMirror> domainTypeMirrorsFiltered = new ArrayList<>();
 
-        if (domainTypeMirrors != null && domainTypeMirrors.size() > 0) {
+        if (domainTypeMirrors != null && !domainTypeMirrors.isEmpty()) {
             List<String> mirroredTypeNames = domainTypeMirrors.stream()
                 .map(DomainTypeMirror::getTypeName)
                 .filter(typeName -> !typeName.startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
@@ -252,9 +267,10 @@ public class DiagramFilterComponent extends Div {
                             .anyMatch(p -> type.getTypeName().startsWith(p)))
                     .filter(m -> !m.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME))
                     .filter(m ->
-                        !m.getDomainType().equals(DomainType.ENUM) &&
-                                !m.getDomainType().equals(DomainType.IDENTITY)
+                        !m.getDomainType().equals(DomainType.ENUM)
+                                && !m.getDomainType().equals(DomainType.IDENTITY)
                         && !m.getDomainType().equals(DomainType.VALUE_OBJECT)
+                                && !m.getDomainType().equals(DomainType.ENTITY)
                     )
                     .toList()
             );
@@ -281,13 +297,36 @@ public class DiagramFilterComponent extends Div {
                 Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
     }
 
+    private List<DomainTypeMirror> filterValueObjectMirrorAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {
+        List<DomainTypeMirror> domainTypeMirrorsFiltered = new ArrayList<>();
+
+        if (domainTypeMirrors != null && !domainTypeMirrors.isEmpty()) {
+            domainTypeMirrorsFiltered.addAll(
+                    domainTypeMirrors
+                            .stream()
+                            .filter(m -> !m.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME))
+                            .filter(m ->
+                                  m.getDomainType().equals(DomainType.VALUE_OBJECT)
+                            )
+                            .toList()
+            );
+
+        }
+
+        return domainTypeMirrorsFiltered.stream().sorted(
+                Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
+    }
+
+
+
     private enum ComboBoxVisibilityType {
         INCLUDE_CONNECTED("Include Connections to:"),
         INCLUDE_CONNECTED_INGOING ("Include ingoing connections to:"),
         INCLUDE_CONNECTED_OUTGOING("Include outgoing connections from:"),
         EXCLUDE_CONNECTED_INGOING("Exclude ingoing connections to:"),
         EXCLUDE_CONNECTED_OUTGOING("Exclude outgoing connections from:"),
-        INVISIBLE("Invisible Objects:");
+        INVISIBLE("Invisible Objects:"),
+        INLINED_VALUE_OBJECTS("Inlined ValueObjects:");
 
         final String label;
 

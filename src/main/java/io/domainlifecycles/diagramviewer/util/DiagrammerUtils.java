@@ -40,6 +40,9 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguratio
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.api.ValueMirror;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,6 +60,14 @@ public class DiagrammerUtils {
                 .map(n -> new DomainClassNote(n.getDomainTypeMirrorName(), n.getNotes()))
                 .toList();
 
+        var blackListedClasses = new ArrayList<String>();
+        if(domainModelVisibility.getBlacklistedClassNames() != null){
+            blackListedClasses.addAll(domainModelVisibility.getBlacklistedClassNames());
+        }
+        if(domainModelVisibility.getInlinedValueObjects() != null){
+            blackListedClasses.addAll(domainModelVisibility.getInlinedValueObjects());
+        }
+
         DiagramTrimSettings trimSettings = DiagramTrimSettings.builder()
                 .withExplicitlyIncludedPackageNames(domainModelVisibility.getExplicitlyIncludedPackagesNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExplicitlyIncludedPackagesNames().stream().toList())
@@ -70,8 +81,7 @@ public class DiagrammerUtils {
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToIngoingClassNames().stream().toList())
                 .withExcludeConnectedToOutgoing(domainModelVisibility.getExcludeConnectedToOutgoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToOutgoingClassNames().stream().toList())
-                .withClassesBlacklist(domainModelVisibility.getBlacklistedClassNames() == null ?
-                        Collections.emptyList() : domainModelVisibility.getBlacklistedClassNames().stream().toList())
+                .withClassesBlacklist(blackListedClasses)
                 .build();
 
         StyleSettings styleSettings = StyleSettings.builder()

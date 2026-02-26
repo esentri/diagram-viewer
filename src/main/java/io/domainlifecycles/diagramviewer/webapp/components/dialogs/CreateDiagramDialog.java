@@ -131,7 +131,7 @@ public class CreateDiagramDialog extends Dialog {
         binder.forField(diagramNameTextField)
             .asRequired("Name is required.")
             .bind(CreateDiagramOptions::getFileName, CreateDiagramOptions::setFileName);
-        formLayout.addFormItem(diagramNameTextField, "File-Name");
+        formLayout.addFormItem(diagramNameTextField, "Diagram Name");
 
         return formLayout;
     }
@@ -180,16 +180,15 @@ public class CreateDiagramDialog extends Dialog {
                     .changedAt(null)
                     .build();
             }
-            advancedConfigurationFormLayout.addFormItem(diagramTemplateSelect, "Template");
 
             blacklistedClassnamesMultiSelectComboBox.setEnabled(!templateDiagramSelected);
             packageMultiSelectComboBox.setEnabled(!templateDiagramSelected);
-
             createDiagramOptions.setDomainModelVisibility(visibility);
             createDiagramOptions.setDiagramStylingConfiguration(diagramStyling);
 
             binder.readBean(createDiagramOptions);
         });
+        advancedConfigurationFormLayout.addFormItem(diagramTemplateSelect, "Template");
     }
 
     private void createAndAddPackageMultiSelectComboBox(FormLayout advancedConfigurationFormLayout) {

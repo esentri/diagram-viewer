@@ -378,8 +378,10 @@ public class DiagramVisibilityComponent extends Div {
                     .stream()
                     .filter(m -> !m.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME))
                     .filter(m ->
-                        !m.getDomainType().equals(DomainType.ENUM) &&
-                        !m.getDomainType().equals(DomainType.IDENTITY)
+                        !m.getDomainType().equals(DomainType.ENUM)
+                        && !m.getDomainType().equals(DomainType.IDENTITY)
+                        && !m.getDomainType().equals(DomainType.VALUE_OBJECT)
+                        && !m.getDomainType().equals(DomainType.ENTITY)
                     )
                     .toList()
             );
