@@ -178,7 +178,7 @@ class ProjectService_ITest extends BaseIntegrationTest {
             .project(project)
             .build();
         diagramRepository.save(diagram);
-        FileIOUtils.saveFile(Path.of(diagramsLocation, project.getId().toString(), diagram.getName()), new ByteArrayInputStream("test".getBytes(
+        FileIOUtils.saveFile(Path.of(diagramsLocation, project.getId().toString(), diagram.getName()+".svg"), new ByteArrayInputStream("test".getBytes(
             StandardCharsets.UTF_8)));
 
         // when

@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -109,6 +109,10 @@ public class DomainModelVisibility {
     private Set<String> blacklistedClassNames;
 
     @Getter
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> inlinedValueObjects;
+
+    @Getter
     @CreationTimestamp
     private Instant createdAt;
 
@@ -123,7 +127,8 @@ public class DomainModelVisibility {
             Set<String> includeConnectedToOutgoingClassNames,
             Set<String> excludeConnectedToIngoingClassNames,
             Set<String> excludeConnectedToOutgoingClassNames,
-            Set<String> blacklistedClassNames
+            Set<String> blacklistedClassNames,
+            Set<String> inlinedValueObjects
     ) {
         this.explicitlyIncludedPackagesNames = explicitlyIncludedPackagesNames == null ? new HashSet<>() : explicitlyIncludedPackagesNames;
         this.includeConnectedToIngoingClassNames = includeConnectedToIngoingClassNames == null ? new HashSet<>() : includeConnectedToIngoingClassNames;
@@ -132,6 +137,7 @@ public class DomainModelVisibility {
         this.excludeConnectedToOutgoingClassNames = excludeConnectedToOutgoingClassNames == null ? new HashSet<>() : excludeConnectedToOutgoingClassNames;
         this.includeConnectedToClassNames = includeConnectedToClassNames == null ? new HashSet<>() : includeConnectedToClassNames;
         this.blacklistedClassNames = blacklistedClassNames == null ? new HashSet<>() : blacklistedClassNames;
+        this.inlinedValueObjects = inlinedValueObjects == null ? new HashSet<>() : inlinedValueObjects;
     }
 
     public DomainModelVisibility replaceBlacklistedClassNames(Set<String> blacklistedClassNames) {
@@ -142,7 +148,8 @@ public class DomainModelVisibility {
                 includeConnectedToOutgoingClassNames,
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
-                blacklistedClassNames
+                blacklistedClassNames,
+                inlinedValueObjects
         );
     }
 
@@ -154,7 +161,8 @@ public class DomainModelVisibility {
                 includeConnectedToOutgoingClassNames,
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
-                blacklistedClassNames
+                blacklistedClassNames,
+                inlinedValueObjects
         );
     }
 
@@ -166,7 +174,8 @@ public class DomainModelVisibility {
                 includeConnectedToOutgoingClassNames,
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
-                blacklistedClassNames
+                blacklistedClassNames,
+                inlinedValueObjects
         );
     }
 
@@ -178,7 +187,8 @@ public class DomainModelVisibility {
                 includeConnectedToOutgoingClassNames,
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
-                blacklistedClassNames
+                blacklistedClassNames,
+                inlinedValueObjects
         );
     }
 
@@ -190,7 +200,8 @@ public class DomainModelVisibility {
                 includeConnectedToOutgoingClassNames,
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
-                blacklistedClassNames
+                blacklistedClassNames,
+                inlinedValueObjects
         );
     }
 
@@ -202,7 +213,8 @@ public class DomainModelVisibility {
                 includeConnectedToOutgoingClassNames,
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
-                blacklistedClassNames
+                blacklistedClassNames,
+                inlinedValueObjects
         );
     }
 
@@ -214,7 +226,21 @@ public class DomainModelVisibility {
                 includeConnectedToOutgoingClassNames,
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
-                blacklistedClassNames
+                blacklistedClassNames,
+                inlinedValueObjects
+        );
+    }
+
+    public DomainModelVisibility replaceInlinedValueObjects(Set<String> inlinedValueObjects) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames,
+                inlinedValueObjects
         );
     }
 }

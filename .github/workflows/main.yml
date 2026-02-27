@@ -35,12 +35,14 @@ jobs:
           known_hosts: "placeholder"
 
       - name: Add Bitbucket to Known Hosts
-        run: ssh-keyscan bitbucket.org >> ~/.ssh/known_hosts
+        run: |
+          ssh-keyscan bitbucket.org >> ~/.ssh/known_hosts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Clone Bitbucket Repos
         run: |
           git clone git@bitbucket.org:esentri/nitrox-kickstart.git nitrox-kickstart
-          git clone git@bitbucket.org:esentri/diagram-viewer-plugin.git diagram-viewer-plugin
+          git clone git@github.com:esentri/diagram-viewer-plugin.git diagram-viewer-plugin
           git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git diagram-viewer-generator-plugin
 
       - name: Build and Publish Local Dependencies to MavenLocal
@@ -61,7 +63,7 @@ jobs:
       - name: Package
         run: |
           zip -r ${{ github.run_id }}.zip .platform
-          zip -j ${{ github.run_id }}.zip build/libs/diagram-viewer-0.0.1-SNAPSHOT.jar
+          zip -j ${{ github.run_id }}.zip build/libs/diagram-viewer-0.1.jar
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4.3.3
@@ -88,4 +90,4 @@ jobs:
           aws elasticbeanstalk create-application-version --application-name $APPLICATION_NAME --version-label $VERSION --description ${{ github.run_id }} --source-bundle S3Bucket="${{ vars.S3_BUCKET }}",S3Key="artifact/diagram-viewer/${{ github.run_id }}.zip"
           aws elasticbeanstalk update-environment --application-name $APPLICATION_NAME --environment-name $ENVIRONMENT_NAME --version-label $VERSION
 #          aws elasticbeanstalk wait environment-updated --application-name $APPLICATION_NAME --environment-name $ENVIRONMENT_NAME --cli-read-timeout 1800 --version-label $VERSION
-    
+

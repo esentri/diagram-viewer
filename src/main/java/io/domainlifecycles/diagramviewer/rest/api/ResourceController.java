@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class ResourceController {
     public static final String VIEW_API_PATH_SUFFIX = "/view";
     public static final String DIAGRAM_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "diagramLastModified";
     public static final String STYLING_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "stylingLastModified";
+    public static final String NOTES_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "notesLastModified";
 
     private final String diagramFolderLocation;
 

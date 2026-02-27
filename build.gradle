@@ -1,3 +1,5 @@
+import dev.yumi.gradle.licenser.task.CheckLicenseTask
+
 buildscript {
 	repositories {
 		mavenCentral()
@@ -17,12 +19,12 @@ plugins {
 }
 
 group = 'io.domainlifecycles'
-version = '0.0.1-SNAPSHOT'
+version = '0.1'
 
 ext {
 	set('vaadinVersion', "24.8.6")
 	javaDockerVersion = "3.4.0"
-	dlcVersion = "2.5.0"
+	dlcVersion = "3.0.0"
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
 
@@ -80,12 +82,13 @@ dependencies {
 	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
 	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.0'
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
+	implementation "io.domainlifecycles:mirror-serialization-jackson2:${dlcVersion}"
 	implementation "io.domainlifecycles:diagram-viewer-plugin:1.1"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
-	//if(isInternal){
+	if(isInternal){
         println "INTERNAL PROFILE ACTIVE"
 		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.1")
-	//}
+	}
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
@@ -126,10 +129,15 @@ plugins.withId('dev.yumi.gradle.licenser') {
 	checkLicenseTest.enabled = false
 	license {
 		rule(file("./copyright/HEADER"))
-
 		include("**/*.java")
-		exclude("**/tests/**/*.java", "*.svg")
 	}
+	tasks.named("checkLicenseMain", CheckLicenseTask).configure {
+		// ConfigurableFileCollection supports setFrom(...)
+		sourceFiles.setFrom(
+				sourceFiles.filter { f -> !f.name.endsWith(".svg") }
+		)
+	}
+
 }
 
 tasks.register('integrationTest', Test) {

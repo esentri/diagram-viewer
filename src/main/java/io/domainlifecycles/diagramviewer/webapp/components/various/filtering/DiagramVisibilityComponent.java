@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ import com.vaadin.flow.component.radiobutton.RadioGroupVariant;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -60,8 +61,6 @@ import static java.util.stream.Collectors.groupingBy;
 
 @Slf4j
 public class DiagramVisibilityComponent extends Div {
-
-    private static final String DOMAINLIFECYCLES_PACKAGE_NAME = "io.domainlifecycles";
 
     private final DiagramService diagramService;
     private final SessionStorage sessionStorage;
@@ -181,7 +180,7 @@ public class DiagramVisibilityComponent extends Div {
         NativeLabel typeMirrorNameLabel = new NativeLabel(shortClassName(mirror.getTypeName()));
         typeMirrorNameLabel.getStyle().set("font-weight", "bold");
 
-        Details blendingLayout = new Details("Trim settings");
+        Details blendingLayout = new Details("View filter settings");
         blendingLayout.addClassName("diagram-styling-details");
         blendingLayout.setOpened(false);
 
@@ -191,7 +190,7 @@ public class DiagramVisibilityComponent extends Div {
             if(!DomainType.VALUE_OBJECT.equals(type) && !DomainType.ENTITY.equals(type)) {
                 RadioButtonGroup<VisibilityFilterType> radioGroup = new RadioButtonGroup<>();
                 radioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
-                radioGroup.setLabel("Trimming");
+                radioGroup.setLabel("View filters");
                 radioGroup.setItems(
                         VisibilityFilterType.NO_TRIMMING,
                         VisibilityFilterType.INCLUDE_CONNECTED,
@@ -280,7 +279,7 @@ public class DiagramVisibilityComponent extends Div {
         currentDiagram.setDomainModelVisibility(visibility);
         currentDiagram = diagramService.updateModelAndImage(currentDiagram);
 
-        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
 
     }
 
@@ -373,14 +372,16 @@ public class DiagramVisibilityComponent extends Div {
                         diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()
                                 || diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream()
                                 .anyMatch(typeName::startsWith))
-                .filter(typeName -> !typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
+                .filter(typeName -> !typeName.startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
             domainTypeMirrors.addAll(
                 mirrors
                     .stream()
-                    .filter(m -> !m.getTypeName().startsWith(DOMAINLIFECYCLES_PACKAGE_NAME))
+                    .filter(m -> !m.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME))
                     .filter(m ->
-                        !m.getDomainType().equals(DomainType.ENUM) &&
-                        !m.getDomainType().equals(DomainType.IDENTITY)
+                        !m.getDomainType().equals(DomainType.ENUM)
+                        && !m.getDomainType().equals(DomainType.IDENTITY)
+                        && !m.getDomainType().equals(DomainType.VALUE_OBJECT)
+                        && !m.getDomainType().equals(DomainType.ENTITY)
                     )
                     .toList()
             );
@@ -405,7 +406,7 @@ public class DiagramVisibilityComponent extends Div {
         INCLUDE_CONNECTED_OUTGOING("include outgoing connections"),
         EXCLUDE_CONNECTED_INGOING("exclude ingoing connections"),
         EXCLUDE_CONNECTED_OUTGOING("exclude outgoing connections"),
-        NO_TRIMMING("no trimming");
+        NO_TRIMMING("no advanced view filter");
 
         final String label;
 

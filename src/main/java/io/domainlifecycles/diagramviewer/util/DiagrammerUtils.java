@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,6 +40,9 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguratio
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.api.ValueMirror;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,6 +60,14 @@ public class DiagrammerUtils {
                 .map(n -> new DomainClassNote(n.getDomainTypeMirrorName(), n.getNotes()))
                 .toList();
 
+        var blackListedClasses = new ArrayList<String>();
+        if(domainModelVisibility.getBlacklistedClassNames() != null){
+            blackListedClasses.addAll(domainModelVisibility.getBlacklistedClassNames());
+        }
+        if(domainModelVisibility.getInlinedValueObjects() != null){
+            blackListedClasses.addAll(domainModelVisibility.getInlinedValueObjects());
+        }
+
         DiagramTrimSettings trimSettings = DiagramTrimSettings.builder()
                 .withExplicitlyIncludedPackageNames(domainModelVisibility.getExplicitlyIncludedPackagesNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExplicitlyIncludedPackagesNames().stream().toList())
@@ -70,8 +81,7 @@ public class DiagrammerUtils {
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToIngoingClassNames().stream().toList())
                 .withExcludeConnectedToOutgoing(domainModelVisibility.getExcludeConnectedToOutgoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToOutgoingClassNames().stream().toList())
-                .withClassesBlacklist(domainModelVisibility.getBlacklistedClassNames() == null ?
-                        Collections.emptyList() : domainModelVisibility.getBlacklistedClassNames().stream().toList())
+                .withClassesBlacklist(blackListedClasses)
                 .build();
 
         StyleSettings styleSettings = StyleSettings.builder()

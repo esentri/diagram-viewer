@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,10 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
+import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -65,8 +68,8 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
 
     private final static double STRING_LENGTH_TO_REM_FACTOR = 0.6;
 
-
     private final DiagramTypeNoteService diagramTypeNoteService;
+    private final DiagramService diagramService;
     private final SessionStorage sessionStorage;
     private final Binder<TypeNotes> binder;
     private ComboBox<DomainTypeMirror> domainTypeComboBox;
@@ -78,9 +81,11 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
     private Diagram diagram;
 
     public DiagramCreateNotesContainer(
+            DiagramService diagramService,
             DiagramTypeNoteService diagramTypeNoteService,
             SessionStorage sessionStorage
     ) {
+        this.diagramService = diagramService;
         this.diagramTypeNoteService = diagramTypeNoteService;
         this.sessionStorage = sessionStorage;
         this.binder = new Binder<>();
@@ -99,7 +104,7 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
                 diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames()
         );
         int longestDomainTypeMirrorNameLength = allDomainTypeMirrorsInIncludedPackages.stream()
-                .map(DomainTypeMirror::getTypeName)
+                .map(DomainModelUtils::nameWithStereoType)
                 .max(Comparator.comparingInt(String::length))
                 .orElse("").length();
         domainTypeComboBox.setItems(allDomainTypeMirrorsInIncludedPackages);
@@ -124,9 +129,8 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
             .bind(TypeNotes::getNotes, TypeNotes::setNotes);
 
         domainTypeComboBox = new ComboBox<>();
-
-        domainTypeComboBox.setItemLabelGenerator(DomainTypeMirror::getTypeName);
         domainTypeComboBox.setWidthFull();
+        domainTypeComboBox.setItemLabelGenerator(DomainModelUtils::nameWithStereoType);
 
         domainTypeComboBox.addValueChangeListener(e -> {
             DomainTypeMirror selectedDomainTypeMirror = e.getValue();
@@ -146,10 +150,13 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
     }
 
     private Set<DomainTypeMirror> getAllDomainTypeMirrorsInIncludedPackages(List<DomainTypeMirror> domainTypeMirrors, Set<String> explicitlyIncludedPackagesNames) {
-        return domainTypeMirrors.stream().filter(domainTypeMirror -> {
-            if(explicitlyIncludedPackagesNames == null || explicitlyIncludedPackagesNames.isEmpty()) return true;
-            return explicitlyIncludedPackagesNames.stream().anyMatch(packageName -> domainTypeMirror.getTypeName().startsWith(packageName));
-        }).collect(Collectors.toSet());
+        return domainTypeMirrors.stream()
+                .filter(domainTypeMirror -> {
+                    if(explicitlyIncludedPackagesNames == null || explicitlyIncludedPackagesNames.isEmpty()) return true;
+                    return explicitlyIncludedPackagesNames.stream().anyMatch(packageName -> domainTypeMirror.getTypeName().startsWith(packageName));
+                })
+                .filter(typeMirror -> !typeMirror.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME))
+                .collect(Collectors.toSet());
     }
 
     private HorizontalLayout getButtonLayout() {
@@ -164,6 +171,8 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
                 typeNotes.getNotes(),
                 typeNotes.getSelectedTypeMirror(),
                 diagram);
+            diagramService.updateModelAndImage(diagram);
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramTypeNotesChangedEvent(this, false, null));
         });
         saveButton.getStyle().setMargin("0");

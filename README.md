@@ -1,30 +1,54 @@
 # DLC Diagram Viewer
 
 ### What it does
-The Diagram Viewer is a service to create and manage UML class diagrams generated with the DLC diagram generator 
-plugin. It helps you analyze Domain‑Driven Design (DDD) projects built with DLC or JMolecules by browsing, rendering, 
-and inspecting your domain model diagrams.\
-Furthermore, you can grant project access to various users in the UI. Users can register and log in either via the 
-Diagram Viewer's own user management or via an external identity provider (Okta).\
-New projects (Domain-Mirror models) can also be uploaded via the API. For this to work, you need to obtain an API-Token
-in the UI.
+The Diagram Viewer is a service to create and share Domain-Driven Design (DDD) specific UML class diagrams.
+Diagrams are created from a DDD model derived from the domain model implementation, that uses [DLC](https://github.com/esentri/domainlifecycles) marker interfaces. 
 
-Have a look at the [Confluence Plugin](https://bitbucket.org/esentri/diagram-viewer-forge-app/) built for the Diagram 
-Viewer. It allows you to stream your diagrams in real-time to Confluence for smooth development and always keeping your 
-documentation up to date.
+The [DLC build plugin](https://github.com/esentri/domainlifecycles/tree/main/dlc-plugins) (Maven or Gradle is supported) can be used to
+generate this model by analyzing DLC marker interfaces that represent the relevant tactical DDD building blocks.
+The Diagram Viewer helps you analyze Java DDD projects built with DLC by browsing, rendering, and inspecting your domain model diagrams.
 
-For maximum efficiency, you can use the Diagram Viewer plugins for 
-[Maven](https://github.com/esentri/domainlifecycles/tree/main/dlc-maven-plugin) or 
-[Gradle](https://github.com/esentri/domainlifecycles/tree/main/dlc-gradle-plugin).\
-They allow you to automatically upload your recent Domain-Mirror model to the Diagram Viewer, so you don't have to 
-consistently update them yourself while developing.
+If the implementation changes and a new model version is pushed to the Diagram Viewer, the corresponding diagrams are updated automatically.
+That helps to reduce the so-called model-code gap and keeps your documentation always up to date.
+Furthermore, you can share your diagrams with other team members and add notes to explain design decisions or trade offs.
 
+### Usage
+Check our [User Guide](./USER_GUIDE.md) for more information.
+
+### Build & Deploy
 #### Prerequisites
-- Java 17+
+
+Running the service:
 - Docker and Docker Compose
+
+For development:
+- Java 17+
 - Gradle (wrapper included)
 
-## Quickstart (local development)
+The diagram viewer depends on a inner plugin lib. 
+It must be cloned and built first for a local build of the diagram viewer:
+
+- git clone https://github.com/esentri/diagram-viewer-plugin.git
+- cd diagram-viewer-plugin
+- ./gradlew build publishToMavenLocal
+
+Then clone this repository and build the diagram viewer:
+- git clone https://github.com/esentri/diagram-viewer.git
+- cd diagram-viewer
+- ./gradlew build
+
+
+#### Quickstart 
+
+##### Run application with Docker
+1) Start containers (Kroki, PostgreSQL and DiagramViewer)
+```
+docker compose -f docker/run/docker-compose.yaml up -d
+```
+2) Open the UI
+   http://localhost:8090
+
+##### Build from source (run for development)
 1) Start required services (Kroki and PostgreSQL)
 ```
 docker compose -f docker/dev/docker-compose.yaml up -d
@@ -41,21 +65,35 @@ Starts:
 4) Open the UI
 http://localhost:8090
 
-### Minimal configuration (only if needed)
+#### Configuration options
 Defaults are optimized for local use and will work out of the box.
-Override via environment variables:
-- SERVER_PORT: HTTP port (default 8090)
-- DIAGRAMS_LOCATION: path to diagram sources (default `diagrams`)
-- KROKI_CONTAINER_URL: Kroki endpoint (default `http://localhost:8000`)
-- Database: `RDS_HOSTNAME` (localhost), `RDS_PORT` (5432), `RDS_DB_NAME` (diagram-viewer-db), `RDS_USERNAME` (user), `RDS_PASSWORD` (password)
-- Authentication (Okta): `OAUTH_ISSUER`, `OAUTH_CLIENT_ID` — set these if your environment requires login
 
-### Ports
+Override via environment variables:
+- `SERVER_PORT`: HTTP port (default 8090)
+- `DIAGRAMS_LOCATION`: path to diagram sources on server (default `diagrams`)
+- `KROKI_CONTAINER_URL`: Kroki endpoint (default `http://localhost:8000`)
+- Database: 
+  - `DB_HOSTNAME` (localhost)
+  - `DB_PORT` (5432)
+  - `DB_NAME` (diagram-viewer-db)
+  - `DB_USERNAME` (user)
+  - `DB_PASSWORD` (password)
+- Manual Jar Upload (disabled by default): `JAR_UPLOAD_ENABLED` (true/false) 
+- Additional Okta Authentication (disabled by default):
+  - `OKTA_LOGIN_ENABLED` (true/false)
+  If enabled, you need to set Spring Okta starter environment variables:
+  - `OKTA_OAUTH2_ISSUER`
+  - `OKTA_OAUTH2_CLIENT_ID`
+  - `OKTA_OAUTH2_REDIRECT_URI`
+- `REGENERATE_DIAGRAMS_TASK_RATE`: Digrams are regenerated, if a new Domain Model was pushed to the Diagram Viewer 
+   (default: check for new domain model version every 30 sec)
+
+#### Ports
 - 8090 — Diagram Viewer (UI/API)
 - 8000 — Kroki
 - 5432 — PostgreSQL
 
-### Health check
+#### Health check
 ```
 GET http://localhost:8090/actuator/health
 ```

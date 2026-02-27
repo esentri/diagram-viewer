@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagram
 import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfigurationButtonBarComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramVisibilityAndNotesComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
@@ -143,7 +143,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         buttonBar.add(
             getRenameDiagramButton(),
             getDiagramDownloadButton(),
-            getCopyDiagramLinkButton(diagram),
             getDeleteDiagramButton(diagram)
         );
     }
@@ -222,26 +221,6 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         return renameDiagramButton;
     }
 
-    private Button getCopyDiagramLinkButton(Diagram diagram) {
-        Button copyDiagramLinkButton = new Button("Copy External Link", new Icon(VaadinIcon.LINK));
-        copyDiagramLinkButton.getStyle().set("cursor", "pointer");
-
-        UI.getCurrent().getPage().fetchCurrentURL(url ->
-            copyDiagramLinkButton.addClickListener(e -> {
-                String baseUrlWithTailingSlash = url.toString();
-                baseUrlWithTailingSlash = baseUrlWithTailingSlash.replace("?continue", "");
-                String baseUrl = baseUrlWithTailingSlash.substring(0, baseUrlWithTailingSlash.length() - 1);
-                String diagramUrl = baseUrl + ResourceController.RESOURCES_API_PATH +
-                    ResourceController.VIEW_API_PATH_SUFFIX + "/" + diagram.getProject().getId() + "/" + diagram.getName();
-                UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0);", diagramUrl);
-
-                Notification.show("Diagram link has been copied to clipboard. Note: To successfully access the " +
-                    "resource, make sure you add your API-Key to the 'X-API-KEY' header in your HTTP request.");
-            }));
-
-        return copyDiagramLinkButton;
-    }
-
     private Button getDeleteDiagramButton(Diagram diagram) {
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Delete Diagram");
@@ -274,7 +253,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         super.onAttach(attachEvent);
             registration = ComponentUtil.addListener(
                 attachEvent.getUI(),
-                DiagramStylingChangedEvent.class,
+                DiagramReRenderedEvent.class,
                 event -> refreshPage()
             );
 

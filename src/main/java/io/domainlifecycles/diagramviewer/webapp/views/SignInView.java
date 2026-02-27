@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.webapp.events.UserRegisteredEvent;
+import io.domainlifecycles.diagramviewer.webapp.properties.ApplicationFeatures;
 
 @Route(value = SignInView.VIEW_PATH, autoLayout = false)
 @PageTitle("DLC | Login")
@@ -62,7 +63,10 @@ public class SignInView extends VerticalLayout implements BeforeEnterObserver {
     private LoginOverlay loginOverlay;
     private Registration registration;
 
-    public SignInView() {
+    private final ApplicationFeatures features;
+
+    public SignInView(ApplicationFeatures features) {
+        this.features = features;
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
         setAlignItems(Alignment.CENTER);
@@ -91,16 +95,21 @@ public class SignInView extends VerticalLayout implements BeforeEnterObserver {
         registerButton.getStyle().set("cursor", "pointer");
         registerButton.addClickListener(e -> UI.getCurrent().navigate("/register"));
 
-        Button oktaButton = getSignInWithOktaButton();
-        oktaButton.setWidth(BUTTON_WIDTH);
-        oktaButton.getStyle().set("cursor", "pointer");
+
 
         VerticalLayout buttons = new VerticalLayout(
             loginButton,
-            registerButton,
-            getOrDivider(BUTTON_WIDTH),
-            oktaButton
+            registerButton
         );
+
+        if (features.features().oktaLogin().enabled()) {
+            Button oktaButton = getSignInWithOktaButton();
+            oktaButton.setWidth(BUTTON_WIDTH);
+            oktaButton.getStyle().set("cursor", "pointer");
+            buttons.add(getOrDivider(BUTTON_WIDTH),oktaButton);
+        }
+
+
         buttons.setPadding(false);
         buttons.setSpacing(false);
         buttons.setAlignItems(Alignment.CENTER);

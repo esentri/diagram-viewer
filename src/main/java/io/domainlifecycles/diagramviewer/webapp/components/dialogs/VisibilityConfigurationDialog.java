@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramStylingChangedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 
 
 public class VisibilityConfigurationDialog extends Dialog {
@@ -89,7 +89,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         diagramConfigurationBinder = new Binder<>(DiagramStylingConfiguration.class);
         domainModelVisibilityBinder = new Binder<>(DomainModelVisibility.class);
 
-        setHeaderTitle("Configuration | Visibility");
+        setHeaderTitle("Configuration | General Visibility");
         setWidth("40%");
         setHeight("60%");
 
@@ -114,7 +114,7 @@ public class VisibilityConfigurationDialog extends Dialog {
             domainModelVisibilityBinder.writeBeanIfValid(diagram.getDomainModelVisibility());
 
             diagram = diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramStylingChangedEvent(this, false));
+            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
             close();
         });
 

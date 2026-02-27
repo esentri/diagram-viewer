@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class CreateDiagramDialog extends Dialog {
         binder.forField(diagramNameTextField)
             .asRequired("Name is required.")
             .bind(CreateDiagramOptions::getFileName, CreateDiagramOptions::setFileName);
-        formLayout.addFormItem(diagramNameTextField, "File-Name");
+        formLayout.addFormItem(diagramNameTextField, "Diagram Name");
 
         return formLayout;
     }
@@ -180,16 +180,15 @@ public class CreateDiagramDialog extends Dialog {
                     .changedAt(null)
                     .build();
             }
-            advancedConfigurationFormLayout.addFormItem(diagramTemplateSelect, "Template");
 
             blacklistedClassnamesMultiSelectComboBox.setEnabled(!templateDiagramSelected);
             packageMultiSelectComboBox.setEnabled(!templateDiagramSelected);
-
             createDiagramOptions.setDomainModelVisibility(visibility);
             createDiagramOptions.setDiagramStylingConfiguration(diagramStyling);
 
             binder.readBean(createDiagramOptions);
         });
+        advancedConfigurationFormLayout.addFormItem(diagramTemplateSelect, "Template");
     }
 
     private void createAndAddPackageMultiSelectComboBox(FormLayout advancedConfigurationFormLayout) {

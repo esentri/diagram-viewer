@@ -26,7 +26,7 @@ services:
     dns:
       - 1.1.1.1
       - 8.8.8.8
-    image: domainlifecycles/diagram-viewer:0.0.1-SNAPSHOT
+    image: marioherb/dlc-diagram-viewer:latest
     ports:
       - "8090:8090"
     environment:
@@ -34,9 +34,6 @@ services:
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
       KROKI_CONTAINER_URL: http://kroki:8000
-
-      IS_BUILD_PROFILE_INTERNAL: "true"
-
     depends_on:
       database:
         condition: service_healthy

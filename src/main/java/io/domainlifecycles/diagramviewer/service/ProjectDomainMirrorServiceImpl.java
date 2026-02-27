@@ -12,7 +12,7 @@
  *        \___/   |__|\___  >\/\_/  \___  >__|
  *                        \/            \/
  *
- *  Copyright 2019-2025 the original author or authors.
+ *  Copyright 2025-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Upload
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import io.domainlifecycles.mirror.serialize.api.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.DomainSerializer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -51,12 +51,15 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
 
     private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final ProjectDomainMirrorRepository repository;
-    private final JacksonDomainSerializer serializer;
+    private final DomainSerializer serializer;
 
-    public ProjectDomainMirrorServiceImpl(RegenerateDiagramsJobService regenerateDiagramsJobService, ProjectDomainMirrorRepository repository) {
+    public ProjectDomainMirrorServiceImpl(
+            RegenerateDiagramsJobService regenerateDiagramsJobService,
+            ProjectDomainMirrorRepository repository,
+            DomainSerializer serializer) {
         this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.repository = repository;
-        this.serializer = new JacksonDomainSerializer(false);
+        this.serializer = serializer;
     }
 
     @Override
