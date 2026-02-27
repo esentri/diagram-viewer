@@ -17,8 +17,12 @@ Check our [User Guide](./USER_GUIDE.md) for more information.
 
 ### Build & Deploy
 #### Prerequisites
-- Java 17+
+
+Running the service:
 - Docker and Docker Compose
+
+For development:
+- Java 17+
 - Gradle (wrapper included)
 
 The diagram viewer depends on a inner plugin lib. 
@@ -34,7 +38,17 @@ Then clone this repository and build the diagram viewer:
 - ./gradlew build
 
 
-#### Quickstart (local deployment)
+#### Quickstart 
+
+##### Run application with Docker
+1) Start containers (Kroki, PostgreSQL and DiagramViewer)
+```
+docker compose -f docker/run/docker-compose.yaml up -d
+```
+2) Open the UI
+   http://localhost:8090
+
+##### Build from source (run for development)
 1) Start required services (Kroki and PostgreSQL)
 ```
 docker compose -f docker/dev/docker-compose.yaml up -d
@@ -59,16 +73,18 @@ Override via environment variables:
 - `DIAGRAMS_LOCATION`: path to diagram sources on server (default `diagrams`)
 - `KROKI_CONTAINER_URL`: Kroki endpoint (default `http://localhost:8000`)
 - Database: 
-  - `RDS_HOSTNAME` (localhost)
-  - `RDS_PORT` (5432)
-  - `RDS_DB_NAME` (diagram-viewer-db)
-  - `RDS_USERNAME` (user)
-  - `RDS_PASSWORD` (password)
+  - `DB_HOSTNAME` (localhost)
+  - `DB_PORT` (5432)
+  - `DB_NAME` (diagram-viewer-db)
+  - `DB_USERNAME` (user)
+  - `DB_PASSWORD` (password)
 - Manual Jar Upload (disabled by default): `JAR_UPLOAD_ENABLED` (true/false) 
 - Additional Okta Authentication (disabled by default):
   - `OKTA_LOGIN_ENABLED` (true/false)
-  - `OAUTH_ISSUER` (Okta issuer URL)
-  - `OAUTH_CLIENT_ID` (Okta client ID)
+  If enabled, you need to set Spring Okta starter environment variables:
+  - `OKTA_OAUTH2_ISSUER`
+  - `OKTA_OAUTH2_CLIENT_ID`
+  - `OKTA_OAUTH2_REDIRECT_URI`
 - `REGENERATE_DIAGRAMS_TASK_RATE`: Digrams are regenerated, if a new Domain Model was pushed to the Diagram Viewer 
    (default: check for new domain model version every 30 sec)
 

@@ -36,6 +36,8 @@ import com.vaadin.flow.spring.security.NavigationAccessControlConfigurer;
 import io.domainlifecycles.diagramviewer.webapp.views.SignInView;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Stream;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -49,6 +51,9 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${app.features.okta-login.enabled:false}")
+    private boolean oktaEnabled;
 
     private final AuthenticationSuccessHandler oAuth2SuccessHandler;
     private final AuthenticationSuccessHandler selfServiceSuccessHandler;
@@ -64,56 +69,54 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter) throws Exception {
+        if (oktaEnabled) {
+            http.oauth2Login(login -> login
+                    .loginPage(SignInView.VIEW_PATH)
+                    .successHandler(oAuth2SuccessHandler)
+                    .permitAll()
+            );
+        } else {
+            http.oauth2Login(AbstractHttpConfigurer::disable);
+        }
+
         return http
-            .csrf(AbstractHttpConfigurer::disable)
-            .logout((logout) -> logout.logoutSuccessUrl(SignInView.VIEW_PATH))
-
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(SignInView.VIEW_PATH)).anonymous()
-                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/register")).permitAll()
-                .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/login")).permitAll()
-                .requestMatchers(
-                    PathPatternRequestMatcher.withDefaults().matcher("/actuator/**"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/api/domain-model/**"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/api/resources/view/**"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/VAADIN/**"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/favicon.ico"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/robots.txt"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/manifest.webmanifest"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/sw.js"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/offline-page.html"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/frontend/**"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/webjars/**"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/frontend-es5/**"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/frontend-es6/**"),
-                    PathPatternRequestMatcher.withDefaults().matcher("/.well-known/**"),
-                    this::isFrameworkInternalRequest)
-                .permitAll()
-                .anyRequest().authenticated()
-            )
-
-            .formLogin(form -> form
-                .loginPage(SignInView.VIEW_PATH)
-                .loginProcessingUrl("/login")
-                .successHandler(selfServiceSuccessHandler)
-                .failureUrl(SignInView.VIEW_PATH + "?error")
-                .permitAll()
-            )
-
-            .oauth2Login(login -> login
-                .loginPage(SignInView.VIEW_PATH)
-                .successHandler(oAuth2SuccessHandler)
-                .permitAll()
-            )
-
-            .exceptionHandling(
-                ex -> ex.authenticationEntryPoint(
-                    (request, response, authException) ->
-                        response.sendRedirect(SignInView.VIEW_PATH))
-            )
-
-            .addFilterAfter(apiKeyAuthFilter, BasicAuthenticationFilter.class)
-            .build();
+                .csrf(AbstractHttpConfigurer::disable)
+                .logout((logout) -> logout.logoutSuccessUrl(SignInView.VIEW_PATH))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(SignInView.VIEW_PATH)).anonymous()
+                        .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/register")).permitAll()
+                        .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/login")).permitAll()
+                        .requestMatchers(
+                                PathPatternRequestMatcher.withDefaults().matcher("/actuator/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/api/domain-model/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/api/resources/view/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/VAADIN/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/favicon.ico"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/robots.txt"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/manifest.webmanifest"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/sw.js"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/offline-page.html"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/frontend/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/webjars/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/frontend-es5/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/frontend-es6/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/.well-known/**"),
+                                this::isFrameworkInternalRequest)
+                        .permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage(SignInView.VIEW_PATH)
+                        .loginProcessingUrl("/login")
+                        .successHandler(selfServiceSuccessHandler)
+                        .failureUrl(SignInView.VIEW_PATH + "?error")
+                        .permitAll()
+                )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        (request, response, authException) -> response.sendRedirect(SignInView.VIEW_PATH))
+                )
+                .addFilterAfter(apiKeyAuthFilter, BasicAuthenticationFilter.class)
+                .build();
     }
 
     private boolean isFrameworkInternalRequest(HttpServletRequest request) {

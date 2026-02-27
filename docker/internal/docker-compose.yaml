@@ -26,7 +26,7 @@ services:
     dns:
       - 1.1.1.1
       - 8.8.8.8
-    image: marioherb/dlc-diagram-viewer:latest
+    image: domainlifecycles/diagram-viewer:0.0.1-SNAPSHOT
     ports:
       - "8090:8090"
     environment:
@@ -34,6 +34,12 @@ services:
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
       KROKI_CONTAINER_URL: http://kroki:8000
+      OKTA_LOGIN_ENABLED: true
+      OKTA_OAUTH2_ISSUER: https://esentri.okta.com
+      OKTA_OAUTH2_CLIENT_ID: 0oa1vgjp7du46YjS21d8
+      OKTA_OAUTH2_REDIRECT_URI: /authorization-code/callback
+      IS_BUILD_PROFILE_INTERNAL: "true"
+
     depends_on:
       database:
         condition: service_healthy
