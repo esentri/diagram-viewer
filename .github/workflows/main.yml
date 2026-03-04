@@ -21,6 +21,12 @@ jobs:
       - name: Checkout Diagram Viewer Repo
         uses: actions/checkout@v4
 
+      - name: Clone GitHub Diagram Viewer Plugin
+        uses: actions/checkout@v4
+        with:
+          repository: esentri/diagram-viewer-plugin
+          path: diagram-viewer-plugin
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -42,7 +48,6 @@ jobs:
       - name: Clone Bitbucket Repos
         run: |
           git clone git@bitbucket.org:esentri/nitrox-kickstart.git nitrox-kickstart
-          git clone git@github.com:esentri/diagram-viewer-plugin.git diagram-viewer-plugin
           git clone git@bitbucket.org:esentri/diagram-viewer-generator-plugin.git diagram-viewer-generator-plugin
 
       - name: Build and Publish Local Dependencies to MavenLocal
