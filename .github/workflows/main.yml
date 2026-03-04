@@ -26,6 +26,8 @@ jobs:
         with:
           repository: esentri/diagram-viewer-plugin
           path: diagram-viewer-plugin
+          ref: main
+          token: ${{ secrets.GH_READ_VIEWER_PLUGIN_REPO }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
