@@ -87,7 +87,7 @@ dependencies {
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	if(isInternal){
         println "INTERNAL PROFILE ACTIVE"
-		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.1")
+		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.2")
 	}
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
