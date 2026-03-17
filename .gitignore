@@ -56,3 +56,4 @@ index.html
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 /gradle.properties
+/src/main/frontend/generated/
