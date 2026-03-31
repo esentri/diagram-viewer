@@ -70,7 +70,7 @@ jobs:
       - name: Package
         run: |
           zip -r ${{ github.run_id }}.zip .platform
-          zip -j ${{ github.run_id }}.zip build/libs/diagram-viewer-0.1.jar
+          zip -j ${{ github.run_id }}.zip build/libs/diagram-viewer-0.2.jar
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4.3.3
