@@ -112,6 +112,8 @@ public class DiagrammerUtils {
 
         GeneralVisualSettings visualSettings = GeneralVisualSettings.builder()
                 .withShowNotes(true)
+                .withShowRelationshipLabels(diagramStylingConfiguration.isShowRelationLabels())
+                .withShowRelationshipStereotypes(diagramStylingConfiguration.isShowRelationStereotypes())
                 .withShowFields(diagramStylingConfiguration.isShowFields())
                 .withShowMethods(diagramStylingConfiguration.isShowMethods())
                 .withFieldStereotypes(diagramStylingConfiguration.isFieldStereotypes())

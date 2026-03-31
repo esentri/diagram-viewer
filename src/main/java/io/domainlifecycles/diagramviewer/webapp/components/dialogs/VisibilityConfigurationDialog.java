@@ -180,6 +180,14 @@ public class VisibilityConfigurationDialog extends Dialog {
         formLayout.addFormItem(showOnlyPublicMethodsCheckbox,"Public methods only");
         diagramConfigurationBinder.bind(showOnlyPublicMethodsCheckbox, DiagramStylingConfiguration::isShowOnlyPublicMethods, DiagramStylingConfiguration::setShowOnlyPublicMethods);
 
+        Checkbox showRelationLabelsCheckbox = new Checkbox();
+        formLayout.addFormItem(showRelationLabelsCheckbox,"Show relation labels");
+        diagramConfigurationBinder.bind(showRelationLabelsCheckbox, DiagramStylingConfiguration::isShowRelationLabels, DiagramStylingConfiguration::setShowRelationLabels);
+
+        Checkbox showRelationStereotypesCheckbox = new Checkbox();
+        formLayout.addFormItem(showRelationStereotypesCheckbox,"Show relation stereotypes");
+        diagramConfigurationBinder.bind(showRelationStereotypesCheckbox, DiagramStylingConfiguration::isShowRelationStereotypes, DiagramStylingConfiguration::setShowRelationStereotypes);
+
         showAllInheritanceStructuresCheckbox = new Checkbox();
         showAllInheritanceStructuresCheckbox.setTooltipText("Note: When you activate this option, make sure to include the packages where your implementations are located in the 'explicitly included packages'. Otherwise, only the interfaces will be shown.");
         formLayout.addFormItem(showAllInheritanceStructuresCheckbox, "Show interface and abstract class implementations");

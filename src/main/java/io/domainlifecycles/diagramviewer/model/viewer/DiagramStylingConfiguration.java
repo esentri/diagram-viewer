@@ -214,6 +214,23 @@ public class DiagramStylingConfiguration {
     @Setter
     @Builder.Default private boolean showOnlyPublicMethods = true;
     /**
+     * A flag indicating whether relationship labels should be displayed.
+     * When set to {@code true}, the labels associated with relationships will be shown.
+     * When set to {@code false}, the relationship labels will be hidden.
+     * Default value is {@code true}.
+     */
+    @Getter
+    @Setter
+    @Builder.Default private boolean showRelationLabels = true;
+    /**
+     * Indicates whether relation stereotypes should be displayed.
+     * This flag determines if stereotypes associated with relationships
+     * are shown in the application. By default, this is set to {@code true}.
+     */
+    @Getter
+    @Setter
+    @Builder.Default private boolean showRelationStereotypes = true;
+    /**
      * If true, Aggregate classes are included (AggregateRoot, included Entity, included ValueObject)
      */
     @Getter
