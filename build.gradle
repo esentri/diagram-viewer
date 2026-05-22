@@ -24,7 +24,7 @@ version = '0.2'
 ext {
 	set('vaadinVersion', "24.8.6")
 	javaDockerVersion = "3.4.0"
-	dlcVersion = "3.1.0"
+	dlcVersion = "3.1.1"
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
 

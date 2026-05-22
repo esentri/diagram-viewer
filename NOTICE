@@ -1,0 +1,60 @@
+NOTICE
+======
+
+This product is licensed under the Apache License, Version 2.0.
+See the LICENSE file for the full license text.
+
+This product includes third-party software components. All listed
+dependencies are compatible with the Apache License 2.0.
+
+--------------------------------------------------------------------------------
+Direct runtime dependencies (Gradle "implementation"):
+--------------------------------------------------------------------------------
+
+  - io.github.classgraph:classgraph
+    Apache License 2.0 - https://github.com/classgraph/classgraph
+
+  - com.vaadin:vaadin-spring-boot-starter
+    Apache License 2.0 - https://vaadin.com
+
+  - org.springframework.boot:spring-boot-starter-data-jpa
+    Apache License 2.0 - https://spring.io/projects/spring-boot
+
+  - org.springframework.boot:spring-boot-starter-actuator
+    Apache License 2.0 - https://spring.io/projects/spring-boot
+
+  - org.postgresql:postgresql
+    BSD 2-Clause License - https://jdbc.postgresql.org/about/license/
+
+  - org.apache.xmlgraphics:batik-transcoder:1.17
+    Apache License 2.0 - https://xmlgraphics.apache.org/batik/
+    Copyright 1999-2023 The Apache Software Foundation
+
+  - org.apache.xmlgraphics:batik-codec:1.17
+    Apache License 2.0 - https://xmlgraphics.apache.org/batik/
+    Copyright 1999-2023 The Apache Software Foundation
+
+  - com.okta.spring:okta-spring-boot-starter:3.0.7
+    Apache License 2.0 - https://github.com/okta/okta-spring-boot
+
+  - com.github.docker-java:docker-java-core
+  - com.github.docker-java:docker-java-transport-httpclient5
+    Apache License 2.0 - https://github.com/docker-java/docker-java
+
+  - com.flowingcode.vaadin.addons:zoomist-addon:1.0.1
+    Apache License 2.0 - https://github.com/FlowingCode/ZoomistAddon
+
+  - org.vaadin.addons.taefi:toggle-button-group:2.2.0
+    Apache License 2.0 - https://github.com/taefi/toggle-button-group
+
+  - io.domainlifecycles:mirror
+  - io.domainlifecycles:mirror-serialization-jackson2
+  - io.domainlifecycles:diagram-viewer-plugin:1.2
+  - io.domainlifecycles:domain-diagrammer
+    Apache License 2.0 - https://github.com/esentri/domainlifecycles
+    Copyright esentri AG
+
+--------------------------------------------------------------------------------
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
