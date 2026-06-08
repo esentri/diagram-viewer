@@ -52,4 +52,6 @@ public interface DiagramService {
     void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram);
 
     void deleteFilesFromFilesystem(String projectId);
+
+    String generateNomnoml(DomainMirror domainMirror, Diagram diagram);
 }

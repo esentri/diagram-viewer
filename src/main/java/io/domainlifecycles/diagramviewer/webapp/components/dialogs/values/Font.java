@@ -31,7 +31,8 @@ package io.domainlifecycles.diagramviewer.webapp.components.dialogs.values;
 
 public enum Font {
     HELVETICA("helvetica", "Helvetica"),
-    ARIAL("arial", "Arial");
+    ARIAL("arial", "Arial"),
+    SANS_SERIF("sans-serif", "sans-serif");
 
     private final String nomnomlValue;
     private final String displayValue;

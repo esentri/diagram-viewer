@@ -29,7 +29,6 @@
 
 package io.domainlifecycles.diagramviewer.webapp.components.dialogs;
 
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -39,16 +38,22 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.function.SerializableConsumer;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramServiceImpl;
+import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileConversionUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.List;
+
+import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -56,6 +61,8 @@ import lombok.Getter;
 public class DownloadDiagramDialog extends Dialog {
 
     private final String diagramsLocation;
+    private final SessionStorage sessionStorage;
+    private final DiagramService diagramService;
     private final DownloadDiagramOptions downloadDiagramOptions;
     private final Binder<DownloadDiagramOptions> binder;
 
@@ -66,10 +73,12 @@ public class DownloadDiagramDialog extends Dialog {
     private Select<FileType> fileTypeSelect;
     private Button downloadDiagramButton;
 
-    public DownloadDiagramDialog(String diagramsLocation) {
+    public DownloadDiagramDialog(String diagramsLocation, SessionStorage sessionStorage, DiagramService diagramService) {
         setHeaderTitle("Download Diagram");
 
         this.diagramsLocation = diagramsLocation;
+        this.sessionStorage = sessionStorage;
+        this.diagramService = diagramService;
         this.binder = new Binder<>();
         this.downloadDiagramOptions = new DownloadDiagramOptions(FileType.SVG);
 
@@ -133,6 +142,15 @@ public class DownloadDiagramDialog extends Dialog {
                 byte[] svgFileContents = FileIOUtils.readFile(diagramLocation.toString());
 
                 FileType selectedType = downloadDiagramOptions.getFileType();
+                if(FileType.NOMNOML.equals(selectedType)){
+                    var nomnoml = diagramService.generateNomnoml(sessionStorage.getDomainMirror(diagram.getProject().getId()), diagram);
+                    return new DownloadResponse(
+                        new ByteArrayInputStream(nomnoml.getBytes(StandardCharsets.UTF_8)),
+                        String.join(".", diagram.getName(), selectedType.getExtension()),
+                        selectedType.getMimeType(),
+                        nomnoml.length()
+                    );
+                }
                 byte[] fileContents = convertImage(svgFileContents, selectedType);
 
                 return new DownloadResponse(
@@ -171,11 +189,13 @@ public class DownloadDiagramDialog extends Dialog {
         getFooter().add(getDiagramDownloadButton());
     }
 
+
     @AllArgsConstructor
     private enum FileType {
         SVG("svg", "image/svg+xml"),
         PNG("png", "image/png"),
-        JPEG("jpeg", "image/jpeg");
+        JPEG("jpeg", "image/jpeg"),
+        NOMNOML("nomnoml", "text/plain");
 
         @Getter
         private final String extension;

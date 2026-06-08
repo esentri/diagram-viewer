@@ -178,7 +178,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
         this.renameDiagramDialog = new RenameDiagramDialog(diagramService);
         add(renameDiagramDialog);
 
-        this.downloadDiagramDialog = new DownloadDiagramDialog(diagramsLocation);
+        this.downloadDiagramDialog = new DownloadDiagramDialog(diagramsLocation, sessionStorage, diagramService);
         add(downloadDiagramDialog);
 
         this.diagramViewerAndStylingContainer = new FlexLayout();

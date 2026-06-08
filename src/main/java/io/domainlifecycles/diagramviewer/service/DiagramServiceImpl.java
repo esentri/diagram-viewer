@@ -157,20 +157,7 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram) {
-
-        final String nomnoml;
-        List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
-
-        try {
-            nomnoml = DiagrammerUtils.generateNomnoml(
-                domainMirror,
-                diagram.getDiagramStylingConfiguration(),
-                diagram.getDomainModelVisibility(),
-                notes
-            );
-        } catch (IllegalStateException e) {
-            throw DiagramViewerException.fail(e.getMessage(), e);
-        }
+        var nomnoml = generateNomnoml(domainMirror, diagram);
 
         byte[] diagramFileContents = krokiClient.convert(nomnoml);
 
@@ -180,6 +167,24 @@ public class DiagramServiceImpl implements DiagramService {
         } catch (IOException e) {
             throw DiagramViewerException.fail(String.format("Could not save diagram to '%s'.", diagramsLocation), e);
         }
+    }
+
+    @Override
+    public String generateNomnoml(DomainMirror domainMirror, Diagram diagram){
+        String nomnoml = "";
+        List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
+
+        try {
+            nomnoml = DiagrammerUtils.generateNomnoml(
+                    domainMirror,
+                    diagram.getDiagramStylingConfiguration(),
+                    diagram.getDomainModelVisibility(),
+                    notes
+            );
+        } catch (IllegalStateException e) {
+            throw DiagramViewerException.fail(e.getMessage(), e);
+        }
+        return nomnoml;
     }
 
     private boolean diagramWithNameExists(Diagram diagram) {
