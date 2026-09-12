@@ -64,6 +64,15 @@ public class ProjectDomainMirror {
     @Convert(converter = DomainModelConverter.class)
     private DomainMirror domainMirror;
 
+    /**
+     * The raw JSON representation of the static analysis result ({@code DomainCalls}) uploaded
+     * alongside the domain mirror, or {@code null} if none was uploaded. Kept as raw JSON rather than
+     * deserialized, since a {@code DomainCalls} is only meaningful resolved against the exact
+     * {@link DomainMirror} instance it was analyzed against.
+     */
+    @Column(columnDefinition = "TEXT")
+    private String domainCalls;
+
     @CreationTimestamp
     private Instant createdAt;
 

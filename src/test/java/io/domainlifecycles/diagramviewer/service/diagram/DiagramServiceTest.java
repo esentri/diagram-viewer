@@ -190,7 +190,7 @@ class DiagramServiceTest {
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
 
-            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any())).thenReturn("testNomnoml");
+            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any())).thenReturn("testNomnoml");
 
             // when
             Diagram result = diagramService.updateModelAndImage(diagram);
@@ -200,7 +200,7 @@ class DiagramServiceTest {
             verify(repository, times(1)).save(eq(diagram));
             verify(sessionStorage, times(1)).getDomainMirror(any());
             verify(krokiClient, times(1)).convert(any());
-            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
 
             assertThat(result).isEqualTo(diagram);
@@ -233,7 +233,7 @@ class DiagramServiceTest {
 
             fileIOUtilsMocked.verify(() -> FileIOUtils.renameFile(any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()), never());
-            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()), never());
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any()), never());
 
             assertThat(result).isEqualTo(diagram);
         }
@@ -257,7 +257,7 @@ class DiagramServiceTest {
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
 
-            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any())).thenReturn(
+            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any())).thenReturn(
                 "testNomnoml");
 
             // when
@@ -273,7 +273,7 @@ class DiagramServiceTest {
             verify(krokiClient).convert(any());
             verify(projectMock).addDiagram(any());
 
-            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
 
             assertThat(result.getName()).isEqualTo("diagramName");
@@ -302,7 +302,7 @@ class DiagramServiceTest {
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
 
-            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any())).thenReturn(
+            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any())).thenReturn(
                 "testNomnoml");
 
             // when
@@ -311,7 +311,7 @@ class DiagramServiceTest {
             // then
             verify(krokiClient).convert(any());
 
-            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
         }
     }
@@ -333,13 +333,13 @@ class DiagramServiceTest {
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class)) {
 
-            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any())).thenThrow(errorCause);
+            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any())).thenThrow(errorCause);
 
             // when
             assertThatThrownBy(() -> diagramService.updateModelAndImage(diagramMock)).isInstanceOf(DiagramViewerException.class).hasMessage(errorMessage).hasCause(errorCause);
 
             // then
-            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any()));
         }
     }
 
@@ -362,7 +362,7 @@ class DiagramServiceTest {
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
 
-            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any())).thenReturn(
+            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any())).thenReturn(
                 "testNomnoml");
             fileIOUtilsMocked.when(() -> FileIOUtils.saveFile(any(), any())).thenThrow(IOException.class);
 
@@ -375,7 +375,7 @@ class DiagramServiceTest {
             // then
             verify(krokiClient).convert(any());
 
-            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any()));
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
         }
     }

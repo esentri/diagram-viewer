@@ -30,17 +30,14 @@
 package io.domainlifecycles.diagramviewer.rest.api;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
@@ -92,22 +89,29 @@ public class ResourceController {
     }
 
     private ResponseEntity<InputStreamResource> getDiagramResponseEntity(String directoryName, String fileName) throws IOException {
-        URI filePath;
+        Path baseDir;
+        Path resolvedPath;
         try {
-            filePath = Path.of(diagramFolderLocation, directoryName, fileName).toUri();
+            baseDir = Path.of(diagramFolderLocation).toAbsolutePath().normalize();
+            resolvedPath = baseDir.resolve(directoryName).resolve(fileName).normalize();
         } catch (InvalidPathException | IOError e) {
             throw DiagramViewerException.fail(
                 String.format("Location of requested file '%s/%s/%s' is not a valid path.",
                     diagramFolderLocation, directoryName, fileName));
         }
 
+        // reject any directoryName/fileName that (after resolving ".." segments or an absolute
+        // override) would escape the diagrams directory, e.g. "../../etc/passwd"
+        if (!resolvedPath.startsWith(baseDir)) {
+            throw DiagramViewerException.fail(
+                String.format("Requested file '%s/%s' is outside the diagrams directory.", directoryName, fileName));
+        }
+
         InputStream inputStream;
         try {
-            inputStream = new FileInputStream(new File(filePath));
-        } catch(NullPointerException e) {
-            throw DiagramViewerException.fail("No path specified for requested file.", e);
+            inputStream = new FileInputStream(resolvedPath.toFile());
         } catch (FileNotFoundException e) {
-            throw DiagramViewerException.fail(String.format("No file found at '%s'.", filePath.getPath()), e);
+            throw DiagramViewerException.fail(String.format("No file found at '%s'.", resolvedPath), e);
         }
 
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
@@ -120,7 +124,7 @@ public class ResourceController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(evaluateContentType(fileName));
-        headers.setContentLength(Files.size(Paths.get(filePath)));
+        headers.setContentLength(Files.size(resolvedPath));
         headers.setCacheControl(CacheControl.maxAge(Duration.ofDays(30)));
         return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
     }

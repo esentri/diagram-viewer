@@ -87,23 +87,25 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     @Override
     public ProjectDomainMirror createOrUpdate(Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType) {
         DomainMirror domainMirror = generateDomainMirror(pathToFile, domainModelPackages, uploadFileType);
-        return createOrUpdate(project, domainMirror);
+        return createOrUpdate(project, domainMirror, null);
     }
 
     @Override
-    public ProjectDomainMirror createOrUpdate(Project project, DomainMirror domainMirror) {
+    public ProjectDomainMirror createOrUpdate(Project project, DomainMirror domainMirror, String domainCallsJson) {
         Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(project.getId());
         ProjectDomainMirror projectDomainMirror;
 
         if(foundProjectDomainMirror.isPresent()) {
             projectDomainMirror = foundProjectDomainMirror.get();
             projectDomainMirror.setDomainMirror(domainMirror);
+            projectDomainMirror.setDomainCalls(domainCallsJson);
             regenerateDiagramsJobService.create(project);
         }
         else {
             projectDomainMirror = ProjectDomainMirror.builder()
                 .projectId(project.getId())
                 .domainMirror(domainMirror)
+                .domainCalls(domainCallsJson)
                 .build();
         }
 

@@ -106,7 +106,7 @@ public class DiagramFilterComponent extends Div {
             advancedFilterDetails.setOpened(sessionStorage.isAdvancedTrimmingOpen());
             advancedFilterDetails.addOpenedChangeListener(e -> sessionStorage.setAdvancedTrimmingOpen(e.isOpened()));
 
-            List<DomainTypeMirror> items = filterConcreteMirrorsInterfaceAvailable(currentDiagram, domainTypeMirrors);
+            List<DomainTypeMirror> items = DomainModelUtils.filterConcreteMirrorsInterfaceAvailable(currentDiagram, domainTypeMirrors);
 
             List<DomainTypeMirror> valueObjects = filterValueObjectMirrorAvailable(currentDiagram, domainTypeMirrors);
 
@@ -249,52 +249,6 @@ public class DiagramFilterComponent extends Div {
         diagram.setDomainModelVisibility(newVisibility);
         diagram = diagramService.updateModelAndImage(diagram);
         ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
-    }
-
-    private List<DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {
-        List<DomainTypeMirror> domainTypeMirrorsFiltered = new ArrayList<>();
-
-        if (domainTypeMirrors != null && !domainTypeMirrors.isEmpty()) {
-            List<String> mirroredTypeNames = domainTypeMirrors.stream()
-                .map(DomainTypeMirror::getTypeName)
-                .filter(typeName -> !typeName.startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
-            domainTypeMirrorsFiltered.addAll(
-                domainTypeMirrors
-                    .stream()
-                    .filter(type ->
-                        diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()
-                            || diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream()
-                            .anyMatch(p -> type.getTypeName().startsWith(p)))
-                    .filter(m -> !m.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME))
-                    .filter(m ->
-                        !m.getDomainType().equals(DomainType.ENUM)
-                                && !m.getDomainType().equals(DomainType.IDENTITY)
-                        && !m.getDomainType().equals(DomainType.VALUE_OBJECT)
-                                && !m.getDomainType().equals(DomainType.ENTITY)
-                    )
-                    .toList()
-            );
-
-            if(!diagram.getDiagramStylingConfiguration().isShowAllInheritanceStructures()){
-                for (DomainTypeMirror mirror : domainTypeMirrors) {
-                    switch (mirror.getDomainType()) {
-                        case SERVICE_KIND, OUTBOUND_SERVICE, APPLICATION_SERVICE, DOMAIN_SERVICE, REPOSITORY, QUERY_HANDLER -> {
-                            for (String interfaceTypeName : mirror.getAllInterfaceTypeNames()) {
-                                if (!interfaceTypeName.startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME) && !diagram.getDiagramStylingConfiguration().isShowInheritanceStructuresForServiceKinds()) {
-                                    if (mirroredTypeNames.contains(interfaceTypeName)) {
-                                        domainTypeMirrorsFiltered.remove(mirror);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-        }
-
-        return domainTypeMirrorsFiltered.stream().sorted(
-                Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
     }
 
     private List<DomainTypeMirror> filterValueObjectMirrorAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {

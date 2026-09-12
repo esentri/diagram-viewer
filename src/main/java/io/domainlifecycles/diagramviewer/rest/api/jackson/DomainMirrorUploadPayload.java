@@ -29,33 +29,20 @@
 
 package io.domainlifecycles.diagramviewer.rest.api.jackson;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.serialize.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
-import java.io.IOException;
-
-@Slf4j
-public class DomainMirrorDeserializer extends JsonDeserializer<DomainMirror> {
-    @Override
-    public DomainMirror deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        DomainSerializer domainSerializer = new JacksonDomainSerializer(false);
-        JsonToken token = p.getCurrentToken();
-        log.debug("Deserializing DomainMirror, token={}, text={}", token, p.getText());
-        var val = p.getValueAsString();
-        log.debug("Serialized DomainMirror: {}", val);
-        // komplettes Objekt einlesen
-        JsonNode node = p.getCodec().readTree(p);
-        var mirrorNode = node.get("domainMirror");
-        String json = mirrorNode.toString();
-
-        log.debug("Serialized DomainMirror JSON: {}", json);
-        return domainSerializer.deserialize(json);
-    }
+/**
+ * The result of reading a domain mirror upload request body: the {@link DomainMirror} itself, the
+ * optional result of a static analysis of the domain classes ({@code DomainCalls}, kept as its raw
+ * JSON representation since it is only meaningful resolved against the {@link DomainMirror} it was
+ * analyzed against), and the domain model packages the upload was restricted to.
+ *
+ * @param domainMirror         the uploaded domain mirror, never {@code null}
+ * @param domainCallsJson      the raw JSON representation of the uploaded static analysis result
+ *                             ({@code DomainCalls}), or {@code null} if none was uploaded
+ * @param domainModelPackages  the domain model packages associated with the upload
+ */
+public record DomainMirrorUploadPayload(
+    DomainMirror domainMirror, String domainCallsJson, List<String> domainModelPackages) {
 }

@@ -41,6 +41,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.ValueMirror;
+import io.domainlifecycles.staticanalysis.DomainCalls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +53,8 @@ public class DiagrammerUtils {
             DomainMirror domainMirror,
             DiagramStylingConfiguration diagramStylingConfiguration,
             DomainModelVisibility domainModelVisibility,
-            List<DiagramTypeNote> notes
+            List<DiagramTypeNote> notes,
+            DomainCalls domainCalls
     ) {
 
         var classNotes = notes
@@ -82,6 +84,8 @@ public class DiagrammerUtils {
                 .withExcludeConnectedToOutgoing(domainModelVisibility.getExcludeConnectedToOutgoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToOutgoingClassNames().stream().toList())
                 .withClassesBlacklist(blackListedClasses)
+                .withIncludeFlowsFrom(domainModelVisibility.getIncludeFlowsFrom() == null ?
+                        Collections.emptyList() : domainModelVisibility.getIncludeFlowsFrom().stream().toList())
                 .build();
 
         StyleSettings styleSettings = StyleSettings.builder()
@@ -175,7 +179,8 @@ public class DiagrammerUtils {
         DomainDiagramGenerator generator = new DomainDiagramGenerator(
                 diagramConfig,
                 domainMirror,
-                classNotes
+                classNotes,
+                domainCalls
         );
         return generator.generateDiagramText();
     }

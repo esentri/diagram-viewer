@@ -61,56 +61,79 @@ public class DomainModelVisibility {
     private UUID id;
 
     @Getter
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> explicitlyIncludedPackagesNames;
+    private Set<String> explicitlyIncludedPackagesNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> includeConnectedToClassNames;
+    private Set<String> includeConnectedToClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_incl_ing", // short, unique table name
         joinColumns = @JoinColumn(name = "dmv_id")
     )
     @Column(name = "class_name")
-    private Set<String> includeConnectedToIngoingClassNames;
+    private Set<String> includeConnectedToIngoingClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_incl_out",
         joinColumns = @JoinColumn(name = "dmv_id")
     )
     @Column(name = "class_name")
-    private Set<String> includeConnectedToOutgoingClassNames;
+    private Set<String> includeConnectedToOutgoingClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_excl_ing",
         joinColumns = @JoinColumn(name = "dmv_id")
     )
     @Column(name = "class_name")
-    private Set<String> excludeConnectedToIngoingClassNames;
+    private Set<String> excludeConnectedToIngoingClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_excl_out",
         joinColumns = @JoinColumn(name = "dmv_id")
     )
     @Column(name = "class_name")
-    private Set<String> excludeConnectedToOutgoingClassNames;
+    private Set<String> excludeConnectedToOutgoingClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> blacklistedClassNames;
+    private Set<String> blacklistedClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> inlinedValueObjects;
+    private Set<String> inlinedValueObjects = new HashSet<>();
+
+    /**
+     * The flow starting points the diagram is restricted to, a full qualified type name each,
+     * optionally followed by {@code #} and a method name. Empty means the diagram is not restricted
+     * to any flow.
+     */
+    @Getter
+    @Builder.Default
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_flows",
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "flow_starting_point")
+    private Set<String> includeFlowsFrom = new HashSet<>();
 
     @Getter
     @CreationTimestamp
@@ -128,7 +151,8 @@ public class DomainModelVisibility {
             Set<String> excludeConnectedToIngoingClassNames,
             Set<String> excludeConnectedToOutgoingClassNames,
             Set<String> blacklistedClassNames,
-            Set<String> inlinedValueObjects
+            Set<String> inlinedValueObjects,
+            Set<String> includeFlowsFrom
     ) {
         this.explicitlyIncludedPackagesNames = explicitlyIncludedPackagesNames == null ? new HashSet<>() : explicitlyIncludedPackagesNames;
         this.includeConnectedToIngoingClassNames = includeConnectedToIngoingClassNames == null ? new HashSet<>() : includeConnectedToIngoingClassNames;
@@ -138,6 +162,7 @@ public class DomainModelVisibility {
         this.includeConnectedToClassNames = includeConnectedToClassNames == null ? new HashSet<>() : includeConnectedToClassNames;
         this.blacklistedClassNames = blacklistedClassNames == null ? new HashSet<>() : blacklistedClassNames;
         this.inlinedValueObjects = inlinedValueObjects == null ? new HashSet<>() : inlinedValueObjects;
+        this.includeFlowsFrom = includeFlowsFrom == null ? new HashSet<>() : includeFlowsFrom;
     }
 
     public DomainModelVisibility replaceBlacklistedClassNames(Set<String> blacklistedClassNames) {
@@ -149,7 +174,8 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
+                inlinedValueObjects,
+                includeFlowsFrom
         );
     }
 
@@ -162,7 +188,8 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
+                inlinedValueObjects,
+                includeFlowsFrom
         );
     }
 
@@ -175,7 +202,8 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
+                inlinedValueObjects,
+                includeFlowsFrom
         );
     }
 
@@ -188,7 +216,8 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
+                inlinedValueObjects,
+                includeFlowsFrom
         );
     }
 
@@ -201,7 +230,8 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
+                inlinedValueObjects,
+                includeFlowsFrom
         );
     }
 
@@ -214,7 +244,8 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
+                inlinedValueObjects,
+                includeFlowsFrom
         );
     }
 
@@ -227,7 +258,8 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
+                inlinedValueObjects,
+                includeFlowsFrom
         );
     }
 
@@ -240,7 +272,22 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
+                inlinedValueObjects,
+                includeFlowsFrom
+        );
+    }
+
+    public DomainModelVisibility replaceIncludeFlowsFrom(Set<String> includeFlowsFrom) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames,
+                inlinedValueObjects,
+                includeFlowsFrom
         );
     }
 }

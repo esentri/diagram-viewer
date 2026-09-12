@@ -266,13 +266,13 @@ class ProjectServiceTest {
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
         // when
-        projectService.createOrUpdateDomainModel(projectName, domainMirrorMock);
+        projectService.createOrUpdateDomainModel(projectName, domainMirrorMock, null);
 
         // then
         verify(repository, times(1)).findByName(eq(projectName));
         verify(projectMock, times(1)).setChangedAt(any());
         verify(repository, times(1)).save(projectMock);
-        verify(sessionStorage, times(1)).createOrUpdate(projectMock, domainMirrorMock);
+        verify(sessionStorage, times(1)).createOrUpdate(projectMock, domainMirrorMock, null);
     }
 
     @Test
@@ -292,7 +292,7 @@ class ProjectServiceTest {
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
         // when
-        assertThatThrownBy(() -> projectService.createOrUpdateDomainModel(projectName, domainMirrorMock))
+        assertThatThrownBy(() -> projectService.createOrUpdateDomainModel(projectName, domainMirrorMock, null))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage("User has no access to project '" + projectName + "'");
 
@@ -315,12 +315,12 @@ class ProjectServiceTest {
         when(repository.save(any())).thenReturn(mock(Project.class));
 
         // when
-        projectService.createOrUpdateDomainModel(projectName, domainMirrorMock);
+        projectService.createOrUpdateDomainModel(projectName, domainMirrorMock, null);
 
         // then
         verify(repository, times(1)).findByName(eq(projectName));
         verify(repository, times(1)).save(any(Project.class));
-        verify(sessionStorage, times(1)).createOrUpdate(any(Project.class), eq(domainMirrorMock));
+        verify(sessionStorage, times(1)).createOrUpdate(any(Project.class), eq(domainMirrorMock), eq((String) null));
     }
 
     @Test

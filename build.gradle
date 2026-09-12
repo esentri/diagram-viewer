@@ -24,7 +24,7 @@ version = '0.2'
 ext {
 	set('vaadinVersion', "24.8.6")
 	javaDockerVersion = "3.4.0"
-	dlcVersion = "3.1.1"
+	dlcVersion = "3.4.0"
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
 
@@ -83,6 +83,8 @@ dependencies {
 	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.0'
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
 	implementation "io.domainlifecycles:mirror-serialization-jackson2:${dlcVersion}"
+	implementation "io.domainlifecycles:static-analysis:${dlcVersion}"
+	implementation "io.domainlifecycles:static-analysis-serialization-jackson2:${dlcVersion}"
 	implementation "io.domainlifecycles:diagram-viewer-plugin:1.2"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	if(isInternal){

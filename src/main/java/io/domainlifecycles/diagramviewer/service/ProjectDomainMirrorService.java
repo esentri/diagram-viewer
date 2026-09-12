@@ -50,7 +50,7 @@ public interface ProjectDomainMirrorService {
 
     ProjectDomainMirror createOrUpdate(final Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType);
 
-    ProjectDomainMirror createOrUpdate(final Project project, DomainMirror domainMirror);
+    ProjectDomainMirror createOrUpdate(final Project project, DomainMirror domainMirror, String domainCallsJson);
 
     void delete(final UUID projectId);
 }

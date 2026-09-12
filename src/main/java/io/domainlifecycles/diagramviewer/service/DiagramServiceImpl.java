@@ -42,6 +42,7 @@ import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.staticanalysis.DomainCalls;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -160,15 +161,17 @@ public class DiagramServiceImpl implements DiagramService {
 
         final String nomnoml;
         List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
+        DomainCalls domainCalls = sessionStorage.getDomainCalls(diagram.getProject().getId()).orElse(null);
 
         try {
             nomnoml = DiagrammerUtils.generateNomnoml(
                 domainMirror,
                 diagram.getDiagramStylingConfiguration(),
                 diagram.getDomainModelVisibility(),
-                notes
+                notes,
+                domainCalls
             );
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             throw DiagramViewerException.fail(e.getMessage(), e);
         }
 

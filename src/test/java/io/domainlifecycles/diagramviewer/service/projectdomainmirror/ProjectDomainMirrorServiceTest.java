@@ -210,7 +210,7 @@ class ProjectDomainMirrorServiceTest {
         doNothing().when(regenerateDiagramsJobService).create(eq(projectMock));
 
         // when
-        ProjectDomainMirror result = projectDomainMirrorService.createOrUpdate(projectMock, domainMirrorMock);
+        ProjectDomainMirror result = projectDomainMirrorService.createOrUpdate(projectMock, domainMirrorMock, null);
 
         // then
         assertThat(result).isEqualTo(projectDomainMirrorMock);
@@ -234,7 +234,7 @@ class ProjectDomainMirrorServiceTest {
         when(repository.save(any(ProjectDomainMirror.class))).thenReturn(projectDomainMirrorMock);
 
         // when
-        ProjectDomainMirror result = projectDomainMirrorService.createOrUpdate(projectMock, domainMirrorMock);
+        ProjectDomainMirror result = projectDomainMirrorService.createOrUpdate(projectMock, domainMirrorMock, null);
 
         // then
         assertThat(result).isEqualTo(projectDomainMirrorMock);

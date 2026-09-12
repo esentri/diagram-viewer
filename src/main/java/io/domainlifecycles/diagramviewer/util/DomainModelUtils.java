@@ -30,6 +30,7 @@
 package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainType;
@@ -45,9 +46,12 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +64,65 @@ public class DomainModelUtils {
     public static String nameWithStereoType(DomainTypeMirror mirror) {
         return mirror.getTypeName().substring(mirror.getTypeName().lastIndexOf('.') + 1)
                 + " <" + translateDomainType(mirror.getDomainType())+">";
+    }
+
+    /**
+     * Restricts the given domain type mirrors to the concrete, non-technical types eligible for the
+     * connection based ("Include Connections to:" etc.) and flow based view filters: enums,
+     * identities, entities and value objects are excluded (entities and value objects are shown
+     * inline on their owning aggregate instead), as are DLC's own framework types, and - unless the
+     * diagram is configured to show all inheritance structures - a service kind interface already
+     * mirrored by one of its own implementations.
+     *
+     * @param diagram           the diagram the filter is applied for
+     * @param domainTypeMirrors the candidate domain type mirrors
+     * @return the eligible domain type mirrors, sorted by type name
+     */
+    public static List<DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {
+        List<DomainTypeMirror> domainTypeMirrorsFiltered = new ArrayList<>();
+
+        if (domainTypeMirrors != null && !domainTypeMirrors.isEmpty()) {
+            List<String> mirroredTypeNames = domainTypeMirrors.stream()
+                .map(DomainTypeMirror::getTypeName)
+                .filter(typeName -> !typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
+            domainTypeMirrorsFiltered.addAll(
+                domainTypeMirrors
+                    .stream()
+                    .filter(type ->
+                        diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()
+                            || diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream()
+                            .anyMatch(p -> type.getTypeName().startsWith(p)))
+                    .filter(m -> !m.getTypeName().startsWith(DOMAINLIFECYCLES_PACKAGE_NAME))
+                    .filter(m ->
+                        !m.getDomainType().equals(DomainType.ENUM)
+                                && !m.getDomainType().equals(DomainType.IDENTITY)
+                        && !m.getDomainType().equals(DomainType.VALUE_OBJECT)
+                                && !m.getDomainType().equals(DomainType.ENTITY)
+                    )
+                    .toList()
+            );
+
+            if(!diagram.getDiagramStylingConfiguration().isShowAllInheritanceStructures()){
+                for (DomainTypeMirror mirror : domainTypeMirrors) {
+                    switch (mirror.getDomainType()) {
+                        case SERVICE_KIND, OUTBOUND_SERVICE, APPLICATION_SERVICE, DOMAIN_SERVICE, REPOSITORY, QUERY_HANDLER -> {
+                            for (String interfaceTypeName : mirror.getAllInterfaceTypeNames()) {
+                                if (!interfaceTypeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME) && !diagram.getDiagramStylingConfiguration().isShowInheritanceStructuresForServiceKinds()) {
+                                    if (mirroredTypeNames.contains(interfaceTypeName)) {
+                                        domainTypeMirrorsFiltered.remove(mirror);
+                                    }
+                                }
+                            }
+                        }
+                        default -> { }
+                    }
+                }
+            }
+
+        }
+
+        return domainTypeMirrorsFiltered.stream().sorted(
+                Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
     }
 
     public static String translateDomainType(DomainType domainType) {

@@ -118,7 +118,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror) {
+    public void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror, String domainCallsJson) {
 
         Optional<Project> foundProject = repository.findByName(buildCleanProjectName(projectName));
 
@@ -131,14 +131,14 @@ public class ProjectServiceImpl implements ProjectService {
 
             project.setChangedAt(Instant.now());
             repository.save(project);
-            sessionStorage.createOrUpdate(project, domainMirror);
+            sessionStorage.createOrUpdate(project, domainMirror, domainCallsJson);
             return;
         }
 
         Project project = mapProject(projectName,
             (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         Project persistedProject = repository.save(project);
-        sessionStorage.createOrUpdate(persistedProject, domainMirror);
+        sessionStorage.createOrUpdate(persistedProject, domainMirror, domainCallsJson);
     }
 
     @Override

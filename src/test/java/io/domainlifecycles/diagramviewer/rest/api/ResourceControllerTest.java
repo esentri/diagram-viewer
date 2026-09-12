@@ -77,4 +77,15 @@ class ResourceControllerTest {
             .hasCauseInstanceOf(DiagramViewerException.class)
             .hasMessageContaining("No file found at '");
     }
+
+    @Test
+    void Should_ThrowDiagramViewerException_WhenDirectoryNameEscapesTheDiagramsDirectory() throws Exception {
+
+        // when: ".." would resolve outside the configured diagrams directory, e.g. to read
+        // 'src/test/build.gradle' instead of a file under 'src/test/resources'
+        assertThatThrownBy(() -> mockMvc.perform(get("/api/resources/view/{directoryName}/{fileName}", "..", "build.gradle")))
+            .isInstanceOf(ServletException.class)
+            .hasCauseInstanceOf(DiagramViewerException.class)
+            .hasMessageContaining("is outside the diagrams directory");
+    }
 }

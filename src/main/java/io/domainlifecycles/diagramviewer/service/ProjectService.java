@@ -87,10 +87,11 @@ public interface ProjectService {
      *
      * @param projectName the name of the project to be saved, must not be null or empty
      * @param domainMirror the domain mirror configuration associated with the project, must not be null
-     * @return the saved {@link Project} entity
+     * @param domainCallsJson the raw JSON representation of the static analysis result (DomainCalls) uploaded
+     *                        alongside the domain mirror, or {@code null} if none was uploaded
      */
     @Transactional
-    void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror);
+    void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror, String domainCallsJson);
 
     /**
      * Renames the specified project with a new name.
