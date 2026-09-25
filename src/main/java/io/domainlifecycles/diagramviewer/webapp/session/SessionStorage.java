@@ -34,6 +34,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
+import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
@@ -146,7 +147,7 @@ public class SessionStorage {
             .lastUpdated(latestChange)
             .domainMirror(domainMirror)
             .aggregateRootMirrors(aggregateRootMirrors)
-            .domainTypeMirrors(domainTypeMirrors)
+            .domainTypeMirrors(DomainModelUtils.withoutUnrelatedNonDomainTypes(domainTypeMirrors, domainMirror))
             .domainCalls(deserializeDomainCalls(projectDomainMirror.getDomainCalls(), domainMirror))
             .build();
 
@@ -175,7 +176,7 @@ public class SessionStorage {
             .lastUpdated(project.getLatestChangeInstant())
             .domainMirror(domainMirror)
             .aggregateRootMirrors(domainMirror.getAllAggregateRootMirrors())
-            .domainTypeMirrors(domainMirror.getAllDomainTypeMirrors())
+            .domainTypeMirrors(DomainModelUtils.withoutUnrelatedNonDomainTypes(domainMirror.getAllDomainTypeMirrors(), domainMirror))
             .domainCalls(deserializeDomainCalls(projectDomainMirror.getDomainCalls(), domainMirror))
             .build();
 

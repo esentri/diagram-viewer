@@ -81,6 +81,8 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showOutboundServiceMethodsCheckbox;
     private Checkbox showUnspecifiedServiceKindFieldsCheckbox;
     private Checkbox showUnspecifiedServiceKindMethodsCheckbox;
+    private Checkbox showNonDomainClassFieldsCheckbox;
+    private Checkbox showNonDomainClassMethodsCheckbox;
     private Checkbox showAggregateFieldsCheckbox;
     private Checkbox showAggregateMethodsCheckbox;
 
@@ -148,6 +150,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         accordion.add(createAndGetQueryHandlerAccordionPanel());
         accordion.add(createAndGetOutboundServiceAccordionPanel());
         accordion.add(createAndGetUnspecifiedServiceKindAccordionPanel());
+        accordion.add(createAndGetNonDomainClassAccordionPanel());
 
         return accordion;
     }
@@ -469,6 +472,30 @@ public class VisibilityConfigurationDialog extends Dialog {
         return accordionPanel;
     }
 
+    private AccordionPanel createAndGetNonDomainClassAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Non-Domain Class");
+
+        FormLayout nonDomainClassDialogFormLayout = new FormLayout();
+
+        Checkbox showNonDomainClassesCheckbox = new Checkbox();
+        showNonDomainClassesCheckbox.setTooltipText("Classes without any domain marker interface, shown only if they are referenced by a service kind or reference one themselves (e.g. a mapper used by a service, or a controller calling an application service).");
+        diagramConfigurationBinder.bind(showNonDomainClassesCheckbox, DiagramStylingConfiguration::isShowNonDomainClasses, DiagramStylingConfiguration::setShowNonDomainClasses);
+
+        showNonDomainClassFieldsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showNonDomainClassFieldsCheckbox, DiagramStylingConfiguration::isShowNonDomainClassFields, DiagramStylingConfiguration::setShowNonDomainClassFields);
+
+        showNonDomainClassMethodsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showNonDomainClassMethodsCheckbox, DiagramStylingConfiguration::isShowNonDomainClassMethods, DiagramStylingConfiguration::setShowNonDomainClassMethods);
+
+        nonDomainClassDialogFormLayout.addFormItem(showNonDomainClassesCheckbox,"Show");
+        nonDomainClassDialogFormLayout.addFormItem(showNonDomainClassFieldsCheckbox,"Fields");
+        nonDomainClassDialogFormLayout.addFormItem(showNonDomainClassMethodsCheckbox,"Methods");
+
+        accordionPanel.add(nonDomainClassDialogFormLayout);
+        return accordionPanel;
+    }
+
     private void invertShowFieldsCheckboxes() {
         Boolean showAllFieldsCheckboxValue = showAllFieldsCheckbox.getValue();
         showDomainEventFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
@@ -480,6 +507,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         showQueryHandlerFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showOutboundServiceFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showUnspecifiedServiceKindFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
+        showNonDomainClassFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
     }
 
     private void invertShowMethodsCheckboxes() {
@@ -493,5 +521,6 @@ public class VisibilityConfigurationDialog extends Dialog {
         showQueryHandlerMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showOutboundServiceMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showUnspecifiedServiceKindMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
+        showNonDomainClassMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
     }
 }

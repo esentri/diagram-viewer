@@ -128,6 +128,7 @@ public class StylingConfigurationDialog extends Dialog {
         accordion.add(createAndGetQueryHandlerAccordionPanel());
         accordion.add(createAndGetOutboundServiceAccordionPanel());
         accordion.add(createAndGetUnspecifiedServiceKindAccordionPanel());
+        accordion.add(createAndGetNonDomainClassAccordionPanel());
 
         return accordion;
     }
@@ -480,6 +481,31 @@ public class StylingConfigurationDialog extends Dialog {
         return accordionPanel;
     }
 
+    private AccordionPanel createAndGetNonDomainClassAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Non-Domain Class");
+
+        FormLayout nonDomainClassDialogFormLayout = new FormLayout();
+
+        ColorPickerComponent nonDomainClassColorInput = new ColorPickerComponent();
+        binder.forField(nonDomainClassColorInput)
+            .bind(diagramStylingConfiguration -> extractColorConfiguration(diagramStylingConfiguration.getNonDomainClassStyle()),
+                (diagramStylingConfiguration, newColorHexString) -> diagramStylingConfiguration.setNonDomainClassStyle(buildNewColorConfiguration(diagramStylingConfiguration.getNonDomainClassStyle(), newColorHexString)));
+        nonDomainClassDialogFormLayout.addFormItem(nonDomainClassColorInput, "Color");
+
+        MultiSelectComboBox<Styling> nonDomainClassStylingOptionsSelect = new MultiSelectComboBox<>();
+        binder.forField(nonDomainClassStylingOptionsSelect)
+            .bind(diagramStylingConfiguration -> Styling.map(extractStylingConfiguration(diagramStylingConfiguration.getNonDomainClassStyle())),
+                (diagramStylingConfiguration, selectedStylings) -> diagramStylingConfiguration.setNonDomainClassStyle(buildNewStylingConfiguration(
+                    diagramStylingConfiguration.getNonDomainClassStyle(), selectedStylings)));
+        nonDomainClassStylingOptionsSelect.setItems(Styling.values());
+        nonDomainClassStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
+        nonDomainClassDialogFormLayout.addFormItem(nonDomainClassStylingOptionsSelect, "Styling Options");
+
+        accordionPanel.add(nonDomainClassDialogFormLayout);
+        return accordionPanel;
+    }
+
     /**
      * Extracts the styling part of the configuration.
      * @param configuration the current configuration, i.e. "fill=#FFFFCC bold italic"
@@ -491,7 +517,8 @@ public class StylingConfigurationDialog extends Dialog {
         Matcher matcher = stylePattern.matcher(configuration);
         if (matcher.find()) {
             String styles = matcher.group().trim();
-            return styles.split("\\s+");
+            // a color-only configuration (e.g. "fill=#EAEAEA") has no styling part at all
+            return styles.isEmpty() ? new String[0] : styles.split("\\s+");
         } else {
             return new String[0];
         }

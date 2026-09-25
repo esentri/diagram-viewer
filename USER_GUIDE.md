@@ -99,6 +99,23 @@ Additionally, you can define which stereotypes are shown.
 2. For example, you can create a diagram showing only the Aggregates in the domain model, without showing field and method details.
 ![Aggregates only](./images/aggregates_only.png)
 
+### Non-domain classes
+Besides the classes implementing one of the DLC marker interfaces, the domain model also contains classes
+that are not DDD building blocks, e.g. mappers, helpers, REST controllers or message listeners. These
+non-domain classes are uploaded with the domain model too (requires a DLC build plugin version supporting non-domain classes) and are shown in the diagram
+**by default**, with the stereotype ``<<NonDomain>>``.
+
+A non-domain class is only drawn, if it has a relationship (via a field, a method parameter or a return type) to a service kind
+(ApplicationService, DomainService, Repository, QueryHandler, OutboundService or unspecified ServiceKind), in either direction:
+- a service depending on a non-domain class, e.g. a mapper an ApplicationService holds a field for
+- a non-domain class depending on a service, e.g. a controller calling an ApplicationService
+
+Non-domain classes without such a relationship never appear in a diagram, and are therefore also not offered in the
+class selections of the view filters.
+
+To hide non-domain classes, open the general visibility settings (eye icon) and uncheck ``Show`` in the section ``Non-Domain Class``.
+There you can also decide whether their fields (hidden by default) and methods (shown by default) are displayed.
+
 ### Filter on the domain model element level
 Sometimes it is useful to only show specific classes in the diagram and package level filtering is not a sufficient way.
 In this case you can hide concrete domain model elements. 
@@ -118,6 +135,43 @@ There are 4 types of connection based filters:
 For example, to show the model elements, that are connected with the use cases implemented in ``ServiceLeistungenUseCases``,
 one might enter the ApplicationService class ``ServiceLeistungUseCases`` in ``Include outgoing connections from`` and see:
 ![user_case_filter](./images/use_case_filter.png)
+
+### Filter on flows
+The connection filters follow the structural relations of the domain model. A flow filter instead follows the
+actual method calls within your domain, joined with the domain events and commands, so a diagram can be restricted
+to exactly the parts taking part in a use case.
+
+This requires the result of a static code analysis of your domain classes to be uploaded alongside the domain model.
+The DLC build plugins do this by default (``runStaticAnalysis = true``). If no analysis result was uploaded,
+the flow filter only shows a hint instead.
+
+1. On the right side open ``Flow filter``.
+2. Choose the ``Direction``:
+   - ``Forward (what it leads to)``: the diagram shows everything reached starting from the selected element,
+     e.g. all classes involved when a command is processed.
+   - ``Backward (what leads into it)``: the diagram shows all entry channels through which the selected element is reached,
+     e.g. all callers of a service, or everything leading to the publishing of a domain event.
+     For an Aggregate or ReadModel, the Repository or QueryHandler providing it is included as well.
+3. Select a ``Class``. For services and other classes with methods you can optionally select a ``Method``
+   to restrict the flow to that single method. Leave it empty to include the flows of all methods.
+   Domain commands and domain events have no method selection: forward, they start the flow they trigger;
+   backward, an event leads to the methods publishing it.
+   Domain commands cannot be selected for the backward direction, since nothing in the analyzed code leads *into* a command
+   (a command can still appear in a backward flow, if a target is reached because it processes that command).
+4. Click ``Add flow``.
+
+The active flows are listed in ``Active flow filters`` (forward) and ``Active backward flow filters`` (backward).
+Deselect an entry there to remove that flow again.
+
+Several flows can be combined, also forward and backward ones. The diagram then shows every element reached by any of them.
+The flow filter only ever narrows the diagram: package filters, invisible objects and the general visibility settings still apply.
+The direction of the drawn relations is not affected by the flow direction, it always follows the domain model.
+
+For example, with the [Demo Project](https://github.com/esentri/ddd-hotel-demo):
+- a forward flow from the command ``CheckeGastAus`` shows the whole guest check-out, including the event ``GastAusgecheckt``
+  and its listener ``ZimmerFreigabeListener``
+- a backward flow to the event ``GastAusgecheckt`` shows only what leads to it: the command ``CheckeGastAus``,
+  the ``BuchungApplicationService`` and the ``Buchung`` aggregate publishing the event
 
 ## G) Add Notes
 There is the option to add notes to the diagram and add information, for discussion or documentation purposes. 
@@ -151,7 +205,7 @@ But in some case left to right is better (``Right`)
 ## I) Styling Options
 Left to the current diagram, there is a button with a small paintbrush icon.
 This opens the general style settings for the node types (supported DDD stereotypes) of the diagram.
-Colors and other style settings of each node type can be changed.
+Colors and other style settings of each node type can be changed, including non-domain classes (``Non-Domain Class``).
 
 ## J) Download diagrams as images
 

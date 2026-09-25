@@ -33,6 +33,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycle
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -152,6 +153,14 @@ public class DiagramStylingConfiguration {
     @Getter
     @Setter
     @Builder.Default private String unspecifiedServiceKindStyle = "fill=#C0C0C0 bold";
+    /**
+     * Style declaration for non-domain classes (see Nomnoml style options). The column default
+     * backfills configurations persisted before non-domain classes were supported.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "varchar(255) default 'fill=#EAEAEA'")
+    @Builder.Default private String nonDomainClassStyle = "fill=#EAEAEA";
     /**
      * General font style declaration  (see Nomnoml style options)
      */
@@ -418,6 +427,31 @@ public class DiagramStylingConfiguration {
     @Getter
     @Setter
     @Builder.Default private boolean showUnspecifiedServiceKindMethods = false;
+
+    /**
+     * If true, non-domain classes (classes without any DLC marker interface) are included, as long as
+     * they are referenced by, or reference themselves, a service kind (e.g. a mapper used by a
+     * service, or a controller calling an application service). The column defaults backfill
+     * configurations persisted before non-domain classes were supported.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showNonDomainClasses = true;
+    /**
+     * If true, fields of non-domain classes are included
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default false")
+    @Builder.Default private boolean showNonDomainClassFields = false;
+    /**
+     * If true, methods of non-domain classes are included
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showNonDomainClassMethods = true;
 
     /**
      * If true, the stereotype {@code <Driver>} is used instead of {@code <ApplicationService>}

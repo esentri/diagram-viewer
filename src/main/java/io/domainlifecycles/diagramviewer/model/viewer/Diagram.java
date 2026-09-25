@@ -82,7 +82,7 @@ public class Diagram {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Builder.Default
-    private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null, null, null, null, null, null, null, null);
+    private DomainModelVisibility domainModelVisibility = new DomainModelVisibility(null, null, null, null, null, null, null, null, null, null);
 
     @Getter
     @CreationTimestamp

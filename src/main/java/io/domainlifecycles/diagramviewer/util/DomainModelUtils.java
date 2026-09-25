@@ -35,6 +35,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Upload
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import io.domainlifecycles.mirror.api.NonDomainTypeMirror;
 import io.domainlifecycles.mirror.exception.MirrorException;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
@@ -125,6 +126,41 @@ public class DomainModelUtils {
                 Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
     }
 
+    /**
+     * Drops the non-domain classes (classes without any DLC marker interface) a diagram can never
+     * show from the given domain type mirrors: the diagrammer only draws a non-domain class that is
+     * referenced by a service kind, or references one itself. Keeping the others would only flood
+     * the class pickers of the view filters with classes that have no effect on any diagram.
+     * <p>
+     * The relationships are resolved against the given, fully initialized {@link DomainMirror}, since
+     * the passed mirrors may have been deserialized one by one, without access to the other types.
+     *
+     * @param domainTypeMirrors the candidate domain type mirrors
+     * @param domainMirror      the domain mirror the candidates belong to
+     * @return the domain type mirrors without non-domain classes lacking a service kind relationship
+     */
+    public static List<DomainTypeMirror> withoutUnrelatedNonDomainTypes(List<DomainTypeMirror> domainTypeMirrors, DomainMirror domainMirror) {
+        if (domainTypeMirrors == null || domainMirror == null) {
+            return domainTypeMirrors;
+        }
+        Set<String> referencedByServiceKinds = domainMirror.getAllServiceKindMirrors().stream()
+            .flatMap(serviceKind -> serviceKind.getReferencedNonDomainTypes().stream())
+            .map(DomainTypeMirror::getTypeName)
+            .collect(Collectors.toSet());
+        return domainTypeMirrors.stream()
+            .filter(mirror -> !DomainType.NON_DOMAIN.equals(mirror.getDomainType())
+                || referencedByServiceKinds.contains(mirror.getTypeName())
+                || referencesServiceKind(domainMirror, mirror.getTypeName()))
+            .toList();
+    }
+
+    private static boolean referencesServiceKind(DomainMirror domainMirror, String typeName) {
+        return domainMirror.getDomainTypeMirror(typeName)
+            .filter(NonDomainTypeMirror.class::isInstance)
+            .map(mirror -> !((NonDomainTypeMirror) mirror).getReferencedServiceKinds().isEmpty())
+            .orElse(false);
+    }
+
     public static String translateDomainType(DomainType domainType) {
         return switch (domainType) {
             case ENUM -> "Enum";
@@ -141,6 +177,7 @@ public class DomainModelUtils {
             case OUTBOUND_SERVICE -> "OutboundService";
             case DOMAIN_SERVICE -> "DomainService";
             case APPLICATION_SERVICE -> "ApplicationService";
+            case NON_DOMAIN -> "NonDomain";
             default -> "Object";
         };
     }

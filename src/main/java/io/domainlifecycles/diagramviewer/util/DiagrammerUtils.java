@@ -86,6 +86,8 @@ public class DiagrammerUtils {
                 .withClassesBlacklist(blackListedClasses)
                 .withIncludeFlowsFrom(domainModelVisibility.getIncludeFlowsFrom() == null ?
                         Collections.emptyList() : domainModelVisibility.getIncludeFlowsFrom().stream().toList())
+                .withIncludeFlowsTo(domainModelVisibility.getIncludeFlowsTo() == null ?
+                        Collections.emptyList() : domainModelVisibility.getIncludeFlowsTo().stream().toList())
                 .build();
 
         StyleSettings styleSettings = StyleSettings.builder()
@@ -105,6 +107,7 @@ public class DiagrammerUtils {
                 .withRepositoryStyle(diagramStylingConfiguration.getRepositoryStyle())
                 .withEnumStyle(diagramStylingConfiguration.getEnumStyle())
                 .withUnspecifiedServiceKindStyle(diagramStylingConfiguration.getUnspecifiedServiceKindStyle())
+                .withNonDomainClassStyle(diagramStylingConfiguration.getNonDomainClassStyle())
                 .withValueObjectStyle(diagramStylingConfiguration.getValueObjectStyle())
                 .build();
 
@@ -161,6 +164,9 @@ public class DiagrammerUtils {
                 .withShowUnspecifiedServiceKinds(diagramStylingConfiguration.isShowUnspecifiedServiceKinds())
                 .withShowUnspecifiedServiceKindFields(diagramStylingConfiguration.isShowUnspecifiedServiceKindFields())
                 .withShowUnspecifiedServiceKindMethods(diagramStylingConfiguration.isShowUnspecifiedServiceKindMethods())
+                .withShowNonDomainClasses(diagramStylingConfiguration.isShowNonDomainClasses())
+                .withShowNonDomainClassFields(diagramStylingConfiguration.isShowNonDomainClassFields())
+                .withShowNonDomainClassMethods(diagramStylingConfiguration.isShowNonDomainClassMethods())
                 .withShowAllInheritanceStructures(diagramStylingConfiguration.isShowAllInheritanceStructures())
                 .withShowInheritanceStructuresForDomainCommands(diagramStylingConfiguration.isShowInheritanceStructuresForDomainCommands())
                 .withShowInheritanceStructuresForDomainEvents(diagramStylingConfiguration.isShowInheritanceStructuresForDomainEvents())

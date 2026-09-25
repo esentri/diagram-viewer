@@ -7,6 +7,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
@@ -191,6 +192,61 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
         assertThat(activeFlowsComboBox(flowFilterComponent)).isEmpty();
     }
 
+    @Test
+    void Should_HideCommands_And_AddBackwardFlow_When_UserSwitchesToBackwardDirectionAndSelectsTheCheckOutEvent() {
+
+        // given: the user switches the direction to backward
+        directionRadioGroup(flowFilterComponent).setValue(DiagramFlowFilterComponent.FlowDirection.BACKWARD);
+
+        // then: a domain command cannot be a backward flow target, so none is offered anymore
+        ComboBox<DomainTypeMirror> classComboBox = classComboBox(flowFilterComponent);
+        assertThat(classComboBox.getListDataView().getItems()
+            .map(DomainTypeMirror::getTypeName))
+            .doesNotContain(RezeptionScenario.CHECK_OUT_COMMAND, RezeptionScenario.CHECK_IN_COMMAND);
+
+        // when: the user selects the check-out event and clicks "Add flow"
+        classComboBox.setValue(findByTypeName(classComboBox, RezeptionScenario.GAST_AUSGECHECKT_EVENT));
+        assertThat(methodComboBox(flowFilterComponent).isEnabled()).isFalse();
+        click(addFlowButton(flowFilterComponent));
+
+        // then: the backward flow is active and persisted, the forward flows stay untouched
+        assertThat(activeBackwardFlows(flowFilterComponent)).contains(RezeptionScenario.GAST_AUSGECHECKT_EVENT);
+        assertThat(activeFlowsComboBox(flowFilterComponent)).isEmpty();
+        Diagram reloaded = diagramRepository.findById(diagram.getId()).orElseThrow();
+        assertThat(reloaded.getDomainModelVisibility().getIncludeFlowsTo())
+            .containsExactly(RezeptionScenario.GAST_AUSGECHECKT_EVENT);
+        assertThat(reloaded.getDomainModelVisibility().getIncludeFlowsFrom()).isEmpty();
+    }
+
+    @Test
+    void Should_KeepForwardAndBackwardFlowsApart_When_UserAddsOneOfEach() {
+
+        // given: a forward flow from the check-out command
+        ComboBox<DomainTypeMirror> classComboBox = classComboBox(flowFilterComponent);
+        classComboBox.setValue(findByTypeName(classComboBox, RezeptionScenario.CHECK_OUT_COMMAND));
+        click(addFlowButton(flowFilterComponent));
+
+        // when: a backward flow into the booking application service is added as well
+        directionRadioGroup(flowFilterComponent).setValue(DiagramFlowFilterComponent.FlowDirection.BACKWARD);
+        classComboBox = classComboBox(flowFilterComponent);
+        classComboBox.setValue(findByTypeName(classComboBox, RezeptionScenario.BUCHUNG_APPLICATION_SERVICE));
+        click(addFlowButton(flowFilterComponent));
+
+        // then
+        assertThat(activeFlows(flowFilterComponent)).containsExactly(RezeptionScenario.CHECK_OUT_COMMAND);
+        assertThat(activeBackwardFlows(flowFilterComponent)).containsExactly(RezeptionScenario.BUCHUNG_APPLICATION_SERVICE);
+
+        // when: the backward flow is removed again
+        activeBackwardFlowsComboBox(flowFilterComponent).orElseThrow().deselect(RezeptionScenario.BUCHUNG_APPLICATION_SERVICE);
+
+        // then: only the forward flow remains
+        Diagram reloaded = diagramRepository.findById(diagram.getId()).orElseThrow();
+        assertThat(reloaded.getDomainModelVisibility().getIncludeFlowsTo()).isEmpty();
+        assertThat(reloaded.getDomainModelVisibility().getIncludeFlowsFrom())
+            .containsExactly(RezeptionScenario.CHECK_OUT_COMMAND);
+        assertThat(activeBackwardFlowsComboBox(flowFilterComponent)).isEmpty();
+    }
+
     private static DomainTypeMirror findByTypeName(ComboBox<DomainTypeMirror> classComboBox, String typeName) {
         return classComboBox.getListDataView().getItems()
             .filter(type -> typeName.equals(type.getTypeName()))
@@ -209,6 +265,27 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
                 && comboBox.getLabel() != null && comboBox.getLabel().startsWith("Active flow filters"))
             .map(c -> (MultiSelectComboBox<String>) c)
             .findFirst();
+    }
+
+    private static Set<String> activeBackwardFlows(Component root) {
+        return activeBackwardFlowsComboBox(root).map(MultiSelectComboBox::getValue).orElseGet(Set::of);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Optional<MultiSelectComboBox<String>> activeBackwardFlowsComboBox(Component root) {
+        return descendants(root)
+            .filter(c -> c instanceof MultiSelectComboBox<?> comboBox
+                && comboBox.getLabel() != null && comboBox.getLabel().startsWith("Active backward flow filters"))
+            .map(c -> (MultiSelectComboBox<String>) c)
+            .findFirst();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static RadioButtonGroup<DiagramFlowFilterComponent.FlowDirection> directionRadioGroup(Component root) {
+        return (RadioButtonGroup<DiagramFlowFilterComponent.FlowDirection>) descendants(root)
+            .filter(c -> c instanceof RadioButtonGroup<?> group && "Direction".equals(group.getLabel()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Direction radio group not found"));
     }
 
     @SuppressWarnings("unchecked")

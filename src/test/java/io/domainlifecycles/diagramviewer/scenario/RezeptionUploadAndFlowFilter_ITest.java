@@ -170,6 +170,28 @@ class RezeptionUploadAndFlowFilter_ITest extends BaseIntegrationTest {
         assertThat(svg).doesNotContain(classBoxMarker("AktualisiereGastdaten"));
     }
 
+    @Test
+    void Should_RestrictDiagramToTheEntryChannels_When_BackwardFlowFilterConfiguredForTheCheckOutEvent() throws IOException {
+
+        // given
+        DomainModelVisibility visibility = new DomainModelVisibility()
+            .replaceIncludeFlowsTo(Set.of(RezeptionScenario.GAST_AUSGECHECKT_EVENT));
+
+        // when
+        Diagram diagram = diagramService.create(project, "check-out-backward-flow-event", visibility, new DiagramStylingConfiguration());
+
+        // then: what leads into the event is rendered, the unrelated check-in command and the
+        // event's own (downstream) listener are not
+        String svg = readGeneratedSvg(diagram);
+        assertThat(svg).contains(classBoxMarker("Buchung"));
+        assertThat(svg).contains(classBoxMarker("CheckeGastAus"));
+        assertThat(svg).doesNotContain(classBoxMarker("CheckeGastEin"));
+        assertThat(svg).doesNotContain(classBoxMarker("ZimmerFreigabeListener"));
+        assertThat(diagramRepository.findById(diagram.getId()).orElseThrow()
+            .getDomainModelVisibility().getIncludeFlowsTo())
+            .containsExactly(RezeptionScenario.GAST_AUSGECHECKT_EVENT);
+    }
+
     private String readGeneratedSvg(Diagram diagram) throws IOException {
         Path svgPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getName() + ".svg");
         return Files.readString(svgPath);

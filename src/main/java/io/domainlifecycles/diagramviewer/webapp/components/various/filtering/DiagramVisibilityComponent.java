@@ -337,6 +337,7 @@ public class DiagramVisibilityComponent extends Div {
             case OUTBOUND_SERVICE -> "OutboundService";
             case DOMAIN_SERVICE -> "DomainService";
             case APPLICATION_SERVICE -> "ApplicationService";
+            case NON_DOMAIN -> "NonDomain";
             default -> "Object";
         };
     }
