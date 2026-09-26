@@ -139,6 +139,22 @@ class DiagrammerUtilsTest {
         assertThat(nomnoml).doesNotContain(classBoxMarker("AktualisiereGastdaten"));
     }
 
+    @Test
+    void Should_IgnoreConfiguredFlows_When_NoStaticAnalysisResultIsAvailable() {
+
+        // given: forward and backward flows configured, but no DomainCalls at hand
+        DomainModelVisibility visibility = new DomainModelVisibility()
+            .replaceIncludeFlowsFrom(Set.of(RezeptionScenario.CHECK_OUT_COMMAND))
+            .replaceIncludeFlowsTo(Set.of(RezeptionScenario.GAST_AUSGECHECKT_EVENT));
+
+        // when: rendering does not fail ...
+        String nomnoml = generate(rezeptionMirror, DiagramStylingConfiguration.builder().build(), visibility, null);
+
+        // then: ... and the diagram is not restricted to any flow
+        assertThat(nomnoml).contains(classBoxMarker("CheckeGastEin"));
+        assertThat(nomnoml).contains(classBoxMarker("AktualisiereGastdaten"));
+    }
+
     private static String generate(DomainMirror mirror,
                                    DiagramStylingConfiguration styling,
                                    DomainModelVisibility visibility,

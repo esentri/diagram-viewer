@@ -39,7 +39,7 @@ to upload your domain model to the DLC Diagram Viewer. There you may also find a
 
 ```Gradle
 plugins {
-	id 'io.domainlifecycles.dlc-gradle-plugin' version '3.0.0'
+	id 'io.domainlifecycles.dlc-gradle-plugin' version '3.4.0'
 }
 ...
 dlcGradlePlugin {
@@ -48,12 +48,61 @@ dlcGradlePlugin {
         projectName = "ddd-reception-demo"
         apiKey = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
         diagramViewerBaseUrl = "http://localhost:8090"
+        // static analysis of the domain classes, uploaded alongside the domain model (default: true)
+        runStaticAnalysis = true
+        // packages considered by the static analysis (default: domainModelPackages)
+        staticAnalysisPackages = ["com.esentri"]
+        // max. number of classes cached while analyzing (default: 500)
+        staticAnalysisCacheSize = 500
+        // stream the upload instead of assembling it in memory first (default: false)
+        streamUpload = true
     }
 }
 ```
 - Change the parameters to your needs
 - Don't forget to have a DLC diagram Viewer running, when executing the plugin
 - Insert the API key from the DLC Diagram Viewer into the build plugin parameters
+- Run the upload with ``gradle domainModelUpload``
+
+Uploading requires access to the project: the first upload of a project name creates the project
+for the user owning the API key. Later uploads to the same project name update it, but only if the user
+owning the API key is assigned to that project (as its creator, or via ``Share Project``). Otherwise the
+upload is rejected.
+
+#### Static analysis
+Since plugin version 3.4.0, the upload by default also includes the result of a static (bytecode) analysis of your
+compiled domain classes. It captures which methods call which other methods, and together with the domain events
+and commands of the domain model, this enables the [flow filter](#filter-on-flows) of the Diagram Viewer.
+Without it, the flow filter is not available and only shows a hint.
+
+- ``runStaticAnalysis``: set to ``false`` to upload only the domain model and skip the analysis
+  (e.g. to speed up the build, if flow filtering is not needed).
+- ``staticAnalysisPackages``: the packages (including their subpackages) the analysis considers. By default, these are the
+  ``domainModelPackages``, not the whole classpath, which would be considerably more expensive for large projects.
+  Widen it, if concrete implementations of your repository or outbound service interfaces live in other packages
+  (e.g. an infrastructure package), otherwise the flows through these implementations are not found.
+- ``staticAnalysisCacheSize``: the analysis keeps memory usage bounded by caching only this many classes at a time
+  (default ``500``). Lower it for very large projects to save memory (at the cost of re-parsing classes more often),
+  raise it if you have memory to spare.
+
+The analysis is run on the compiled classes, so the upload task compiles your project first.
+
+#### Stream upload
+The domain model and the static analysis result are uploaded as JSON, which can reach tens of megabytes for a domain
+of a few hundred types. The upload is therefore always gzip-compressed, the Diagram Viewer decompresses it transparently.
+
+- By default (``streamUpload = false``), the complete compressed request is assembled in memory before it is sent.
+  This is simple and sufficient for small and medium-sized domains.
+- With ``streamUpload = true``, the JSON is streamed directly into the HTTP request while it is being produced
+  (using chunked transfer encoding), so the complete JSON is never held in memory. Use this for large domains, where
+  the default could otherwise risk an ``OutOfMemoryError`` in your build.
+
+Both variants use the same endpoint of the Diagram Viewer, so no configuration is needed on the viewer side.
+The plugin applies a 10 second connect timeout and an overall 5 minute request timeout, so an unreachable or slow
+Diagram Viewer fails the build instead of hanging it.
+
+For the Maven plugin, the same options are available as ``<runStaticAnalysis>``, ``<staticAnalysisPackages>``,
+``<staticAnalysisCacheSize>`` and ``<streamUpload>``, see the [DLC Build Plugins](https://github.com/esentri/domainlifecycles/tree/main/dlc-plugins) documentation.
 
 3. After a successful upload, refresh the diagram viewer page and you can see the new project on the left side.
 ![Uploaded](./images/uploaded.png)
@@ -143,7 +192,10 @@ to exactly the parts taking part in a use case.
 
 This requires the result of a static code analysis of your domain classes to be uploaded alongside the domain model.
 The DLC build plugins do this by default (``runStaticAnalysis = true``). If no analysis result was uploaded,
-the flow filter only shows a hint instead.
+flow filtering is disabled for the project: the flow filter is marked as ``unavailable`` and no flows can be added.
+Flows configured earlier (e.g. before the domain model was uploaded again with ``runStaticAnalysis = false``) are kept,
+but ignored when the diagram is rendered. They are listed read-only as ``Inactive flow filters`` and apply again
+as soon as an analysis result is uploaded.
 
 1. On the right side open ``Flow filter``.
 2. Choose the ``Direction``:

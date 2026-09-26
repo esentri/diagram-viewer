@@ -84,9 +84,11 @@ public class DiagrammerUtils {
                 .withExcludeConnectedToOutgoing(domainModelVisibility.getExcludeConnectedToOutgoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToOutgoingClassNames().stream().toList())
                 .withClassesBlacklist(blackListedClasses)
-                .withIncludeFlowsFrom(domainModelVisibility.getIncludeFlowsFrom() == null ?
+                // flow filtering needs the result of a static analysis: without one, configured flows
+                // are ignored (but kept, so they apply again once an analysis result is uploaded)
+                .withIncludeFlowsFrom(domainCalls == null || domainModelVisibility.getIncludeFlowsFrom() == null ?
                         Collections.emptyList() : domainModelVisibility.getIncludeFlowsFrom().stream().toList())
-                .withIncludeFlowsTo(domainModelVisibility.getIncludeFlowsTo() == null ?
+                .withIncludeFlowsTo(domainCalls == null || domainModelVisibility.getIncludeFlowsTo() == null ?
                         Collections.emptyList() : domainModelVisibility.getIncludeFlowsTo().stream().toList())
                 .build();
 

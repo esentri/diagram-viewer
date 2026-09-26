@@ -124,16 +124,15 @@ public class DiagramFlowFilterComponent extends Div {
         }
         log.debug("refreshDetails DiagramFlowFilterComponent started");
 
-        Details flowDetails = new Details("Flow filter");
+        boolean domainCallsAvailable = sessionStorage.getDomainCalls(currentDiagram.getProject().getId()).isPresent();
+
+        Details flowDetails = new Details(domainCallsAvailable ? "Flow filter" : "Flow filter (unavailable)");
         flowDetails.setWidthFull();
         flowDetails.setOpened(sessionStorage.isFlowFilterOpen());
         flowDetails.addOpenedChangeListener(e -> sessionStorage.setFlowFilterOpen(e.isOpened()));
 
-        boolean domainCallsAvailable = sessionStorage.getDomainCalls(currentDiagram.getProject().getId()).isPresent();
         if (!domainCallsAvailable) {
-            flowDetails.add(new Paragraph(
-                "Upload the result of a static code analysis (DomainCalls) alongside the domain mirror "
-                    + "to restrict this diagram to one or more flows."));
+            addFlowFilteringUnavailableContent(flowDetails);
             add(flowDetails);
             return;
         }
@@ -188,6 +187,33 @@ public class DiagramFlowFilterComponent extends Div {
 
         add(flowDetails);
         log.debug("refreshDetails DiagramFlowFilterComponent finished");
+    }
+
+    /**
+     * Without an uploaded static analysis result, flow filtering is disabled: no flows can be added,
+     * and flows configured earlier are ignored when the diagram is rendered. They are kept though -
+     * shown here read-only - and apply again as soon as an analysis result is uploaded.
+     */
+    private void addFlowFilteringUnavailableContent(Details flowDetails) {
+        flowDetails.add(new Paragraph(
+            "Flow filtering is disabled, since no result of a static code analysis (DomainCalls) was uploaded "
+                + "alongside the domain mirror. Upload it (e.g. via the DLC build plugin with "
+                + "'runStaticAnalysis = true') to restrict this diagram to one or more flows."));
+
+        DomainModelVisibility visibility = currentDiagram.getDomainModelVisibility();
+        Set<String> inactiveFlows = new LinkedHashSet<>(visibility.getIncludeFlowsFrom());
+        inactiveFlows.addAll(visibility.getIncludeFlowsTo());
+        if (!inactiveFlows.isEmpty()) {
+            MultiSelectComboBox<String> inactiveFlowsComboBox = new MultiSelectComboBox<>("Inactive flow filters:");
+            inactiveFlowsComboBox.setWidthFull();
+            inactiveFlowsComboBox.setItems(inactiveFlows);
+            inactiveFlowsComboBox.setItemLabelGenerator(flowPoint -> flowPointLabel(flowPoint)
+                + (visibility.getIncludeFlowsTo().contains(flowPoint) ? " (backward)" : ""));
+            inactiveFlowsComboBox.select(inactiveFlows);
+            inactiveFlowsComboBox.setReadOnly(true);
+            inactiveFlowsComboBox.setHelperText("Not applied to the diagram until a static analysis result is uploaded.");
+            flowDetails.add(inactiveFlowsComboBox);
+        }
     }
 
     private MultiSelectComboBox<String> createActiveFlowsComboBox(String label,

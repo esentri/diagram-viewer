@@ -17,6 +17,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
+import io.domainlifecycles.diagramviewer.repository.RegenerateDiagramsJobRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramFlowFilterComponent;
@@ -74,6 +75,9 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
     DiagramService diagramService;
 
     @Autowired
+    RegenerateDiagramsJobRepository regenerateDiagramsJobRepository;
+
+    @Autowired
     SessionStorage sessionStorage;
 
     private AppUser appUser;
@@ -116,6 +120,8 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
     void tearDown() {
         UI.setCurrent(null);
         sessionStorage.delete(project.getId());
+        // a re-upload of the domain model schedules regeneration jobs referencing the diagrams
+        regenerateDiagramsJobRepository.deleteAll();
         diagramRepository.deleteAll();
         projectRepository.deleteAll();
         appUserRepository.deleteAll();
@@ -247,6 +253,46 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
         assertThat(activeBackwardFlowsComboBox(flowFilterComponent)).isEmpty();
     }
 
+    @Test
+    void Should_DisableFlowFiltering_And_ShowConfiguredFlowsAsInactive_When_DomainModelIsReuploadedWithoutStaticAnalysis() throws Exception {
+
+        // given: a forward and a backward flow were added while an analysis result was available
+        ComboBox<DomainTypeMirror> classComboBox = classComboBox(flowFilterComponent);
+        classComboBox.setValue(findByTypeName(classComboBox, RezeptionScenario.CHECK_OUT_COMMAND));
+        click(addFlowButton(flowFilterComponent));
+        directionRadioGroup(flowFilterComponent).setValue(DiagramFlowFilterComponent.FlowDirection.BACKWARD);
+        classComboBox = classComboBox(flowFilterComponent);
+        classComboBox.setValue(findByTypeName(classComboBox, RezeptionScenario.GAST_AUSGECHECKT_EVENT));
+        click(addFlowButton(flowFilterComponent));
+
+        // when: the domain model is uploaded again, this time without a static analysis result
+        mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", project.getName())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-API-KEY", appUser.getApiKey().toString())
+                .header("Content-Encoding", "gzip")
+                .content(RezeptionScenario.gzippedUploadRequestBodyWithoutDomainCalls()))
+            .andExpect(status().isOk());
+        Diagram reloaded = diagramRepository.findById(diagram.getId()).orElseThrow();
+        flowFilterComponent.setDiagram(reloaded);
+
+        // then: no flow can be added anymore ...
+        assertThat(descendants(flowFilterComponent)
+            .noneMatch(c -> c instanceof ComboBox<?> comboBox && "Class".equals(comboBox.getLabel()))).isTrue();
+        assertThat(descendants(flowFilterComponent)
+            .noneMatch(c -> c instanceof Button button && "Add flow".equals(button.getText()))).isTrue();
+
+        // ... the configured flows are kept, shown read-only as inactive ...
+        MultiSelectComboBox<String> inactiveFlows = inactiveFlowsComboBox(flowFilterComponent).orElseThrow();
+        assertThat(inactiveFlows.isReadOnly()).isTrue();
+        assertThat(inactiveFlows.getValue())
+            .containsExactlyInAnyOrder(RezeptionScenario.CHECK_OUT_COMMAND, RezeptionScenario.GAST_AUSGECHECKT_EVENT);
+        assertThat(reloaded.getDomainModelVisibility().getIncludeFlowsFrom()).containsExactly(RezeptionScenario.CHECK_OUT_COMMAND);
+        assertThat(reloaded.getDomainModelVisibility().getIncludeFlowsTo()).containsExactly(RezeptionScenario.GAST_AUSGECHECKT_EVENT);
+
+        // ... and the diagram still renders, just unrestricted
+        diagramService.updateModelAndImage(reloaded);
+    }
+
     private static DomainTypeMirror findByTypeName(ComboBox<DomainTypeMirror> classComboBox, String typeName) {
         return classComboBox.getListDataView().getItems()
             .filter(type -> typeName.equals(type.getTypeName()))
@@ -276,6 +322,15 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
         return descendants(root)
             .filter(c -> c instanceof MultiSelectComboBox<?> comboBox
                 && comboBox.getLabel() != null && comboBox.getLabel().startsWith("Active backward flow filters"))
+            .map(c -> (MultiSelectComboBox<String>) c)
+            .findFirst();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Optional<MultiSelectComboBox<String>> inactiveFlowsComboBox(Component root) {
+        return descendants(root)
+            .filter(c -> c instanceof MultiSelectComboBox<?> comboBox
+                && comboBox.getLabel() != null && comboBox.getLabel().startsWith("Inactive flow filters"))
             .map(c -> (MultiSelectComboBox<String>) c)
             .findFirst();
     }

@@ -99,6 +99,15 @@ public final class RezeptionScenario {
         return gzip(uploadRequestBody());
     }
 
+    /**
+     * @return the upload request body of a build plugin configured with {@code runStaticAnalysis = false},
+     * gzip-compressed: the domain mirror only, without a static analysis result
+     */
+    public static byte[] gzippedUploadRequestBodyWithoutDomainCalls() {
+        return gzip("{\"domainMirror\":" + domainMirrorJson()
+            + ",\"domainModelPackages\":[\"" + DOMAIN_MODEL_PACKAGE + "\"]}");
+    }
+
     private static byte[] gzip(String value) {
         try {
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
