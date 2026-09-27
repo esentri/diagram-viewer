@@ -36,6 +36,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramServiceImpl;
 import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
@@ -50,14 +51,15 @@ public class CardLinkWrapper extends Div {
         getStyle().setMarginBottom("calc(var(--vaadin-form-layout-column-spacing))");
     }
 
-    public CardLinkWrapper(DiagramDirectoryService diagramDirectoryService, Project project, Diagram diagram) {
+    public CardLinkWrapper(DiagramDirectoryService diagramDirectoryService, DiagramService diagramService, Project project,
+                           Diagram diagram) {
         this();
         addClickListener(
             event -> UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
                 Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(),
                     DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, diagram.getName()))));
 
-        add(createAndGetDiagramCard(diagramDirectoryService, project, diagram));
+        add(createAndGetDiagramCard(diagramDirectoryService, diagramService, project, diagram));
     }
 
     public CardLinkWrapper(DiagramDirectoryService diagramDirectoryService, DiagramDirectory diagramDirectory) {
@@ -69,8 +71,10 @@ public class CardLinkWrapper extends Div {
         add(createAndGetDiagramCard(diagramDirectoryService, diagramDirectory));
     }
 
-    private DiagramCard createAndGetDiagramCard(DiagramDirectoryService diagramDirectoryService, Project project, Diagram diagram) {
-        return new DiagramCard(diagramDirectoryService, diagram,
+    private DiagramCard createAndGetDiagramCard(DiagramDirectoryService diagramDirectoryService, DiagramService diagramService,
+                                                Project project, Diagram diagram) {
+        return new DiagramCard(diagramDirectoryService, diagram, diagramService.imageSize(diagram),
+            diagramService.previewLimitBytes(),
             DiagramFileUtils.assembleDiagramUrl(
                 diagram.getChangedAt(), diagram.getDiagramStylingConfiguration().getChangedAt(),
                 project.getId().toString(), diagram.getName() + DiagramServiceImpl.SVG_FILE_SUFFIX));

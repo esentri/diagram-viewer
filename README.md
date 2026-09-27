@@ -78,6 +78,8 @@ Override via environment variables:
 - `DIAGRAMS_RENDERING_THREADS`: number of diagrams rendered in the background at the same time (default 2)
 - `DIAGRAMS_LARGE_DIAGRAM_CLASSES`: above this number of classes users are advised to restrict a diagram with
   filters (default 1000)
+- `DIAGRAMS_CARD_PREVIEW_MAX_KILOBYTES`: diagram cards in project and folder views show diagrams up to this image size
+  as preview, larger ones as a placeholder (default 1024) - drawing dozens of large diagrams at once makes the browser slow
 - `PROJECT_MODEL_CACHE_MAXIMUM_MEGABYTES` / `PROJECT_MODEL_CACHE_EXPIRE_AFTER_ACCESS_MINUTES`: memory budget of the
   project models kept in memory, shared by all users (default 0 = half of the maximum heap), and how long a project
   stays cached after its last access (default 60 minutes)

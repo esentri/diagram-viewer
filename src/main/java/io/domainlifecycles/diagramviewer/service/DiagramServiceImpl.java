@@ -46,6 +46,7 @@ import io.domainlifecycles.staticanalysis.DomainCalls;
 import jakarta.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import java.util.List;
@@ -78,6 +79,7 @@ public class DiagramServiceImpl implements DiagramService {
     private final DiagramTypeNoteRepository noteRepository;
     private final KrokiClient krokiClient;
     private final int largeDiagramClasses;
+    private final long previewLimitBytes;
     private final ExecutorService renderingExecutor;
     /** per diagram the number of the latest background rendering requested, see {@link #renderInBackground} */
     private final Map<UUID, AtomicLong> latestRenderings = new ConcurrentHashMap<>();
@@ -89,7 +91,8 @@ public class DiagramServiceImpl implements DiagramService {
         DiagramTypeNoteRepository noteRepository,
         KrokiClient krokiClient,
         @Value("${diagrams.rendering.threads:2}") int renderingThreads,
-        @Value("${diagrams.largeDiagramClasses:1000}") int largeDiagramClasses
+        @Value("${diagrams.largeDiagramClasses:1000}") int largeDiagramClasses,
+        @Value("${diagrams.cardPreviewMaxKilobytes:1024}") long cardPreviewMaxKilobytes
     ) {
         this.diagramsLocation = diagramsLocation;
         this.projectModelCache = projectModelCache;
@@ -97,6 +100,7 @@ public class DiagramServiceImpl implements DiagramService {
         this.noteRepository = noteRepository;
         this.krokiClient = krokiClient;
         this.largeDiagramClasses = largeDiagramClasses;
+        this.previewLimitBytes = cardPreviewMaxKilobytes * 1024;
         AtomicInteger threadNumber = new AtomicInteger();
         this.renderingExecutor = Executors.newFixedThreadPool(renderingThreads, runnable -> {
             Thread thread = new Thread(runnable, "diagram-rendering-" + threadNumber.incrementAndGet());
@@ -311,6 +315,21 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private record RenderedImage(byte[] svg, int classCount) {
+    }
+
+    @Override
+    public long imageSize(Diagram diagram) {
+        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
+        try {
+            return Files.size(diagramPath);
+        } catch (IOException e) {
+            return -1;
+        }
+    }
+
+    @Override
+    public long previewLimitBytes() {
+        return previewLimitBytes;
     }
 
     private boolean diagramWithNameExists(Diagram diagram) {

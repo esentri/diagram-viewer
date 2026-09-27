@@ -90,4 +90,16 @@ public interface DiagramService {
     void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram);
 
     void deleteFilesFromFilesystem(String projectId);
+
+    /**
+     * @param diagram a diagram
+     * @return the size of the diagram's rendered image in bytes, {@code -1} if it has not been rendered (yet)
+     */
+    long imageSize(Diagram diagram);
+
+    /**
+     * @return the image size up to which diagram cards show the diagram itself as preview; larger diagrams show a
+     * placeholder, since drawing dozens of large images at once makes the browser slow
+     */
+    long previewLimitBytes();
 }

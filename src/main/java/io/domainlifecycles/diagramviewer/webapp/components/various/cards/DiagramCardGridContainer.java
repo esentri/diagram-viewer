@@ -34,6 +34,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import java.util.Set;
 
 public class DiagramCardGridContainer extends FlexLayout {
@@ -44,17 +45,19 @@ public class DiagramCardGridContainer extends FlexLayout {
     }
 
     public DiagramCardGridContainer(final DiagramDirectoryService diagramDirectoryService,
+                                    final DiagramService diagramService,
                                     final Project project,
                                     final Set<DiagramDirectory> diagramDirectories,
                                     final Set<Diagram> diagrams) {
         this();
-        add(new DiagramCardGrid(diagramDirectoryService, project, diagramDirectories, diagrams));
+        add(new DiagramCardGrid(diagramDirectoryService, diagramService, project, diagramDirectories, diagrams));
     }
 
     public DiagramCardGridContainer(final DiagramDirectoryService diagramDirectoryService,
+                                    final DiagramService diagramService,
                                     final Project project,
                                     final Set<Diagram> diagrams) {
         this();
-        add(new DiagramCardGrid(diagramDirectoryService, project, diagrams));
+        add(new DiagramCardGrid(diagramDirectoryService, diagramService, project, diagrams));
     }
 }

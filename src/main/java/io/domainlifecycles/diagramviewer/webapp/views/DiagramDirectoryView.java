@@ -47,6 +47,7 @@ import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDirectoryDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
@@ -68,13 +69,16 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
 
     private final DiagramDirectoryService diagramDirectoryService;
     private final ProjectService projectService;
+    private final DiagramService diagramService;
 
     private DiagramDirectory diagramDirectory;
     private Project project;
     private UUID diagramDirectoryId;
 
-    public DiagramDirectoryView(DiagramDirectoryService diagramDirectoryService, ProjectService projectService) {
+    public DiagramDirectoryView(DiagramDirectoryService diagramDirectoryService, ProjectService projectService,
+                                DiagramService diagramService) {
         this.diagramDirectoryService = diagramDirectoryService;
+        this.diagramService = diagramService;
         this.projectService = projectService;
 
         setSizeFull();
@@ -95,7 +99,7 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
 
     private void addPageContents() {
         add(createAndGetNameAndDeleteButtonLayout());
-        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, project,
+        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, diagramService, project,
             project.getSubDirectories(diagramDirectory), diagramDirectory.getDiagrams()));
         add(scroller);
     }

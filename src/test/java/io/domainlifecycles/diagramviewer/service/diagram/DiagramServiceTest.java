@@ -72,7 +72,7 @@ class DiagramServiceTest {
 
     @BeforeEach
     void setUp() {
-        diagramService = new DiagramServiceImpl("/tmp/diagrams", projectModelCache, repository, diagramTypeNoteRepository, krokiClient, 1, 1000);
+        diagramService = new DiagramServiceImpl("/tmp/diagrams", projectModelCache, repository, diagramTypeNoteRepository, krokiClient, 1, 1000, 1024);
         diagramRegenerationService = new DiagramRegenerationService(projectModelCache, diagramService);
     }
 

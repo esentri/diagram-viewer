@@ -109,7 +109,7 @@ class DiagramServiceAsyncRenderingTest {
         when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         return new DiagramServiceImpl(diagramsLocation.toString(), cache, repository,
-            mock(DiagramTypeNoteRepository.class), krokiClient, 1, largeDiagramClasses);
+            mock(DiagramTypeNoteRepository.class), krokiClient, 1, largeDiagramClasses, 1024);
     }
 
     @Test
