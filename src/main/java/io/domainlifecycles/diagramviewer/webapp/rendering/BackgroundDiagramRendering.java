@@ -44,6 +44,7 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramRenderingStartedEv
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import lombok.extern.slf4j.Slf4j;
 
@@ -133,6 +134,16 @@ public final class BackgroundDiagramRendering {
                 }
                 access(ui, requestContext, () -> onDone.accept(failed));
             });
+    }
+
+    /**
+     * @param ui the UI to update
+     * @return runs commands on the UI from background threads, with the UI locked and the current request's session
+     * scoped beans available - see {@link RequestContextBinding}
+     */
+    public static Consumer<Runnable> uiUpdater(UI ui) {
+        RequestContextBinding requestContext = RequestContextBinding.capture();
+        return command -> access(ui, requestContext, command);
     }
 
     private static void notify(String message, NotificationVariant variant) {

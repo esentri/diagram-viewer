@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -264,6 +265,27 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
         Diagram zimmerauslastung = diagram(readModels, RezeptionScenario.AUSLASTUNG_CONTEXT_PACKAGE + " - Zimmerauslastung");
         assertThat(zimmerauslastung.getDomainModelVisibility().getIncludeFlowsTo())
             .containsExactly(RezeptionScenario.ZIMMERAUSLASTUNG_READ_MODEL);
+    }
+
+    @Test
+    void Should_ReportProgress_When_ProjectIsAnalyzedInTheBackground() throws Exception {
+
+        // given
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithBoundedContexts());
+        List<String> progress = new CopyOnWriteArrayList<>();
+
+        // when
+        BoundedContextAnalysisService.Result result = boundedContextAnalysisService
+            .analyzeAsync(reloadedProject(), (done, total, diagramName) -> progress.add(done + "/" + total + " " + diagramName))
+            .get(2, TimeUnit.MINUTES);
+        awaitRenderings(result);
+
+        // then: every diagram reported once, counting up to the total
+        assertThat(result.createdDiagrams()).isEqualTo(6);
+        assertThat(progress).hasSize(6);
+        assertThat(progress.get(0)).startsWith("1/6 ");
+        assertThat(progress.get(5)).startsWith("6/6 ");
+        assertThat(progress).anyMatch(entry -> entry.endsWith(" Buchung - CheckeGastAus"));
     }
 
     @Test

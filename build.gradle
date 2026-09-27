@@ -181,7 +181,11 @@ tasks.register('perfTest', Test) {
 
 	useJUnitPlatform()
 	maxHeapSize = findProperty('perfHeap') ?: '2g'
-	jvmArgs '-XX:+UseG1GC', '-XX:+UseStringDeduplication'
+	jvmArgs '-XX:+UseG1GC', '-XX:+UseStringDeduplication', '-XX:+HeapDumpOnOutOfMemoryError',
+		"-XX:HeapDumpPath=${layout.buildDirectory.get().asFile}/perf"
+	if (findProperty('perfJfr')) {
+		jvmArgs "-XX:StartFlightRecording=filename=${findProperty('perfJfr')},settings=profile"
+	}
 	outputs.upToDateWhen { false }
 	testLogging { showStandardStreams = true }
 	['perf.upload', 'perf.package', 'perf.flowEntry'].each { key ->

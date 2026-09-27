@@ -30,6 +30,7 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
@@ -65,6 +66,15 @@ public interface DiagramService {
      * but renders its image in the background, see {@link #updateModelAndImageAsync(Diagram)}.
      */
     DiagramRendering createAsync(Project project, String fileName, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
+
+    /**
+     * Like {@link #createAsync(Project, String, DomainModelVisibility, DiagramStylingConfiguration)}, creating the
+     * diagram right in the given directory - with a single save, which matters when many diagrams are created at once.
+     *
+     * @param directory the directory of the new diagram, {@code null} for none
+     */
+    DiagramRendering createAsync(Project project, DiagramDirectory directory, String fileName, DomainModelVisibility visibility,
+                                 DiagramStylingConfiguration diagramStylingConfiguration);
 
     /**
      * Renders the given diagram and saves it to the filesystem.

@@ -31,6 +31,7 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
@@ -176,15 +177,28 @@ public class DiagramServiceImpl implements DiagramService {
                                         String name,
                                         DomainModelVisibility visibility,
                                         DiagramStylingConfiguration diagramStylingConfiguration) {
+        return createAsync(project, null, name, visibility, diagramStylingConfiguration);
+    }
+
+    @Override
+    public DiagramRendering createAsync(Project project,
+                                        DiagramDirectory directory,
+                                        String name,
+                                        DomainModelVisibility visibility,
+                                        DiagramStylingConfiguration diagramStylingConfiguration) {
         Diagram diagram = Diagram.builder()
             .name(name)
             .domainModelVisibility(visibility)
             .diagramStylingConfiguration(diagramStylingConfiguration)
             .project(project)
+            .diagramDirectory(directory)
             .build();
 
         save(diagram);
         project.addDiagram(diagram);
+        if (directory != null) {
+            directory.getDiagrams().add(diagram);
+        }
         return new DiagramRendering(diagram, renderInBackground(diagram));
     }
 

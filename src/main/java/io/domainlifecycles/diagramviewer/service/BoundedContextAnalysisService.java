@@ -29,7 +29,6 @@
 
 package io.domainlifecycles.diagramviewer.service;
 
-import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
@@ -40,14 +39,18 @@ import io.domainlifecycles.mirror.api.DomainCommandMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.mirror.api.ReadModelMirror;
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -76,6 +79,12 @@ public class BoundedContextAnalysisService {
     private final ProjectModelCache projectModelCache;
     private final DiagramService diagramService;
     private final DiagramDirectoryService diagramDirectoryService;
+    /** one analysis at a time: analyses of the same project would otherwise race for the same diagram names */
+    private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "bounded-context-analysis");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     public BoundedContextAnalysisService(ProjectModelCache projectModelCache,
                                          DiagramService diagramService,
@@ -83,6 +92,39 @@ public class BoundedContextAnalysisService {
         this.projectModelCache = projectModelCache;
         this.diagramService = diagramService;
         this.diagramDirectoryService = diagramDirectoryService;
+    }
+
+    @PreDestroy
+    void shutdownAnalysisExecutor() {
+        analysisExecutor.shutdownNow();
+    }
+
+    /**
+     * Runs {@link #analyze(Project, ProgressListener)} in the background, so that the user interface stays responsive
+     * - creating the diagrams of a large project takes a while.
+     *
+     * @param project  the project to analyze
+     * @param listener informed about the progress, on the analysis thread
+     * @return the outcome, once the diagrams are created (their images are rendered afterwards)
+     */
+    public CompletableFuture<Result> analyzeAsync(Project project, ProgressListener listener) {
+        return CompletableFuture.supplyAsync(() -> analyze(project, listener), analysisExecutor);
+    }
+
+    /**
+     * Informed while an analysis creates diagrams.
+     */
+    @FunctionalInterface
+    public interface ProgressListener {
+
+        ProgressListener NONE = (done, total, diagramName) -> { };
+
+        /**
+         * @param done        the number of diagrams handled so far (created or skipped)
+         * @param total       the number of diagrams the analysis handles in total
+         * @param diagramName the diagram just handled
+         */
+        void diagramHandled(int done, int total, String diagramName);
     }
 
     /**
@@ -107,14 +149,27 @@ public class BoundedContextAnalysisService {
      * @return what was created
      */
     public Result analyze(Project project) {
+        return analyze(project, ProgressListener.NONE);
+    }
+
+    /**
+     * @param project  the project to analyze
+     * @param listener informed about the progress
+     * @return what was created
+     */
+    public Result analyze(Project project, ProgressListener listener) {
         ProjectModel model = projectModelCache.get(project.getId());
         DomainMirror domainMirror = model.domainMirror();
         boolean flowsAvailable = model.domainCallsAvailable();
-        Analysis analysis = new Analysis(project, domainMirror);
 
         List<BoundedContextMirror> boundedContexts = domainMirror.getAllBoundedContextMirrors().stream()
             .sorted(Comparator.comparing(BoundedContextAnalysisService::label, String.CASE_INSENSITIVE_ORDER))
             .toList();
+        int total = boundedContexts.stream()
+            .mapToInt(boundedContext -> (boundedContext.getAggregateRoots().isEmpty() ? 0 : 1)
+                + (flowsAvailable ? boundedContext.getReadModels().size() + boundedContext.getDomainCommands().size() : 0))
+            .sum();
+        Analysis analysis = new Analysis(project, domainMirror, listener, total);
         for (BoundedContextMirror boundedContext : boundedContexts) {
             analysis.analyze(boundedContext, flowsAvailable);
         }
@@ -132,13 +187,18 @@ public class BoundedContextAnalysisService {
 
         private final Project project;
         private final DomainMirror domainMirror;
+        private final ProgressListener listener;
+        private final int total;
         private final List<CompletableFuture<DiagramRendering.Result>> renderings = new ArrayList<>();
+        private Map<String, Set<String>> processingMethodsByCommand;
         private int created;
         private int skipped;
 
-        private Analysis(Project project, DomainMirror domainMirror) {
+        private Analysis(Project project, DomainMirror domainMirror, ProgressListener listener, int total) {
             this.project = project;
             this.domainMirror = domainMirror;
+            this.listener = listener;
+            this.total = total;
         }
 
         private void analyze(BoundedContextMirror boundedContext, boolean flowsAvailable) {
@@ -181,26 +241,32 @@ public class BoundedContextAnalysisService {
             boolean exists = project.getDiagrams().stream().anyMatch(diagram -> name.equals(diagram.getName()));
             if (exists) {
                 skipped++;
-                return;
+            } else {
+                DiagramRendering rendering = diagramService.createAsync(project, directory, name, visibility, styling);
+                renderings.add(rendering.image());
+                created++;
             }
-            DiagramRendering rendering = diagramService.createAsync(project, name, visibility, styling);
-            Diagram diagram = rendering.diagram();
-            diagramDirectoryService.add(directory, diagram);
-            renderings.add(rendering.image());
-            created++;
+            listener.diagramHandled(created + skipped, total, name);
         }
 
         /**
          * The backward flow targets for a command: every method processing it, as {@code Type#method}.
          */
         private Set<String> methodsProcessing(DomainCommandMirror command) {
-            return domainMirror.getAllDomainTypeMirrors().stream()
-                .filter(type -> !type.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME))
-                .flatMap(type -> type.getMethods().stream()
-                    .filter(method -> method.getProcessedCommands().stream()
-                        .anyMatch(processed -> processed.getTypeName().equals(command.getTypeName())))
-                    .map(method -> type.getTypeName() + "#" + method.getName()))
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+            if (processingMethodsByCommand == null) {
+                // indexed once: resolving the processed commands of every method for every command took the
+                // analysis of large projects tens of seconds
+                processingMethodsByCommand = new HashMap<>();
+                for (DomainTypeMirror type : domainMirror.getAllDomainTypeMirrors()) {
+                    if (type.getTypeName().startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME)) {
+                        continue;
+                    }
+                    type.getMethods().forEach(method -> method.getProcessedCommands().forEach(processed ->
+                        processingMethodsByCommand.computeIfAbsent(processed.getTypeName(), key -> new LinkedHashSet<>())
+                            .add(type.getTypeName() + "#" + method.getName())));
+                }
+            }
+            return processingMethodsByCommand.getOrDefault(command.getTypeName(), Set.of());
         }
     }
 

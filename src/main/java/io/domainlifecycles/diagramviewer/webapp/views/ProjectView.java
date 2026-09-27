@@ -59,6 +59,7 @@ import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.sql.NoOpSQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.BoundedContextAnalysisDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.EditProjectDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
@@ -72,6 +73,8 @@ import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -214,39 +217,70 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
             + "Existing folders are reused and diagrams that already exist are kept unchanged.</div>"));
         confirmDialog.setCancelable(true);
         confirmDialog.setConfirmText("Analyze");
-        confirmDialog.addConfirmListener(event -> analyzeBoundedContexts());
-
         Button analyzeButton = new Button("Analyze Bounded Contexts", new Icon(VaadinIcon.SITEMAP));
+        confirmDialog.addConfirmListener(event -> analyzeBoundedContexts(analyzeButton));
+
         analyzeButton.setId("analyze-bounded-contexts");
         analyzeButton.getStyle().set("cursor", "pointer");
         analyzeButton.addClickListener(e -> confirmDialog.open());
         return analyzeButton;
     }
 
-    private void analyzeBoundedContexts() {
+    private void analyzeBoundedContexts(Button analyzeButton) {
         UI ui = UI.getCurrent();
-        BoundedContextAnalysisService.Result result = boundedContextAnalysisService.analyze(project);
-        ComponentUtil.fireEvent(ui, new DiagramsOrProjectsChangedEvent(this, false));
+        Consumer<Runnable> onUi = BackgroundDiagramRendering.uiUpdater(ui);
+        BoundedContextAnalysisDialog progress = new BoundedContextAnalysisDialog();
+        progress.open();
+        analyzeButton.setEnabled(false);
 
+        boundedContextAnalysisService.analyzeAsync(project,
+                (done, total, diagramName) -> onUi.accept(() -> progress.diagramCreated(done, total, diagramName)))
+            .whenComplete((result, error) -> onUi.accept(() -> {
+                analyzeButton.setEnabled(true);
+                if (error != null) {
+                    Throwable cause = error.getCause() != null ? error.getCause() : error;
+                    log.error("Analyzing the bounded contexts of project '{}' failed.", project.getName(), cause);
+                    progress.failed(String.valueOf(cause.getMessage()));
+                    return;
+                }
+                ComponentUtil.fireEvent(ui, new DiagramsOrProjectsChangedEvent(this, false));
+                followRendering(ui, onUi, progress, result);
+            }));
+    }
+
+    private void followRendering(UI ui, Consumer<Runnable> onUi, BoundedContextAnalysisDialog progress,
+                                 BoundedContextAnalysisService.Result result) {
         String summary = String.format("%d Bounded Context(s) analyzed: %d diagram(s) created%s.",
             result.boundedContexts(), result.createdDiagrams(),
             result.skippedDiagrams() > 0 ? String.format(", %d already existed", result.skippedDiagrams()) : "");
         if (result.flowsSkipped()) {
             summary += " Read model and command diagrams need a static analysis result, which was not uploaded.";
         }
-        Notification.show(summary, 8000, Notification.Position.BOTTOM_END);
-
-        if (!result.renderings().isEmpty()) {
-            BackgroundDiagramRendering.whenAllRendered(ui, result.renderings(), failed -> {
-                // the cards show the images, which are complete only now
-                ComponentUtil.fireEvent(ui, new DiagramsOrProjectsChangedEvent(this, false));
-                Notification notification = Notification.show(failed == 0
-                        ? String.format("All %d new diagram(s) rendered.", result.renderings().size())
-                        : String.format("%d of %d new diagram(s) could not be rendered.", failed, result.renderings().size()),
-                    8000, Notification.Position.BOTTOM_END);
-                notification.addThemeVariants(failed == 0 ? NotificationVariant.LUMO_SUCCESS : NotificationVariant.LUMO_ERROR);
-            });
+        if (result.renderings().isEmpty()) {
+            progress.finished(summary);
+            return;
         }
+
+        int total = result.renderings().size();
+        AtomicInteger rendered = new AtomicInteger();
+        progress.diagramRendered(0, total);
+        result.renderings().forEach(rendering -> rendering.whenComplete((image, error) -> {
+            int done = rendered.incrementAndGet();
+            onUi.accept(() -> progress.diagramRendered(done, total));
+        }));
+        String createdSummary = summary;
+        BackgroundDiagramRendering.whenAllRendered(ui, result.renderings(), failed -> {
+            // the cards show the images, which are complete only now
+            ComponentUtil.fireEvent(ui, new DiagramsOrProjectsChangedEvent(this, false));
+            String outcome = createdSummary + (failed == 0
+                ? String.format(" All %d diagram(s) rendered.", total)
+                : String.format(" %d of %d diagram(s) could not be rendered.", failed, total));
+            progress.finished(outcome);
+            if (!progress.isOpened()) {
+                Notification notification = Notification.show(outcome, 8000, Notification.Position.BOTTOM_END);
+                notification.addThemeVariants(failed == 0 ? NotificationVariant.LUMO_SUCCESS : NotificationVariant.LUMO_ERROR);
+            }
+        });
     }
 
     private Button getDatabaseButton() {
