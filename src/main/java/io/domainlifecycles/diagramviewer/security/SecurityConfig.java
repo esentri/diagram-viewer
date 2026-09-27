@@ -87,7 +87,10 @@ public class SecurityConfig {
                         .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/register")).permitAll()
                         .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/login")).permitAll()
                         .requestMatchers(
-                                PathPatternRequestMatcher.withDefaults().matcher("/actuator/**"),
+                                // only the health check is public (e.g. for container health checks); any other
+                                // actuator endpoint, if exposed at all, requires a signed in user
+                                PathPatternRequestMatcher.withDefaults().matcher("/actuator/health"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/actuator/health/**"),
                                 PathPatternRequestMatcher.withDefaults().matcher("/api/domain-model/**"),
                                 PathPatternRequestMatcher.withDefaults().matcher("/api/resources/view/**"),
                                 PathPatternRequestMatcher.withDefaults().matcher("/VAADIN/**"),
