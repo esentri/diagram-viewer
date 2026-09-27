@@ -8,6 +8,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
+import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.ProjectServiceImpl;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
@@ -63,6 +64,9 @@ class ProjectServiceTest {
     SessionStorage sessionStorage;
 
     @Mock
+    ProjectDomainMirrorService projectDomainMirrorService;
+
+    @Mock
     ProjectRepository repository;
 
     ProjectService projectService;
@@ -70,7 +74,7 @@ class ProjectServiceTest {
     @BeforeEach
     void setUp() {
         projectService = new ProjectServiceImpl("/tmp/diagrams", diagramService, diagramTypeNoteService,
-            regenerateDiagramsJobService, appUserService, sessionStorage, repository);
+            regenerateDiagramsJobService, appUserService, sessionStorage, projectDomainMirrorService, repository);
     }
 
     @Test
@@ -261,18 +265,19 @@ class ProjectServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
 
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
+        byte[] domainMirrorGz = new byte[] {1, 2, 3};
 
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
         // when
-        projectService.createOrUpdateDomainModel(projectName, domainMirrorMock, null);
+        projectService.createOrUpdateDomainModel(projectName, domainMirrorGz, null);
 
-        // then
+        // then: persisted directly, the (API request's) session is not touched
         verify(repository, times(1)).findByName(eq(projectName));
         verify(projectMock, times(1)).setChangedAt(any());
         verify(repository, times(1)).save(projectMock);
-        verify(sessionStorage, times(1)).createOrUpdate(projectMock, domainMirrorMock, null);
+        verify(projectDomainMirrorService, times(1)).createOrUpdateCompressed(projectMock, domainMirrorGz, null);
+        verifyNoInteractions(sessionStorage);
     }
 
     @Test
@@ -287,12 +292,10 @@ class ProjectServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getName()).thenReturn(projectName);
 
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
-
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
         // when
-        assertThatThrownBy(() -> projectService.createOrUpdateDomainModel(projectName, domainMirrorMock, null))
+        assertThatThrownBy(() -> projectService.createOrUpdateDomainModel(projectName, new byte[0], null))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage("User has no access to project '" + projectName + "'");
 
@@ -309,18 +312,21 @@ class ProjectServiceTest {
             new UsernamePasswordAuthenticationToken(appUserMock, null));
 
         String projectName = "projectName";
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
+        byte[] domainMirrorGz = new byte[] {1, 2, 3};
+        byte[] domainCallsGz = new byte[] {4, 5, 6};
+        Project persistedProject = mock(Project.class);
 
         when(repository.findByName(eq(projectName))).thenReturn(Optional.empty());
-        when(repository.save(any())).thenReturn(mock(Project.class));
+        when(repository.save(any())).thenReturn(persistedProject);
 
         // when
-        projectService.createOrUpdateDomainModel(projectName, domainMirrorMock, null);
+        projectService.createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz);
 
-        // then
+        // then: persisted directly, the (API request's) session is not touched
         verify(repository, times(1)).findByName(eq(projectName));
         verify(repository, times(1)).save(any(Project.class));
-        verify(sessionStorage, times(1)).createOrUpdate(any(Project.class), eq(domainMirrorMock), eq((String) null));
+        verify(projectDomainMirrorService, times(1)).createOrUpdateCompressed(persistedProject, domainMirrorGz, domainCallsGz);
+        verifyNoInteractions(sessionStorage);
     }
 
     @Test

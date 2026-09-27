@@ -10,7 +10,9 @@ import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.ProjectDomainMirrorRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
+import io.domainlifecycles.diagramviewer.scenario.RezeptionScenario;
 import io.domainlifecycles.diagramviewer.service.AppUserService;
+import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.model.DomainModel;
 import io.domainlifecycles.mirror.serialize.DomainSerializer;
@@ -34,6 +36,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -52,6 +55,9 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
 
     @Autowired
     ProjectDomainMirrorRepository projectDomainMirrorRepository;
+
+    @Autowired
+    ProjectDomainMirrorService projectDomainMirrorService;
 
     @Autowired
     AppUserRepository appUserRepository;
@@ -99,6 +105,48 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
     }
 
     @Test
+    void Should_NotCreateHttpSession_And_StoreReadableModel_When_UploadingAndReuploading() throws Exception {
+
+        // when: a first upload of a real domain model with a static analysis result ...
+        MvcResult first = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", project.getName())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-API-KEY", appUser.getApiKey().toString())
+                .header("Content-Encoding", "gzip")
+                .content(RezeptionScenario.gzippedUploadRequestBody()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        // then: no HTTP session was created - an upload's session would never be seen by any user and
+        // only keep the uploaded model in memory until it times out (performance plan item 1.1)
+        assertThat(first.getRequest().getSession(false)).isNull();
+        String cleanedProjectName = project.getName().replaceAll("[.-]", "_");
+        Project uploadedProject = projectRepository.findByName(cleanedProjectName).orElseThrow();
+        ProjectDomainMirror stored = projectDomainMirrorRepository.findByProjectId(uploadedProject.getId()).orElseThrow();
+        assertThat(stored.getDomainMirrorGz()).isNotEmpty();
+        assertThat(stored.getDomainCallsGz()).isNotEmpty();
+        assertThat(projectDomainMirrorService.getDomainMirror(uploadedProject.getId())
+            .getDomainTypeMirror(RezeptionScenario.BUCHUNG_AGGREGATE)).isPresent();
+
+        // when: ... and a re-upload without one, replacing the stored model in place
+        MvcResult second = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", project.getName())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-API-KEY", appUser.getApiKey().toString())
+                .header("Content-Encoding", "gzip")
+                .content(RezeptionScenario.gzippedUploadRequestBodyWithoutDomainCalls()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        // then
+        assertThat(second.getRequest().getSession(false)).isNull();
+        ProjectDomainMirror replaced = projectDomainMirrorRepository.findByProjectId(uploadedProject.getId()).orElseThrow();
+        assertThat(replaced.getId()).isEqualTo(stored.getId());
+        assertThat(projectDomainMirrorService.getDomainMirror(uploadedProject.getId())
+            .getDomainTypeMirror(RezeptionScenario.BUCHUNG_AGGREGATE)).isPresent();
+        assertThat(replaced.getDomainCallsGz()).isNull();
+        assertThat(projectDomainMirrorService.hasDomainCalls(uploadedProject.getId())).isFalse();
+    }
+
+    @Test
     void Should_Return401_When_ApiKeyIsNotCorrect() throws Exception {
 
         // given
@@ -133,7 +181,7 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
         String cleanedProjectName = project.getName().replaceAll("[.-]", "_");
         Project updatedProject = projectRepository.findByName(cleanedProjectName).orElseThrow();
         ProjectDomainMirror stored = projectDomainMirrorRepository.findByProjectId(updatedProject.getId()).orElseThrow();
-        assertThat(stored.getDomainCalls()).isNotBlank();
+        assertThat(stored.getDomainCallsGz()).isNotEmpty();
     }
 
     @Test

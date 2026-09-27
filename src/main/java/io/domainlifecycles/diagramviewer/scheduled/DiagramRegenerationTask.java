@@ -75,17 +75,29 @@ public class DiagramRegenerationTask {
         Map<UUID, List<RegenerateDiagramsJob>> jobsGroupedByProjectId = allJobs.stream()
             .collect(Collectors.groupingBy(job -> job.getDiagram().getProject().getId()));
 
-        jobsGroupedByProjectId.forEach((projectId, value) -> {
+        jobsGroupedByProjectId.forEach((projectId, regenerateDiagramsJobsForProject) -> {
             LOGGER.info("Regenerating diagrams for project '{}' ...", projectId);
 
-            List<RegenerateDiagramsJob> regenerateDiagramsJobsForProject = jobsGroupedByProjectId.get(projectId);
+            // the project's model is loaded once and shared by all of its diagrams
+            final DiagramRegenerationService.ProjectModel projectModel;
+            try {
+                projectModel = diagramRegenerationService.loadProjectModel(projectId);
+            } catch (Exception e) {
+                LOGGER.error("Error occurred while loading the model of project '{}'. Continuing with others...", projectId);
+                regenerateDiagramsJobsForProject.forEach(job -> caughtErrors.add(DiagramRegenerationError.builder()
+                        .diagramId(job.getDiagram().getId())
+                        .diagramName(job.getDiagram().getName())
+                        .caughtException(e)
+                    .build()));
+                return;
+            }
 
             regenerateDiagramsJobsForProject.forEach(job -> {
                 try {
                     var diagram = job.getDiagram();
                     diagram.setChangedAt(Instant.now());
                     diagramService.updateModel(diagram);
-                    diagramRegenerationService.regenerate(job.getDiagram());
+                    diagramRegenerationService.regenerate(diagram, projectModel);
                     regenerateDiagramsJobService.delete(job);
                 } catch(Exception e) {
                     LOGGER.error("Error occurred while regenerating diagram '{}'. Continuing with others...",

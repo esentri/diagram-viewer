@@ -184,6 +184,15 @@ public class DomainModelVisibility {
         this.includeFlowsTo = includeFlowsTo == null ? new HashSet<>() : includeFlowsTo;
     }
 
+    /**
+     * @return {@code true} if the diagram is restricted to at least one flow, forward or backward - only
+     * then does rendering it need the project's static analysis result
+     */
+    public boolean hasFlowSettings() {
+        return (includeFlowsFrom != null && !includeFlowsFrom.isEmpty())
+            || (includeFlowsTo != null && !includeFlowsTo.isEmpty());
+    }
+
     public DomainModelVisibility replaceBlacklistedClassNames(Set<String> blacklistedClassNames) {
         return new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,

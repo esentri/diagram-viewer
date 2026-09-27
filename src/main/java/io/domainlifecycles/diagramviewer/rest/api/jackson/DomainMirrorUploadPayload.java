@@ -29,20 +29,23 @@
 
 package io.domainlifecycles.diagramviewer.rest.api.jackson;
 
-import io.domainlifecycles.mirror.api.DomainMirror;
 import java.util.List;
 
 /**
- * The result of reading a domain mirror upload request body: the {@link DomainMirror} itself, the
- * optional result of a static analysis of the domain classes ({@code DomainCalls}, kept as its raw
- * JSON representation since it is only meaningful resolved against the {@link DomainMirror} it was
- * analyzed against), and the domain model packages the upload was restricted to.
+ * The result of reading a domain mirror upload request body: the domain mirror and the optional result
+ * of a static analysis of the domain classes ({@code DomainCalls}), both as gzip-compressed JSON, and
+ * the domain model packages the upload was restricted to.
+ * <p>
+ * Both are kept compressed as they are stored, so the upload never holds their uncompressed JSON in
+ * memory - several gigabytes for a large domain model. The domain mirror has been validated by
+ * deserializing it once; the static analysis result is not validated on upload - it is only resolved
+ * against the domain mirror when a flow filter first needs it.
  *
- * @param domainMirror         the uploaded domain mirror, never {@code null}
- * @param domainCallsJson      the raw JSON representation of the uploaded static analysis result
+ * @param domainMirrorGz       the gzip-compressed JSON of the uploaded domain mirror, validated, never {@code null}
+ * @param domainCallsGz        the gzip-compressed JSON of the uploaded static analysis result
  *                             ({@code DomainCalls}), or {@code null} if none was uploaded
  * @param domainModelPackages  the domain model packages associated with the upload
  */
 public record DomainMirrorUploadPayload(
-    DomainMirror domainMirror, String domainCallsJson, List<String> domainModelPackages) {
+    byte[] domainMirrorGz, byte[] domainCallsGz, List<String> domainModelPackages) {
 }

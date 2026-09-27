@@ -55,14 +55,24 @@ public class RegenerateDiagramsJobServiceImpl implements RegenerateDiagramsJobSe
         return StreamSupport.stream(repository.findAll().spliterator(), false).toList();
     }
 
+    /**
+     * Schedules the regeneration of all diagrams of the given project. A diagram that still has a pending
+     * job - e.g. because the project was uploaded again before the scheduler ran, or because its last
+     * regeneration failed - keeps that job: there is at most one job per diagram (unique constraint), and
+     * a pending job already regenerates the diagram from the project's current model.
+     *
+     * @param project the project whose diagrams to regenerate
+     */
     @Override
     public void create(Project project) {
-        project.getDiagrams().forEach(diagram -> {
-            RegenerateDiagramsJob job = RegenerateDiagramsJob.builder()
-                .diagram(diagram)
-                .build();
-            repository.save(job);
-        });
+        project.getDiagrams().stream()
+            .filter(diagram -> repository.findByDiagramId(diagram.getId()).isEmpty())
+            .forEach(diagram -> {
+                RegenerateDiagramsJob job = RegenerateDiagramsJob.builder()
+                    .diagram(diagram)
+                    .build();
+                repository.save(job);
+            });
     }
 
     @Override

@@ -4,10 +4,7 @@ import io.domainlifecycles.diagramviewer.rest.api.jackson.DomainMirrorUploadPayl
 import io.domainlifecycles.diagramviewer.rest.api.jackson.DomainMirrorUploadPayloadReader;
 import io.domainlifecycles.diagramviewer.security.ApiKeyAuthFilter;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.model.DomainModel;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -46,11 +43,11 @@ class DomainMirrorUploadControllerTest {
 
         // given
         String projectName = "testProjectName";
-        DomainMirror domainMirror = new DomainModel(Map.of(), "test.package");
-        DomainMirrorUploadPayload payload = new DomainMirrorUploadPayload(domainMirror, null, List.of());
+        byte[] domainMirrorGz = new byte[] {1, 2, 3};
+        DomainMirrorUploadPayload payload = new DomainMirrorUploadPayload(domainMirrorGz, null, List.of());
 
         when(payloadReader.read(any())).thenReturn(payload);
-        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirror, null);
+        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, null);
 
         // when
         ResultActions result = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", projectName)
@@ -59,7 +56,7 @@ class DomainMirrorUploadControllerTest {
 
         // then
         result.andExpect(status().isOk());
-        verify(projectService).createOrUpdateDomainModel(projectName, domainMirror, null);
+        verify(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, null);
     }
 
     @Test
@@ -67,12 +64,12 @@ class DomainMirrorUploadControllerTest {
 
         // given
         String projectName = "testProjectName";
-        DomainMirror domainMirror = new DomainModel(Map.of(), "test.package");
-        String domainCallsJson = "{\"callsByCaller\":[],\"diagnostics\":[]}";
-        DomainMirrorUploadPayload payload = new DomainMirrorUploadPayload(domainMirror, domainCallsJson, List.of("test.package"));
+        byte[] domainMirrorGz = new byte[] {1, 2, 3};
+        byte[] domainCallsGz = new byte[] {4, 5, 6};
+        DomainMirrorUploadPayload payload = new DomainMirrorUploadPayload(domainMirrorGz, domainCallsGz, List.of("test.package"));
 
         when(payloadReader.read(any())).thenReturn(payload);
-        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirror, domainCallsJson);
+        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz);
 
         // when
         ResultActions result = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", projectName)
@@ -81,6 +78,6 @@ class DomainMirrorUploadControllerTest {
 
         // then
         result.andExpect(status().isOk());
-        verify(projectService).createOrUpdateDomainModel(projectName, domainMirror, domainCallsJson);
+        verify(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz);
     }
 }

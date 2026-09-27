@@ -13,6 +13,8 @@ import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectDomainMirrorRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
+import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.staticanalysis.DomainCalls;
 import java.io.IOException;
@@ -72,6 +74,9 @@ class RezeptionUploadAndFlowFilter_ITest extends BaseIntegrationTest {
     DiagramService diagramService;
 
     @Autowired
+    ProjectDomainMirrorService projectDomainMirrorService;
+
+    @Autowired
     SessionStorage sessionStorage;
 
     private AppUser appUser;
@@ -116,11 +121,15 @@ class RezeptionUploadAndFlowFilter_ITest extends BaseIntegrationTest {
 
         // when
         ProjectDomainMirror stored = projectDomainMirrorRepository.findByProjectId(project.getId()).orElseThrow();
+        DomainMirror domainMirror = projectDomainMirrorService.getDomainMirror(project.getId());
 
-        // then
-        assertThat(stored.getDomainMirror().getDomainTypeMirror(RezeptionScenario.BUCHUNG_AGGREGATE)).isPresent();
-        assertThat(stored.getDomainMirror().getDomainTypeMirror(RezeptionScenario.ZIMMER_AGGREGATE)).isPresent();
-        assertThat(stored.getDomainCalls()).isNotBlank();
+        // then: stored compressed only, and readable back
+        assertThat(stored.getDomainMirrorGz()).isNotEmpty();
+        assertThat(stored.getDomainCallsGz()).isNotEmpty();
+        assertThat(stored.getDomainCalls()).isNull();
+        assertThat(domainMirror.getDomainTypeMirror(RezeptionScenario.BUCHUNG_AGGREGATE)).isPresent();
+        assertThat(domainMirror.getDomainTypeMirror(RezeptionScenario.ZIMMER_AGGREGATE)).isPresent();
+        assertThat(projectDomainMirrorService.loadDomainCalls(project.getId(), domainMirror)).isPresent();
     }
 
     @Test

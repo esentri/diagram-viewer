@@ -124,7 +124,7 @@ public class DiagramFlowFilterComponent extends Div {
         }
         log.debug("refreshDetails DiagramFlowFilterComponent started");
 
-        boolean domainCallsAvailable = sessionStorage.getDomainCalls(currentDiagram.getProject().getId()).isPresent();
+        boolean domainCallsAvailable = sessionStorage.hasDomainCalls(currentDiagram.getProject().getId());
 
         Details flowDetails = new Details(domainCallsAvailable ? "Flow filter" : "Flow filter (unavailable)");
         flowDetails.setWidthFull();

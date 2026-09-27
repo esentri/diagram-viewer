@@ -10,6 +10,7 @@ import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
 import io.domainlifecycles.diagramviewer.service.DiagramRegenerationService;
+import io.domainlifecycles.staticanalysis.DomainCalls;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramServiceImpl;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
@@ -32,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -208,6 +210,62 @@ class DiagramServiceTest {
     }
 
     @Test
+    void Should_NotRequestDomainCalls_When_RenderingDiagramWithoutFlowFilter() {
+
+        // given
+        Diagram diagram = diagramToRender(new DomainModelVisibility());
+
+        try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
+            MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
+            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any())).thenReturn("testNomnoml");
+
+            // when
+            diagramService.updateModelAndImage(diagram);
+
+            // then: the (possibly large) static analysis result is neither loaded nor handed over
+            verify(sessionStorage, never()).getDomainCalls(any());
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), isNull()));
+        }
+    }
+
+    @Test
+    void Should_RequestDomainCalls_When_RenderingDiagramWithFlowFilter() {
+
+        // given
+        Diagram diagram = diagramToRender(new DomainModelVisibility()
+            .replaceIncludeFlowsTo(Set.of("some.Type")));
+        DomainCalls domainCalls = mock(DomainCalls.class);
+        when(sessionStorage.getDomainCalls(any())).thenReturn(Optional.of(domainCalls));
+
+        try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
+            MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
+            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any())).thenReturn("testNomnoml");
+
+            // when
+            diagramService.updateModelAndImage(diagram);
+
+            // then
+            verify(sessionStorage, times(1)).getDomainCalls(any());
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), eq(domainCalls)));
+        }
+    }
+
+    private Diagram diagramToRender(DomainModelVisibility visibility) {
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(UUID.randomUUID());
+        Diagram diagram = mock(Diagram.class);
+        when(diagram.getName()).thenReturn("diagramName");
+        when(diagram.getDiagramStylingConfiguration()).thenReturn(mock(DiagramStylingConfiguration.class));
+        when(diagram.getDomainModelVisibility()).thenReturn(visibility);
+        when(diagram.getProject()).thenReturn(project);
+        when(repository.findByName(any())).thenReturn(Optional.empty());
+        when(repository.save(diagram)).thenReturn(diagram);
+        when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
+        when(krokiClient.convert(any())).thenReturn("filedata".getBytes());
+        return diagram;
+    }
+
+    @Test
     void Should_RenameDiagram() {
 
         // given
@@ -294,10 +352,8 @@ class DiagramServiceTest {
 
         when(krokiClient.convert(any())).thenReturn("img".getBytes());
 
-        ProjectDomainMirror projectDomainMirrorMock = mock(ProjectDomainMirror.class);
         DomainMirror domainMirrorMock = mock(DomainMirror.class);
-        when(projectDomainMirrorMock.getDomainMirror()).thenReturn(domainMirrorMock);
-        when(projectDomainMirrorService.getByProjectId(any())).thenReturn(projectDomainMirrorMock);
+        when(projectDomainMirrorService.getDomainMirror(any())).thenReturn(domainMirrorMock);
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {

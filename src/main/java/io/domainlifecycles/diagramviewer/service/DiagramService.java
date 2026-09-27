@@ -34,6 +34,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguratio
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.staticanalysis.DomainCalls;
 import java.util.Set;
 import java.util.UUID;
 
@@ -49,7 +50,18 @@ public interface DiagramService {
 
     Diagram create(Project project, String fileName, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
 
-    void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram);
+    /**
+     * Renders the given diagram and saves it to the filesystem.
+     * <p>
+     * All model data is passed in explicitly, so this can be called without an HTTP request or session
+     * bound - e.g. from the scheduled diagram regeneration.
+     *
+     * @param domainMirror the domain mirror of the diagram's project
+     * @param domainCalls  the static analysis result of the diagram's project, {@code null} if none was
+     *                     uploaded (flow filters are then ignored)
+     * @param diagram      the diagram to render
+     */
+    void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram);
 
     void deleteFilesFromFilesystem(String projectId);
 }

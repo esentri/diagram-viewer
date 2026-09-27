@@ -98,8 +98,11 @@ public class DiagramServiceImpl implements DiagramService {
     public Diagram updateModelAndImage(Diagram diagram) {
         diagram.setChangedAt(Instant.now());
         final Diagram updatedDiagram = save(diagram);
-        DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
-        createAndSaveDiagramToFilesystem(domainMirror, updatedDiagram);
+        UUID projectId = diagram.getProject().getId();
+        createAndSaveDiagramToFilesystem(
+            sessionStorage.getDomainMirror(projectId),
+            domainCallsIfNeeded(updatedDiagram),
+            updatedDiagram);
         return updatedDiagram;
     }
 
@@ -126,11 +129,25 @@ public class DiagramServiceImpl implements DiagramService {
             .build();
 
         save(diagram);
-        DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
-        createAndSaveDiagramToFilesystem(domainMirror, diagram);
+        UUID projectId = diagram.getProject().getId();
+        createAndSaveDiagramToFilesystem(
+            sessionStorage.getDomainMirror(projectId),
+            domainCallsIfNeeded(diagram),
+            diagram);
         project.addDiagram(diagram);
 
         return diagram;
+    }
+
+    /**
+     * The static analysis result is only needed to render a diagram restricted to a flow - requesting it
+     * only then keeps it from being loaded at all for projects whose diagrams use no flow filter.
+     */
+    private DomainCalls domainCallsIfNeeded(Diagram diagram) {
+        if (diagram.getDomainModelVisibility() == null || !diagram.getDomainModelVisibility().hasFlowSettings()) {
+            return null;
+        }
+        return sessionStorage.getDomainCalls(diagram.getProject().getId()).orElse(null);
     }
 
     private Diagram save(Diagram diagram) {
@@ -157,11 +174,10 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram) {
+    public void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram) {
 
         final String nomnoml;
         List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
-        DomainCalls domainCalls = sessionStorage.getDomainCalls(diagram.getProject().getId()).orElse(null);
 
         try {
             nomnoml = DiagrammerUtils.generateNomnoml(

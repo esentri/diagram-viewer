@@ -30,9 +30,10 @@
 package io.domainlifecycles.diagramviewer.repository;
 
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
-import java.util.List;
+import io.domainlifecycles.mirror.api.DomainMirror;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -43,30 +44,83 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
 
     Optional<ProjectDomainMirror> findByProjectId(UUID projectId);
 
-    @Query(
-        value = """
-                SELECT value AS mirror
-                         FROM
-                             project_domain_mirror,
-                             jsonb_each(domain_mirror::jsonb -> 'allTypeMirrors') AS mirrors(key, value)
-                         WHERE project_id = :id
-                         AND value ->> '@class' = 'io.domainlifecycles.mirror.model.AggregateRootModel'
-                """,
-        nativeQuery = true
-    )
-    List<String> findProjectAggregateTypes(@Param("id") UUID projectId);
+    boolean existsByProjectId(UUID projectId);
 
-    @Query(
-        value = """
-                SELECT value AS mirror
-                         FROM
-                             project_domain_mirror,
-                             jsonb_each(domain_mirror::jsonb -> 'allTypeMirrors') AS mirrors(key, value)
-                         WHERE project_id = :id
-                         AND value ->> '@class' <> 'io.domainlifecycles.mirror.model.EnumModel'
-                         AND value ->> '@class' <> 'io.domainlifecycles.mirror.model.IdentityModel'
-                """,
-        nativeQuery = true
-    )
-    List<String> findProjectDomainTypesWithoutEnumsAndIds(@Param("id") UUID projectId);
+    /**
+     * Loads only the gzip-compressed domain mirror of a project, without its static analysis result.
+     * Empty for projects last uploaded before the compressed storage was introduced.
+     */
+    @Query(value = "SELECT domain_mirror_gz FROM project_domain_mirror WHERE project_id = :id AND domain_mirror_gz IS NOT NULL",
+        nativeQuery = true)
+    Optional<byte[]> findDomainMirrorGzByProjectId(@Param("id") UUID projectId);
+
+    /**
+     * Loads only the gzip-compressed static analysis result ({@code DomainCalls}) of a project. Empty if
+     * none was uploaded, or for projects last uploaded before the compressed storage was introduced.
+     */
+    @Query(value = "SELECT domain_calls_gz FROM project_domain_mirror WHERE project_id = :id AND domain_calls_gz IS NOT NULL",
+        nativeQuery = true)
+    Optional<byte[]> findDomainCallsGzByProjectId(@Param("id") UUID projectId);
+
+    /**
+     * Legacy storage: loads only the uncompressed domain mirror of a project last uploaded before the
+     * compressed storage was introduced.
+     */
+    @Query("SELECT p.domainMirror FROM ProjectDomainMirror p WHERE p.projectId = :id")
+    Optional<DomainMirror> findLegacyDomainMirrorByProjectId(@Param("id") UUID projectId);
+
+    /**
+     * Legacy storage: loads only the uncompressed static analysis result of a project last uploaded
+     * before the compressed storage was introduced.
+     */
+    @Query("SELECT p.domainCalls FROM ProjectDomainMirror p WHERE p.projectId = :id")
+    Optional<String> findLegacyDomainCallsJsonByProjectId(@Param("id") UUID projectId);
+
+    /**
+     * Checks whether a static analysis result was uploaded for a project, in either storage, without loading it.
+     */
+    @Query(value = """
+                SELECT EXISTS (SELECT 1 FROM project_domain_mirror
+                                WHERE project_id = :id AND (domain_calls_gz IS NOT NULL OR domain_calls IS NOT NULL))
+                """, nativeQuery = true)
+    boolean existsDomainCallsByProjectId(@Param("id") UUID projectId);
+
+    /**
+     * Replaces the domain mirror and static analysis result of a project with the given gzip-compressed
+     * JSON - without loading the previous values - and clears the legacy uncompressed columns. The
+     * {@code CAST}s keep a {@code null} static analysis result from being bound with the wrong type.
+     */
+    @Modifying
+    @Query(value = """
+                UPDATE project_domain_mirror
+                   SET domain_mirror_gz = CAST(:domainMirrorGz AS bytea),
+                       domain_calls_gz = CAST(:domainCallsGz AS bytea),
+                       domain_mirror = NULL,
+                       domain_calls = NULL,
+                       changed_at = now()
+                 WHERE project_id = :projectId
+                """, nativeQuery = true)
+    int updateCompressed(@Param("projectId") UUID projectId,
+                         @Param("domainMirrorGz") byte[] domainMirrorGz,
+                         @Param("domainCallsGz") byte[] domainCallsGz);
+
+    /**
+     * Stores the domain mirror and static analysis result of a project as gzip-compressed JSON.
+     */
+    @Modifying
+    @Query(value = """
+                INSERT INTO project_domain_mirror (id, project_id, domain_mirror_gz, domain_calls_gz, created_at, changed_at)
+                VALUES (:id, :projectId, CAST(:domainMirrorGz AS bytea), CAST(:domainCallsGz AS bytea), now(), now())
+                """, nativeQuery = true)
+    void insertCompressed(@Param("id") UUID id,
+                          @Param("projectId") UUID projectId,
+                          @Param("domainMirrorGz") byte[] domainMirrorGz,
+                          @Param("domainCallsGz") byte[] domainCallsGz);
+
+    /**
+     * Deletes the domain model of a project without loading it first.
+     */
+    @Modifying
+    @Query("DELETE FROM ProjectDomainMirror p WHERE p.projectId = :id")
+    void deleteByProjectIdWithoutLoading(@Param("id") UUID projectId);
 }

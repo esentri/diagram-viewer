@@ -127,6 +127,17 @@ public class DomainModelUtils {
     }
 
     /**
+     * @param domainTypeMirrors the domain type mirrors to filter
+     * @return the given domain type mirrors without enums and identities, which the view filters never offer
+     */
+    public static List<DomainTypeMirror> withoutEnumsAndIdentities(List<DomainTypeMirror> domainTypeMirrors) {
+        return domainTypeMirrors.stream()
+            .filter(mirror -> !DomainType.ENUM.equals(mirror.getDomainType())
+                && !DomainType.IDENTITY.equals(mirror.getDomainType()))
+            .toList();
+    }
+
+    /**
      * Drops the non-domain classes (classes without any DLC marker interface) a diagram can never
      * show from the given domain type mirrors: the diagrammer only draws a non-domain class that is
      * referenced by a service kind, or references one itself. Keeping the others would only flood

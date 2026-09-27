@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -67,6 +68,24 @@ class RegenerateDiagramsJobServiceTest {
         // then
         verify(repository, times(1)).save(regenerateDiagramsJobCaptor.capture());
         assertThat(regenerateDiagramsJobCaptor.getValue().getDiagram()).isEqualTo(firstDiagramMock);
+    }
+
+    @Test
+    void Should_NotCreateSecondJob_When_DiagramAlreadyHasPendingJob() {
+
+        // given
+        Project project = mock(Project.class);
+        Diagram diagramWithPendingJob = mock(Diagram.class);
+        UUID diagramId = UUID.randomUUID();
+        when(diagramWithPendingJob.getId()).thenReturn(diagramId);
+        when(project.getDiagrams()).thenReturn(Set.of(diagramWithPendingJob));
+        when(repository.findByDiagramId(diagramId)).thenReturn(List.of(mock(RegenerateDiagramsJob.class)));
+
+        // when
+        service.create(project);
+
+        // then
+        verify(repository, never()).save(any());
     }
 
     @Test

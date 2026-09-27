@@ -31,7 +31,6 @@ package io.domainlifecycles.diagramviewer.webapp.session;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
@@ -41,7 +40,6 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.staticanalysis.DomainCalls;
-import io.domainlifecycles.staticanalysis.serialize.DomainCallsSerializer;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -66,7 +64,6 @@ public class SessionStorage {
 
     private final ProjectDomainMirrorService projectDomainMirrorService;
     private final ProjectRepository projectRepository;
-    private final DomainCallsSerializer domainCallsSerializer;
     private final Map<UUID, DomainMirrorContainer> domainMirrorContainers;
     @Setter
     @Getter
@@ -81,12 +78,10 @@ public class SessionStorage {
 
     public SessionStorage(
             ProjectDomainMirrorService projectDomainMirrorService,
-            ProjectRepository projectRepository,
-            DomainCallsSerializer domainCallsSerializer
+            ProjectRepository projectRepository
     ) {
         this.projectDomainMirrorService = projectDomainMirrorService;
         this.projectRepository = projectRepository;
-        this.domainCallsSerializer = domainCallsSerializer;
         this.domainMirrorContainers = new HashMap<>();
         this.domainTypeDiagramSettingsOpen = new HashMap<>();
         this.packageFilterOpen = true;
@@ -97,12 +92,36 @@ public class SessionStorage {
     }
 
     /**
+     * Returns the static analysis result of a project, loading and deserializing it on first access.
+     * <p>
+     * The {@code DomainCalls} are only needed for flow filtering, but typically are the largest part of a
+     * project's model data - so they are not loaded when a project is opened, only when first requested,
+     * and then kept in the session. Use {@link #hasDomainCalls(UUID)} to only check for their presence.
+     *
      * @param projectId the project to get the uploaded static analysis result for
-     * @return the deserialized {@code DomainCalls} kept in the session for the given project, empty if
-     * none was uploaded alongside its domain mirror
+     * @return the deserialized {@code DomainCalls} of the given project, empty if none was uploaded
+     * alongside its domain mirror
      */
     public Optional<DomainCalls> getDomainCalls(UUID projectId) {
-        return Optional.ofNullable(getDomainMirrorContainer(projectId).getDomainCalls());
+        DomainMirrorContainer container = getDomainMirrorContainer(projectId);
+        if (!container.isDomainCallsAvailable()) {
+            return Optional.empty();
+        }
+        if (container.getDomainCalls() == null) {
+            log.debug("loading DomainCalls for {}", projectId);
+            container.setDomainCalls(projectDomainMirrorService
+                .loadDomainCalls(projectId, container.getDomainMirror())
+                .orElse(null));
+        }
+        return Optional.ofNullable(container.getDomainCalls());
+    }
+
+    /**
+     * @param projectId the project to check
+     * @return {@code true} if a static analysis result was uploaded for the given project; does not load it
+     */
+    public boolean hasDomainCalls(UUID projectId) {
+        return getDomainMirrorContainer(projectId).isDomainCallsAvailable();
     }
 
     public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
@@ -136,33 +155,17 @@ public class SessionStorage {
 
     private void add(UUID projectId, Instant latestChange) {
         log.debug("add project {}", projectId);
-        var projectDomainMirror = projectDomainMirrorService.getByProjectId(projectId);
-        DomainMirror domainMirror = projectDomainMirror.getDomainMirror();
-        List<AggregateRootMirror> aggregateRootMirrors = projectDomainMirrorService.getAllAggregateRootMirrors(
-                projectId);
-        List<DomainTypeMirror> domainTypeMirrors = projectDomainMirrorService.getAllDomainTypeMirrorsWithoutEnumsAndIds(
-                projectId);
-
-        DomainMirrorContainer domainMirrorContainer = DomainMirrorContainer.builder()
-            .lastUpdated(latestChange)
-            .domainMirror(domainMirror)
-            .aggregateRootMirrors(aggregateRootMirrors)
-            .domainTypeMirrors(DomainModelUtils.withoutUnrelatedNonDomainTypes(domainTypeMirrors, domainMirror))
-            .domainCalls(deserializeDomainCalls(projectDomainMirror.getDomainCalls(), domainMirror))
-            .build();
-
-        domainMirrorContainers.put(projectId, domainMirrorContainer);
+        // only the domain mirror - the static analysis result is loaded on demand, see getDomainCalls
+        DomainMirror domainMirror = projectDomainMirrorService.getDomainMirror(projectId);
+        domainMirrorContainers.put(projectId,
+            createContainer(domainMirror, latestChange, projectDomainMirrorService.hasDomainCalls(projectId)));
         log.debug("adding project {} finished", projectId);
     }
 
     public void createOrUpdate(Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType) {
-        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, domainModelPackages, pathToFile, uploadFileType);
-        createAndAddDomainMirrorContainer(project, projectDomainMirror);
-    }
-
-    public void createOrUpdate(Project project, DomainMirror domainMirror, String domainCallsJson) {
-        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, domainMirror, domainCallsJson);
-        createAndAddDomainMirrorContainer(project, projectDomainMirror);
+        DomainMirror domainMirror = projectDomainMirrorService.createOrUpdate(project, domainModelPackages, pathToFile, uploadFileType);
+        // an uploaded file never contains a static analysis result
+        domainMirrorContainers.put(project.getId(), createContainer(domainMirror, project.getLatestChangeInstant(), false));
     }
 
     public void delete(UUID projectId) {
@@ -170,35 +173,22 @@ public class SessionStorage {
         domainMirrorContainers.remove(projectId);
     }
 
-    private void createAndAddDomainMirrorContainer(Project project, ProjectDomainMirror projectDomainMirror) {
-        DomainMirror domainMirror = projectDomainMirror.getDomainMirror();
-        DomainMirrorContainer domainMirrorContainer = DomainMirrorContainer.builder()
-            .lastUpdated(project.getLatestChangeInstant())
+    /**
+     * The type lists offered by the view filters are derived from the loaded domain mirror itself. They
+     * used to be queried separately via {@code jsonb} (a deliberate optimization back when views loaded
+     * them without the full mirror); since the mirror is loaded here anyway, and is stored compressed,
+     * deriving them avoids a second, duplicate set of type mirrors (performance plan items 1.3 / 2.4).
+     */
+    private DomainMirrorContainer createContainer(DomainMirror domainMirror, Instant lastUpdated, boolean domainCallsAvailable) {
+        return DomainMirrorContainer.builder()
+            .lastUpdated(lastUpdated)
             .domainMirror(domainMirror)
             .aggregateRootMirrors(domainMirror.getAllAggregateRootMirrors())
-            .domainTypeMirrors(DomainModelUtils.withoutUnrelatedNonDomainTypes(domainMirror.getAllDomainTypeMirrors(), domainMirror))
-            .domainCalls(deserializeDomainCalls(projectDomainMirror.getDomainCalls(), domainMirror))
+            .domainTypeMirrors(DomainModelUtils.withoutUnrelatedNonDomainTypes(
+                DomainModelUtils.withoutEnumsAndIdentities(domainMirror.getAllDomainTypeMirrors()), domainMirror))
+            // loaded on demand, see getDomainCalls
+            .domainCallsAvailable(domainCallsAvailable)
             .build();
-
-        domainMirrorContainers.remove(project.getId());
-        domainMirrorContainers.put(project.getId(), domainMirrorContainer);
-    }
-
-    /**
-     * Deserializes the raw JSON of an uploaded static analysis result ({@code DomainCalls}) back
-     * against the given {@link DomainMirror} it was analyzed against, so it is held ready-to-use in
-     * the session alongside the domain mirror rather than re-parsed on every access.
-     *
-     * @param domainCallsJson the raw JSON representation of the uploaded DomainCalls, or {@code null}
-     *                        if none was uploaded
-     * @param domainMirror    the domain mirror the DomainCalls was analyzed against
-     * @return the deserialized DomainCalls, or {@code null} if none was uploaded
-     */
-    private DomainCalls deserializeDomainCalls(String domainCallsJson, DomainMirror domainMirror) {
-        if (domainCallsJson == null) {
-            return null;
-        }
-        return domainCallsSerializer.deserialize(domainCallsJson, domainMirror);
     }
 
     public boolean isDomainTypeSettingOpen(DomainType domainType) {
@@ -216,6 +206,8 @@ public class SessionStorage {
         private DomainMirror domainMirror;
         private List<AggregateRootMirror> aggregateRootMirrors;
         private List<DomainTypeMirror> domainTypeMirrors;
+        private boolean domainCallsAvailable;
+        /** {@code null} until first requested, see {@link SessionStorage#getDomainCalls(UUID)} */
         private DomainCalls domainCalls;
     }
 }

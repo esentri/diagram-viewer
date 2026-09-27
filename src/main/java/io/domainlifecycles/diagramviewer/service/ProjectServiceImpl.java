@@ -38,7 +38,6 @@ import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
-import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -67,6 +66,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final AppUserService appUserService;
     private final SessionStorage sessionStorage;
+    private final ProjectDomainMirrorService projectDomainMirrorService;
     private final ProjectRepository repository;
 
     public ProjectServiceImpl(
@@ -75,6 +75,7 @@ public class ProjectServiceImpl implements ProjectService {
         DiagramTypeNoteService diagramTypeNoteService, RegenerateDiagramsJobService regenerateDiagramsJobService,
         AppUserService appUserService,
         SessionStorage sessionStorage,
+        ProjectDomainMirrorService projectDomainMirrorService,
         ProjectRepository repository) {
 
         this.diagramsLocation = diagramsLocation;
@@ -83,6 +84,7 @@ public class ProjectServiceImpl implements ProjectService {
         this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.appUserService = appUserService;
         this.sessionStorage = sessionStorage;
+        this.projectDomainMirrorService = projectDomainMirrorService;
         this.repository = repository;
     }
 
@@ -118,7 +120,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror, String domainCallsJson) {
+    public void createOrUpdateDomainModel(String projectName, byte[] domainMirrorGz, byte[] domainCallsGz) {
 
         Optional<Project> foundProject = repository.findByName(buildCleanProjectName(projectName));
 
@@ -131,14 +133,14 @@ public class ProjectServiceImpl implements ProjectService {
 
             project.setChangedAt(Instant.now());
             repository.save(project);
-            sessionStorage.createOrUpdate(project, domainMirror, domainCallsJson);
+            projectDomainMirrorService.createOrUpdateCompressed(project, domainMirrorGz, domainCallsGz);
             return;
         }
 
         Project project = mapProject(projectName,
             (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         Project persistedProject = repository.save(project);
-        sessionStorage.createOrUpdate(persistedProject, domainMirror, domainCallsJson);
+        projectDomainMirrorService.createOrUpdateCompressed(persistedProject, domainMirrorGz, domainCallsGz);
     }
 
     @Override

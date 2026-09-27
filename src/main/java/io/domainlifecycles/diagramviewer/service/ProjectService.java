@@ -34,7 +34,6 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
-import io.domainlifecycles.mirror.api.DomainMirror;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -82,16 +81,20 @@ public interface ProjectService {
     Project create(String projectName, Set<String> domainModelPackages, AppUser appUser, Path pathToFile, UploadFileType uploadFileType);
 
     /**
-     * Saves a project with the given name and domain mirror configuration.
-     * Could create a new project or alter the domainMirror of an existing one.
+     * Saves an uploaded domain model for the project with the given name.
+     * Could create a new project or alter the domain mirror of an existing one.
+     * <p>
+     * Only persists: it deliberately does not touch the session scoped {@code SessionStorage}, since an
+     * upload is an API request whose session no user ever sees - caching the model there would only keep
+     * it in memory until the session times out. Open UI sessions pick up the change on their next access.
      *
      * @param projectName the name of the project to be saved, must not be null or empty
-     * @param domainMirror the domain mirror configuration associated with the project, must not be null
-     * @param domainCallsJson the raw JSON representation of the static analysis result (DomainCalls) uploaded
-     *                        alongside the domain mirror, or {@code null} if none was uploaded
+     * @param domainMirrorGz the gzip-compressed JSON of the uploaded domain mirror, already validated, must not be null
+     * @param domainCallsGz the gzip-compressed JSON of the static analysis result (DomainCalls) uploaded
+     *                      alongside the domain mirror, or {@code null} if none was uploaded
      */
     @Transactional
-    void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror, String domainCallsJson);
+    void createOrUpdateDomainModel(String projectName, byte[] domainMirrorGz, byte[] domainCallsGz);
 
     /**
      * Renames the specified project with a new name.

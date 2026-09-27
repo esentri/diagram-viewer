@@ -29,17 +29,18 @@
 
 package io.domainlifecycles.diagramviewer.rest.api.jackson;
 
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
-import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.diagramviewer.util.CompressedJson;
 import io.domainlifecycles.mirror.serialize.DomainSerializer;
-import io.domainlifecycles.staticanalysis.serialize.DomainCallsSerializer;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -56,12 +57,15 @@ import org.springframework.stereotype.Component;
  * {@code domainCalls} - the result of a static analysis of the domain classes - is optional and
  * omitted entirely when the upload did not run one.
  * <p>
- * The request body is walked field by field with a streaming {@link JsonParser} rather than read
- * into a single {@link JsonNode} tree upfront: the plugin sends both the plain and the
- * (chunked-transfer-encoded) streaming upload as gzip-compressed JSON that, for a domain of a few
- * hundred types, can already reach the tens of megabytes, so buffering the whole request body as one
- * in-memory tree in addition to the {@link DomainMirror} object graph it is deserialized into would
- * undercut the very memory savings the streaming upload is meant to provide.
+ * The request body is walked field by field with a streaming {@link JsonParser}, and the domain mirror
+ * and the static analysis result are copied out token by token as compact JSON directly into a gzip
+ * stream ({@link CompressedJson}) - never built up as a {@code JsonNode} tree, nor as an uncompressed
+ * string. For a large domain model the uncompressed JSON reaches several gigabytes; only its compressed
+ * form, a fraction of that, is held in memory and stored.
+ * <p>
+ * The domain mirror is validated by deserializing it once, streamed from its compressed form; the
+ * resulting object graph is discarded. The static analysis result is deliberately not validated on
+ * upload: it is only resolved against the domain mirror when a flow filter first needs it.
  */
 @Component
 public class DomainMirrorUploadPayloadReader {
@@ -72,12 +76,10 @@ public class DomainMirrorUploadPayloadReader {
 
     private final ObjectMapper objectMapper;
     private final DomainSerializer domainSerializer;
-    private final DomainCallsSerializer domainCallsSerializer;
 
-    public DomainMirrorUploadPayloadReader(DomainSerializer domainSerializer, DomainCallsSerializer domainCallsSerializer) {
+    public DomainMirrorUploadPayloadReader(DomainSerializer domainSerializer) {
         this.objectMapper = new ObjectMapper();
         this.domainSerializer = domainSerializer;
-        this.domainCallsSerializer = domainCallsSerializer;
     }
 
     /**
@@ -85,8 +87,8 @@ public class DomainMirrorUploadPayloadReader {
      * gzip-decompressed) stream. The stream is read from, but not closed.
      *
      * @param requestBody the request body to read, not gzip-compressed
-     * @return the uploaded domain mirror, the raw JSON of the uploaded static analysis result (if
-     * any), and the associated domain model packages
+     * @return the gzip-compressed JSON of the uploaded domain mirror (validated) and static analysis
+     * result (if any), and the associated domain model packages
      */
     public DomainMirrorUploadPayload read(InputStream requestBody) {
         try {
@@ -97,8 +99,8 @@ public class DomainMirrorUploadPayloadReader {
     }
 
     private DomainMirrorUploadPayload doRead(InputStream requestBody) throws IOException {
-        String domainMirrorJson = null;
-        String domainCallsJson = null;
+        byte[] domainMirrorGz = null;
+        byte[] domainCallsGz = null;
         List<String> domainModelPackages = List.of();
 
         try (JsonParser parser = objectMapper.getFactory().createParser(requestBody)) {
@@ -111,32 +113,48 @@ public class DomainMirrorUploadPayloadReader {
                 parser.nextToken();
 
                 switch (fieldName) {
-                    case FIELD_DOMAIN_MIRROR -> domainMirrorJson = readRawJson(parser);
-                    case FIELD_DOMAIN_CALLS -> domainCallsJson = readRawJson(parser);
+                    case FIELD_DOMAIN_MIRROR -> domainMirrorGz = readCompressedJson(parser);
+                    case FIELD_DOMAIN_CALLS -> domainCallsGz = readCompressedJson(parser);
                     case FIELD_DOMAIN_MODEL_PACKAGES -> domainModelPackages = readStringList(parser);
                     default -> parser.skipChildren();
                 }
             }
         }
 
-        if (domainMirrorJson == null) {
+        if (domainMirrorGz == null) {
             throw DiagramViewerException.fail(
                 "The domain mirror upload request body is missing the required '%s' field.", FIELD_DOMAIN_MIRROR);
         }
 
-        DomainMirror domainMirror = domainSerializer.deserialize(domainMirrorJson);
-        if (domainCallsJson != null) {
-            // fail fast if the static analysis result cannot be resolved against the uploaded domain mirror,
-            // rather than persisting a DomainCalls that could never be read back
-            domainCallsSerializer.deserialize(domainCallsJson, domainMirror);
+        CompressedJson.checkStorable(domainMirrorGz, "domain mirror");
+        CompressedJson.checkStorable(domainCallsGz, "static analysis result (domainCalls)");
+
+        // validation only: a domain mirror that cannot be read back must not be stored
+        try (InputStream domainMirrorJson = CompressedJson.decompress(domainMirrorGz)) {
+            domainSerializer.deserialize(domainMirrorJson);
         }
 
-        return new DomainMirrorUploadPayload(domainMirror, domainCallsJson, domainModelPackages);
+        return new DomainMirrorUploadPayload(domainMirrorGz, domainCallsGz, domainModelPackages);
     }
 
-    private String readRawJson(JsonParser parser) throws IOException {
-        JsonNode node = objectMapper.readTree(parser);
-        return node.toString();
+    /**
+     * Copies the JSON value the parser currently points at, token by token, as compact JSON into a gzip
+     * stream.
+     *
+     * @return the gzip-compressed JSON, or {@code null} for a JSON {@code null} value
+     */
+    private byte[] readCompressedJson(JsonParser parser) {
+        if (parser.currentToken() == JsonToken.VALUE_NULL) {
+            return null;
+        }
+        return CompressedJson.compress(out -> {
+            try (JsonGenerator generator = objectMapper.getFactory().createGenerator(out, JsonEncoding.UTF8)) {
+                generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+                generator.copyCurrentStructure(parser);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     private List<String> readStringList(JsonParser parser) throws IOException {
