@@ -53,20 +53,25 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.cards.Diagram
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
+import java.util.UUID;
 
-@Route(value = "/directory/:" + DiagramDirectoryView.DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
+@Route(value = "/directory/:" + DiagramDirectoryView.DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Directory Viewer")
 @PermitAll
 public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObserver {
 
-    public static final String DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER = "diagramDirectoryName";
+    /**
+     * Directories are addressed by id: their names are only unique among the sub directories of one parent (e.g.
+     * every Bounded Context folder has its own "Commands" folder).
+     */
+    public static final String DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER = "diagramDirectoryId";
 
     private final DiagramDirectoryService diagramDirectoryService;
     private final ProjectService projectService;
 
     private DiagramDirectory diagramDirectory;
     private Project project;
-    private String diagramDirectoryName;
+    private UUID diagramDirectoryId;
 
     public DiagramDirectoryView(DiagramDirectoryService diagramDirectoryService, ProjectService projectService) {
         this.diagramDirectoryService = diagramDirectoryService;
@@ -79,18 +84,19 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        diagramDirectoryName = event.getRouteParameters().get(DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER).orElseThrow();
+        diagramDirectoryId = UUID.fromString(event.getRouteParameters().get(DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER).orElseThrow());
         refreshPage();
     }
 
     private void setDiagramDirectoryAndProject() {
-        diagramDirectory = diagramDirectoryService.getByName(diagramDirectoryName);
+        diagramDirectory = diagramDirectoryService.getById(diagramDirectoryId);
         project = diagramDirectory.getProject();
     }
 
     private void addPageContents() {
         add(createAndGetNameAndDeleteButtonLayout());
-        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, project, diagramDirectory.getDiagrams()));
+        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, project,
+            project.getSubDirectories(diagramDirectory), diagramDirectory.getDiagrams()));
         add(scroller);
     }
 
@@ -102,8 +108,16 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
 
     private HorizontalLayout createAndGetNameAndDeleteButtonLayout() {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.add(new H2(diagramDirectory.getName()), getRenameDirectoryButton(), getDeleteDirectoryButton());
+        horizontalLayout.add(new H2(directoryPath()), getRenameDirectoryButton(), getDeleteDirectoryButton());
         return horizontalLayout;
+    }
+
+    private String directoryPath() {
+        StringBuilder path = new StringBuilder(diagramDirectory.getName());
+        for (DiagramDirectory parent = diagramDirectory.getParent(); parent != null; parent = parent.getParent()) {
+            path.insert(0, parent.getName() + " / ");
+        }
+        return path.toString();
     }
 
     private Button getRenameDirectoryButton() {
@@ -120,7 +134,8 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Delete Directory");
         confirmDialog.setText(String.format(
-            "Are you sure you want to delete directory '%s'?", diagramDirectory.getName()));
+            "Are you sure you want to delete directory '%s' and its sub directories? Their diagrams are kept"
+                + " and moved to the project.", diagramDirectory.getName()));
 
         confirmDialog.setCancelable(true);
 

@@ -121,7 +121,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private void addPageContents() {
         add(createAndGetNameAndEditButtonAndReuploadButtonLayout(), createAndGetButtonBar());
-        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, project, project.getDiagramDirectories(), project.getDiagramsWithoutDirectory()));
+        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, project, project.getTopLevelDiagramDirectories(), project.getDiagramsWithoutDirectory()));
         add(scroller);
     }
 

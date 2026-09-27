@@ -52,7 +52,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Table(name = "diagram_directory")
 @Data
-@ToString(exclude = {"project", "diagrams"})
+@ToString(exclude = {"project", "diagrams", "parent"})
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -67,6 +67,14 @@ public class DiagramDirectory {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="project_id", nullable=false)
     private Project project;
+
+    /**
+     * The directory this one is nested in, {@code null} for a directory directly below its project. The sub
+     * directories of a directory are derived from its project's directories, see {@link Project#getSubDirectories}.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "parent_id")
+    private DiagramDirectory parent;
 
     @OneToMany(fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "diagramDirectory")
     private Set<Diagram> diagrams;

@@ -33,11 +33,23 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface DiagramDirectoryService {
 
-    DiagramDirectory getByName(String name);
+    DiagramDirectory getById(UUID id);
+
+    /**
+     * Returns the directory with the given name nested directly in the given parent, creating it if there is none.
+     *
+     * @param project the project of the directory
+     * @param parent  the parent directory, {@code null} for a directory directly below the project
+     * @param name    the name of the directory
+     * @return the found or created directory
+     */
+    @Transactional
+    DiagramDirectory findOrCreate(Project project, DiagramDirectory parent, String name);
 
     @Transactional
     void create(String name, Project project, Set<Diagram> diagrams);

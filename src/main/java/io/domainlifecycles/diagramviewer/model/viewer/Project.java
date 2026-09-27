@@ -45,6 +45,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -134,6 +135,23 @@ public class Project {
         diagramDirectories.remove(diagramDirectory);
         diagramDirectories = new HashSet<>(diagramDirectories);
         diagramDirectory.setProject(null);
+    }
+
+    /**
+     * @return the directories directly below this project, i.e. not nested in another directory
+     */
+    public Set<DiagramDirectory> getTopLevelDiagramDirectories() {
+        return getSubDirectories(null);
+    }
+
+    /**
+     * @param parent a directory of this project, {@code null} for the project itself
+     * @return the directories nested directly in the given directory
+     */
+    public Set<DiagramDirectory> getSubDirectories(DiagramDirectory parent) {
+        return diagramDirectories.stream()
+            .filter(directory -> Objects.equals(directory.getParent(), parent))
+            .collect(Collectors.toSet());
     }
 
     public Set<Diagram> getDiagramsWithoutDirectory() {

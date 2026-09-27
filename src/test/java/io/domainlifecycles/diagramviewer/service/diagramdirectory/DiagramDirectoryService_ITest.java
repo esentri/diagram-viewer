@@ -7,6 +7,8 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
+import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.repository.DiagramDirectoryRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
@@ -37,6 +39,12 @@ class DiagramDirectoryService_ITest extends BaseIntegrationTest {
 
     @Autowired
     DiagramRepository diagramRepository;
+
+    @Autowired
+    DiagramDirectoryRepository diagramDirectoryRepository;
+
+    @Autowired
+    ProjectService projectService;
 
     private AppUser appUser;
 
@@ -80,8 +88,39 @@ class DiagramDirectoryService_ITest extends BaseIntegrationTest {
         service.create(directoryName, project, Set.of(firstDiagram, secondDiagram));
 
         // then
-        DiagramDirectory diagramDirectory = service.getByName(directoryName);
-        assertThat(diagramDirectory).isNotNull();
+        DiagramDirectory diagramDirectory = project.getTopLevelDiagramDirectories().stream()
+            .filter(directory -> directoryName.equals(directory.getName()))
+            .findFirst().orElseThrow();
+        assertThat(service.getById(diagramDirectory.getId())).isNotNull();
+    }
+
+    @Test
+    void Should_PersistNestedDirectories_And_DeleteThemWithTheirParent() {
+
+        // given: two context folders with a "Commands" folder each, one holding a diagram
+        Project project = setUpProject();
+        project.setDiagrams(new HashSet<>());
+        DiagramDirectory buchung = service.findOrCreate(project, null, "Buchung");
+        DiagramDirectory buchungCommands = service.findOrCreate(project, buchung, "Commands");
+        DiagramDirectory zimmer = service.findOrCreate(project, null, "Zimmer");
+        DiagramDirectory zimmerCommands = service.findOrCreate(project, zimmer, "Commands");
+        Diagram diagram = diagramRepository.save(Diagram.builder().name("Buchung - CheckeGastAus").project(project).build());
+        project.addDiagram(diagram);
+        service.add(buchungCommands, diagram);
+
+        // then: same names below different parents are different folders, found again on a second run
+        assertThat(buchungCommands).isNotEqualTo(zimmerCommands);
+        assertThat(service.findOrCreate(project, buchung, "Commands")).isEqualTo(buchungCommands);
+        assertThat(service.getById(buchungCommands.getId()).getParent()).isEqualTo(buchung);
+
+        // when: the context folder is deleted
+        projectService.deleteDiagramDirectory(project, buchung);
+
+        // then: its sub folder went with it, the other context stays, the diagram is kept without folder
+        assertThat(diagramDirectoryRepository.findById(buchung.getId())).isEmpty();
+        assertThat(diagramDirectoryRepository.findById(buchungCommands.getId())).isEmpty();
+        assertThat(diagramDirectoryRepository.findById(zimmerCommands.getId())).isPresent();
+        assertThat(diagramRepository.findById(diagram.getId()).orElseThrow().getDiagramDirectory()).isNull();
     }
 
     private Project setUpProject() {

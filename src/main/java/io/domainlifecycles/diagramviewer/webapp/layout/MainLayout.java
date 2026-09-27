@@ -243,22 +243,24 @@ public class MainLayout extends AppLayout {
             project.getName(), ProjectView.class, new RouteParameters(Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName())));
         projectSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
 
-        project.getDiagramDirectories()
-            .stream().sorted(Comparator.comparing(DiagramDirectory::getCreatedAt))
-                .forEach(diagramDirectory -> {
-                    SideNavItem directorySideNavItem = createAndGetDiagramDirectorySideNavItem(project, diagramDirectory);
-                    projectSideNavItem.addItem(directorySideNavItem);
-                });
+        addDirectorySideNavItems(project, projectSideNavItem, project.getTopLevelDiagramDirectories());
 
         createAndAddChildDiagramSideNavItems(project, projectSideNavItem, project.getDiagramsWithoutDirectory());
 
         return projectSideNavItem;
     }
 
+    private void addDirectorySideNavItems(Project project, SideNavItem parentSideNavItem, Set<DiagramDirectory> diagramDirectories) {
+        diagramDirectories
+            .stream().sorted(Comparator.comparing(DiagramDirectory::getCreatedAt))
+            .forEach(diagramDirectory -> parentSideNavItem.addItem(createAndGetDiagramDirectorySideNavItem(project, diagramDirectory)));
+    }
+
     private SideNavItem createAndGetDiagramDirectorySideNavItem(Project project, DiagramDirectory diagramDirectory) {
         SideNavItem directorySideNavItem = new SideNavItem(diagramDirectory.getName(), DiagramDirectoryView.class,
-            new RouteParameters(Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER, diagramDirectory.getName())));
+            new RouteParameters(Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER, diagramDirectory.getId().toString())));
 
+        addDirectorySideNavItems(project, directorySideNavItem, project.getSubDirectories(diagramDirectory));
         createAndAddChildDiagramSideNavItems(project, directorySideNavItem, diagramDirectory.getDiagrams());
 
         directorySideNavItem.getStyle().setLineHeight(LineHeight.SMALL);

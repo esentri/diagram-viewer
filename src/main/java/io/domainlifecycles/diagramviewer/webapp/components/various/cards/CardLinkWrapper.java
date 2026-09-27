@@ -64,7 +64,7 @@ public class CardLinkWrapper extends Div {
         this();
         addClickListener(
             event -> UI.getCurrent().navigate(DiagramDirectoryView.class, new RouteParameters(
-                Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER, diagramDirectory.getName()))));
+                Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER, diagramDirectory.getId().toString()))));
 
         add(createAndGetDiagramCard(diagramDirectoryService, diagramDirectory));
     }

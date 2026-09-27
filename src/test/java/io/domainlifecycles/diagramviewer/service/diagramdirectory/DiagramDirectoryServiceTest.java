@@ -7,8 +7,10 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramDirectoryRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryServiceImpl;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,35 +40,83 @@ public class DiagramDirectoryServiceTest {
     DiagramDirectoryServiceImpl service;
 
     @Test
-    public void Should_GetDiagramDirectoryByName_When_DiagramDirectoryWithNameExists() {
+    public void Should_GetDiagramDirectoryById_When_DiagramDirectoryExists() {
 
         // given
-        String name = "testDirectory";
-        DiagramDirectory diagramDirectory = DiagramDirectory.builder().name(name).build();
-
-        // prepare mocks
-        when(diagramDirectoryRepository.findByName(eq(name))).thenReturn(Optional.of(diagramDirectory));
+        UUID id = UUID.randomUUID();
+        DiagramDirectory diagramDirectory = DiagramDirectory.builder().id(id).name("testDirectory").build();
+        when(diagramDirectoryRepository.findById(eq(id))).thenReturn(Optional.of(diagramDirectory));
 
         // when
-        DiagramDirectory diagramDirectoryResult = service.getByName(name);
+        DiagramDirectory diagramDirectoryResult = service.getById(id);
 
         // then
-        assertThat(diagramDirectoryResult).isNotNull();
         assertThat(diagramDirectoryResult).isEqualTo(diagramDirectory);
     }
 
     @Test
-    public void Should_ThrowDiagramViewerException_When_DiagramDirectoryWithNameDoesNotExist() {
+    public void Should_ThrowDiagramViewerException_When_DiagramDirectoryWithIdDoesNotExist() {
 
         // given
-        String name = "testDirectory";
+        UUID id = UUID.randomUUID();
+        when(diagramDirectoryRepository.findById(any())).thenReturn(Optional.empty());
 
-        // prepare mocks
-        when(diagramDirectoryRepository.findByName(any())).thenReturn(Optional.empty());
+        // when / then
+        assertThatThrownBy(() -> service.getById(id)).isInstanceOf(DiagramViewerException.class)
+            .hasMessage("No Diagram Directory found with id '" + id + "'.");
+    }
+
+    @Test
+    public void Should_ReuseDirectory_When_ParentAlreadyHasOneWithTheName() {
+
+        // given: two context folders, each with its own "Commands" folder
+        Project project = project();
+        DiagramDirectory buchung = directory(project, null, "Buchung");
+        DiagramDirectory zimmer = directory(project, null, "Zimmer");
+        DiagramDirectory buchungCommands = directory(project, buchung, "Commands");
+        directory(project, zimmer, "Commands");
 
         // when
+        DiagramDirectory found = service.findOrCreate(project, buchung, "Commands");
+
+        // then: the one below the given parent, nothing created
+        assertThat(found).isSameAs(buchungCommands);
+        verify(diagramDirectoryRepository, never()).save(any());
+    }
+
+    @Test
+    public void Should_CreateNestedDirectory_When_ParentHasNoneWithTheName() {
+
+        // given: a "Commands" folder exists, but below another parent
+        Project project = project();
+        DiagramDirectory buchung = directory(project, null, "Buchung");
+        DiagramDirectory zimmer = directory(project, null, "Zimmer");
+        directory(project, zimmer, "Commands");
+        when(diagramDirectoryRepository.save(any())).thenAnswer(invocation -> {
+            DiagramDirectory saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID());
+            return saved;
+        });
+
+        // when
+        DiagramDirectory created = service.findOrCreate(project, buchung, "Commands");
+
         // then
-        assertThatThrownBy(() -> service.getByName(name)).isInstanceOf(DiagramViewerException.class).hasMessage("No Diagram Directory found with name '" + name + "'.");
+        assertThat(created.getParent()).isSameAs(buchung);
+        assertThat(created.getName()).isEqualTo("Commands");
+        assertThat(project.getSubDirectories(buchung)).containsExactly(created);
+    }
+
+    private static Project project() {
+        return Project.builder().id(UUID.randomUUID()).name("p")
+            .diagrams(new HashSet<>()).diagramDirectories(new HashSet<>()).build();
+    }
+
+    private static DiagramDirectory directory(Project project, DiagramDirectory parent, String name) {
+        DiagramDirectory directory = DiagramDirectory.builder().id(UUID.randomUUID()).name(name).parent(parent)
+            .diagrams(new HashSet<>()).build();
+        project.addDiagramDirectory(directory);
+        return directory;
     }
 
     @Test

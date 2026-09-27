@@ -41,6 +41,7 @@ import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -219,9 +220,20 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void deleteDiagramDirectory(Project project, DiagramDirectory diagramDirectory) {
-        project.removeDiagramDirectory(diagramDirectory);
-        diagramDirectory.removeAllDiagrams();
+        // nested directories go with their parent; the diagrams of all of them move to the project itself
+        List<DiagramDirectory> directories = new ArrayList<>();
+        collectWithSubDirectories(project, diagramDirectory, directories);
+        directories.forEach(directory -> {
+            directory.removeAllDiagrams();
+            directory.setParent(null);
+            project.removeDiagramDirectory(directory);
+        });
         repository.save(project);
+    }
+
+    private static void collectWithSubDirectories(Project project, DiagramDirectory directory, List<DiagramDirectory> collected) {
+        collected.add(directory);
+        project.getSubDirectories(directory).forEach(subDirectory -> collectWithSubDirectories(project, subDirectory, collected));
     }
 
     private Project mapProject(String projectName, AppUser appUser) {

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -619,5 +620,34 @@ class ProjectServiceTest {
         verify(projectMock, times(1)).removeDiagramDirectory(eq(diagramDirectoryMock));
         verify(repository, times(1)).save(eq(projectMock));
         verify(diagramDirectoryMock, times(1)).removeAllDiagrams();
+    }
+
+    @Test
+    void Should_DeleteSubDirectoriesAlong_And_KeepTheirDiagrams_When_DirectoryIsDeleted() {
+
+        // given: a context folder with a nested "Commands" folder holding a diagram
+        Project project = Project.builder().id(UUID.randomUUID()).name("p")
+            .diagrams(new HashSet<>()).diagramDirectories(new HashSet<>()).build();
+        DiagramDirectory context = DiagramDirectory.builder().id(UUID.randomUUID()).name("Buchung")
+            .diagrams(new HashSet<>()).build();
+        DiagramDirectory commands = DiagramDirectory.builder().id(UUID.randomUUID()).name("Commands").parent(context)
+            .diagrams(new HashSet<>()).build();
+        DiagramDirectory other = DiagramDirectory.builder().id(UUID.randomUUID()).name("Zimmer")
+            .diagrams(new HashSet<>()).build();
+        project.addDiagramDirectory(context);
+        project.addDiagramDirectory(commands);
+        project.addDiagramDirectory(other);
+        Diagram diagram = Diagram.builder().id(UUID.randomUUID()).name("Buchung - CheckeGastAus").project(project).build();
+        project.addDiagram(diagram);
+        commands.addDiagram(diagram);
+        when(repository.save(project)).thenReturn(project);
+
+        // when
+        projectService.deleteDiagramDirectory(project, context);
+
+        // then
+        org.assertj.core.api.Assertions.assertThat(project.getDiagramDirectories()).containsExactly(other);
+        assertThat(diagram.getDiagramDirectory()).isNull();
+        org.assertj.core.api.Assertions.assertThat(project.getDiagrams()).contains(diagram);
     }
 }
