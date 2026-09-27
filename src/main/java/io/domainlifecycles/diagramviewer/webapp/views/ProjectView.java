@@ -32,6 +32,7 @@ package io.domainlifecycles.diagramviewer.webapp.views;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -39,6 +40,8 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -49,6 +52,8 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.plugin.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.service.BoundedContext;
+import io.domainlifecycles.diagramviewer.service.BoundedContextAnalysisService;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
@@ -62,11 +67,15 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ShareProjectD
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.util.HtmlUtils;
 
 @Route(value = "/project/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Project Viewer")
@@ -82,6 +91,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final DiagramService diagramService;
     private final DiagramDirectoryService diagramDirectoryService;
     private final SessionStorage sessionStorage;
+    private final BoundedContextAnalysisService boundedContextAnalysisService;
 
     private Project project;
     private String projectName;
@@ -94,7 +104,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
                        SecurityService securityService,
                        ProjectService projectService,
                        DiagramService diagramService,
-                       DiagramDirectoryService diagramDirectoryService, SessionStorage sessionStorage) {
+                       DiagramDirectoryService diagramDirectoryService, SessionStorage sessionStorage,
+                       BoundedContextAnalysisService boundedContextAnalysisService) {
         this.jarUploadEnabled = jarUploadEnabled;
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.securityService = securityService;
@@ -102,6 +113,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         this.diagramService = diagramService;
         this.diagramDirectoryService = diagramDirectoryService;
         this.sessionStorage = sessionStorage;
+        this.boundedContextAnalysisService = boundedContextAnalysisService;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
@@ -159,6 +171,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         buttonBar.getStyle().setMarginTop("2rem");
 
         buttonBar.add(getCreateDiagramButton());
+        buttonBar.add(getAnalyzeBoundedContextsButton());
         if(!(sqlddlGeneratorService instanceof NoOpSQLDDLGeneratorService)){
             buttonBar.add(getDatabaseButton());
         }
@@ -176,6 +189,64 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         createDiagramButton.addClickListener(e -> createDiagramDialog.open());
         return createDiagramButton;
+    }
+
+    /**
+     * Creates a directory per Bounded Context with diagrams of its aggregates, read models and commands, see
+     * {@link BoundedContextAnalysisService}.
+     */
+    private Button getAnalyzeBoundedContextsButton() {
+        List<BoundedContext> boundedContexts = sessionStorage.getBoundedContexts(project.getId());
+        boolean flowsAvailable = sessionStorage.hasDomainCalls(project.getId());
+
+        ConfirmDialog confirmDialog = new ConfirmDialog();
+        confirmDialog.setHeader("Analyze Bounded Contexts");
+        confirmDialog.setText(new Html("<div>"
+            + "Creates a folder for each of the " + boundedContexts.size() + " Bounded Context(s) of this project ("
+            + boundedContexts.stream().map(BoundedContext::label).map(HtmlUtils::htmlEscape).collect(Collectors.joining(", "))
+            + ") containing<ul>"
+            + "<li>a diagram of its aggregates,</li>"
+            + "<li>a folder <b>Read Models</b> with a diagram per read model, showing what leads into it,</li>"
+            + "<li>a folder <b>Commands</b> with a diagram per command, showing the flow it triggers and what leads"
+            + " into its processing.</li></ul>"
+            + (flowsAvailable ? "" : "<p>No static analysis result was uploaded for this project, so only the"
+                + " aggregate diagrams can be created.</p>")
+            + "Existing folders are reused and diagrams that already exist are kept unchanged.</div>"));
+        confirmDialog.setCancelable(true);
+        confirmDialog.setConfirmText("Analyze");
+        confirmDialog.addConfirmListener(event -> analyzeBoundedContexts());
+
+        Button analyzeButton = new Button("Analyze Bounded Contexts", new Icon(VaadinIcon.SITEMAP));
+        analyzeButton.setId("analyze-bounded-contexts");
+        analyzeButton.getStyle().set("cursor", "pointer");
+        analyzeButton.addClickListener(e -> confirmDialog.open());
+        return analyzeButton;
+    }
+
+    private void analyzeBoundedContexts() {
+        UI ui = UI.getCurrent();
+        BoundedContextAnalysisService.Result result = boundedContextAnalysisService.analyze(project);
+        ComponentUtil.fireEvent(ui, new DiagramsOrProjectsChangedEvent(this, false));
+
+        String summary = String.format("%d Bounded Context(s) analyzed: %d diagram(s) created%s.",
+            result.boundedContexts(), result.createdDiagrams(),
+            result.skippedDiagrams() > 0 ? String.format(", %d already existed", result.skippedDiagrams()) : "");
+        if (result.flowsSkipped()) {
+            summary += " Read model and command diagrams need a static analysis result, which was not uploaded.";
+        }
+        Notification.show(summary, 8000, Notification.Position.BOTTOM_END);
+
+        if (!result.renderings().isEmpty()) {
+            BackgroundDiagramRendering.whenAllRendered(ui, result.renderings(), failed -> {
+                // the cards show the images, which are complete only now
+                ComponentUtil.fireEvent(ui, new DiagramsOrProjectsChangedEvent(this, false));
+                Notification notification = Notification.show(failed == 0
+                        ? String.format("All %d new diagram(s) rendered.", result.renderings().size())
+                        : String.format("%d of %d new diagram(s) could not be rendered.", failed, result.renderings().size()),
+                    8000, Notification.Position.BOTTOM_END);
+                notification.addThemeVariants(failed == 0 ? NotificationVariant.LUMO_SUCCESS : NotificationVariant.LUMO_ERROR);
+            });
+        }
     }
 
     private Button getDatabaseButton() {

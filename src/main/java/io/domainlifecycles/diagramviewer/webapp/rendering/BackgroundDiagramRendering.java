@@ -41,7 +41,10 @@ import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramRenderingFailedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramRenderingStartedEvent;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.IntConsumer;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -107,6 +110,29 @@ public final class BackgroundDiagramRendering {
                 });
             }
         });
+    }
+
+    /**
+     * Runs a command on the UI once all given background renderings are done, e.g. to refresh the diagram cards
+     * after many diagrams were created at once.
+     *
+     * @param ui         the UI to update
+     * @param renderings the renderings to wait for
+     * @param onDone     receives the number of failed renderings; runs with the UI locked
+     */
+    public static void whenAllRendered(UI ui, List<CompletableFuture<DiagramRendering.Result>> renderings,
+                                       IntConsumer onDone) {
+        RequestContextBinding requestContext = RequestContextBinding.capture();
+        CompletableFuture.allOf(renderings.stream()
+                .map(rendering -> rendering.handle((result, error) -> error))
+                .toArray(CompletableFuture[]::new))
+            .thenRun(() -> {
+                int failed = (int) renderings.stream().filter(CompletableFuture::isCompletedExceptionally).count();
+                if (failed > 0) {
+                    log.warn("{} of {} diagram renderings failed.", failed, renderings.size());
+                }
+                access(ui, requestContext, () -> onDone.accept(failed));
+            });
     }
 
     private static void notify(String message, NotificationVariant variant) {
