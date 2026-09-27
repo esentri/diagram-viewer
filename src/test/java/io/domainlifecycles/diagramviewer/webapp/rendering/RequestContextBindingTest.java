@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.context.request.SessionScope;
@@ -52,6 +54,28 @@ class RequestContextBindingTest {
     @AfterEach
     void tearDown() {
         RequestContextHolder.resetRequestAttributes();
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void Should_KnowTheSignedInUser_When_RunOnAnotherThread() throws Exception {
+
+        // given: a UI request of a signed in user
+        SecurityContextHolder.getContext().setAuthentication(
+            new TestingAuthenticationToken("t@t.de", null, "ROLE_USER"));
+        RequestContextBinding binding = RequestContextBinding.capture();
+        SecurityContextHolder.clearContext();
+
+        // when: the UI update runs on a background thread
+        String[] seen = new String[2];
+        CompletableFuture.runAsync(() -> {
+            binding.run(() -> seen[0] = SecurityContextHolder.getContext().getAuthentication().getName());
+            seen[1] = String.valueOf(SecurityContextHolder.getContext().getAuthentication());
+        }).get(10, TimeUnit.SECONDS);
+
+        // then: the user is known while the command runs, and the pooled thread is clean again afterwards
+        assertThat(seen[0]).isEqualTo("t@t.de");
+        assertThat(seen[1]).isEqualTo("null");
     }
 
     @Test

@@ -29,28 +29,35 @@
 
 package io.domainlifecycles.diagramviewer.webapp.rendering;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 /**
- * Carries the Spring request attributes of the request starting a background rendering over to the code that later
- * updates the UI via {@code UI.access}. Vaadin often runs such a command right away on the calling thread - here the
- * rendering thread, which has no request bound - and the UI components read the session scoped
- * {@code SessionStorage}, which Spring resolves via the bound request attributes.
- * <p>
- * The captured attributes keep a reference to the HTTP session, which Spring's {@code ServletRequestAttributes} use
- * for session scoped beans once the original request is completed.
+ * Carries the thread bound context of the request starting background work over to the code that later updates the
+ * UI via {@code UI.access}. Vaadin often runs such a command right away on the calling thread - a rendering or
+ * analysis thread, which has no request bound - while the UI components need what the request had:
+ * <ul>
+ *     <li>the Spring request attributes, to resolve the session scoped {@code SessionStorage}. The captured attributes
+ *     keep a reference to the HTTP session, which Spring's {@code ServletRequestAttributes} use for session scoped
+ *     beans once the original request is completed;</li>
+ *     <li>the Spring Security context, to know the signed in user (e.g. for the navigation listing their projects).</li>
+ * </ul>
  */
 final class RequestContextBinding {
 
     private final RequestAttributes requestAttributes;
+    private final SecurityContext securityContext;
 
-    private RequestContextBinding(RequestAttributes requestAttributes) {
+    private RequestContextBinding(RequestAttributes requestAttributes, SecurityContext securityContext) {
         this.requestAttributes = requestAttributes;
+        this.securityContext = securityContext;
     }
 
     /**
-     * Captures the request attributes bound to the current thread, if any.
+     * Captures the request attributes and the security context bound to the current thread, if any.
      *
      * @return the binding to apply later
      */
@@ -60,24 +67,37 @@ final class RequestContextBinding {
             // makes the attributes remember the session while the request is still active
             requestAttributes.getSessionMutex();
         }
-        return new RequestContextBinding(requestAttributes);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        SecurityContext securityContext = null;
+        if (authentication != null) {
+            securityContext = SecurityContextHolder.createEmptyContext();
+            securityContext.setAuthentication(authentication);
+        }
+        return new RequestContextBinding(requestAttributes, securityContext);
     }
 
     /**
-     * Runs the command with the captured request attributes bound, unless the running thread has request attributes
-     * of its own (e.g. when Vaadin runs the command within a later request of the same session).
+     * Runs the command with the captured request attributes and security context bound - each unless the running
+     * thread has one of its own (e.g. when Vaadin runs the command within a later request of the same session).
      *
      * @param command the command to run
      */
     void run(Runnable command) {
-        boolean bind = requestAttributes != null && RequestContextHolder.getRequestAttributes() == null;
-        if (bind) {
+        boolean bindRequest = requestAttributes != null && RequestContextHolder.getRequestAttributes() == null;
+        boolean bindSecurity = securityContext != null && SecurityContextHolder.getContext().getAuthentication() == null;
+        if (bindRequest) {
             RequestContextHolder.setRequestAttributes(requestAttributes);
+        }
+        if (bindSecurity) {
+            SecurityContextHolder.setContext(securityContext);
         }
         try {
             command.run();
         } finally {
-            if (bind) {
+            if (bindSecurity) {
+                SecurityContextHolder.clearContext();
+            }
+            if (bindRequest) {
                 RequestContextHolder.resetRequestAttributes();
             }
         }

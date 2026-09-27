@@ -121,6 +121,8 @@ test {
 	finalizedBy jacocoTestReport
 	exclude '**/*_ITest.class'
 	exclude '**/*_PerfTest.class'
+	// keep the images of test diagrams away from the diagrams of a locally running viewer
+	systemProperty 'diagrams.location', "${layout.buildDirectory.get().asFile}/test-diagrams"
 }
 
 plugins.withId('checkstyle') {
@@ -158,6 +160,8 @@ tasks.register('integrationTest', Test) {
 	classpath = sourceSets.test.runtimeClasspath
 
 	include '**/*_ITest.class'
+	// keep the images of test diagrams away from the diagrams of a locally running viewer
+	systemProperty 'diagrams.location', "${layout.buildDirectory.get().asFile}/test-diagrams"
 
 	useJUnitPlatform()
 
@@ -178,6 +182,8 @@ tasks.register('perfTest', Test) {
 	classpath = sourceSets.test.runtimeClasspath
 
 	include '**/*_PerfTest.class'
+	// keep the images of test diagrams away from the diagrams of a locally running viewer
+	systemProperty 'diagrams.location', "${layout.buildDirectory.get().asFile}/test-diagrams"
 
 	useJUnitPlatform()
 	maxHeapSize = findProperty('perfHeap') ?: '2g'
