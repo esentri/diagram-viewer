@@ -1,5 +1,8 @@
 package io.domainlifecycles.diagramviewer.scenario;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -64,7 +67,49 @@ public final class RezeptionScenario {
     public static final String ZIMMER_FREIGABE_LISTENER = "com.esentri.rezeption.application.buchung.ZimmerFreigabeListener";
     public static final String GAST_AUSGECHECKT_EVENT = "com.esentri.rezeption.domain.buchung.GastAusgecheckt";
 
+    /** Bounded Contexts of {@link #gzippedUploadRequestBodyWithBoundedContexts()}. */
+    public static final String BUCHUNG_CONTEXT_PACKAGE = "com.esentri.rezeption.domain.buchung";
+    public static final String BUCHUNG_CONTEXT_NAME = "Buchung";
+    public static final String ZIMMER_CONTEXT_PACKAGE = "com.esentri.rezeption.domain.zimmer";
+    public static final String ZIMMER_CONTEXT_NAME = "Zimmer";
+    /** A Bounded Context without a name - its package is its label. */
+    public static final String AUSLASTUNG_CONTEXT_PACKAGE = "com.esentri.rezeption.domain.auslastung";
+    public static final String ZIMMERAUSLASTUNG_READ_MODEL = "com.esentri.rezeption.domain.auslastung.Zimmerauslastung";
+
     private RezeptionScenario() {
+    }
+
+    /**
+     * The rezeption domain as if its packages {@code domain.buchung} and {@code domain.zimmer} were annotated with
+     * {@code @BoundedContext("Buchung")} / {@code @BoundedContext("Zimmer")} and {@code domain.auslastung} with a
+     * nameless {@code @BoundedContext} - the real upload only carries DLC's fallback, the whole domain model package
+     * as one Bounded Context without a name.
+     *
+     * @return the gzip-compressed upload request body, with static analysis result
+     */
+    public static byte[] gzippedUploadRequestBodyWithBoundedContexts() {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode mirror = (ObjectNode) objectMapper.readTree(domainMirrorJson());
+            ArrayNode boundedContexts = mirror.putArray("boundedContextMirrors");
+            addBoundedContext(boundedContexts, BUCHUNG_CONTEXT_PACKAGE, BUCHUNG_CONTEXT_NAME);
+            addBoundedContext(boundedContexts, ZIMMER_CONTEXT_PACKAGE, ZIMMER_CONTEXT_NAME);
+            addBoundedContext(boundedContexts, AUSLASTUNG_CONTEXT_PACKAGE, null);
+            return gzip("{\"domainMirror\":" + objectMapper.writeValueAsString(mirror)
+                + ",\"domainCalls\":" + domainCallsJson()
+                + ",\"domainModelPackages\":[\"" + DOMAIN_MODEL_PACKAGE + "\"]}");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static void addBoundedContext(ArrayNode boundedContexts, String packageName, String name) {
+        ObjectNode boundedContext = boundedContexts.addObject();
+        boundedContext.put("@class", "io.domainlifecycles.mirror.model.BoundedContextModel");
+        boundedContext.put("packageName", packageName);
+        if (name != null) {
+            boundedContext.put("name", name);
+        }
     }
 
     /** @return the raw, real serialized {@code DomainMirror} JSON of the rezeption domain */
