@@ -30,6 +30,7 @@
 package io.domainlifecycles.diagramviewer.webapp.session;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
+import io.domainlifecycles.diagramviewer.service.BoundedContext;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectModel;
 import io.domainlifecycles.diagramviewer.service.ProjectModelCache;
@@ -114,6 +115,22 @@ public class SessionStorage {
 
     public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
         return projectModelCache.get(projectId).domainTypeMirrors();
+    }
+
+    /**
+     * @param projectId the project
+     * @return the Bounded Contexts of the project's domain model, sorted by label
+     */
+    public List<BoundedContext> getBoundedContexts(UUID projectId) {
+        return projectModelCache.get(projectId).boundedContexts();
+    }
+
+    /**
+     * @param projectId the project
+     * @return {@code true} if the project's domain model declares Bounded Contexts (more than DLC's fallback)
+     */
+    public boolean hasDeclaredBoundedContexts(UUID projectId) {
+        return projectModelCache.get(projectId).boundedContextsDeclared();
     }
 
     public List<AggregateRootMirror> getAllAggregateRootMirrors(UUID projectId) {

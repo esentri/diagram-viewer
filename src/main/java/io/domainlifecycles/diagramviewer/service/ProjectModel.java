@@ -34,6 +34,7 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.staticanalysis.DomainCalls;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -51,6 +52,8 @@ public final class ProjectModel {
     private final List<AggregateRootMirror> aggregateRootMirrors;
     private final List<DomainTypeMirror> domainTypeMirrors;
     private final boolean domainCallsAvailable;
+    private final List<BoundedContext> boundedContexts;
+    private final boolean boundedContextsDeclared;
     private final Supplier<Optional<DomainCalls>> domainCallsLoader;
     private final long domainMirrorBytes;
     private volatile Consumer<ProjectModel> domainCallsLoadedListener = model -> { };
@@ -72,6 +75,22 @@ public final class ProjectModel {
                         List<DomainTypeMirror> domainTypeMirrors,
                         boolean domainCallsAvailable,
                         Supplier<Optional<DomainCalls>> domainCallsLoader) {
+        this(lastUpdated, domainMirror, aggregateRootMirrors, domainTypeMirrors, domainCallsAvailable, domainCallsLoader,
+            null);
+    }
+
+    /**
+     * @param domainModelPackages the packages the domain model was built from, to tell declared Bounded Contexts
+     *                            apart from DLC's fallback (see {@link BoundedContext#areDeclared}); {@code null} if
+     *                            unknown
+     */
+    public ProjectModel(Instant lastUpdated,
+                        DomainMirror domainMirror,
+                        List<AggregateRootMirror> aggregateRootMirrors,
+                        List<DomainTypeMirror> domainTypeMirrors,
+                        boolean domainCallsAvailable,
+                        Supplier<Optional<DomainCalls>> domainCallsLoader,
+                        Collection<String> domainModelPackages) {
         this.lastUpdated = lastUpdated;
         this.domainMirror = domainMirror;
         this.aggregateRootMirrors = aggregateRootMirrors;
@@ -79,6 +98,24 @@ public final class ProjectModel {
         this.domainCallsAvailable = domainCallsAvailable;
         this.domainCallsLoader = domainCallsLoader;
         this.domainMirrorBytes = HeapEstimate.of(domainMirror);
+        this.boundedContexts = BoundedContext.of(domainMirror);
+        this.boundedContextsDeclared = BoundedContext.areDeclared(boundedContexts, domainModelPackages);
+    }
+
+    /**
+     * @return the Bounded Contexts of the domain model, sorted by label - at least DLC's fallback of one per domain
+     * model package
+     */
+    public List<BoundedContext> boundedContexts() {
+        return boundedContexts;
+    }
+
+    /**
+     * @return {@code true} if the domain model declares Bounded Contexts, i.e. more than DLC's fallback - only then
+     * are they offered as a filter
+     */
+    public boolean boundedContextsDeclared() {
+        return boundedContextsDeclared;
     }
 
     /**

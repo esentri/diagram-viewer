@@ -39,6 +39,7 @@ import io.domainlifecycles.mirror.api.DomainMirror;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,7 +118,8 @@ public class ProjectModelCache {
             LOGGER.debug("loading project model of {}", id);
             // only the domain mirror - the static analysis result is loaded on demand, see ProjectModel
             DomainMirror domainMirror = projectDomainMirrorService.getDomainMirror(id);
-            return create(id, domainMirror, latestChange, projectDomainMirrorService.hasDomainCalls(id));
+            Set<String> domainModelPackages = projectRepository.findById(id).map(Project::getDomainModelPackages).orElse(null);
+            return create(id, domainMirror, latestChange, projectDomainMirrorService.hasDomainCalls(id), domainModelPackages);
         });
     }
 
@@ -129,7 +131,8 @@ public class ProjectModelCache {
      * @param domainMirror the created domain mirror
      */
     public void putFromFileUpload(Project project, DomainMirror domainMirror) {
-        cache.put(project.getId(), create(project.getId(), domainMirror, project.getLatestChangeInstant(), false));
+        cache.put(project.getId(), create(project.getId(), domainMirror, project.getLatestChangeInstant(), false,
+            project.getDomainModelPackages()));
     }
 
     /**
@@ -154,7 +157,8 @@ public class ProjectModelCache {
      * identities are never offered, nor are non-domain classes a diagram cannot
      * show.
      */
-    private ProjectModel create(UUID projectId, DomainMirror domainMirror, Instant lastUpdated, boolean domainCallsAvailable) {
+    private ProjectModel create(UUID projectId, DomainMirror domainMirror, Instant lastUpdated, boolean domainCallsAvailable,
+                                Set<String> domainModelPackages) {
         ProjectModel model = new ProjectModel(
             lastUpdated,
             domainMirror,
@@ -162,7 +166,8 @@ public class ProjectModelCache {
             DomainModelUtils.withoutUnrelatedNonDomainTypes(
                 DomainModelUtils.withoutEnumsAndIdentities(domainMirror.getAllDomainTypeMirrors()), domainMirror),
             domainCallsAvailable,
-            () -> projectDomainMirrorService.loadDomainCalls(projectId, domainMirror));
+            () -> projectDomainMirrorService.loadDomainCalls(projectId, domainMirror),
+            domainModelPackages);
         if (model.estimatedBytes() / 1024 > maximumKilobytes) {
             LOGGER.warn("The model of project {} (about {} MB) exceeds the cache budget of {} MB and cannot be kept cached.",
                 projectId, model.estimatedBytes() >> 20, maximumKilobytes / 1024);
