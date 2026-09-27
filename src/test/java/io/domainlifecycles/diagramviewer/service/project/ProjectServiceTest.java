@@ -271,7 +271,7 @@ class ProjectServiceTest {
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
         // when
-        projectService.createOrUpdateDomainModel(projectName, domainMirrorGz, null);
+        projectService.createOrUpdateDomainModel(projectName, domainMirrorGz, null, List.of());
 
         // then: persisted directly, the (API request's) session is not touched
         verify(repository, times(1)).findByName(eq(projectName));
@@ -296,7 +296,7 @@ class ProjectServiceTest {
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
         // when
-        assertThatThrownBy(() -> projectService.createOrUpdateDomainModel(projectName, new byte[0], null))
+        assertThatThrownBy(() -> projectService.createOrUpdateDomainModel(projectName, new byte[0], null, List.of()))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage("User has no access to project '" + projectName + "'");
 
@@ -321,7 +321,7 @@ class ProjectServiceTest {
         when(repository.save(any())).thenReturn(persistedProject);
 
         // when
-        projectService.createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz);
+        projectService.createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz, List.of());
 
         // then: persisted directly, the (API request's) session is not touched
         verify(repository, times(1)).findByName(eq(projectName));

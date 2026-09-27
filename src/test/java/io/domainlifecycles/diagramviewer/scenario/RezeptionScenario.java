@@ -88,16 +88,38 @@ public final class RezeptionScenario {
      * @return the gzip-compressed upload request body, with static analysis result
      */
     public static byte[] gzippedUploadRequestBodyWithBoundedContexts() {
+        return gzippedUploadRequestBody(new String[][] {
+            {BUCHUNG_CONTEXT_PACKAGE, BUCHUNG_CONTEXT_NAME},
+            {ZIMMER_CONTEXT_PACKAGE, ZIMMER_CONTEXT_NAME},
+            {AUSLASTUNG_CONTEXT_PACKAGE, null}
+        }, DOMAIN_MODEL_PACKAGE);
+    }
+
+    /**
+     * The upload of a build plugin configured with the two domain model packages {@code domain.buchung} and
+     * {@code domain.zimmer} and no {@code @BoundedContext} annotation: DLC's fallback mirrors each of them as a
+     * Bounded Context without a name.
+     *
+     * @return the gzip-compressed upload request body, with static analysis result
+     */
+    public static byte[] gzippedUploadRequestBodyWithTwoDomainModelPackages() {
+        return gzippedUploadRequestBody(new String[][] {
+            {BUCHUNG_CONTEXT_PACKAGE, null},
+            {ZIMMER_CONTEXT_PACKAGE, null}
+        }, BUCHUNG_CONTEXT_PACKAGE, ZIMMER_CONTEXT_PACKAGE);
+    }
+
+    private static byte[] gzippedUploadRequestBody(String[][] boundedContextPackagesAndNames, String... domainModelPackages) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode mirror = (ObjectNode) objectMapper.readTree(domainMirrorJson());
             ArrayNode boundedContexts = mirror.putArray("boundedContextMirrors");
-            addBoundedContext(boundedContexts, BUCHUNG_CONTEXT_PACKAGE, BUCHUNG_CONTEXT_NAME);
-            addBoundedContext(boundedContexts, ZIMMER_CONTEXT_PACKAGE, ZIMMER_CONTEXT_NAME);
-            addBoundedContext(boundedContexts, AUSLASTUNG_CONTEXT_PACKAGE, null);
+            for (String[] packageAndName : boundedContextPackagesAndNames) {
+                addBoundedContext(boundedContexts, packageAndName[0], packageAndName[1]);
+            }
             return gzip("{\"domainMirror\":" + objectMapper.writeValueAsString(mirror)
                 + ",\"domainCalls\":" + domainCallsJson()
-                + ",\"domainModelPackages\":[\"" + DOMAIN_MODEL_PACKAGE + "\"]}");
+                + ",\"domainModelPackages\":" + objectMapper.writeValueAsString(domainModelPackages) + "}");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -71,7 +71,8 @@ public class DomainMirrorUploadController {
         @PathVariable String projectName, HttpServletRequest request) throws IOException {
 
         DomainMirrorUploadPayload payload = payloadReader.read(request.getInputStream());
-        projectService.createOrUpdateDomainModel(projectName, payload.domainMirrorGz(), payload.domainCallsGz());
+        projectService.createOrUpdateDomainModel(projectName, payload.domainMirrorGz(), payload.domainCallsGz(),
+            payload.domainModelPackages());
         return ResponseEntity.ok().build();
     }
 }

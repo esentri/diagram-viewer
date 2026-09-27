@@ -150,6 +150,19 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
     }
 
     @Test
+    void Should_NotOfferBoundedContexts_When_DlcFallbackHasOneBoundedContextPerDomainModelPackage() throws Exception {
+
+        // when: two domain model packages, no annotations - two nameless Bounded Contexts, one per package
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithTwoDomainModelPackages());
+
+        // then: the upload keeps the packages at the project, which tells the fallback apart
+        assertThat(projectRepository.findDomainModelPackages(project.getId()))
+            .containsExactlyInAnyOrder(RezeptionScenario.BUCHUNG_CONTEXT_PACKAGE, RezeptionScenario.ZIMMER_CONTEXT_PACKAGE);
+        assertThat(sessionStorage.getBoundedContexts(project.getId())).hasSize(2);
+        assertThat(sessionStorage.hasDeclaredBoundedContexts(project.getId())).isFalse();
+    }
+
+    @Test
     void Should_RenderOnlyTheIncludedBoundedContext() throws Exception {
 
         // given

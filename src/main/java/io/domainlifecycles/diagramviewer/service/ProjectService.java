@@ -35,6 +35,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -92,9 +93,12 @@ public interface ProjectService {
      * @param domainMirrorGz the gzip-compressed JSON of the uploaded domain mirror, already validated, must not be null
      * @param domainCallsGz the gzip-compressed JSON of the static analysis result (DomainCalls) uploaded
      *                      alongside the domain mirror, or {@code null} if none was uploaded
+     * @param domainModelPackages the packages the domain model was built from, kept at the project - among others
+     *                            to tell declared Bounded Contexts apart from DLC's fallback
      */
     @Transactional
-    void createOrUpdateDomainModel(String projectName, byte[] domainMirrorGz, byte[] domainCallsGz);
+    void createOrUpdateDomainModel(String projectName, byte[] domainMirrorGz, byte[] domainCallsGz,
+                                   Collection<String> domainModelPackages);
 
     /**
      * Renames the specified project with a new name.

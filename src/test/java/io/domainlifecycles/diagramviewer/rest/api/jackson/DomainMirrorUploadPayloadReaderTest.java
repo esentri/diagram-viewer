@@ -23,6 +23,17 @@ class DomainMirrorUploadPayloadReaderTest {
         new DomainMirrorUploadPayloadReader(new JacksonDomainSerializer(false));
 
     @Test
+    void Should_ReadAllDomainModelPackages() throws Exception {
+
+        // when
+        DomainMirrorUploadPayload payload = read("{\"domainMirror\":" + RezeptionScenario.domainMirrorJson()
+            + ",\"domainModelPackages\":[\"a.first\",\"b.second\"]}");
+
+        // then
+        assertThat(payload.domainModelPackages()).containsExactly("a.first", "b.second");
+    }
+
+    @Test
     void Should_ReturnMirrorAndDomainCallsAsCompressedJson() throws Exception {
 
         // when

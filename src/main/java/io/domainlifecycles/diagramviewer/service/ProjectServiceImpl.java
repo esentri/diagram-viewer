@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -109,19 +110,24 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public Project updateDomainMirror(Project project, Set<String> domainModelPackages, AppUser appUser, Path pathToFile, UploadFileType uploadFileType) {
         checkIsProjectCreator(project, appUser);
+        project.setDomainModelPackages(packagesOf(domainModelPackages));
+        repository.save(project);
         sessionStorage.createOrUpdate(project, domainModelPackages, pathToFile, uploadFileType);
         return project;
     }
 
     @Override
     public Project create(String projectName, Set<String> domainModelPackages, AppUser appUser, Path pathToFile, UploadFileType uploadFileType) {
-        final Project mappedProject = saveWithNameExistsCheck(mapProject(projectName, appUser));
+        Project project = mapProject(projectName, appUser);
+        project.setDomainModelPackages(packagesOf(domainModelPackages));
+        final Project mappedProject = saveWithNameExistsCheck(project);
         sessionStorage.createOrUpdate(mappedProject, domainModelPackages, pathToFile, uploadFileType);
         return mappedProject;
     }
 
     @Override
-    public void createOrUpdateDomainModel(String projectName, byte[] domainMirrorGz, byte[] domainCallsGz) {
+    public void createOrUpdateDomainModel(String projectName, byte[] domainMirrorGz, byte[] domainCallsGz,
+                                          Collection<String> domainModelPackages) {
 
         Optional<Project> foundProject = repository.findByName(buildCleanProjectName(projectName));
 
@@ -133,6 +139,7 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             project.setChangedAt(Instant.now());
+            project.setDomainModelPackages(packagesOf(domainModelPackages));
             repository.save(project);
             projectDomainMirrorService.createOrUpdateCompressed(project, domainMirrorGz, domainCallsGz);
             return;
@@ -140,6 +147,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project project = mapProject(projectName,
             (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        project.setDomainModelPackages(packagesOf(domainModelPackages));
         Project persistedProject = repository.save(project);
         projectDomainMirrorService.createOrUpdateCompressed(persistedProject, domainMirrorGz, domainCallsGz);
     }
@@ -234,6 +242,10 @@ public class ProjectServiceImpl implements ProjectService {
     private static void collectWithSubDirectories(Project project, DiagramDirectory directory, List<DiagramDirectory> collected) {
         collected.add(directory);
         project.getSubDirectories(directory).forEach(subDirectory -> collectWithSubDirectories(project, subDirectory, collected));
+    }
+
+    private static Set<String> packagesOf(Collection<String> domainModelPackages) {
+        return domainModelPackages == null ? new HashSet<>() : new HashSet<>(domainModelPackages);
     }
 
     private Project mapProject(String projectName, AppUser appUser) {

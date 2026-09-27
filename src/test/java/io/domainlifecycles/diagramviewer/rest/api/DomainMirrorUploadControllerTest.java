@@ -47,7 +47,7 @@ class DomainMirrorUploadControllerTest {
         DomainMirrorUploadPayload payload = new DomainMirrorUploadPayload(domainMirrorGz, null, List.of());
 
         when(payloadReader.read(any())).thenReturn(payload);
-        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, null);
+        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, null, List.of());
 
         // when
         ResultActions result = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", projectName)
@@ -56,7 +56,7 @@ class DomainMirrorUploadControllerTest {
 
         // then
         result.andExpect(status().isOk());
-        verify(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, null);
+        verify(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, null, List.of());
     }
 
     @Test
@@ -69,7 +69,7 @@ class DomainMirrorUploadControllerTest {
         DomainMirrorUploadPayload payload = new DomainMirrorUploadPayload(domainMirrorGz, domainCallsGz, List.of("test.package"));
 
         when(payloadReader.read(any())).thenReturn(payload);
-        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz);
+        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz, List.of("test.package"));
 
         // when
         ResultActions result = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", projectName)
@@ -78,6 +78,6 @@ class DomainMirrorUploadControllerTest {
 
         // then
         result.andExpect(status().isOk());
-        verify(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz);
+        verify(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz, List.of("test.package"));
     }
 }

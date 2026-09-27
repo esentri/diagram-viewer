@@ -60,4 +60,13 @@ public interface ProjectRepository extends CrudRepository<Project, UUID> {
     """)
     Instant findLatestChange(@Param("projectId") UUID projectId);
 
-    List<Project> findByAssignedUsersContainingOrderByCreatedAtAsc(AppUser assignedUser);}
+    List<Project> findByAssignedUsersContainingOrderByCreatedAtAsc(AppUser assignedUser);
+
+    /**
+     * Reads the domain model packages of a project directly: loaded through the project entity, the collection can
+     * come back incomplete, since the project's eager relations lead back to it (project, assigned users, their
+     * projects).
+     */
+    @Query("SELECT pkg FROM Project p JOIN p.domainModelPackages pkg WHERE p.id = :projectId")
+    Set<String> findDomainModelPackages(@Param("projectId") UUID projectId);
+}

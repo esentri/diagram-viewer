@@ -118,7 +118,7 @@ public class ProjectModelCache {
             LOGGER.debug("loading project model of {}", id);
             // only the domain mirror - the static analysis result is loaded on demand, see ProjectModel
             DomainMirror domainMirror = projectDomainMirrorService.getDomainMirror(id);
-            Set<String> domainModelPackages = projectRepository.findById(id).map(Project::getDomainModelPackages).orElse(null);
+            Set<String> domainModelPackages = projectRepository.findDomainModelPackages(id);
             return create(id, domainMirror, latestChange, projectDomainMirrorService.hasDomainCalls(id), domainModelPackages);
         });
     }
