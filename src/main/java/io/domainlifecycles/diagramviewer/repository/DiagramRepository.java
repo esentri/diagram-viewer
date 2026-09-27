@@ -39,7 +39,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DiagramRepository extends CrudRepository<Diagram, UUID> {
 
-    Optional<Diagram> findByName(String name);
+    /**
+     * Diagram names are unique per project - the diagram view and the stored image are addressed by project and name.
+     */
+    Optional<Diagram> findByProjectIdAndName(UUID projectId, String name);
 
     Set<Diagram> findByProjectId(UUID projectId);
 }

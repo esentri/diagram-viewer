@@ -106,7 +106,7 @@ class DiagramServiceAsyncRenderingTest {
         when(cache.get(any())).thenReturn(
             new ProjectModel(Instant.now(), domainMirror, List.of(), List.of(), false, Optional::empty));
         DiagramRepository repository = mock(DiagramRepository.class);
-        when(repository.findByName(any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         return new DiagramServiceImpl(diagramsLocation.toString(), cache, repository,
             mock(DiagramTypeNoteRepository.class), krokiClient, 1, largeDiagramClasses);

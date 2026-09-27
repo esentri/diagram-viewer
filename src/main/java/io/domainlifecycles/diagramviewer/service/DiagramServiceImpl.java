@@ -300,7 +300,8 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private boolean diagramWithNameExists(Diagram diagram) {
-        Optional<Diagram> diagramWithName = repository.findByName(diagram.getName());
+        UUID projectId = diagram.getProject() == null ? null : diagram.getProject().getId();
+        Optional<Diagram> diagramWithName = repository.findByProjectIdAndName(projectId, diagram.getName());
         return diagramWithName.isPresent() && Objects.equals(diagram.getName(), diagramWithName.get().getName());
     }
 

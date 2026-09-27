@@ -97,7 +97,7 @@ class DiagramServiceTest {
 
         // given
         Diagram diagram = mock(Diagram.class);
-        when(repository.findByName(any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
 
         // when
@@ -127,7 +127,7 @@ class DiagramServiceTest {
         Diagram existingDiagramWithSameNameAsNew = mock(Diagram.class);
         when(existingDiagramWithSameNameAsNew.getName()).thenReturn(newDiagramName);
 
-        when(repository.findByName(eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
+        when(repository.findByProjectIdAndName(any(), eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
         when(repository.findById(eq(diagramId))).thenReturn(Optional.of(oldDiagramState));
 
         // when
@@ -148,12 +148,33 @@ class DiagramServiceTest {
         Diagram existingDiagramWithSameNameAsNew = mock(Diagram.class);
         when(existingDiagramWithSameNameAsNew.getName()).thenReturn(newDiagramName);
 
-        when(repository.findByName(eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
+        when(repository.findByProjectIdAndName(any(), eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
 
         // when
         assertThatThrownBy(() -> diagramService.updateModel(newDiagramState))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage("Diagram with name '" + newDiagramName + "' already exists. Please choose a different name.");
+    }
+
+    @Test
+    void Should_AcceptDiagramName_When_ItIsOnlyTakenInAnotherProject() {
+
+        // given: a new diagram of one project, named like a diagram of another project
+        UUID projectId = UUID.randomUUID();
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(projectId);
+        Diagram newDiagram = mock(Diagram.class);
+        when(newDiagram.getName()).thenReturn("Buchung - Aggregates");
+        when(newDiagram.getProject()).thenReturn(project);
+        when(repository.findByProjectIdAndName(projectId, "Buchung - Aggregates")).thenReturn(Optional.empty());
+        when(repository.save(newDiagram)).thenReturn(newDiagram);
+
+        // when
+        Diagram saved = diagramService.updateModel(newDiagram);
+
+        // then: names are only checked within the diagram's own project
+        assertThat(saved).isSameAs(newDiagram);
+        verify(repository).findByProjectIdAndName(projectId, "Buchung - Aggregates");
     }
 
     @Test
@@ -169,7 +190,7 @@ class DiagramServiceTest {
         Diagram existing = mock(Diagram.class);
         when(existing.getName()).thenReturn(diagramFileName);
 
-        when(repository.findByName(diagramFileName)).thenReturn(Optional.of(existing));
+        when(repository.findByProjectIdAndName(any(), eq(diagramFileName))).thenReturn(Optional.of(existing));
         when(repository.findById(any())).thenReturn(Optional.of(mock(Diagram.class)));
 
         // when
@@ -192,7 +213,7 @@ class DiagramServiceTest {
         when(diagram.getDomainModelVisibility()).thenReturn(mock(DomainModelVisibility.class));
         when(diagram.getProject()).thenReturn(project);
 
-        when(repository.findByName(any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
         ProjectModel model = projectModel(null);
         when(projectModelCache.get(any())).thenReturn(model);
@@ -207,7 +228,7 @@ class DiagramServiceTest {
             Diagram result = diagramService.updateModelAndImage(diagram);
 
             // then
-            verify(repository, times(1)).findByName(any());
+            verify(repository, times(1)).findByProjectIdAndName(any(), any());
             verify(repository, times(1)).save(eq(diagram));
             verify(projectModelCache, times(1)).get(any());
             verify(krokiClient, times(1)).convert(any());
@@ -276,7 +297,7 @@ class DiagramServiceTest {
         when(diagram.getDiagramStylingConfiguration()).thenReturn(mock(DiagramStylingConfiguration.class));
         when(diagram.getDomainModelVisibility()).thenReturn(visibility);
         when(diagram.getProject()).thenReturn(project);
-        when(repository.findByName(any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
         ProjectModel model = projectModel(null);
         when(projectModelCache.get(any())).thenReturn(model);
@@ -295,7 +316,7 @@ class DiagramServiceTest {
         when(diagram.getProject()).thenReturn(project);
         when(diagram.getName()).thenReturn("diagramName.svg");
 
-        when(repository.findByName(any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
@@ -305,7 +326,7 @@ class DiagramServiceTest {
             Diagram result = diagramService.rename(diagram, "newDiagramName");
 
             // then
-            verify(repository, times(1)).findByName(any());
+            verify(repository, times(1)).findByProjectIdAndName(any(), any());
             verify(repository, times(1)).save(eq(diagram));
 
             fileIOUtilsMocked.verify(() -> FileIOUtils.renameFile(any(), any()));
@@ -326,7 +347,7 @@ class DiagramServiceTest {
         DomainModelVisibility domainModelVisibilityMock = mock(DomainModelVisibility.class);
         DiagramStylingConfiguration diagramStylingConfigurationMock = mock(DiagramStylingConfiguration.class);
 
-        when(repository.findByName(any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         ProjectModel model = projectModel(null);
         when(projectModelCache.get(any())).thenReturn(model);
