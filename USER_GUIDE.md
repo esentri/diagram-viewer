@@ -117,6 +117,40 @@ For the Maven plugin, the same options are available as ``<runStaticAnalysis>``,
 4. After creating the diagram, you can see the diagram name in the menu on the left side. If you click there, you can see the diagram.
 ![Diagram created](./images/diagram_created.png)
 
+### Analyze Bounded Contexts
+To get started with a large model, the viewer can create a set of diagrams for you. In the project view, click
+``Analyze Bounded Contexts``. A dialog explains what will be created; after confirming, the viewer creates a folder for
+each Bounded Context of the project, named after the Bounded Context (or its package, if it has no name), containing
+
+- a diagram ``<Bounded Context> - Aggregates`` showing only the aggregates of the Bounded Context,
+- a sub folder ``Read Models`` with a diagram per read model of the Bounded Context, showing everything leading into
+  the read model (backward flow). Without read models, there is no such folder,
+- a sub folder ``Commands`` with a diagram per command of the Bounded Context, showing the flow the command triggers
+  (forward flow) together with everything leading into the methods processing it (backward flow - a command itself
+  has no backward flow, since nothing in the analysis models where a command is created). Without commands, there is
+  no such folder.
+
+The read model and command diagrams need the static analysis result (see [Static analysis](#static-analysis)); without
+it, only the aggregate diagrams are created. The diagrams are rendered in the background, a notification tells when all
+of them are ready. Running the analysis again, e.g. after new commands were added, only adds what is missing: existing
+folders are reused, and diagrams that already exist are kept unchanged, including any filters you changed in them.
+
+Bounded Contexts are taken from the uploaded domain model: DLC derives them from packages annotated with
+``@BoundedContext`` (``io.domainlifecycles.domain.types.BoundedContext``, or jMolecules' equivalent), with an optional
+name:
+
+```java
+@BoundedContext("Order Management")
+package sampleshop.orders;
+
+import io.domainlifecycles.domain.types.BoundedContext;
+```
+
+Without such annotations, each package of ``domainModelPackages`` counts as one Bounded Context.
+
+Folders can be nested this way; deleting a folder also deletes its sub folders, while all their diagrams are kept and
+moved to the project.
+
 ## E) Share Project
 
 1. Click on the project on the left side, then click on ``Share Project``
@@ -144,6 +178,12 @@ We have structured our demo project according to Ports&Adapters, so there is a p
 1. On the right side, add the package in tzhe field ``Excplicitly included packages``, then the diagram will only show the 
 model elements from this package and its subpackages.
 ![Explicitly included packages](./images/explicitly_included_packages.png)
+
+### Filter on Bounded Contexts
+If the domain model declares Bounded Contexts (see [Analyze Bounded Contexts](#analyze-bounded-contexts)), the right side
+additionally shows the filter ``Bounded Contexts`` above the package filter. Select one or more Bounded Contexts to only
+show their model elements. Bounded Contexts are listed by their name, or by their package if they have no name. If both
+filters are set, only the model elements lying in both a selected package and a selected Bounded Context are shown.
 
 ### General visibility on stereotype level
 
