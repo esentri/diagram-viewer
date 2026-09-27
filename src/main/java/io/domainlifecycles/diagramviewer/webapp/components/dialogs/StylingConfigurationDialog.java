@@ -39,12 +39,12 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.ColorPickerComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Styling;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
@@ -97,8 +97,7 @@ public class StylingConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             binder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
-            diagram = diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+            diagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
             close();
         });
 

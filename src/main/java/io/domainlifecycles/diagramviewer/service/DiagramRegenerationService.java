@@ -30,10 +30,7 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
-import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.staticanalysis.DomainCalls;
 import java.util.UUID;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -43,71 +40,34 @@ import org.springframework.stereotype.Service;
  * project's domain model was uploaded again.
  * <p>
  * It runs without an HTTP request or session bound, so it must not use the session scoped
- * {@code SessionStorage}: the project's domain mirror and static analysis result are loaded from the
- * database instead - once per project via {@link #loadProjectModel(UUID)}, then shared by all of that
- * project's diagrams.
+ * {@code SessionStorage}. It takes the project's model data from the {@link ProjectModelCache} shared with the
+ * sessions instead - loaded once per project, and the static analysis result only if a diagram needs it.
  */
 @Service
 public class DiagramRegenerationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DiagramRegenerationService.class);
 
-    private final ProjectDomainMirrorService projectDomainMirrorService;
+    private final ProjectModelCache projectModelCache;
 
     private final DiagramService diagramService;
 
     public DiagramRegenerationService(
-            ProjectDomainMirrorService projectDomainMirrorService,
+            ProjectModelCache projectModelCache,
             DiagramService diagramService
     ) {
-        this.projectDomainMirrorService = projectDomainMirrorService;
+        this.projectModelCache = projectModelCache;
         this.diagramService = diagramService;
     }
 
     /**
-     * The model data a project's diagrams are rendered from. The domain mirror is loaded right away, the
-     * static analysis result only on first access - it is only needed for diagrams restricted to a flow,
-     * and then loaded at most once per project.
-     */
-    public static final class ProjectModel {
-
-        private final DomainMirror domainMirror;
-        private final Supplier<DomainCalls> domainCallsLoader;
-        private boolean domainCallsLoaded;
-        private DomainCalls domainCalls;
-
-        public ProjectModel(DomainMirror domainMirror, Supplier<DomainCalls> domainCallsLoader) {
-            this.domainMirror = domainMirror;
-            this.domainCallsLoader = domainCallsLoader;
-        }
-
-        public DomainMirror domainMirror() {
-            return domainMirror;
-        }
-
-        /**
-         * @return the project's static analysis result, {@code null} if none was uploaded
-         */
-        public DomainCalls domainCalls() {
-            if (!domainCallsLoaded) {
-                domainCalls = domainCallsLoader.get();
-                domainCallsLoaded = true;
-            }
-            return domainCalls;
-        }
-    }
-
-    /**
-     * Loads the model data of a project from the database: the domain mirror right away, the static
-     * analysis result lazily, see {@link ProjectModel}.
+     * Returns the current model data of a project, shared with the sessions via the {@link ProjectModelCache}.
      *
      * @param projectId the project to load
      * @return the project's model data
      */
     public ProjectModel loadProjectModel(UUID projectId) {
-        DomainMirror domainMirror = projectDomainMirrorService.getDomainMirror(projectId);
-        return new ProjectModel(domainMirror,
-            () -> projectDomainMirrorService.loadDomainCalls(projectId, domainMirror).orElse(null));
+        return projectModelCache.get(projectId);
     }
 
     /**
@@ -118,8 +78,8 @@ public class DiagramRegenerationService {
      */
     public void regenerate(Diagram diagram, ProjectModel projectModel) {
         LOGGER.info(String.format("Regenerating diagram '%s'.", diagram.getName()));
-        DomainCalls domainCalls = diagram.getDomainModelVisibility() != null && diagram.getDomainModelVisibility().hasFlowSettings()
-            ? projectModel.domainCalls()
+        var domainCalls = diagram.getDomainModelVisibility() != null && diagram.getDomainModelVisibility().hasFlowSettings()
+            ? projectModel.domainCalls().orElse(null)
             : null;
         diagramService.createAndSaveDiagramToFilesystem(projectModel.domainMirror(), domainCalls, diagram);
     }

@@ -131,6 +131,12 @@ He can also edit the diagrams and create new ones, which are automatically share
 For a large project containing a large domain model one diagram with all details my be overwhelming.
 There are several options to filter the model and only show the relevant parts in new diagrams.
 
+Every change of a filter or setting is saved right away, while the diagram image is rendered in the background:
+a progress bar below the buttons shows that a new image is on its way, and the diagram refreshes once it is ready.
+Further changes in the meantime are fine - only the latest one is rendered. If a diagram contains more than
+1000 classes (configurable), a hint suggests restricting it with package or flow filters, since very large
+diagrams take long to render and are hard to read.
+
 ### Filter on package level
 We have structured our demo project according to Ports&Adapters, so there is a package 
 ``com.esentri.rezeption.inbound``.
@@ -171,6 +177,10 @@ In this case you can hide concrete domain model elements.
 
 1. On the right side open `Àdvanced view filters` 
 2. Select the name of the building blocks to be hidden in ``Invisible objects``.
+
+Alternatively, the building blocks are listed per type on the right side (e.g. ``AggregateRoot``, ``NonDomain``).
+Open a type, look up a class with the search field and expand its ``View filter settings`` to hide it or to set
+a connection filter for it.
 
 ### Filter on connections / relations
 Among the advanced filters there are also filters for connections/relations:

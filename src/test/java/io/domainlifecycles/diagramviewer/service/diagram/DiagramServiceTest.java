@@ -14,14 +14,18 @@ import io.domainlifecycles.staticanalysis.DomainCalls;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramServiceImpl;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
+import io.domainlifecycles.diagramviewer.service.ProjectModel;
+import io.domainlifecycles.diagramviewer.service.ProjectModelCache;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +38,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -44,7 +49,7 @@ import static org.mockito.Mockito.when;
 class DiagramServiceTest {
 
     @Mock
-    SessionStorage sessionStorage;
+    ProjectModelCache projectModelCache;
 
     @Mock
     DiagramRepository repository;
@@ -58,14 +63,17 @@ class DiagramServiceTest {
     @Mock
     ProjectDomainMirrorService projectDomainMirrorService;
 
+    @Mock
+    Supplier<Optional<DomainCalls>> domainCallsLoader;
+
     DiagramService diagramService;
 
     DiagramRegenerationService diagramRegenerationService;
 
     @BeforeEach
     void setUp() {
-        diagramService = new DiagramServiceImpl("/tmp/diagrams", sessionStorage, repository, diagramTypeNoteRepository, krokiClient);
-        diagramRegenerationService = new DiagramRegenerationService(projectDomainMirrorService, diagramService);
+        diagramService = new DiagramServiceImpl("/tmp/diagrams", projectModelCache, repository, diagramTypeNoteRepository, krokiClient, 1, 1000);
+        diagramRegenerationService = new DiagramRegenerationService(projectModelCache, diagramService);
     }
 
     @Test
@@ -186,7 +194,8 @@ class DiagramServiceTest {
 
         when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
-        when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
+        ProjectModel model = projectModel(null);
+        when(projectModelCache.get(any())).thenReturn(model);
         when(krokiClient.convert(any())).thenReturn("filedata".getBytes());
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
@@ -200,7 +209,7 @@ class DiagramServiceTest {
             // then
             verify(repository, times(1)).findByName(any());
             verify(repository, times(1)).save(eq(diagram));
-            verify(sessionStorage, times(1)).getDomainMirror(any());
+            verify(projectModelCache, times(1)).get(any());
             verify(krokiClient, times(1)).convert(any());
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any()));
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()));
@@ -223,7 +232,7 @@ class DiagramServiceTest {
             diagramService.updateModelAndImage(diagram);
 
             // then: the (possibly large) static analysis result is neither loaded nor handed over
-            verify(sessionStorage, never()).getDomainCalls(any());
+            verify(domainCallsLoader, never()).get();
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), isNull()));
         }
     }
@@ -235,7 +244,8 @@ class DiagramServiceTest {
         Diagram diagram = diagramToRender(new DomainModelVisibility()
             .replaceIncludeFlowsTo(Set.of("some.Type")));
         DomainCalls domainCalls = mock(DomainCalls.class);
-        when(sessionStorage.getDomainCalls(any())).thenReturn(Optional.of(domainCalls));
+        ProjectModel model = projectModel(domainCalls);
+        when(projectModelCache.get(any())).thenReturn(model);
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
@@ -245,9 +255,17 @@ class DiagramServiceTest {
             diagramService.updateModelAndImage(diagram);
 
             // then
-            verify(sessionStorage, times(1)).getDomainCalls(any());
+            verify(domainCallsLoader, times(1)).get();
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), eq(domainCalls)));
         }
+    }
+
+    /**
+     * A project model whose static analysis result is loaded via the {@link #domainCallsLoader} mock.
+     */
+    private ProjectModel projectModel(DomainCalls domainCalls) {
+        lenient().when(domainCallsLoader.get()).thenReturn(Optional.ofNullable(domainCalls));
+        return new ProjectModel(Instant.now(), mock(DomainMirror.class), List.of(), List.of(), true, domainCallsLoader);
     }
 
     private Diagram diagramToRender(DomainModelVisibility visibility) {
@@ -260,7 +278,8 @@ class DiagramServiceTest {
         when(diagram.getProject()).thenReturn(project);
         when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(diagram)).thenReturn(diagram);
-        when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
+        ProjectModel model = projectModel(null);
+        when(projectModelCache.get(any())).thenReturn(model);
         when(krokiClient.convert(any())).thenReturn("filedata".getBytes());
         return diagram;
     }
@@ -309,7 +328,8 @@ class DiagramServiceTest {
 
         when(repository.findByName(any())).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(sessionStorage.getDomainMirror(any())).thenReturn(mock(DomainMirror.class));
+        ProjectModel model = projectModel(null);
+        when(projectModelCache.get(any())).thenReturn(model);
         when(krokiClient.convert(any())).thenReturn("filedata".getBytes());
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
@@ -352,8 +372,9 @@ class DiagramServiceTest {
 
         when(krokiClient.convert(any())).thenReturn("img".getBytes());
 
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
-        when(projectDomainMirrorService.getDomainMirror(any())).thenReturn(domainMirrorMock);
+        ProjectModel model = projectModel(null);
+
+        when(projectModelCache.get(any())).thenReturn(model);
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
             MockedStatic<FileIOUtils> fileIOUtilsMocked = Mockito.mockStatic(FileIOUtils.class)) {
@@ -386,6 +407,8 @@ class DiagramServiceTest {
         when(diagramMock.getProject()).thenReturn(projectMock);
 
         when(repository.save(diagramMock)).thenReturn(diagramMock);
+        ProjectModel model = projectModel(null);
+        when(projectModelCache.get(any())).thenReturn(model);
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class)) {
 
@@ -412,6 +435,8 @@ class DiagramServiceTest {
         when(diagramMock.getProject()).thenReturn(projectMock);
 
         when(repository.save(diagramMock)).thenReturn(diagramMock);
+        ProjectModel model = projectModel(null);
+        when(projectModelCache.get(any())).thenReturn(model);
 
         when(krokiClient.convert(any())).thenReturn("img".getBytes());
 

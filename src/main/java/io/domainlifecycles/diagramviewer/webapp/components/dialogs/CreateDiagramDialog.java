@@ -42,6 +42,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
@@ -97,11 +98,12 @@ public class CreateDiagramDialog extends Dialog {
 
         createButton.addClickListener(e -> {
             binder.writeBeanIfValid(createDiagramOptions);
-            diagramService.create(
+            var rendering = diagramService.createAsync(
                     project,
                     createDiagramOptions.getFileName(),
                     createDiagramOptions.getDomainModelVisibility(),
                     createDiagramOptions.getDiagramStylingConfiguration());
+            BackgroundDiagramRendering.follow(this, UI.getCurrent(), rendering);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
             close();
         });

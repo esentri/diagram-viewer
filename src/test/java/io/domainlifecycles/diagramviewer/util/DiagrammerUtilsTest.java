@@ -169,4 +169,17 @@ class DiagrammerUtilsTest {
     private static String classBoxMarker(String shortTypeName) {
         return "> " + shortTypeName + " <<";
     }
+
+    @Test
+    void Should_CountClassBoxesWithoutAggregateFrames() {
+        String nomnoml = String.join("\n",
+            "#.AF:visual=frame align=left",
+            "[<AF> Booking Aggregate|",
+            "  [<AR> Booking]",
+            "]",
+            "[<ND> BookingMapper]",
+            "[<DS> BookingService]");
+
+        assertThat(DiagrammerUtils.countClasses(nomnoml)).isEqualTo(3);
+    }
 }

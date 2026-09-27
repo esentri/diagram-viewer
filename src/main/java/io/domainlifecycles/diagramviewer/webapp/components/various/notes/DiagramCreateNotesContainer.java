@@ -45,12 +45,12 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -171,8 +171,7 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
                 typeNotes.getNotes(),
                 typeNotes.getSelectedTypeMirror(),
                 diagram);
-            diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+            BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramTypeNotesChangedEvent(this, false, null));
         });
         saveButton.getStyle().setMargin("0");

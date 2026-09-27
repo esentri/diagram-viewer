@@ -37,6 +37,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.binder.Binder;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
@@ -44,7 +45,6 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycle
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 
 public class VariousConfigurationDialog extends Dialog {
 
@@ -83,8 +83,7 @@ public class VariousConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
-            diagram = diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+            diagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
             close();
         });
 

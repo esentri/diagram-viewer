@@ -35,12 +35,12 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageMultiSelectComboBox;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -94,8 +94,7 @@ public class DiagramFilterComponent extends Div {
                     new PackageMultiSelectComboBox(domainTypeMirrors, currentDiagram);
             packageMultiSelectComboBox.addValueChangeListener(e -> {
                 currentDiagram.setDomainModelVisibility(currentDiagram.getDomainModelVisibility().replaceExplicitlyIncludedPackagesNames(e.getValue()));
-                var newDiagram = diagramService.updateModelAndImage(currentDiagram);
-                ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+                var newDiagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, currentDiagram);
             });
 
             packageDetails.add(packageMultiSelectComboBox);
@@ -247,8 +246,7 @@ public class DiagramFilterComponent extends Div {
         );
 
         diagram.setDomainModelVisibility(newVisibility);
-        diagram = diagramService.updateModelAndImage(diagram);
-        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+        diagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
     }
 
     private List<DomainTypeMirror> filterValueObjectMirrorAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {

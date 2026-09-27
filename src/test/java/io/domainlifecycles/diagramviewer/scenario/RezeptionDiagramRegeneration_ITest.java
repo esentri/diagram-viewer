@@ -34,8 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Covers the regeneration of existing diagrams after their project's domain model was uploaded again
- * (performance plan item 1.4).
+ * Covers the regeneration of existing diagrams after their project's domain model was uploaded again.
  * <p>
  * The {@link DiagramRegenerationTask} is a {@code @Scheduled} job, so in production it runs on a
  * scheduler thread without any HTTP request or session bound to it. The test therefore invokes it on a

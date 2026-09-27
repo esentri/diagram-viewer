@@ -51,6 +51,22 @@ public interface DiagramService {
     Diagram create(Project project, String fileName, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
 
     /**
+     * Saves the diagram's model right away and renders its image in the background, so that the user interface is
+     * not blocked while large diagrams are generated and converted by Kroki. A rendering that is superseded by a
+     * newer one of the same diagram is dropped - before it starts, or at the latest before its image is saved.
+     *
+     * @param diagram the diagram to save and render
+     * @return the saved diagram and the pending rendering of its image
+     */
+    DiagramRendering updateModelAndImageAsync(Diagram diagram);
+
+    /**
+     * Creates a diagram like {@link #create(Project, String, DomainModelVisibility, DiagramStylingConfiguration)},
+     * but renders its image in the background, see {@link #updateModelAndImageAsync(Diagram)}.
+     */
+    DiagramRendering createAsync(Project project, String fileName, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
+
+    /**
      * Renders the given diagram and saves it to the filesystem.
      * <p>
      * All model data is passed in explicitly, so this can be called without an HTTP request or session

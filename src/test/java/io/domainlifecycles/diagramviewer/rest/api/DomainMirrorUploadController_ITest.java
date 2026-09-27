@@ -117,7 +117,7 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
             .andReturn();
 
         // then: no HTTP session was created - an upload's session would never be seen by any user and
-        // only keep the uploaded model in memory until it times out (performance plan item 1.1)
+        // only keep the uploaded model in memory until it times out
         assertThat(first.getRequest().getSession(false)).isNull();
         String cleanedProjectName = project.getName().replaceAll("[.-]", "_");
         Project uploadedProject = projectRepository.findByName(cleanedProjectName).orElseThrow();

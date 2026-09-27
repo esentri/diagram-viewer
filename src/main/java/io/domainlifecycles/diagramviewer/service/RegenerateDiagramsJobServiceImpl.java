@@ -44,6 +44,8 @@ public class RegenerateDiagramsJobServiceImpl implements RegenerateDiagramsJobSe
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RegenerateDiagramsJobServiceImpl.class);
 
+    private static final int MAX_ERROR_LENGTH = 2000;
+
     private final RegenerateDiagramsJobRepository repository;
 
     public RegenerateDiagramsJobServiceImpl(RegenerateDiagramsJobRepository repository) {
@@ -55,24 +57,46 @@ public class RegenerateDiagramsJobServiceImpl implements RegenerateDiagramsJobSe
         return StreamSupport.stream(repository.findAll().spliterator(), false).toList();
     }
 
+    @Override
+    public List<RegenerateDiagramsJob> getDue(int maxAttempts) {
+        return repository.findByFailedAttemptsLessThan(maxAttempts);
+    }
+
+    @Override
+    public RegenerateDiagramsJob recordFailure(RegenerateDiagramsJob job, Throwable error) {
+        job.setFailedAttempts(job.getFailedAttempts() + 1);
+        String message = String.valueOf(error.getMessage());
+        job.setLastError(message.length() > MAX_ERROR_LENGTH ? message.substring(0, MAX_ERROR_LENGTH) : message);
+        return repository.save(job);
+    }
+
     /**
      * Schedules the regeneration of all diagrams of the given project. A diagram that still has a pending
      * job - e.g. because the project was uploaded again before the scheduler ran, or because its last
      * regeneration failed - keeps that job: there is at most one job per diagram (unique constraint), and
-     * a pending job already regenerates the diagram from the project's current model.
+     * a pending job already regenerates the diagram from the project's current model. Its failed attempts
+     * are reset, since the new model may well render.
      *
      * @param project the project whose diagrams to regenerate
      */
     @Override
     public void create(Project project) {
-        project.getDiagrams().stream()
-            .filter(diagram -> repository.findByDiagramId(diagram.getId()).isEmpty())
-            .forEach(diagram -> {
-                RegenerateDiagramsJob job = RegenerateDiagramsJob.builder()
+        project.getDiagrams().forEach(diagram -> {
+            List<RegenerateDiagramsJob> pendingJobs = repository.findByDiagramId(diagram.getId());
+            if (pendingJobs.isEmpty()) {
+                repository.save(RegenerateDiagramsJob.builder()
                     .diagram(diagram)
-                    .build();
-                repository.save(job);
-            });
+                    .build());
+            } else {
+                pendingJobs.stream()
+                    .filter(job -> job.getFailedAttempts() > 0)
+                    .forEach(job -> {
+                        job.setFailedAttempts(0);
+                        job.setLastError(null);
+                        repository.save(job);
+                    });
+            }
+        });
     }
 
     @Override

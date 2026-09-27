@@ -33,6 +33,7 @@ import io.domainlifecycles.diagramviewer.exception.DiagramRegenerationTaskExcept
 import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
 import io.domainlifecycles.diagramviewer.service.DiagramRegenerationService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.service.ProjectModel;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -55,21 +57,25 @@ public class DiagramRegenerationTask {
     private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final DiagramRegenerationService diagramRegenerationService;
     private final DiagramService diagramService;
+    private final int maxAttempts;
 
     public DiagramRegenerationTask(
             RegenerateDiagramsJobService regenerateDiagramsJobService,
             DiagramRegenerationService diagramRegenerationService,
-            DiagramService diagramService
+            DiagramService diagramService,
+            @Value("${regenerateDiagramsTask.maxAttempts:3}") int maxAttempts
     ) {
         this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.diagramRegenerationService = diagramRegenerationService;
         this.diagramService = diagramService;
+        this.maxAttempts = maxAttempts;
     }
 
     @Scheduled(fixedRateString = "${regenerateDiagramsTask.rate}")
     public void regenerateUpdatedDomainMirrors() {
         List<DiagramRegenerationError> caughtErrors = new ArrayList<>();
-        List<RegenerateDiagramsJob> allJobs = regenerateDiagramsJobService.getAll();
+        // jobs that failed too often are not retried until their project is uploaded again
+        List<RegenerateDiagramsJob> allJobs = regenerateDiagramsJobService.getDue(maxAttempts);
         LOGGER.debug("Found {} diagrams to regenerate after DomainMirror update.", allJobs.size());
 
         Map<UUID, List<RegenerateDiagramsJob>> jobsGroupedByProjectId = allJobs.stream()
@@ -79,16 +85,19 @@ public class DiagramRegenerationTask {
             LOGGER.info("Regenerating diagrams for project '{}' ...", projectId);
 
             // the project's model is loaded once and shared by all of its diagrams
-            final DiagramRegenerationService.ProjectModel projectModel;
+            final ProjectModel projectModel;
             try {
                 projectModel = diagramRegenerationService.loadProjectModel(projectId);
             } catch (Exception e) {
                 LOGGER.error("Error occurred while loading the model of project '{}'. Continuing with others...", projectId);
-                regenerateDiagramsJobsForProject.forEach(job -> caughtErrors.add(DiagramRegenerationError.builder()
+                regenerateDiagramsJobsForProject.forEach(job -> {
+                    recordFailure(job, e);
+                    caughtErrors.add(DiagramRegenerationError.builder()
                         .diagramId(job.getDiagram().getId())
                         .diagramName(job.getDiagram().getName())
                         .caughtException(e)
-                    .build()));
+                        .build());
+                });
                 return;
             }
 
@@ -102,6 +111,7 @@ public class DiagramRegenerationTask {
                 } catch(Exception e) {
                     LOGGER.error("Error occurred while regenerating diagram '{}'. Continuing with others...",
                         job.getDiagram().getName());
+                    recordFailure(job, e);
 
                     caughtErrors.add(DiagramRegenerationError.builder()
                             .diagramId(job.getDiagram().getId())
@@ -117,6 +127,18 @@ public class DiagramRegenerationTask {
         }
 
         LOGGER.debug("Diagram regeneration task finished.");
+    }
+
+    private void recordFailure(RegenerateDiagramsJob job, Exception e) {
+        try {
+            var updatedJob = regenerateDiagramsJobService.recordFailure(job, e);
+            if (updatedJob.getFailedAttempts() >= maxAttempts) {
+                LOGGER.warn("Regenerating diagram '{}' failed {} times, it is not retried until its project is uploaded again.",
+                    job.getDiagram().getName(), updatedJob.getFailedAttempts());
+            }
+        } catch (Exception recordingError) {
+            LOGGER.error("Could not record the failed regeneration of diagram '{}'.", job.getDiagram().getName(), recordingError);
+        }
     }
 
     @Data

@@ -61,6 +61,12 @@ bootBuildImage {
 	}
 }
 
+tasks.named('bootRun') {
+	// same heap as the provided docker setup; override e.g. with -PviewerHeap=8g (a -Xmx in JAVA_TOOL_OPTIONS
+	// would be overruled by this command line option)
+	jvmArgs "-Xmx${findProperty('viewerHeap') ?: '2g'}", '-XX:+UseG1GC', '-XX:+UseStringDeduplication'
+}
+
 tasks.named('bootJar') {
 	mainClass = "io.domainlifecycles.diagramviewer.DiagramViewerApplication"
 	enabled = true
@@ -68,6 +74,7 @@ tasks.named('bootJar') {
 
 dependencies {
 	implementation "io.github.classgraph:classgraph:${classGraphVersion}"
+	implementation "com.github.ben-manes.caffeine:caffeine"
 	implementation "com.vaadin:vaadin-spring-boot-starter"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation ('org.postgresql:postgresql')
@@ -113,6 +120,7 @@ test {
 	useJUnitPlatform()
 	finalizedBy jacocoTestReport
 	exclude '**/*_ITest.class'
+	exclude '**/*_PerfTest.class'
 }
 
 plugins.withId('checkstyle') {
@@ -158,6 +166,29 @@ tasks.register('integrationTest', Test) {
 	jvmArgs '-Xmx1536m'
 
 	shouldRunAfter test
+}
+
+// Performance measurements for large projects, not part of "check".
+// Usage: ./gradlew perfTest -Dperf.upload=<captured gzip upload body> (see LargeProjectRendering_PerfTest)
+tasks.register('perfTest', Test) {
+	group = 'verification'
+	description = 'Runs performance measurements (requires -Dperf.upload)'
+
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+
+	include '**/*_PerfTest.class'
+
+	useJUnitPlatform()
+	maxHeapSize = findProperty('perfHeap') ?: '2g'
+	jvmArgs '-XX:+UseG1GC', '-XX:+UseStringDeduplication'
+	outputs.upToDateWhen { false }
+	testLogging { showStandardStreams = true }
+	['perf.upload', 'perf.package', 'perf.flowEntry'].each { key ->
+		if (System.getProperty(key) != null) {
+			systemProperty key, System.getProperty(key)
+		}
+	}
 }
 
 tasks.named("check") {

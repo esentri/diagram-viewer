@@ -38,6 +38,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.slf4j.Logger;
@@ -45,25 +46,45 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * Converts nomnoml diagrams to SVG via the Kroki container.
+ * <p>
+ * One {@link HttpClient} is shared by all conversions instead of creating one per call. The request timeout is
+ * configurable: large diagrams take Kroki well over ten seconds (the whole
+ * esprit_2 model: 4529 classes, 17 s, 7 MB SVG), and Kroki itself aborts conversions after
+ * {@code KROKI_COMMAND_TIMEOUT} (default 5 s), which it reports as error 500.
+ */
 @Service
 public class KrokiClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KrokiClient.class);
     private static final String KROKI_NOMNOML_SVG_PATH = "/nomnoml/svg";
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
 
-    private final String krokiContainerUrl;
+    private final URI nomnomlSvgUri;
+    private final Duration requestTimeout;
+    private final HttpClient httpClient;
 
-    public KrokiClient(@Value("${kroki.container.url}") String krokiContainerUrl) {
-        this.krokiContainerUrl = krokiContainerUrl;
+    public KrokiClient(
+        @Value("${kroki.container.url}") String krokiContainerUrl,
+        @Value("${kroki.request.timeoutSeconds:90}") long requestTimeoutSeconds
+    ) {
+        this.nomnomlSvgUri = URI.create(krokiContainerUrl + KROKI_NOMNOML_SVG_PATH);
+        this.requestTimeout = Duration.ofSeconds(requestTimeoutSeconds);
+        this.httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(CONNECT_TIMEOUT)
+            .build();
     }
 
     public byte[] convert(String rawInputDiagramContent) {
-        LOGGER.debug("Converting Nomnoml diagram to specified format via Kroki Docker container...");
+        LOGGER.debug("Converting Nomnoml diagram of {} characters to SVG via Kroki Docker container...",
+            rawInputDiagramContent.length());
 
-        HttpRequest request = HttpRequest.newBuilder().version(HttpClient.Version.HTTP_1_1)
-            .uri(URI.create(krokiContainerUrl + KROKI_NOMNOML_SVG_PATH))
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(nomnomlSvgUri)
             .header("Content-Type", "text/plain")
-            .timeout(Duration.ofSeconds(10))
+            .timeout(requestTimeout)
             .POST(BodyPublishers.ofString(rawInputDiagramContent))
             .build();
 
@@ -72,24 +93,24 @@ public class KrokiClient {
 
     private byte[] send(final HttpRequest httpRequest) {
         try {
-            LOGGER.debug(String.format("Sending HTTP request '%s' to Kroki Docker container.",
-                httpRequest.bodyPublisher().orElseGet(() -> BodyPublishers.ofString("Request body empty!"))));
-            final HttpResponse<byte[]> response = HttpClient
-                .newHttpClient()
-                .send(httpRequest, BodyHandlers.ofByteArray());
+            final HttpResponse<byte[]> response = httpClient.send(httpRequest, BodyHandlers.ofByteArray());
 
             if (response.statusCode() < 400) {
                 LOGGER.debug("HTTP request to Kroki Docker container has been successful.");
                 return response.body();
             }
-            if (response.statusCode() >= 400) {
-                throw DiagramViewerException.fail(
-                    String.format("Kroki Docker container returned error for conversion: %s",
-                        new String(response.body(), StandardCharsets.UTF_8)));
-            }
-        } catch (IOException | InterruptedException e) {
+            throw DiagramViewerException.fail(
+                String.format("Kroki Docker container returned error for conversion: %s",
+                    new String(response.body(), StandardCharsets.UTF_8)));
+        } catch (HttpTimeoutException e) {
+            throw DiagramViewerException.fail(String.format(
+                "Nomnoml conversion with Kroki Server did not finish within %d seconds. The diagram is probably too large - restrict it with filters.",
+                requestTimeout.toSeconds()), e);
+        } catch (IOException e) {
             throw DiagramViewerException.fail("Nomnoml conversion with Kroki Server failed.", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw DiagramViewerException.fail("Nomnoml conversion with Kroki Server was interrupted.", e);
         }
-        throw DiagramViewerException.fail("Kroki server couldn't be reached.");
     }
 }

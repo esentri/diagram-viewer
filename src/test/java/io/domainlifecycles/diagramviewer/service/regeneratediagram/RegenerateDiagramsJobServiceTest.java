@@ -122,4 +122,52 @@ class RegenerateDiagramsJobServiceTest {
         verify(repository, times(1)).delete(eq(firstRegenerateDiagramsJobMock));
         verify(repository, times(1)).delete(eq(secondRegenerateDiagramsJobMock));
     }
+
+    @Test
+    void Should_ResetFailedAttempts_When_ProjectIsUploadedAgainWhileJobIsPending() {
+
+        // given: a pending job whose regeneration already failed
+        Project project = mock(Project.class);
+        Diagram diagram = mock(Diagram.class);
+        UUID diagramId = UUID.randomUUID();
+        when(diagram.getId()).thenReturn(diagramId);
+        when(project.getDiagrams()).thenReturn(Set.of(diagram));
+        RegenerateDiagramsJob failedJob = RegenerateDiagramsJob.builder()
+            .diagram(diagram).failedAttempts(3).lastError("Kroki error").build();
+        when(repository.findByDiagramId(diagramId)).thenReturn(List.of(failedJob));
+
+        // when
+        service.create(project);
+
+        // then: the new model gets a fresh chance
+        verify(repository).save(failedJob);
+        assertThat(failedJob.getFailedAttempts()).isZero();
+        assertThat(failedJob.getLastError()).isNull();
+    }
+
+    @Test
+    void Should_CountFailedAttemptAndKeepError_When_FailureIsRecorded() {
+
+        // given
+        RegenerateDiagramsJob job = RegenerateDiagramsJob.builder().diagram(mock(Diagram.class)).build();
+        when(repository.save(job)).thenReturn(job);
+
+        // when
+        service.recordFailure(job, new IllegalStateException("x".repeat(3000)));
+
+        // then
+        assertThat(job.getFailedAttempts()).isEqualTo(1);
+        assertThat(job.getLastError()).hasSize(2000);
+    }
+
+    @Test
+    void Should_OnlyReturnJobsBelowTheAttemptLimit() {
+
+        // given
+        List<RegenerateDiagramsJob> due = List.of(mock(RegenerateDiagramsJob.class));
+        when(repository.findByFailedAttemptsLessThan(3)).thenReturn(due);
+
+        // when / then
+        assertThat(service.getDue(3)).isSameAs(due);
+    }
 }

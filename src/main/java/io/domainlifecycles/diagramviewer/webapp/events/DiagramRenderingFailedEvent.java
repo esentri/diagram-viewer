@@ -27,18 +27,16 @@
  *  limitations under the License.
  */
 
-package io.domainlifecycles.diagramviewer.repository;
+package io.domainlifecycles.diagramviewer.webapp.events;
 
-import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
-import java.util.List;
-import java.util.UUID;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentEvent;
 
-@Repository
-public interface RegenerateDiagramsJobRepository extends CrudRepository<RegenerateDiagramsJob, UUID> {
-
-    List<RegenerateDiagramsJob> findByDiagramId(UUID diagramId);
-
-    List<RegenerateDiagramsJob> findByFailedAttemptsLessThan(int failedAttempts);
+/**
+ * Fired on the UI when rendering a diagram's image in the background failed.
+ */
+public class DiagramRenderingFailedEvent extends ComponentEvent<Component> {
+    public DiagramRenderingFailedEvent(Component source, boolean fromClient) {
+        super(source, fromClient);
+    }
 }

@@ -39,11 +39,11 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainCommandMirror;
 import io.domainlifecycles.mirror.api.DomainEventMirror;
@@ -300,8 +300,7 @@ public class DiagramFlowFilterComponent extends Div {
             .replaceIncludeFlowsFrom(new LinkedHashSet<>(newFlowsFrom))
             .replaceIncludeFlowsTo(new LinkedHashSet<>(newFlowsTo));
         currentDiagram.setDomainModelVisibility(newVisibility);
-        currentDiagram = diagramService.updateModelAndImage(currentDiagram);
-        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+        currentDiagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, currentDiagram);
         refreshDetails();
     }
 

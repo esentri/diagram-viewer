@@ -21,6 +21,7 @@ public abstract class BaseIntegrationTest {
     @Container
     static GenericContainer<?> kroki =
         new GenericContainer<>("yuzutech/kroki")
+          .withEnv("KROKI_COMMAND_TIMEOUT", "60s")
           .withExposedPorts(8000);
 
     @DynamicPropertySource

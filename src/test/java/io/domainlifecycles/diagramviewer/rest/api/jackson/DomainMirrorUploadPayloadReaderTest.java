@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Covers reading the upload request body into gzip-compressed JSON (performance plan items 1.2 / 2.4).
+ * Covers reading the upload request body into gzip-compressed JSON.
  */
 class DomainMirrorUploadPayloadReaderTest {
 

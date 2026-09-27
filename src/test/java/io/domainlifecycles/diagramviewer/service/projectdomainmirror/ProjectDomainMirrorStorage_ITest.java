@@ -27,7 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Covers the storage of a project's domain model against a real PostgreSQL (performance plan item 2.4):
+ * Covers the storage of a project's domain model against a real PostgreSQL:
  * compressed storage, and the fallback to the legacy uncompressed columns for projects last uploaded
  * before the compressed storage was introduced.
  */

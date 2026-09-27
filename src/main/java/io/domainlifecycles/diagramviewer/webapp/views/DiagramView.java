@@ -42,6 +42,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -64,6 +65,8 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.DiagramConfig
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramVisibilityAndNotesComponentsContainer;
 import io.domainlifecycles.diagramviewer.webapp.components.various.zoom.DiagramZoomComponentContainer;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramRenderingFailedEvent;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramRenderingStartedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
@@ -73,6 +76,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.io.ByteArrayInputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -102,7 +106,9 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private RenameDiagramDialog renameDiagramDialog;
     private DownloadDiagramDialog downloadDiagramDialog;
 
-    private Registration registration;
+    private final ProgressBar renderingProgressBar = new ProgressBar();
+
+    private List<Registration> registrations = List.of();
 
     public DiagramView(
             @Value("${diagrams.location}") String diagramsLocation,
@@ -133,6 +139,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     }
 
     private void refreshPage() {
+        renderingProgressBar.setVisible(false);
         diagram = getDiagram();
         diagramVisibilityAndNotesComponentsContainer.setDiagram(diagram);
         renameDiagramDialog.setDiagram(diagram);
@@ -174,6 +181,12 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     private void addPageContents() {
         this.buttonBar = createAndGetButtonBar();
         add(buttonBar);
+
+        // shown while the diagram's image is rendered in the background
+        renderingProgressBar.setIndeterminate(true);
+        renderingProgressBar.setVisible(false);
+        renderingProgressBar.setId("diagram-rendering-progress");
+        add(renderingProgressBar);
 
         this.renameDiagramDialog = new RenameDiagramDialog(diagramService);
         add(renameDiagramDialog);
@@ -251,18 +264,18 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-            registration = ComponentUtil.addListener(
-                attachEvent.getUI(),
-                DiagramReRenderedEvent.class,
-                event -> refreshPage()
-            );
-
+        UI ui = attachEvent.getUI();
+        registrations = List.of(
+            ComponentUtil.addListener(ui, DiagramReRenderedEvent.class, event -> refreshPage()),
+            ComponentUtil.addListener(ui, DiagramRenderingStartedEvent.class, event -> renderingProgressBar.setVisible(true)),
+            ComponentUtil.addListener(ui, DiagramRenderingFailedEvent.class, event -> renderingProgressBar.setVisible(false))
+        );
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         super.onDetach(detachEvent);
-        registration.remove();
+        registrations.forEach(Registration::remove);
     }
 
 }

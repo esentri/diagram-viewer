@@ -26,19 +26,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package io.domainlifecycles.diagramviewer.service;
 
-package io.domainlifecycles.diagramviewer.repository;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import java.util.concurrent.CompletableFuture;
 
-import io.domainlifecycles.diagramviewer.model.task.RegenerateDiagramsJob;
-import java.util.List;
-import java.util.UUID;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
+/**
+ * A diagram whose model has been saved and whose image is rendered in the background.
+ *
+ * @param diagram the saved diagram
+ * @param image   completes when the background rendering is done - with the outcome, or exceptionally if rendering
+ *                failed
+ */
+public record DiagramRendering(Diagram diagram, CompletableFuture<Result> image) {
 
-@Repository
-public interface RegenerateDiagramsJobRepository extends CrudRepository<RegenerateDiagramsJob, UUID> {
+    /**
+     * @param saved      {@code true} if the rendered image was saved; {@code false} if the rendering was superseded
+     *                   by a newer one of the same diagram and its result dropped
+     * @param classCount the number of classes in the diagram
+     * @param large      {@code true} if the diagram exceeds the configured size above which users should
+     *                   restrict it with filters
+     */
+    public record Result(boolean saved, int classCount, boolean large) {
 
-    List<RegenerateDiagramsJob> findByDiagramId(UUID diagramId);
-
-    List<RegenerateDiagramsJob> findByFailedAttemptsLessThan(int failedAttempts);
+        public static final Result SUPERSEDED = new Result(false, 0, false);
+    }
 }

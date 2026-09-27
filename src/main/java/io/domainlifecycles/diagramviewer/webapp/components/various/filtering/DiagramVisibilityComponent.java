@@ -40,11 +40,15 @@ import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.radiobutton.RadioGroupVariant;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.virtuallist.VirtualList;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.data.value.ValueChangeMode;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -52,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,6 +66,10 @@ import static java.util.stream.Collectors.groupingBy;
 
 @Slf4j
 public class DiagramVisibilityComponent extends Div {
+
+    private static final double ENTRY_HEIGHT_REM = 4.5;
+    private static final double MAX_LIST_HEIGHT_REM = 30;
+    private static final int SEARCH_FIELD_THRESHOLD = 10;
 
     private final DiagramService diagramService;
     private final SessionStorage sessionStorage;
@@ -149,6 +158,11 @@ public class DiagramVisibilityComponent extends Div {
         return details;
     }
 
+    /**
+     * Shows the types of an opened group in a virtual list with a search field: only the entries in view are
+     * created, and their filter settings only when expanded. Before, opening all
+     * groups of the esprit_2 model created over 30 000 components.
+     */
     private void openDomainTypeView(
             Details details,
             boolean opened,
@@ -159,10 +173,31 @@ public class DiagramVisibilityComponent extends Div {
             VerticalLayout layout = new VerticalLayout();
             layout.setSpacing(false);
             layout.setPadding(false);
-            for (DomainTypeMirror mirror : domainTypeMirrors) {
-                Component typeMirrorVisibilityLayout = createAndGetContentForDomainTypeAndMirror(type, mirror);
-                layout.add(typeMirrorVisibilityLayout);
+
+            List<DomainTypeMirror> allMirrors = new ArrayList<>(domainTypeMirrors);
+            VirtualList<DomainTypeMirror> list = new VirtualList<>();
+            list.setWidthFull();
+            list.setHeight(Math.min(allMirrors.size() * ENTRY_HEIGHT_REM, MAX_LIST_HEIGHT_REM) + "rem");
+            list.setRenderer(new ComponentRenderer<>(mirror -> createAndGetContentForDomainTypeAndMirror(type, mirror)));
+            list.setItems(allMirrors);
+
+            if (allMirrors.size() > SEARCH_FIELD_THRESHOLD) {
+                TextField search = new TextField();
+                search.setPlaceholder("Search " + allMirrors.size() + " types");
+                search.setWidthFull();
+                search.setClearButtonVisible(true);
+                search.setValueChangeMode(ValueChangeMode.LAZY);
+                search.addValueChangeListener(event -> {
+                    String term = event.getValue().trim().toLowerCase(Locale.ROOT);
+                    list.setItems(term.isEmpty()
+                        ? allMirrors
+                        : allMirrors.stream()
+                            .filter(mirror -> mirror.getTypeName().toLowerCase(Locale.ROOT).contains(term))
+                            .toList());
+                });
+                layout.add(search);
             }
+            layout.add(list);
             details.add(layout);
         }else{
             details.removeAll();
@@ -183,7 +218,19 @@ public class DiagramVisibilityComponent extends Div {
         Details blendingLayout = new Details("View filter settings");
         blendingLayout.addClassName("diagram-styling-details");
         blendingLayout.setOpened(false);
+        // the settings are only created when the user expands them
+        blendingLayout.addOpenedChangeListener(event -> {
+            if (event.isOpened() && blendingLayout.getContent().findAny().isEmpty()) {
+                addFilterSettings(blendingLayout, type, mirror);
+            }
+        });
 
+        typeMirrorVisibilityLayout.add(typeMirrorNameLabel);
+        typeMirrorVisibilityLayout.add(blendingLayout);
+        return typeMirrorVisibilityLayout;
+    }
+
+    private void addFilterSettings(Details blendingLayout, DomainType type, DomainTypeMirror mirror) {
         if (domainTypeOrdered().contains(type) && !DomainType.ENUM.equals(type)) {
             Checkbox visible = createAndGetDomainTypeVisibilityCheckbox(mirror);
             blendingLayout.add(visible);
@@ -206,11 +253,7 @@ public class DiagramVisibilityComponent extends Div {
                 });
                 blendingLayout.add(radioGroup);
             }
-
         }
-        typeMirrorVisibilityLayout.add(typeMirrorNameLabel);
-        typeMirrorVisibilityLayout.add(blendingLayout);
-        return typeMirrorVisibilityLayout;
     }
 
     private VisibilityFilterType calculateRadioValue(DomainTypeMirror mirror) {
@@ -277,9 +320,7 @@ public class DiagramVisibilityComponent extends Div {
             }
         }
         currentDiagram.setDomainModelVisibility(visibility);
-        currentDiagram = diagramService.updateModelAndImage(currentDiagram);
-
-        ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+        currentDiagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, currentDiagram);
 
     }
 

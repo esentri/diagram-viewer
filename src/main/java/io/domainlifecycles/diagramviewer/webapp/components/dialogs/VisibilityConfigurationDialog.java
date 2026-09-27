@@ -39,11 +39,11 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 
 
 public class VisibilityConfigurationDialog extends Dialog {
@@ -115,8 +115,7 @@ public class VisibilityConfigurationDialog extends Dialog {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             domainModelVisibilityBinder.writeBeanIfValid(diagram.getDomainModelVisibility());
 
-            diagram = diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+            diagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
             close();
         });
 
