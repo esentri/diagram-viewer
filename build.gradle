@@ -194,7 +194,7 @@ tasks.register('perfTest', Test) {
 	}
 	outputs.upToDateWhen { false }
 	testLogging { showStandardStreams = true }
-	['perf.upload', 'perf.package', 'perf.flowEntry'].each { key ->
+	['perf.upload', 'perf.package', 'perf.flowEntry', 'perf.skipRendering'].each { key ->
 		if (System.getProperty(key) != null) {
 			systemProperty key, System.getProperty(key)
 		}

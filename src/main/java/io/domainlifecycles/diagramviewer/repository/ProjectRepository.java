@@ -62,6 +62,8 @@ public interface ProjectRepository extends CrudRepository<Project, UUID> {
 
     List<Project> findByAssignedUsersContainingOrderByCreatedAtAsc(AppUser assignedUser);
 
+    boolean existsByNameAndAssignedUsersId(String name, UUID assignedUserId);
+
     /**
      * Reads the domain model packages of a project directly: loaded through the project entity, the collection can
      * come back incomplete, since the project's eager relations lead back to it (project, assigned users, their

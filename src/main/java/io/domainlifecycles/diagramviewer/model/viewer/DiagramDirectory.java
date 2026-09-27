@@ -29,6 +29,8 @@
 
 package io.domainlifecycles.diagramviewer.model.viewer;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -76,6 +78,7 @@ public class DiagramDirectory {
     @JoinColumn(name = "parent_id")
     private DiagramDirectory parent;
 
+    @Fetch(FetchMode.SUBSELECT)
     @OneToMany(fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "diagramDirectory")
     private Set<Diagram> diagrams;
 

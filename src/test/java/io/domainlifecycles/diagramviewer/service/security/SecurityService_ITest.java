@@ -126,9 +126,10 @@ class SecurityService_ITest extends BaseIntegrationTest {
         assertThat(userIdentity.getExternalSubject()).isEqualTo(sub);
         assertThat(userIdentity.getProvider()).isEqualTo(IdentityProvider.OKTA);
 
-        assertThat(newAppUser.getAssignedProjects().stream().findFirst().orElseThrow().getId()).isEqualTo(project.getId());
-        assertThat(newAppUser.getAssignedProjects().stream().findFirst().orElseThrow().getAssignedUsers().size()).isEqualTo(2);
-        assertThat(newAppUser.getAssignedProjects().stream().findFirst().orElseThrow().getCreator().getId()).isEqualTo(project.getCreator().getId());
+        Project assignedProject = projectRepository.findByAssignedUsersContainingOrderByCreatedAtAsc(newAppUser).get(0);
+        assertThat(assignedProject.getId()).isEqualTo(project.getId());
+        assertThat(assignedProject.getAssignedUsers().size()).isEqualTo(2);
+        assertThat(assignedProject.getCreator().getId()).isEqualTo(project.getCreator().getId());
     }
 
     private Project setUpProject() {

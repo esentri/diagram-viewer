@@ -29,6 +29,8 @@
 
 package io.domainlifecycles.diagramviewer.model.viewer;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -75,6 +77,7 @@ public class AppUser {
     @Column(nullable = false)
     private UserStatus status;
 
+    @Fetch(FetchMode.SUBSELECT)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private Set<UserIdentity> identities = new HashSet<>();
@@ -82,7 +85,12 @@ public class AppUser {
     @Builder.Default
     private UUID apiKey = UUID.randomUUID();
 
-    @ManyToMany(fetch = FetchType.EAGER, mappedBy = "assignedUsers")
+    /**
+     * Lazy: loading it eagerly loaded every project of the user - with all their diagrams - whenever a user was loaded,
+     * e.g. as the assigned user of a project, and kept it in the principal of each session. Which projects a user may
+     * access is queried instead, see {@code ProjectRepository#existsByNameAndAssignedUsersId}.
+     */
+    @ManyToMany(mappedBy = "assignedUsers")
     @Builder.Default
     private Set<Project> assignedProjects = new HashSet<>();
 

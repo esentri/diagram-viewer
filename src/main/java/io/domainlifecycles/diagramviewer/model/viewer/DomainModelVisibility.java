@@ -29,6 +29,8 @@
 
 package io.domainlifecycles.diagramviewer.model.viewer;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -68,16 +70,19 @@ public class DomainModelVisibility {
 
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> explicitlyIncludedPackagesNames = new HashSet<>();
 
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> includeConnectedToClassNames = new HashSet<>();
 
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_incl_ing", // short, unique table name
@@ -88,6 +93,7 @@ public class DomainModelVisibility {
 
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_incl_out",
@@ -98,6 +104,7 @@ public class DomainModelVisibility {
 
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_excl_ing",
@@ -108,6 +115,7 @@ public class DomainModelVisibility {
 
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_excl_out",
@@ -118,11 +126,13 @@ public class DomainModelVisibility {
 
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> blacklistedClassNames = new HashSet<>();
 
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> inlinedValueObjects = new HashSet<>();
 
@@ -133,6 +143,7 @@ public class DomainModelVisibility {
      */
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_flows",
@@ -150,6 +161,7 @@ public class DomainModelVisibility {
      */
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_flows_to",
@@ -164,6 +176,7 @@ public class DomainModelVisibility {
      */
     @Getter
     @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_bounded_contexts",

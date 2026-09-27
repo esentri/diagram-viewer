@@ -29,6 +29,9 @@
 
 package io.domainlifecycles.diagramviewer.model.viewer;
 
+import org.hibernate.Hibernate;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -74,15 +77,19 @@ public class Project {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Fetch(FetchMode.SUBSELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
     private Set<Diagram> diagrams;
 
+    @Fetch(FetchMode.SUBSELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "project")
     private Set<DiagramDirectory> diagramDirectories;
 
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> domainModelPackages;
 
+    @Fetch(FetchMode.SUBSELECT)
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "project_assigned_users", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<AppUser> assignedUsers;
@@ -101,7 +108,9 @@ public class Project {
         if(user != null) {
             assignedUsers.remove(user);
             this.assignedUsers = new HashSet<>(assignedUsers);
-            user.removeAssignedProject(this);
+            if (Hibernate.isInitialized(user.getAssignedProjects())) {
+                user.removeAssignedProject(this);
+            }
         }
     }
 
@@ -109,7 +118,9 @@ public class Project {
         if(user != null) {
             assignedUsers.add(user);
             this.assignedUsers = new HashSet<>(assignedUsers);
-            user.addAssignedProject(this);
+            if (Hibernate.isInitialized(user.getAssignedProjects())) {
+                user.addAssignedProject(this);
+            }
         }
     }
 

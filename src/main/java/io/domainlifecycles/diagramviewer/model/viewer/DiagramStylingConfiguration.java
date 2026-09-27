@@ -29,6 +29,8 @@
 
 package io.domainlifecycles.diagramviewer.model.viewer;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycler;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
@@ -465,6 +467,7 @@ public class DiagramStylingConfiguration {
      */
     @Getter
     @Setter
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> fieldBlacklist = List.of("concurrencyVersion");
 
@@ -473,6 +476,7 @@ public class DiagramStylingConfiguration {
      */
     @Getter
     @Setter
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> methodBlacklist = List.of(
         "builder",
