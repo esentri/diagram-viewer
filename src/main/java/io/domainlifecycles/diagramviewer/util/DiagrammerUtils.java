@@ -73,8 +73,7 @@ public class DiagrammerUtils {
         }
 
         DiagramTrimSettings trimSettings = DiagramTrimSettings.builder()
-                .withExplicitlyIncludedPackageNames(domainModelVisibility.getExplicitlyIncludedPackagesNames() == null ?
-                        Collections.emptyList() : domainModelVisibility.getExplicitlyIncludedPackagesNames().stream().toList())
+                .withExplicitlyIncludedPackageNames(domainModelVisibility.getEffectiveIncludedPackages().stream().toList())
                 .withIncludeConnectedTo(domainModelVisibility.getIncludeConnectedToClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getIncludeConnectedToClassNames().stream().toList())
                 .withIncludeConnectedToIngoing(domainModelVisibility.getIncludeConnectedToIngoingClassNames() == null ?

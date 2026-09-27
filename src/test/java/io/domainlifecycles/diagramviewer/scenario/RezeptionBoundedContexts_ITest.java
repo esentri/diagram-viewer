@@ -1,7 +1,13 @@
 package io.domainlifecycles.diagramviewer.scenario;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
+import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
@@ -9,9 +15,16 @@ import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.RegenerateDiagramsJobRepository;
 import io.domainlifecycles.diagramviewer.service.BoundedContext;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
+import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramFilterComponent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,11 +67,15 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
     @Autowired
     SessionStorage sessionStorage;
 
+    @Autowired
+    DiagramService diagramService;
+
     private AppUser appUser;
     private Project project;
 
     @BeforeEach
     void setUp() {
+        UI.setCurrent(new UI());
         appUser = appUserRepository.save(AppUser.builder()
             .firstName("Rezeption")
             .lastName("BoundedContextTester")
@@ -76,6 +93,7 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        UI.setCurrent(null);
         sessionStorage.delete(project.getId());
         regenerateDiagramsJobRepository.deleteAll();
         diagramRepository.deleteAll();
@@ -111,6 +129,76 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
             .extracting(BoundedContext::packageName)
             .containsExactly(RezeptionScenario.DOMAIN_MODEL_PACKAGE);
         assertThat(sessionStorage.hasDeclaredBoundedContexts(project.getId())).isFalse();
+    }
+
+    @Test
+    void Should_RenderOnlyTheIncludedBoundedContext() throws Exception {
+
+        // given
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithBoundedContexts());
+        DomainModelVisibility onlyZimmer = new DomainModelVisibility()
+            .replaceIncludedBoundedContextPackages(Set.of(RezeptionScenario.ZIMMER_CONTEXT_PACKAGE));
+
+        // when
+        String nomnoml = DiagrammerUtils.generateNomnoml(sessionStorage.getDomainMirror(project.getId()),
+            DiagramStylingConfiguration.builder().build(), onlyZimmer, List.of(), null);
+
+        // then
+        assertThat(nomnoml).contains("[<AR> Zimmer");
+        assertThat(nomnoml).doesNotContain("[<AR> Buchung");
+    }
+
+    @Test
+    void Should_OfferBoundedContextFilter_And_PersistTheSelection() throws Exception {
+
+        // given
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithBoundedContexts());
+        Diagram diagram = diagramService.create(project, "bounded-context-filter", new DomainModelVisibility(),
+            new DiagramStylingConfiguration());
+        DiagramFilterComponent filterComponent = new DiagramFilterComponent(sessionStorage, diagramService);
+        filterComponent.setDiagram(diagram);
+        MultiSelectComboBox<BoundedContext> boundedContextFilter = boundedContextFilter(filterComponent).orElseThrow();
+        assertThat(boundedContextFilter.getListDataView().getItems().map(BoundedContext::label))
+            .containsExactly(RezeptionScenario.BUCHUNG_CONTEXT_NAME, RezeptionScenario.AUSLASTUNG_CONTEXT_PACKAGE,
+                RezeptionScenario.ZIMMER_CONTEXT_NAME);
+
+        // when
+        boundedContextFilter.setValue(boundedContextFilter.getListDataView().getItems()
+            .filter(boundedContext -> boundedContext.label().equals(RezeptionScenario.BUCHUNG_CONTEXT_NAME))
+            .collect(Collectors.toSet()));
+
+        // then
+        Diagram reloaded = diagramRepository.findById(diagram.getId()).orElseThrow();
+        assertThat(reloaded.getDomainModelVisibility().getIncludedBoundedContextPackages())
+            .containsExactly(RezeptionScenario.BUCHUNG_CONTEXT_PACKAGE);
+    }
+
+    @Test
+    void Should_NotOfferBoundedContextFilter_When_DomainModelOnlyHasDlcFallback() throws Exception {
+
+        // given
+        upload(RezeptionScenario.gzippedUploadRequestBody());
+        Diagram diagram = diagramService.create(project, "no-bounded-context-filter", new DomainModelVisibility(),
+            new DiagramStylingConfiguration());
+        DiagramFilterComponent filterComponent = new DiagramFilterComponent(sessionStorage, diagramService);
+
+        // when
+        filterComponent.setDiagram(diagram);
+
+        // then
+        assertThat(boundedContextFilter(filterComponent)).isEmpty();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Optional<MultiSelectComboBox<BoundedContext>> boundedContextFilter(Component root) {
+        return descendants(root)
+            .filter(component -> component.getId().filter("bounded-context-filter"::equals).isPresent())
+            .map(component -> (MultiSelectComboBox<BoundedContext>) component)
+            .findFirst();
+    }
+
+    private static Stream<Component> descendants(Component root) {
+        return Stream.concat(Stream.of(root), root.getChildren().flatMap(RezeptionBoundedContexts_ITest::descendants));
     }
 
     private void upload(byte[] gzippedBody) throws Exception {

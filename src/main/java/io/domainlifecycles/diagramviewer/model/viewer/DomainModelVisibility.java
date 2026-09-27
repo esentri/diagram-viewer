@@ -56,6 +56,12 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Builder(toBuilder = true)
 public class DomainModelVisibility {
 
+    /**
+     * A package no type name starts with: the restriction to it leaves nothing - unlike an empty set of packages,
+     * which restricts nothing.
+     */
+    public static final String NO_PACKAGE = "#none";
+
     @Id
     @GeneratedValue
     private UUID id;
@@ -152,6 +158,20 @@ public class DomainModelVisibility {
     @Column(name = "flow_target_point")
     private Set<String> includeFlowsTo = new HashSet<>();
 
+    /**
+     * The root packages of the Bounded Contexts the diagram is restricted to. Empty means no restriction. Combined
+     * with {@link #explicitlyIncludedPackagesNames}, see {@link #getEffectiveIncludedPackages()}.
+     */
+    @Getter
+    @Builder.Default
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_bounded_contexts",
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "package_name")
+    private Set<String> includedBoundedContextPackages = new HashSet<>();
+
     @Getter
     @CreationTimestamp
     private Instant createdAt;
@@ -172,6 +192,24 @@ public class DomainModelVisibility {
             Set<String> includeFlowsFrom,
             Set<String> includeFlowsTo
     ) {
+        this(explicitlyIncludedPackagesNames, includeConnectedToClassNames, includeConnectedToIngoingClassNames,
+            includeConnectedToOutgoingClassNames, excludeConnectedToIngoingClassNames, excludeConnectedToOutgoingClassNames,
+            blacklistedClassNames, inlinedValueObjects, includeFlowsFrom, includeFlowsTo, null);
+    }
+
+    public DomainModelVisibility(
+            Set<String> explicitlyIncludedPackagesNames,
+            Set<String> includeConnectedToClassNames,
+            Set<String> includeConnectedToIngoingClassNames,
+            Set<String> includeConnectedToOutgoingClassNames,
+            Set<String> excludeConnectedToIngoingClassNames,
+            Set<String> excludeConnectedToOutgoingClassNames,
+            Set<String> blacklistedClassNames,
+            Set<String> inlinedValueObjects,
+            Set<String> includeFlowsFrom,
+            Set<String> includeFlowsTo,
+            Set<String> includedBoundedContextPackages
+    ) {
         this.explicitlyIncludedPackagesNames = explicitlyIncludedPackagesNames == null ? new HashSet<>() : explicitlyIncludedPackagesNames;
         this.includeConnectedToIngoingClassNames = includeConnectedToIngoingClassNames == null ? new HashSet<>() : includeConnectedToIngoingClassNames;
         this.includeConnectedToOutgoingClassNames = includeConnectedToOutgoingClassNames == null ? new HashSet<>() : includeConnectedToOutgoingClassNames;
@@ -182,6 +220,7 @@ public class DomainModelVisibility {
         this.inlinedValueObjects = inlinedValueObjects == null ? new HashSet<>() : inlinedValueObjects;
         this.includeFlowsFrom = includeFlowsFrom == null ? new HashSet<>() : includeFlowsFrom;
         this.includeFlowsTo = includeFlowsTo == null ? new HashSet<>() : includeFlowsTo;
+        this.includedBoundedContextPackages = includedBoundedContextPackages == null ? new HashSet<>() : includedBoundedContextPackages;
     }
 
     /**
@@ -204,7 +243,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -219,7 +259,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -234,7 +275,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -249,7 +291,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -264,7 +307,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -279,7 +323,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -294,7 +339,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -309,7 +355,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -324,7 +371,8 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
     }
 
@@ -339,7 +387,54 @@ public class DomainModelVisibility {
                 blacklistedClassNames,
                 inlinedValueObjects,
                 includeFlowsFrom,
-                includeFlowsTo
+                includeFlowsTo,
+                includedBoundedContextPackages
         );
+    }
+
+    public DomainModelVisibility replaceIncludedBoundedContextPackages(Set<String> includedBoundedContextPackages) {
+        return new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames,
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        );
+    }
+
+    /**
+     * The packages the diagram is effectively restricted to, combining the explicitly included packages with the
+     * included Bounded Contexts. If only one of them is set, it applies alone. If both are set, only what lies in
+     * both remains: for each package and Bounded Context of which one lies in the other, the narrower one.
+     *
+     * @return the package prefixes the diagram's types must start with, empty for no restriction; {@link #NO_PACKAGE}
+     * alone if package and Bounded Context filter exclude each other
+     */
+    public Set<String> getEffectiveIncludedPackages() {
+        Set<String> packages = explicitlyIncludedPackagesNames == null ? Set.of() : explicitlyIncludedPackagesNames;
+        Set<String> boundedContexts = includedBoundedContextPackages == null ? Set.of() : includedBoundedContextPackages;
+        if (boundedContexts.isEmpty()) {
+            return packages;
+        }
+        if (packages.isEmpty()) {
+            return boundedContexts;
+        }
+        Set<String> effective = new HashSet<>();
+        for (String packageName : packages) {
+            for (String boundedContext : boundedContexts) {
+                if (packageName.startsWith(boundedContext)) {
+                    effective.add(packageName);
+                } else if (boundedContext.startsWith(packageName)) {
+                    effective.add(boundedContext);
+                }
+            }
+        }
+        return effective.isEmpty() ? Set.of(NO_PACKAGE) : effective;
     }
 }

@@ -101,7 +101,7 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
         this.diagram = diagram;
         Set<DomainTypeMirror> allDomainTypeMirrorsInIncludedPackages = getAllDomainTypeMirrorsInIncludedPackages(
                 sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(diagram.getProject().getId()),
-                diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames()
+                diagram.getDomainModelVisibility().getEffectiveIncludedPackages()
         );
         int longestDomainTypeMirrorNameLength = allDomainTypeMirrorsInIncludedPackages.stream()
                 .map(DomainModelUtils::nameWithStereoType)

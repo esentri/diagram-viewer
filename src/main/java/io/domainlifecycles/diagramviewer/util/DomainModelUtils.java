@@ -90,8 +90,8 @@ public class DomainModelUtils {
                 domainTypeMirrors
                     .stream()
                     .filter(type ->
-                        diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()
-                            || diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream()
+                        diagram.getDomainModelVisibility().getEffectiveIncludedPackages().isEmpty()
+                            || diagram.getDomainModelVisibility().getEffectiveIncludedPackages().stream()
                             .anyMatch(p -> type.getTypeName().startsWith(p)))
                     .filter(m -> !m.getTypeName().startsWith(DOMAINLIFECYCLES_PACKAGE_NAME))
                     .filter(m ->

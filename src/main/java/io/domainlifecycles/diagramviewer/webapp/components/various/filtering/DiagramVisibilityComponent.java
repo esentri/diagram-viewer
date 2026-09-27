@@ -96,7 +96,7 @@ public class DiagramVisibilityComponent extends Div {
             log.debug("refreshDetails DiagramVisibilityComponent started");
             List<DomainTypeMirror> directlyContained = domainTypeMirrors.stream().filter(dtm ->
                     currentDiagram.getDomainModelVisibility()
-                            .getExplicitlyIncludedPackagesNames()
+                            .getEffectiveIncludedPackages()
                             .stream()
                             .anyMatch(p -> dtm.getTypeName().startsWith(p))
             ).toList();
@@ -107,7 +107,7 @@ public class DiagramVisibilityComponent extends Div {
                             .stream()
                             .filter(dtm -> {
                                 Set<String> filteredPackageNames = currentDiagram.getDomainModelVisibility()
-                                        .getExplicitlyIncludedPackagesNames();
+                                        .getEffectiveIncludedPackages();
 
                                 if (filteredPackageNames == null || filteredPackageNames.isEmpty()) return true;
 
@@ -411,8 +411,8 @@ public class DiagramVisibilityComponent extends Div {
         if (mirrors != null && mirrors.size() > 0) {
             List<String> mirroredTypeNames = mirrors.stream().map(DomainTypeMirror::getTypeName)
                 .filter(typeName ->
-                        diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()
-                                || diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream()
+                        diagram.getDomainModelVisibility().getEffectiveIncludedPackages().isEmpty()
+                                || diagram.getDomainModelVisibility().getEffectiveIncludedPackages().stream()
                                 .anyMatch(typeName::startsWith))
                 .filter(typeName -> !typeName.startsWith(DomainModelUtils.DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
             domainTypeMirrors.addAll(

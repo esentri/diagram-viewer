@@ -35,12 +35,13 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
-import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
+import io.domainlifecycles.diagramviewer.service.BoundedContext;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.selects.PackageMultiSelectComboBox;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -49,6 +50,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
@@ -86,6 +88,11 @@ public class DiagramFilterComponent extends Div {
         if(this.currentDiagram != null) {
             var domainTypeMirrors = sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(currentDiagram.getProject().getId());
             log.debug("refreshDetails DiagramVisibilityComponent started");
+            UUID projectId = currentDiagram.getProject().getId();
+            if (sessionStorage.hasDeclaredBoundedContexts(projectId)) {
+                add(createBoundedContextDetails(sessionStorage.getBoundedContexts(projectId)));
+            }
+
             Details packageDetails = new Details("Explicitly included packages");
             packageDetails.setWidthFull();
             packageDetails.setOpened(sessionStorage.isPackageFilterOpen());
@@ -247,6 +254,38 @@ public class DiagramFilterComponent extends Div {
 
         diagram.setDomainModelVisibility(newVisibility);
         diagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
+    }
+
+    /**
+     * Restricts the diagram to Bounded Contexts, labelled by their name or, if they have none, their package. Only
+     * offered for domain models declaring Bounded Contexts; combined with the package filter, see
+     * {@link DomainModelVisibility#getEffectiveIncludedPackages()}.
+     */
+    private Details createBoundedContextDetails(List<BoundedContext> boundedContexts) {
+        Details boundedContextDetails = new Details("Bounded Contexts");
+        boundedContextDetails.setWidthFull();
+        boundedContextDetails.setOpened(true);
+
+        MultiSelectComboBox<BoundedContext> boundedContextComboBox = new MultiSelectComboBox<>();
+        boundedContextComboBox.setId("bounded-context-filter");
+        boundedContextComboBox.setWidthFull();
+        boundedContextComboBox.setPlaceholder("All Bounded Contexts");
+        boundedContextComboBox.setItems(boundedContexts);
+        boundedContextComboBox.setItemLabelGenerator(BoundedContext::label);
+        Set<String> includedPackages = currentDiagram.getDomainModelVisibility().getIncludedBoundedContextPackages();
+        boundedContextComboBox.setValue(boundedContexts.stream()
+            .filter(boundedContext -> includedPackages.contains(boundedContext.packageName()))
+            .collect(Collectors.toSet()));
+        boundedContextComboBox.addValueChangeListener(e -> {
+            currentDiagram.setDomainModelVisibility(currentDiagram.getDomainModelVisibility()
+                .replaceIncludedBoundedContextPackages(e.getValue().stream()
+                    .map(BoundedContext::packageName)
+                    .collect(Collectors.toSet())));
+            currentDiagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, currentDiagram);
+        });
+
+        boundedContextDetails.add(boundedContextComboBox);
+        return boundedContextDetails;
     }
 
     private List<DomainTypeMirror> filterValueObjectMirrorAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {
