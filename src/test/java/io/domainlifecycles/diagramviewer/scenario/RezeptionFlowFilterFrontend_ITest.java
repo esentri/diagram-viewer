@@ -8,6 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
+import com.vaadin.flow.server.StreamResourceRegistry;
+import com.vaadin.flow.server.VaadinSession;
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
@@ -20,11 +22,13 @@ import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.RegenerateDiagramsJobRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.FlowTextDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramFlowFilterComponent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.mirror.api.MethodMirror;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -37,6 +41,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -178,6 +184,40 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
         Diagram reloaded = diagramRepository.findById(diagram.getId()).orElseThrow();
         assertThat(reloaded.getDomainModelVisibility().getIncludeFlowsFrom())
             .containsExactly(RezeptionScenario.CHECK_OUT_METHOD_FLOW_STARTING_POINT);
+    }
+
+    @Test
+    void Should_OfferTheFlowAsText_When_AFlowIsActive() {
+
+        // given: without a flow there is nothing to show
+        assertThat(showFlowAsTextButton(flowFilterComponent)).isEmpty();
+        ComboBox<DomainTypeMirror> classComboBox = classComboBox(flowFilterComponent);
+        classComboBox.setValue(findByTypeName(classComboBox, RezeptionScenario.CHECK_OUT_COMMAND));
+        click(addFlowButton(flowFilterComponent));
+
+        // when: the dialog's download link needs a session to register its resource with
+        withSession(UI.getCurrent());
+        click(showFlowAsTextButton(flowFilterComponent).orElseThrow());
+
+        // then
+        FlowTextDialog dialog = descendants(flowFilterComponent)
+            .filter(FlowTextDialog.class::isInstance)
+            .map(FlowTextDialog.class::cast)
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Flow text dialog not opened"));
+        assertThat(dialog.isOpened()).isTrue();
+        List<String> lines = descendants(dialog)
+            .filter(c -> "flow-text".equals(c.getId().orElse(null)))
+            .flatMap(Component::getChildren)
+            .map(line -> line.getElement().getText())
+            .toList();
+        assertThat(lines).contains("▼ WHAT IT LEADS TO", "[Command] CheckeGastAus   ◀ start");
+
+        // when
+        dialog.close();
+
+        // then
+        assertThat(descendants(flowFilterComponent).noneMatch(FlowTextDialog.class::isInstance)).isTrue();
     }
 
     @Test
@@ -365,6 +405,21 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
             .filter(c -> c instanceof Button button && "Add flow".equals(button.getText()))
             .findFirst()
             .orElseThrow(() -> new AssertionError("'Add flow' button not found"));
+    }
+
+    private static Optional<Button> showFlowAsTextButton(Component root) {
+        return descendants(root)
+            .filter(c -> c instanceof Button button && "Show flow as text".equals(button.getText()))
+            .map(Button.class::cast)
+            .findFirst();
+    }
+
+    private static void withSession(UI ui) {
+        VaadinSession session = mock(VaadinSession.class);
+        when(session.hasLock()).thenReturn(true);
+        StreamResourceRegistry resourceRegistry = new StreamResourceRegistry(session);
+        when(session.getResourceRegistry()).thenReturn(resourceRegistry);
+        ui.getInternals().setSession(session);
     }
 
     private static void click(Button button) {

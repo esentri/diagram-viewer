@@ -37,12 +37,14 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.FlowTextDialog;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainCommandMirror;
@@ -67,7 +69,8 @@ import lombok.extern.slf4j.Slf4j;
  *   method, i.e. "what leads into this" - the entry channels through which it is reached. A domain
  *   command can never be a backward flow target, so commands are not offered for it.</li>
  * </ul>
- * Forward and backward flows can be combined; the diagram then shows the types reached by either.
+ * Forward and backward flows can be combined; the diagram then shows the types reached by either. The active flows
+ * can be shown as text as well, see {@link FlowTextDialog}.
  * <p>
  * This requires the result of a static analysis of the domain classes ({@code DomainCalls}) to have
  * been uploaded alongside the domain mirror; the filter is unavailable otherwise.
@@ -184,6 +187,13 @@ public class DiagramFlowFilterComponent extends Div {
             flowDetails.add(createActiveFlowsComboBox("Active backward flow filters:", activeFlowsTo,
                 selected -> applyFlows(visibility.getIncludeFlowsFrom(), selected)));
         }
+        if (!activeFlowsFrom.isEmpty() || !activeFlowsTo.isEmpty()) {
+            Button showAsTextButton = new Button("Show flow as text", VaadinIcon.FILE_TEXT_O.create(),
+                e -> openFlowText(visibility));
+            showAsTextButton.setId("show-flow-as-text");
+            showAsTextButton.setWidthFull();
+            flowDetails.add(showAsTextButton);
+        }
 
         add(flowDetails);
         log.debug("refreshDetails DiagramFlowFilterComponent finished");
@@ -293,6 +303,23 @@ public class DiagramFlowFilterComponent extends Div {
             updatedFlowsFrom.add(flowPoint);
         }
         applyFlows(updatedFlowsFrom, updatedFlowsTo);
+    }
+
+    private void openFlowText(DomainModelVisibility visibility) {
+        var projectId = currentDiagram.getProject().getId();
+        sessionStorage.getDomainCalls(projectId).ifPresent(domainCalls -> {
+            FlowTextDialog dialog = new FlowTextDialog(sessionStorage.getDomainMirror(projectId), domainCalls,
+                currentDiagram.getName(), List.copyOf(visibility.getIncludeFlowsFrom()),
+                List.copyOf(visibility.getIncludeFlowsTo()));
+            // attached here rather than implicitly to the UI, and removed again once closed
+            dialog.addOpenedChangeListener(e -> {
+                if (!e.isOpened()) {
+                    remove(dialog);
+                }
+            });
+            add(dialog);
+            dialog.open();
+        });
     }
 
     private void applyFlows(Set<String> newFlowsFrom, Set<String> newFlowsTo) {
