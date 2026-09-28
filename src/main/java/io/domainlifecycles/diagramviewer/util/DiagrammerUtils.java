@@ -170,6 +170,7 @@ public class DiagrammerUtils {
                 .withShowNonDomainClasses(diagramStylingConfiguration.isShowNonDomainClasses())
                 .withShowNonDomainClassFields(diagramStylingConfiguration.isShowNonDomainClassFields())
                 .withShowNonDomainClassMethods(diagramStylingConfiguration.isShowNonDomainClassMethods())
+                .withMaxInlinedValueObjectFields(diagramStylingConfiguration.getMaxInlinedValueObjectFields())
                 .withShowAllInheritanceStructures(diagramStylingConfiguration.isShowAllInheritanceStructures())
                 .withShowInheritanceStructuresForDomainCommands(diagramStylingConfiguration.isShowInheritanceStructuresForDomainCommands())
                 .withShowInheritanceStructuresForDomainEvents(diagramStylingConfiguration.isShowInheritanceStructuresForDomainEvents())

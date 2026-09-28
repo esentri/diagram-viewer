@@ -38,6 +38,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.data.binder.Binder;
 import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
@@ -258,9 +259,22 @@ public class VisibilityConfigurationDialog extends Dialog {
         showAggregateMethodsCheckbox = new Checkbox();
         diagramConfigurationBinder.bind(showAggregateMethodsCheckbox, DiagramStylingConfiguration::isShowAggregateMethods, DiagramStylingConfiguration::setShowAggregateMethods);
 
+        IntegerField maxInlinedValueObjectFieldsField = new IntegerField();
+        maxInlinedValueObjectFieldsField.setMin(0);
+        maxInlinedValueObjectFieldsField.setStepButtonsVisible(true);
+        maxInlinedValueObjectFieldsField.setHelperText(
+            "Value objects with at most this many fields are shown as field of the class referencing them, "
+                + "0 shows none that way");
+        diagramConfigurationBinder.forField(maxInlinedValueObjectFieldsField)
+            .asRequired("Required")
+            .withValidator(fields -> fields >= 0, "Must not be negative")
+            .bind(DiagramStylingConfiguration::getMaxInlinedValueObjectFields,
+                DiagramStylingConfiguration::setMaxInlinedValueObjectFields);
+
         aggregatesDialogFormLayout.addFormItem(showAggregatesCheckbox,"Show");
         aggregatesDialogFormLayout.addFormItem(showAggregateFieldsCheckbox,"Fields");
         aggregatesDialogFormLayout.addFormItem(showAggregateMethodsCheckbox,"Methods");
+        aggregatesDialogFormLayout.addFormItem(maxInlinedValueObjectFieldsField, "Inline value objects up to (fields)");
 
         accordionPanel.add(aggregatesDialogFormLayout);
         return accordionPanel;

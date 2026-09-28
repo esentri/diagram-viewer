@@ -49,4 +49,10 @@ class DiagramStylingConfigurationTest {
         assertThat(constructed.isShowOutboundServiceMethods()).isTrue();
         assertThat(constructed.isShowOutboundServiceFields()).isFalse();
     }
+
+    @Test
+    void Should_ShowValueObjectsOfUpToTwoFieldsInline_ByDefault() {
+        assertThat(DiagramStylingConfiguration.builder().build().getMaxInlinedValueObjectFields()).isEqualTo(2);
+        assertThat(new DiagramStylingConfiguration().getMaxInlinedValueObjectFields()).isEqualTo(2);
+    }
 }

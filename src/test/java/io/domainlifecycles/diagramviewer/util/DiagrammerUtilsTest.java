@@ -155,6 +155,23 @@ class DiagrammerUtilsTest {
         assertThat(nomnoml).contains(classBoxMarker("AktualisiereGastdaten"));
     }
 
+    @Test
+    void Should_ShowValueObjectsOfTwoFieldsInline_ByDefault_And_AsClass_When_TheMaximumIsLowered() {
+
+        // given: Zeitraum has two fields, start and ende
+        String zeitraumBox = "// !!! com.esentri.rezeption.domain.Zeitraum !!!";
+
+        // when
+        String byDefault = generate(rezeptionMirror, DiagramStylingConfiguration.builder().build(),
+            new DomainModelVisibility(), rezeptionCalls);
+        String lowered = generate(rezeptionMirror, DiagramStylingConfiguration.builder().maxInlinedValueObjectFields(1).build(),
+            new DomainModelVisibility(), rezeptionCalls);
+
+        // then
+        assertThat(byDefault).doesNotContain(zeitraumBox).contains("zeitraum:<VO> Zeitraum");
+        assertThat(lowered).contains(zeitraumBox);
+    }
+
     private static String generate(DomainMirror mirror,
                                    DiagramStylingConfiguration styling,
                                    DomainModelVisibility visibility,

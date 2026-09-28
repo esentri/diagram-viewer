@@ -454,6 +454,14 @@ public class DiagramStylingConfiguration {
     @Setter
     @Column(columnDefinition = "boolean not null default true")
     @Builder.Default private boolean showNonDomainClassMethods = true;
+    /**
+     * Value objects with at most this many fields are shown inline, as field of the class referencing them, instead of
+     * as class of their own connected by a composition; 0 shows no value object inline
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "integer not null default 2")
+    @Builder.Default private int maxInlinedValueObjectFields = 2;
 
     /**
      * If true, the stereotype {@code <Driver>} is used instead of {@code <ApplicationService>}

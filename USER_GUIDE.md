@@ -202,6 +202,10 @@ There you define, if fields or methods are shown, if inheritance structures are 
 Additionally, you can define which stereotypes are shown.
 2. For example, you can create a diagram showing only the Aggregates in the domain model, without showing field and method details.
 ![Aggregates only](./images/aggregates_only.png)
+3. In the section ``Aggregates``, ``Inline value objects up to (fields)`` defines up to how many fields a value object
+   is shown inline - as field of the class referencing it, e.g. ``price:<VO> Money`` - instead of as class of its own
+   connected by a composition. By default value objects of up to 2 fields are shown inline; ``1`` shows only those of a
+   single field inline, ``0`` none. A value object containing one that is not shown inline is not shown inline itself.
 
 ### Non-domain classes
 Besides the classes implementing one of the DLC marker interfaces, the domain model also contains classes
