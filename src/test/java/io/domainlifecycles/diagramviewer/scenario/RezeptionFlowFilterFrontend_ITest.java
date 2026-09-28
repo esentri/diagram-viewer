@@ -238,6 +238,22 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
     }
 
     @Test
+    void Should_ConnectTheCallsOfTheFlowsByDefault_And_KeepTheChoice_When_UserSwitchesItOff() {
+
+        // given: the switch is shown in the flow filter, checked by default
+        Checkbox showFlowCallRelations = checkbox(flowFilterComponent, "show-flow-call-relations");
+        assertThat(showFlowCallRelations.getValue()).isTrue();
+
+        // when
+        showFlowCallRelations.setValue(false);
+
+        // then: the choice is persisted and still shown after refreshing
+        Diagram reloaded = diagramRepository.findById(diagram.getId()).orElseThrow();
+        assertThat(reloaded.getDiagramStylingConfiguration().isShowFlowCallRelations()).isFalse();
+        assertThat(checkbox(flowFilterComponent, "show-flow-call-relations").getValue()).isFalse();
+    }
+
+    @Test
     void Should_RemoveFlow_When_UserDeselectsItFromTheActiveFlowsList() {
 
         // given: a flow was added
@@ -425,10 +441,14 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
     }
 
     private static Checkbox showOnlyFlowMethodsCheckbox(Component root) {
+        return checkbox(root, "show-only-flow-methods");
+    }
+
+    private static Checkbox checkbox(Component root, String id) {
         return (Checkbox) descendants(root)
-            .filter(c -> c instanceof Checkbox && "show-only-flow-methods".equals(c.getId().orElse(null)))
+            .filter(c -> c instanceof Checkbox && id.equals(c.getId().orElse(null)))
             .findFirst()
-            .orElseThrow(() -> new AssertionError("'Show only the methods called in the flows' checkbox not found"));
+            .orElseThrow(() -> new AssertionError("Checkbox '" + id + "' not found"));
     }
 
     private static Optional<Button> showFlowAsTextButton(Component root) {

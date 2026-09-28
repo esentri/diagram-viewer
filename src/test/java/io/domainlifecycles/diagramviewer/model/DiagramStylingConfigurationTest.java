@@ -57,6 +57,12 @@ class DiagramStylingConfigurationTest {
     }
 
     @Test
+    void Should_ConnectClassesCallingEachOtherInTheFlows_ByDefault() {
+        assertThat(DiagramStylingConfiguration.builder().build().isShowFlowCallRelations()).isTrue();
+        assertThat(new DiagramStylingConfiguration().isShowFlowCallRelations()).isTrue();
+    }
+
+    @Test
     void Should_ShowValueObjectsOfUpToTwoFieldsInline_ByDefault() {
         assertThat(DiagramStylingConfiguration.builder().build().getMaxInlinedValueObjectFields()).isEqualTo(2);
         assertThat(new DiagramStylingConfiguration().getMaxInlinedValueObjectFields()).isEqualTo(2);

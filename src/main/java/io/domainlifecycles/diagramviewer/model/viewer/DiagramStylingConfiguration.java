@@ -469,6 +469,14 @@ public class DiagramStylingConfiguration {
     @Setter
     @Column(columnDefinition = "boolean not null default true")
     @Builder.Default private boolean showOnlyFlowMethods = true;
+    /**
+     * If true, in a diagram restricted to flows two classes calling each other in a flow are connected by a
+     * {@code <<calls>>} relationship, if no other relationship connects them
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showFlowCallRelations = true;
 
     /**
      * If true, the stereotype {@code <Driver>} is used instead of {@code <ApplicationService>}

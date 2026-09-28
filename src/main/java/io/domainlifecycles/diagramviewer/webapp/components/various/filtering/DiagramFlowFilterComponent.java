@@ -182,7 +182,14 @@ public class DiagramFlowFilterComponent extends Div {
             + "show their methods as without flow.");
         showOnlyFlowMethodsCheckbox.addValueChangeListener(e -> applyShowOnlyFlowMethods(e.getValue()));
 
-        flowDetails.add(directionRadioGroup, selectionLayout, addButton, showOnlyFlowMethodsCheckbox);
+        Checkbox showFlowCallRelationsCheckbox = new Checkbox("Connect classes calling each other in the flows",
+            currentDiagram.getDiagramStylingConfiguration().isShowFlowCallRelations());
+        showFlowCallRelationsCheckbox.setId("show-flow-call-relations");
+        showFlowCallRelationsCheckbox.setTooltipText("A <<calls>> relationship, if no other relationship connects them.");
+        showFlowCallRelationsCheckbox.addValueChangeListener(e -> applyShowFlowCallRelations(e.getValue()));
+
+        flowDetails.add(directionRadioGroup, selectionLayout, addButton, showOnlyFlowMethodsCheckbox,
+            showFlowCallRelationsCheckbox);
 
         DomainModelVisibility visibility = currentDiagram.getDomainModelVisibility();
         Set<String> activeFlowsFrom = visibility.getIncludeFlowsFrom();
@@ -332,6 +339,12 @@ public class DiagramFlowFilterComponent extends Div {
 
     private void applyShowOnlyFlowMethods(boolean showOnlyFlowMethods) {
         currentDiagram.getDiagramStylingConfiguration().setShowOnlyFlowMethods(showOnlyFlowMethods);
+        currentDiagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, currentDiagram);
+        refreshDetails();
+    }
+
+    private void applyShowFlowCallRelations(boolean showFlowCallRelations) {
+        currentDiagram.getDiagramStylingConfiguration().setShowFlowCallRelations(showFlowCallRelations);
         currentDiagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, currentDiagram);
         refreshDetails();
     }
