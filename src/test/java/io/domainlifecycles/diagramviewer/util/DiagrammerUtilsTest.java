@@ -172,6 +172,30 @@ class DiagrammerUtilsTest {
         assertThat(lowered).contains(zeitraumBox);
     }
 
+    @Test
+    void Should_ShowOnlyTheMethodsCalledInTheFlow_ByDefault_And_AllMethods_When_SwitchedOff() {
+
+        // given: the check-out flow calls checkeGastAus of the application service, but not its other methods
+        var visibility = new DomainModelVisibility().replaceIncludeFlowsFrom(Set.of(RezeptionScenario.CHECK_OUT_COMMAND));
+
+        // when
+        String byDefault = generate(rezeptionMirror, DiagramStylingConfiguration.builder().build(), visibility, rezeptionCalls);
+        String switchedOff = generate(rezeptionMirror,
+            DiagramStylingConfiguration.builder().showOnlyFlowMethods(false).build(), visibility, rezeptionCalls);
+
+        // then
+        assertThat(applicationServiceBox(byDefault))
+            .contains("checkeGastAus").doesNotContain("checkeGastEin", "aktualisiereGastdaten");
+        assertThat(applicationServiceBox(switchedOff))
+            .contains("checkeGastAus", "checkeGastEin", "aktualisiereGastdaten");
+    }
+
+    private static String applicationServiceBox(String nomnoml) {
+        int start = nomnoml.indexOf("[<AS> BuchungApplicationService");
+        assertThat(start).as("box of the application service").isNotNegative();
+        return nomnoml.substring(start, nomnoml.indexOf(']', start) + 1);
+    }
+
     private static String generate(DomainMirror mirror,
                                    DiagramStylingConfiguration styling,
                                    DomainModelVisibility visibility,

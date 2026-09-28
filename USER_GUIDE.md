@@ -282,6 +282,11 @@ Several flows can be combined, also forward and backward ones. The diagram then 
 The flow filter only ever narrows the diagram: package filters, invisible objects and the general visibility settings still apply.
 The direction of the drawn relations is not affected by the flow direction, it always follows the domain model.
 
+``Show only the methods called in the flows`` (checked by default) shows, in the classes taking part in a flow, only the
+methods called in it - e.g. only ``checkeGastAus`` of the ``BuchungApplicationService`` for the flow from ``CheckeGastAus``.
+Classes shown for another reason, e.g. an entity of a shown aggregate or a read model contained in a shown read model,
+show their methods as without flow. Uncheck it to see all methods the general visibility settings allow.
+
 For example, with the [Demo Project](https://github.com/esentri/ddd-hotel-demo):
 - a forward flow from the command ``CheckeGastAus`` shows the whole guest check-out, including the event ``GastAusgecheckt``
   and its listener ``ZimmerFreigabeListener``

@@ -5,6 +5,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
@@ -221,6 +222,22 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
     }
 
     @Test
+    void Should_ShowOnlyTheFlowMethodsByDefault_And_KeepTheChoice_When_UserSwitchesItOff() {
+
+        // given: the switch is shown in the flow filter, checked by default
+        Checkbox showOnlyFlowMethods = showOnlyFlowMethodsCheckbox(flowFilterComponent);
+        assertThat(showOnlyFlowMethods.getValue()).isTrue();
+
+        // when
+        showOnlyFlowMethods.setValue(false);
+
+        // then: the choice is persisted and still shown after refreshing
+        Diagram reloaded = diagramRepository.findById(diagram.getId()).orElseThrow();
+        assertThat(reloaded.getDiagramStylingConfiguration().isShowOnlyFlowMethods()).isFalse();
+        assertThat(showOnlyFlowMethodsCheckbox(flowFilterComponent).getValue()).isFalse();
+    }
+
+    @Test
     void Should_RemoveFlow_When_UserDeselectsItFromTheActiveFlowsList() {
 
         // given: a flow was added
@@ -405,6 +422,13 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
             .filter(c -> c instanceof Button button && "Add flow".equals(button.getText()))
             .findFirst()
             .orElseThrow(() -> new AssertionError("'Add flow' button not found"));
+    }
+
+    private static Checkbox showOnlyFlowMethodsCheckbox(Component root) {
+        return (Checkbox) descendants(root)
+            .filter(c -> c instanceof Checkbox && "show-only-flow-methods".equals(c.getId().orElse(null)))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("'Show only the methods called in the flows' checkbox not found"));
     }
 
     private static Optional<Button> showFlowAsTextButton(Component root) {

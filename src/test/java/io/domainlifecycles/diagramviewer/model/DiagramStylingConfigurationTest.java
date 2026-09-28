@@ -51,6 +51,12 @@ class DiagramStylingConfigurationTest {
     }
 
     @Test
+    void Should_ShowOnlyTheMethodsCalledInTheFlows_ByDefault() {
+        assertThat(DiagramStylingConfiguration.builder().build().isShowOnlyFlowMethods()).isTrue();
+        assertThat(new DiagramStylingConfiguration().isShowOnlyFlowMethods()).isTrue();
+    }
+
+    @Test
     void Should_ShowValueObjectsOfUpToTwoFieldsInline_ByDefault() {
         assertThat(DiagramStylingConfiguration.builder().build().getMaxInlinedValueObjectFields()).isEqualTo(2);
         assertThat(new DiagramStylingConfiguration().getMaxInlinedValueObjectFields()).isEqualTo(2);

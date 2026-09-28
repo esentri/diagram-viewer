@@ -32,6 +32,7 @@ package io.domainlifecycles.diagramviewer.webapp.components.various.filtering;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
@@ -174,7 +175,14 @@ public class DiagramFlowFilterComponent extends Div {
         selectionLayout.setWidthFull();
         selectionLayout.setFlexGrow(1, classComboBox, methodComboBox);
 
-        flowDetails.add(directionRadioGroup, selectionLayout, addButton);
+        Checkbox showOnlyFlowMethodsCheckbox = new Checkbox("Show only the methods called in the flows",
+            currentDiagram.getDiagramStylingConfiguration().isShowOnlyFlowMethods());
+        showOnlyFlowMethodsCheckbox.setId("show-only-flow-methods");
+        showOnlyFlowMethodsCheckbox.setTooltipText("Classes shown for another reason, e.g. as part of an aggregate, "
+            + "show their methods as without flow.");
+        showOnlyFlowMethodsCheckbox.addValueChangeListener(e -> applyShowOnlyFlowMethods(e.getValue()));
+
+        flowDetails.add(directionRadioGroup, selectionLayout, addButton, showOnlyFlowMethodsCheckbox);
 
         DomainModelVisibility visibility = currentDiagram.getDomainModelVisibility();
         Set<String> activeFlowsFrom = visibility.getIncludeFlowsFrom();
@@ -320,6 +328,12 @@ public class DiagramFlowFilterComponent extends Div {
             add(dialog);
             dialog.open();
         });
+    }
+
+    private void applyShowOnlyFlowMethods(boolean showOnlyFlowMethods) {
+        currentDiagram.getDiagramStylingConfiguration().setShowOnlyFlowMethods(showOnlyFlowMethods);
+        currentDiagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, currentDiagram);
+        refreshDetails();
     }
 
     private void applyFlows(Set<String> newFlowsFrom, Set<String> newFlowsTo) {

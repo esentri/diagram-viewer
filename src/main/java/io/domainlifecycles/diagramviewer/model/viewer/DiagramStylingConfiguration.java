@@ -462,6 +462,13 @@ public class DiagramStylingConfiguration {
     @Setter
     @Column(columnDefinition = "integer not null default 2")
     @Builder.Default private int maxInlinedValueObjectFields = 2;
+    /**
+     * If true, in a diagram restricted to flows the classes taking part in a flow show only the methods called in it
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showOnlyFlowMethods = true;
 
     /**
      * If true, the stereotype {@code <Driver>} is used instead of {@code <ApplicationService>}
