@@ -409,7 +409,7 @@ public class DiagramStylingConfiguration {
      */
     @Getter
     @Setter
-    @Builder.Default private boolean showOutboundServiceMethods = false;
+    @Builder.Default private boolean showOutboundServiceMethods = true;
 
     /**
      * If true, unspecified ServiceKind classes are included
