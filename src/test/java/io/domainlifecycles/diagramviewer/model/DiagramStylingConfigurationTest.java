@@ -57,9 +57,9 @@ class DiagramStylingConfigurationTest {
     }
 
     @Test
-    void Should_ConnectClassesCallingEachOtherInTheFlows_ByDefault() {
-        assertThat(DiagramStylingConfiguration.builder().build().isShowFlowCallRelations()).isTrue();
-        assertThat(new DiagramStylingConfiguration().isShowFlowCallRelations()).isTrue();
+    void Should_NotConnectClassesCallingEachOtherInTheFlows_ByDefault() {
+        assertThat(DiagramStylingConfiguration.builder().build().isShowFlowCallRelations()).isFalse();
+        assertThat(new DiagramStylingConfiguration().isShowFlowCallRelations()).isFalse();
     }
 
     @Test

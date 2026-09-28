@@ -475,8 +475,8 @@ public class DiagramStylingConfiguration {
      */
     @Getter
     @Setter
-    @Column(columnDefinition = "boolean not null default true")
-    @Builder.Default private boolean showFlowCallRelations = true;
+    @Column(columnDefinition = "boolean not null default false")
+    @Builder.Default private boolean showFlowCallRelations = false;
 
     /**
      * If true, the stereotype {@code <Driver>} is used instead of {@code <ApplicationService>}

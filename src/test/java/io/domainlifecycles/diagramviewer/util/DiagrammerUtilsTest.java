@@ -191,22 +191,22 @@ class DiagrammerUtilsTest {
     }
 
     @Test
-    void Should_ConnectTheApplicationServiceToTheAggregateItCallsInTheFlow_ByDefault_And_NotWhen_SwitchedOff() {
+    void Should_ConnectTheApplicationServiceToTheAggregateItCallsInTheFlow_When_SwitchedOn_And_NotByDefault() {
 
         // given: in the check-out flow, the application service calls Buchung.checkeAus - holding no field of it
         var visibility = new DomainModelVisibility().replaceIncludeFlowsFrom(Set.of(RezeptionScenario.CHECK_OUT_COMMAND));
 
         // when
+        String switchedOn = generate(rezeptionMirror,
+            DiagramStylingConfiguration.builder().showFlowCallRelations(true).build(), visibility, rezeptionCalls);
         String byDefault = generate(rezeptionMirror, DiagramStylingConfiguration.builder().build(), visibility, rezeptionCalls);
-        String switchedOff = generate(rezeptionMirror,
-            DiagramStylingConfiguration.builder().showFlowCallRelations(false).build(), visibility, rezeptionCalls);
 
         // then
-        assertThat(byDefault.lines())
+        assertThat(switchedOn.lines())
             .anyMatch(line -> line.startsWith("[<AS>BuchungApplicationService ")
                 && line.contains("<<calls>> Buchung.checkeAus")
                 && line.endsWith("[<AF> Buchung <<Aggregate>>]"));
-        assertThat(switchedOff).doesNotContain("<<calls>>");
+        assertThat(byDefault).doesNotContain("<<calls>>");
     }
 
     private static String applicationServiceBox(String nomnoml) {

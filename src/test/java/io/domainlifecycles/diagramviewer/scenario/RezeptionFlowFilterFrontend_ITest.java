@@ -238,19 +238,19 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
     }
 
     @Test
-    void Should_ConnectTheCallsOfTheFlowsByDefault_And_KeepTheChoice_When_UserSwitchesItOff() {
+    void Should_NotConnectTheCallsOfTheFlowsByDefault_And_KeepTheChoice_When_UserSwitchesItOn() {
 
-        // given: the switch is shown in the flow filter, checked by default
+        // given: the switch is shown in the flow filter, unchecked by default
         Checkbox showFlowCallRelations = checkbox(flowFilterComponent, "show-flow-call-relations");
-        assertThat(showFlowCallRelations.getValue()).isTrue();
+        assertThat(showFlowCallRelations.getValue()).isFalse();
 
         // when
-        showFlowCallRelations.setValue(false);
+        showFlowCallRelations.setValue(true);
 
         // then: the choice is persisted and still shown after refreshing
         Diagram reloaded = diagramRepository.findById(diagram.getId()).orElseThrow();
-        assertThat(reloaded.getDiagramStylingConfiguration().isShowFlowCallRelations()).isFalse();
-        assertThat(checkbox(flowFilterComponent, "show-flow-call-relations").getValue()).isFalse();
+        assertThat(reloaded.getDiagramStylingConfiguration().isShowFlowCallRelations()).isTrue();
+        assertThat(checkbox(flowFilterComponent, "show-flow-call-relations").getValue()).isTrue();
     }
 
     @Test

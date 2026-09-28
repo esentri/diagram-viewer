@@ -287,7 +287,7 @@ methods called in it - e.g. only ``checkeGastAus`` of the ``BuchungApplicationSe
 Classes shown for another reason, e.g. an entity of a shown aggregate or a read model contained in a shown read model,
 show their methods as without flow. Uncheck it to see all methods the general visibility settings allow.
 
-``Connect classes calling each other in the flows`` (checked by default) draws a ``<<calls>>`` relationship, labeled with
+``Connect classes calling each other in the flows`` (unchecked by default) draws a ``<<calls>>`` relationship, labeled with
 the called methods, between two classes calling each other in a flow, if no other relationship connects them - e.g. a
 class reading a read model it got from elsewhere. Otherwise such classes would stand in the diagram without connection.
 
