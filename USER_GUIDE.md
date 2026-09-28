@@ -282,6 +282,34 @@ For example, with the [Demo Project](https://github.com/esentri/ddd-hotel-demo):
 - a backward flow to the event ``GastAusgecheckt`` shows only what leads to it: the command ``CheckeGastAus``,
   the ``BuchungApplicationService`` and the ``Buchung`` aggregate publishing the event
 
+#### Show a flow as text
+The diagram shows which elements take part in a flow, not in which order they are called. Click ``Show flow as text``
+below the active flows to see the calls step by step. The text is read from top to bottom, in call order:
+- ``▲ WHAT LEADS INTO IT`` shows the backward flows. Each is an upside-down tree: its target is at the bottom, and its
+  branches open upwards, towards everything leading into it.
+- ``▼ WHAT IT LEADS TO`` shows the forward flows as a tree below their start.
+
+```
+▲ WHAT LEADS INTO IT
+   ┌─ BuchungApplicationService.checkeGastAus(CheckeGastAus)
+┌─ Buchung.checkeAus()
+[Event] GastAusgecheckt   ◀ target
+```
+
+``─`` is a call, ``⇒`` an implementation of the method above it (e.g. of a repository interface), ``↻`` a cycle and
+``×3`` three calls of the same method. A step reached on several ways is expanded once, marked with a number like
+``[2]``, and referred to everywhere else with ``→ see [2]``. ``⟨vendor⟩`` marks a step in another Bounded Context
+than the flow starts in.
+
+Large flows can be narrowed down:
+- ``Depth`` limits the number of steps shown from a start or target, ``…`` marks the steps with more behind them.
+  Flows of up to 300 lines are shown completely at first, larger ones to a depth of 5.
+- ``Hide accessors`` (on by default) summarizes the calls only reading values, e.g. of value objects, identities or
+  getters, as ``… 3 accessors hidden``.
+- ``Search`` shows only the paths leading to the steps containing the searched text, and highlights these steps.
+
+``Copy`` and ``Download`` take the text as shown, headed by the flows the diagram is restricted to.
+
 ## G) Add Notes
 There is the option to add notes to the diagram and add information, for discussion or documentation purposes. 
 
