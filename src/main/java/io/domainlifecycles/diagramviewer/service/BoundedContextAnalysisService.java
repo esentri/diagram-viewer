@@ -37,6 +37,7 @@ import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.mirror.api.BoundedContextMirror;
 import io.domainlifecycles.mirror.api.DomainCommandMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.mirror.api.ReadModelMirror;
 import jakarta.annotation.PreDestroy;
@@ -60,7 +61,9 @@ import org.springframework.stereotype.Service;
  * Creates a starting point for exploring a project: per Bounded Context a directory with
  * <ul>
  *     <li>a diagram of the Bounded Context's aggregates only,</li>
- *     <li>a sub directory "Read Models" with a diagram per read model, showing what leads into it (backward flow),</li>
+ *     <li>a sub directory "Read Models" with a diagram per top level read model - one contained in no other read model
+ *     -, showing what leads into it (backward flow); a contained read model is shown in the diagram of the read model
+ *     containing it,</li>
  *     <li>a sub directory "Commands" with a diagram per command, showing the flow it triggers (forward) together with
  *     what leads into the methods processing it (backward - a command itself cannot be a backward flow target).</li>
  * </ul>
@@ -166,11 +169,14 @@ public class BoundedContextAnalysisService {
         List<BoundedContextMirror> boundedContexts = domainMirror.getAllBoundedContextMirrors().stream()
             .sorted(Comparator.comparing(BoundedContextAnalysisService::label, String.CASE_INSENSITIVE_ORDER))
             .toList();
+        Set<String> containedReadModels = containedReadModelTypeNames(domainMirror);
         int total = boundedContexts.stream()
             .mapToInt(boundedContext -> (boundedContext.getAggregateRoots().isEmpty() ? 0 : 1)
-                + (flowsAvailable ? boundedContext.getReadModels().size() + boundedContext.getDomainCommands().size() : 0))
+                + (flowsAvailable
+                    ? topLevelReadModels(boundedContext, containedReadModels).size() + boundedContext.getDomainCommands().size()
+                    : 0))
             .sum();
-        Analysis analysis = new Analysis(project, domainMirror, listener, total);
+        Analysis analysis = new Analysis(project, domainMirror, containedReadModels, listener, total);
         for (BoundedContextMirror boundedContext : boundedContexts) {
             analysis.analyze(boundedContext, flowsAvailable);
         }
@@ -178,6 +184,28 @@ public class BoundedContextAnalysisService {
             boundedContexts.size(), project.getName(), analysis.created, analysis.skipped);
         return new Result(boundedContexts.size(), analysis.created, analysis.skipped, !flowsAvailable,
             List.copyOf(analysis.renderings));
+    }
+
+    /**
+     * The read models of a Bounded Context contained in no other read model.
+     */
+    static List<ReadModelMirror> topLevelReadModels(BoundedContextMirror boundedContext, Set<String> containedReadModels) {
+        return sortedByName(boundedContext.getReadModels()).stream()
+            .filter(readModel -> !containedReadModels.contains(readModel.getTypeName()))
+            .toList();
+    }
+
+    /**
+     * The read models contained in another read model - as field, {@code Optional} or collection. A read model
+     * containing itself, e.g. as tree, is not contained by that alone.
+     */
+    static Set<String> containedReadModelTypeNames(DomainMirror domainMirror) {
+        return domainMirror.getAllReadModelMirrors().stream()
+            .flatMap(readModel -> readModel.getAllFields().stream()
+                .filter(field -> DomainType.READ_MODEL.equals(field.getType().getDomainType()))
+                .map(field -> field.getType().getTypeName())
+                .filter(typeName -> !typeName.equals(readModel.getTypeName())))
+            .collect(Collectors.toSet());
     }
 
     private static String label(BoundedContextMirror boundedContext) {
@@ -188,6 +216,7 @@ public class BoundedContextAnalysisService {
 
         private final Project project;
         private final DomainMirror domainMirror;
+        private final Set<String> containedReadModels;
         private final ProgressListener listener;
         private final int total;
         private final List<CompletableFuture<DiagramRendering.Result>> renderings = new ArrayList<>();
@@ -195,9 +224,11 @@ public class BoundedContextAnalysisService {
         private int created;
         private int skipped;
 
-        private Analysis(Project project, DomainMirror domainMirror, ProgressListener listener, int total) {
+        private Analysis(Project project, DomainMirror domainMirror, Set<String> containedReadModels,
+                         ProgressListener listener, int total) {
             this.project = project;
             this.domainMirror = domainMirror;
+            this.containedReadModels = containedReadModels;
             this.listener = listener;
             this.total = total;
         }
@@ -216,7 +247,7 @@ public class BoundedContextAnalysisService {
                 return;
             }
 
-            List<ReadModelMirror> readModels = sortedByName(boundedContext.getReadModels());
+            List<ReadModelMirror> readModels = topLevelReadModels(boundedContext, containedReadModels);
             if (!readModels.isEmpty()) {
                 DiagramDirectory readModelsDirectory = diagramDirectoryService.findOrCreate(project, directory, READ_MODELS_DIRECTORY);
                 Map<String, String> names = diagramNames(readModels, boundedContext);

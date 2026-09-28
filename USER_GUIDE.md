@@ -127,8 +127,10 @@ To get started with a large model, the viewer can create a set of diagrams for y
 each Bounded Context of the project, named after the Bounded Context (or its package, if it has no name), containing
 
 - a diagram ``Aggregates`` showing only the aggregates of the Bounded Context,
-- a sub folder ``Read Models`` with a diagram per read model of the Bounded Context, named after the read model,
-  showing everything leading into the read model (backward flow). Without read models, there is no such folder,
+- a sub folder ``Read Models`` with a diagram per top level read model of the Bounded Context, named after the read
+  model, showing everything leading into the read model (backward flow). A read model contained in another one (as
+  field, ``Optional`` or collection) gets no diagram of its own: it is shown, connected by a composition, in the
+  diagram of the read model containing it. Without read models, there is no such folder,
 - a sub folder ``Commands`` with a diagram per command of the Bounded Context, named after the command, showing the
   flow the command triggers (forward flow) together with everything leading into the methods processing it (backward
   flow - a command itself has no backward flow, since nothing in the analysis models where a command is created).
