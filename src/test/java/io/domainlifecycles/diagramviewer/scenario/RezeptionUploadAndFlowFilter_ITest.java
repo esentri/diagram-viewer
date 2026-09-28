@@ -14,6 +14,7 @@ import io.domainlifecycles.diagramviewer.repository.ProjectDomainMirrorRepositor
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.staticanalysis.DomainCalls;
@@ -202,7 +203,7 @@ class RezeptionUploadAndFlowFilter_ITest extends BaseIntegrationTest {
     }
 
     private String readGeneratedSvg(Diagram diagram) throws IOException {
-        Path svgPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getName() + ".svg");
+        Path svgPath = Path.of(diagramsLocation, project.getId().toString(), DiagramFileUtils.imageFileName(diagram));
         return Files.readString(svgPath);
     }
 

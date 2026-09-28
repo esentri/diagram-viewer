@@ -89,9 +89,7 @@ public class RenameDiagramDialog extends Dialog {
             binder.writeBeanIfValid(renameDiagramOptions);
             diagramService.rename(diagram, renameDiagramOptions.getFileName());
             close();
-            UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
-                    Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, diagram.getProject().getName(),
-                        DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, diagram.getName())));
+            UI.getCurrent().navigate(DiagramView.class, DiagramView.routeParameters(diagram.getProject(), diagram));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 

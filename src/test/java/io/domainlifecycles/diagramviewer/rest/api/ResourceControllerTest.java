@@ -1,8 +1,12 @@
 package io.domainlifecycles.diagramviewer.rest.api;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.security.ApiKeyAuthFilter;
 import jakarta.servlet.ServletException;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import static org.mockito.Mockito.when;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,6 +34,39 @@ class ResourceControllerTest {
 
     @MockitoBean
     ApiKeyAuthFilter apiKeyAuthFilter;
+
+    @MockitoBean
+    DiagramRepository diagramRepository;
+
+    private static final UUID PROJECT_ID = UUID.fromString("00000000-0000-0000-0000-00000000000a");
+    private static final UUID DIAGRAM_ID = UUID.fromString("00000000-0000-0000-0000-00000000000b");
+
+    @Test
+    void Should_GetImageByDiagramName_When_TheNameIsUniqueInTheProject() throws Exception {
+
+        // given: the image is stored under the diagram's id
+        when(diagramRepository.findByProjectIdAndName(PROJECT_ID, "Aggregates"))
+            .thenReturn(List.of(Diagram.builder().id(DIAGRAM_ID).name("Aggregates").build()));
+
+        // when: requested by the diagram's name, as before images were named after the id
+        ResultActions result = mockMvc.perform(get("/api/resources/view/{directoryName}/{fileName}", PROJECT_ID, "Aggregates.svg"));
+
+        // then
+        result.andExpect(status().isOk()).andExpect(content().string(containsString("<svg")));
+    }
+
+    @Test
+    void Should_Reject_When_TheDiagramNameIsAmbiguousInTheProject() throws Exception {
+
+        // given: two folders with a diagram "Aggregates" each
+        when(diagramRepository.findByProjectIdAndName(PROJECT_ID, "Aggregates")).thenReturn(List.of(
+            Diagram.builder().id(DIAGRAM_ID).name("Aggregates").build(),
+            Diagram.builder().id(UUID.randomUUID()).name("Aggregates").build()));
+
+        // when / then
+        mockMvc.perform(get("/api/resources/view/{directoryName}/{fileName}", PROJECT_ID, "Aggregates.svg"))
+            .andExpect(status().isConflict());
+    }
 
     @Test
     void Should_GetFile_WhenNoAdditionalRequestParametersAreSpecified() throws Exception {

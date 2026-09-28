@@ -549,7 +549,7 @@ class ProjectServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getId()).thenReturn(new UUID(0, 0));
         Diagram diagramMock = mock(Diagram.class);
-        when(diagramMock.getName()).thenReturn("diagramName.svg");
+        when(diagramMock.getId()).thenReturn(new UUID(0, 1));
 
         doNothing().when(diagramTypeNoteService).delete(eq(diagramMock));
         doNothing().when(regenerateDiagramsJobService).delete(eq(diagramMock));
@@ -577,7 +577,7 @@ class ProjectServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getId()).thenReturn(new UUID(0, 0));
         Diagram diagramMock = mock(Diagram.class);
-        when(diagramMock.getName()).thenReturn("diagramName.svg");
+        when(diagramMock.getId()).thenReturn(new UUID(0, 1));
 
         doNothing().when(diagramTypeNoteService).delete(eq(diagramMock));
         doNothing().when(regenerateDiagramsJobService).delete(eq(diagramMock));

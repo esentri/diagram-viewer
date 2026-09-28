@@ -93,6 +93,13 @@ public class DiagramDirectoryServiceImpl implements DiagramDirectoryService {
 
     @Override
     public void add(DiagramDirectory diagramDirectory, Diagram diagram) {
+        boolean nameTaken = diagramDirectory.getDiagrams().stream()
+            .anyMatch(other -> !other.equals(diagram) && Objects.equals(other.getName(), diagram.getName()));
+        if (nameTaken) {
+            throw DiagramViewerException.fail(String.format(
+                "Folder '%s' already contains a diagram named '%s'. Please rename one of them first.",
+                diagramDirectory.getName(), diagram.getName()));
+        }
         diagramDirectory.addDiagram(diagram);
         repository.save(diagramDirectory);
         diagramService.updateModel(diagram);

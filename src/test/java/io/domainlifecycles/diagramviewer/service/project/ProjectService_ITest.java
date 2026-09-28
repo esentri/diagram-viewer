@@ -10,6 +10,7 @@ import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.AppUserRepository;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import java.io.ByteArrayInputStream;
@@ -178,7 +179,7 @@ class ProjectService_ITest extends BaseIntegrationTest {
             .project(project)
             .build();
         diagramRepository.save(diagram);
-        FileIOUtils.saveFile(Path.of(diagramsLocation, project.getId().toString(), diagram.getName()+".svg"), new ByteArrayInputStream("test".getBytes(
+        FileIOUtils.saveFile(Path.of(diagramsLocation, project.getId().toString(), DiagramFileUtils.imageFileName(diagram)), new ByteArrayInputStream("test".getBytes(
             StandardCharsets.UTF_8)));
 
         // when

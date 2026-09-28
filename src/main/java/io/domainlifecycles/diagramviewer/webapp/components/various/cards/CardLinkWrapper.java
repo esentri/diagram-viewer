@@ -55,9 +55,7 @@ public class CardLinkWrapper extends Div {
                            Diagram diagram) {
         this();
         addClickListener(
-            event -> UI.getCurrent().navigate(DiagramView.class, new RouteParameters(
-                Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(),
-                    DiagramView.DIAGRAM_NAME_ROUTE_PARAMETER, diagram.getName()))));
+            event -> UI.getCurrent().navigate(DiagramView.class, DiagramView.routeParameters(project, diagram)));
 
         add(createAndGetDiagramCard(diagramDirectoryService, diagramService, project, diagram));
     }
@@ -77,7 +75,7 @@ public class CardLinkWrapper extends Div {
             diagramService.previewLimitBytes(),
             DiagramFileUtils.assembleDiagramUrl(
                 diagram.getChangedAt(), diagram.getDiagramStylingConfiguration().getChangedAt(),
-                project.getId().toString(), diagram.getName() + DiagramServiceImpl.SVG_FILE_SUFFIX));
+                project.getId().toString(), DiagramFileUtils.imageFileName(diagram)));
     }
 
     private DiagramCard createAndGetDiagramCard(DiagramDirectoryService diagramDirectoryService, DiagramDirectory diagramDirectory) {

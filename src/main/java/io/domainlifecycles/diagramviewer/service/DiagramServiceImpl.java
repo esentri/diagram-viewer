@@ -39,6 +39,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.mirror.api.DomainMirror;
@@ -71,7 +72,7 @@ import org.springframework.stereotype.Service;
 public class DiagramServiceImpl implements DiagramService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DiagramServiceImpl.class);
-    public static final String SVG_FILE_SUFFIX = ".svg";
+    public static final String SVG_FILE_SUFFIX = DiagramFileUtils.SVG_FILE_SUFFIX;
 
     private final String diagramsLocation;
     private final ProjectModelCache projectModelCache;
@@ -138,9 +139,7 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public Diagram rename(Diagram diagram, String newName) {
-        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
-        FileIOUtils.renameFile(diagramPath, newName + SVG_FILE_SUFFIX);
-
+        // the image is named after the diagram's id, see DiagramFileUtils#imagePath
         diagram.setName(newName);
         return updateModel(diagram);
     }
@@ -256,7 +255,7 @@ public class DiagramServiceImpl implements DiagramService {
     private Diagram save(Diagram diagram) {
         final String fileName = diagram.getName();
 
-        if(diagramWithNameExists(diagram) && diagramNameHasChanged(diagram)) {
+        if (nameTakenInDirectory(diagram)) {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
                 fileName));
         }
@@ -306,7 +305,7 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private void saveImage(Diagram diagram, byte[] diagramFileContents) {
-        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
+        Path diagramPath = DiagramFileUtils.imagePath(diagramsLocation, diagram);
         try {
             FileIOUtils.saveFile(diagramPath.toAbsolutePath(), new ByteArrayInputStream(diagramFileContents));
         } catch (IOException e) {
@@ -319,7 +318,7 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public long imageSize(Diagram diagram) {
-        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
+        Path diagramPath = DiagramFileUtils.imagePath(diagramsLocation, diagram);
         try {
             return Files.size(diagramPath);
         } catch (IOException e) {
@@ -332,15 +331,19 @@ public class DiagramServiceImpl implements DiagramService {
         return previewLimitBytes;
     }
 
-    private boolean diagramWithNameExists(Diagram diagram) {
+    /**
+     * Names are unique within a directory of a project, or among the diagrams of a project without directory - the
+     * diagram view and the stored image are addressed by the diagram's id.
+     */
+    private boolean nameTakenInDirectory(Diagram diagram) {
         UUID projectId = diagram.getProject() == null ? null : diagram.getProject().getId();
-        Optional<Diagram> diagramWithName = repository.findByProjectIdAndName(projectId, diagram.getName());
-        return diagramWithName.isPresent() && Objects.equals(diagram.getName(), diagramWithName.get().getName());
+        UUID directoryId = directoryIdOf(diagram);
+        return repository.findByProjectIdAndName(projectId, diagram.getName()).stream()
+            .filter(other -> diagram.getId() == null || !diagram.getId().equals(other.getId()))
+            .anyMatch(other -> Objects.equals(directoryIdOf(other), directoryId));
     }
 
-    private boolean diagramNameHasChanged(Diagram diagram) {
-        if(diagram.getId() == null) return true;
-        Optional<Diagram> oldDiagram = repository.findById(diagram.getId());
-        return oldDiagram.isPresent() && !Objects.equals(oldDiagram.get().getName(), diagram.getName());
+    private static UUID directoryIdOf(Diagram diagram) {
+        return diagram.getDiagramDirectory() == null ? null : diagram.getDiagramDirectory().getId();
     }
 }

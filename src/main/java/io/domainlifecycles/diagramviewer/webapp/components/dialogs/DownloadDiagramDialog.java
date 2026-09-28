@@ -46,6 +46,7 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.service.DiagramServiceImpl;
 import io.domainlifecycles.diagramviewer.util.FileConversionUtils;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import java.io.ByteArrayInputStream;
 import java.nio.file.Path;
@@ -123,11 +124,7 @@ public class DownloadDiagramDialog extends Dialog {
     }
 
     private DownloadHandler getDownloadHandler(String diagramFileName) {
-        Path diagramLocation = Path.of(
-            diagramsLocation,
-            diagram.getProject().getId().toString(),
-            diagramFileName
-        );
+        Path diagramLocation = DiagramFileUtils.imagePath(diagramsLocation, diagram);
 
         return DownloadHandler.fromInputStream(e -> {
                 byte[] svgFileContents = FileIOUtils.readFile(diagramLocation.toString());

@@ -39,6 +39,7 @@ import io.domainlifecycles.diagramviewer.service.DiagramRendering;
 import io.domainlifecycles.diagramviewer.service.DiagramServiceImpl;
 import io.domainlifecycles.diagramviewer.service.ProjectModel;
 import io.domainlifecycles.diagramviewer.service.ProjectModelCache;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
 import java.nio.charset.StandardCharsets;
@@ -106,7 +107,7 @@ class DiagramServiceAsyncRenderingTest {
         when(cache.get(any())).thenReturn(
             new ProjectModel(Instant.now(), domainMirror, List.of(), List.of(), false, Optional::empty));
         DiagramRepository repository = mock(DiagramRepository.class);
-        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(List.of());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         return new DiagramServiceImpl(diagramsLocation.toString(), cache, repository,
             mock(DiagramTypeNoteRepository.class), krokiClient, 1, largeDiagramClasses, 1024);
@@ -180,6 +181,6 @@ class DiagramServiceAsyncRenderingTest {
     }
 
     private Path svgPath() {
-        return diagramsLocation.resolve(projectId.toString()).resolve(diagram.getName() + ".svg");
+        return DiagramFileUtils.imagePath(diagramsLocation.toString(), diagram);
     }
 }

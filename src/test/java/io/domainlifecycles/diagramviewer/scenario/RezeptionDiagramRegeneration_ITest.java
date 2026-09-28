@@ -13,6 +13,7 @@ import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.repository.RegenerateDiagramsJobRepository;
 import io.domainlifecycles.diagramviewer.scheduled.DiagramRegenerationTask;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -146,7 +147,7 @@ class RezeptionDiagramRegeneration_ITest extends BaseIntegrationTest {
         DomainModelVisibility visibility = new DomainModelVisibility()
             .replaceIncludeFlowsFrom(Set.of(RezeptionScenario.CHECK_OUT_COMMAND));
         Diagram diagram = diagramService.create(project, "regenerated-flow", visibility, new DiagramStylingConfiguration());
-        Path svgPath = Path.of(diagramsLocation, project.getId().toString(), diagram.getName() + ".svg");
+        Path svgPath = Path.of(diagramsLocation, project.getId().toString(), DiagramFileUtils.imageFileName(diagram));
         Files.delete(svgPath);
         upload();
 

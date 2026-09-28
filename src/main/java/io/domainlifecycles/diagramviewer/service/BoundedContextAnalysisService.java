@@ -51,6 +51,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -72,7 +73,7 @@ public class BoundedContextAnalysisService {
 
     public static final String READ_MODELS_DIRECTORY = "Read Models";
     public static final String COMMANDS_DIRECTORY = "Commands";
-    static final String AGGREGATES_DIAGRAM_SUFFIX = "Aggregates";
+    public static final String AGGREGATES_DIAGRAM_NAME = "Aggregates";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BoundedContextAnalysisService.class);
 
@@ -206,7 +207,7 @@ public class BoundedContextAnalysisService {
             DiagramDirectory directory = diagramDirectoryService.findOrCreate(project, null, label);
 
             if (!boundedContext.getAggregateRoots().isEmpty()) {
-                createDiagram(directory, label + " - " + AGGREGATES_DIAGRAM_SUFFIX,
+                createDiagram(directory, AGGREGATES_DIAGRAM_NAME,
                     new DomainModelVisibility()
                         .replaceIncludedBoundedContextPackages(Set.of(boundedContext.getPackageName())),
                     aggregatesOnly());
@@ -218,8 +219,9 @@ public class BoundedContextAnalysisService {
             List<ReadModelMirror> readModels = sortedByName(boundedContext.getReadModels());
             if (!readModels.isEmpty()) {
                 DiagramDirectory readModelsDirectory = diagramDirectoryService.findOrCreate(project, directory, READ_MODELS_DIRECTORY);
+                Map<String, String> names = diagramNames(readModels, boundedContext);
                 readModels.forEach(readModel -> createDiagram(readModelsDirectory,
-                    label + " - " + shortName(readModel.getTypeName()),
+                    names.get(readModel.getTypeName()),
                     new DomainModelVisibility().replaceIncludeFlowsTo(Set.of(readModel.getTypeName())),
                     DiagramStylingConfiguration.builder().build()));
             }
@@ -227,8 +229,9 @@ public class BoundedContextAnalysisService {
             List<DomainCommandMirror> commands = sortedByName(boundedContext.getDomainCommands());
             if (!commands.isEmpty()) {
                 DiagramDirectory commandsDirectory = diagramDirectoryService.findOrCreate(project, directory, COMMANDS_DIRECTORY);
+                Map<String, String> names = diagramNames(commands, boundedContext);
                 commands.forEach(command -> createDiagram(commandsDirectory,
-                    label + " - " + shortName(command.getTypeName()),
+                    names.get(command.getTypeName()),
                     new DomainModelVisibility()
                         .replaceIncludeFlowsFrom(Set.of(command.getTypeName()))
                         .replaceIncludeFlowsTo(methodsProcessing(command)),
@@ -238,7 +241,8 @@ public class BoundedContextAnalysisService {
 
         private void createDiagram(DiagramDirectory directory, String name, DomainModelVisibility visibility,
                                    DiagramStylingConfiguration styling) {
-            boolean exists = project.getDiagrams().stream().anyMatch(diagram -> name.equals(diagram.getName()));
+            // names are unique within a directory, see DiagramServiceImpl
+            boolean exists = directory.getDiagrams().stream().anyMatch(diagram -> name.equals(diagram.getName()));
             if (exists) {
                 skipped++;
             } else {
@@ -268,6 +272,31 @@ public class BoundedContextAnalysisService {
             }
             return processingMethodsByCommand.getOrDefault(command.getTypeName(), Set.of());
         }
+    }
+
+    /**
+     * The diagram names for types sharing one directory: their simple names - or, where several share one, the simple
+     * name followed by the package relative to the Bounded Context. The same for every run, so that analyzing again
+     * finds the diagrams created before.
+     */
+    static Map<String, String> diagramNames(List<? extends DomainTypeMirror> types, BoundedContextMirror boundedContext) {
+        Map<String, Long> countBySimpleName = types.stream()
+            .collect(Collectors.groupingBy(type -> shortName(type.getTypeName()), Collectors.counting()));
+        Map<String, String> names = new HashMap<>();
+        for (DomainTypeMirror type : types) {
+            String simpleName = shortName(type.getTypeName());
+            names.put(type.getTypeName(), countBySimpleName.get(simpleName) == 1
+                ? simpleName
+                : simpleName + " (" + relativePackage(type.getTypeName(), boundedContext.getPackageName()) + ")");
+        }
+        return names;
+    }
+
+    private static String relativePackage(String typeName, String boundedContextPackage) {
+        String packageName = typeName.substring(0, typeName.lastIndexOf('.'));
+        return packageName.startsWith(boundedContextPackage + ".")
+            ? packageName.substring(boundedContextPackage.length() + 1)
+            : packageName;
     }
 
     private static String shortName(String typeName) {

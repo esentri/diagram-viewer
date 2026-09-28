@@ -117,18 +117,25 @@ For the Maven plugin, the same options are available as ``<runStaticAnalysis>``,
 4. After creating the diagram, you can see the diagram name in the menu on the left side. If you click there, you can see the diagram.
 ![Diagram created](./images/diagram_created.png)
 
+Diagram names have to be unique within their folder (or among the diagrams of the project without folder) - diagrams
+in different folders may share a name. The diagram view shows the name of the diagram above it, below the path of its
+folder.
+
 ### Analyze Bounded Contexts
 To get started with a large model, the viewer can create a set of diagrams for you. In the project view, click
 ``Analyze Bounded Contexts``. A dialog explains what will be created; after confirming, the viewer creates a folder for
 each Bounded Context of the project, named after the Bounded Context (or its package, if it has no name), containing
 
-- a diagram ``<Bounded Context> - Aggregates`` showing only the aggregates of the Bounded Context,
-- a sub folder ``Read Models`` with a diagram per read model of the Bounded Context, showing everything leading into
-  the read model (backward flow). Without read models, there is no such folder,
-- a sub folder ``Commands`` with a diagram per command of the Bounded Context, showing the flow the command triggers
-  (forward flow) together with everything leading into the methods processing it (backward flow - a command itself
-  has no backward flow, since nothing in the analysis models where a command is created). Without commands, there is
-  no such folder.
+- a diagram ``Aggregates`` showing only the aggregates of the Bounded Context,
+- a sub folder ``Read Models`` with a diagram per read model of the Bounded Context, named after the read model,
+  showing everything leading into the read model (backward flow). Without read models, there is no such folder,
+- a sub folder ``Commands`` with a diagram per command of the Bounded Context, named after the command, showing the
+  flow the command triggers (forward flow) together with everything leading into the methods processing it (backward
+  flow - a command itself has no backward flow, since nothing in the analysis models where a command is created).
+  Without commands, there is no such folder.
+
+If two read models or commands of a Bounded Context share their simple name, their diagram names are followed by
+their package, relative to the Bounded Context, e.g. ``AktiviereCommand (core.domain.vertrag)``.
 
 The read model and command diagrams need the static analysis result (see [Static analysis](#static-analysis)); without
 it, only the aggregate diagrams are created. The diagrams are rendered in the background, a notification tells when all

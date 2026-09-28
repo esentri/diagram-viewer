@@ -1,0 +1,505 @@
+<svg version="1.1" baseProfile="full" width="3634.5" height="660.0" viewbox="0 0 3634.5 660" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+	<desc >#.AF:visual=frame align=left
+	#.AF_R:visual=frame align=left;stroke=#FF0000
+	#.AF_N:visual=frame align=left;stroke=#108738
+	#.AR:fill=#88ff00 bold
+	#.AR_R:fill=#88ff00 bold;stroke=#FF0000
+	#.AR_N:fill=#88ff00 bold;stroke=#108738
+	#.E:fill=#88AAFF bold
+	#.E_R:fill=#88AAFF bold;stroke=#FF0000
+	#.E_N:fill=#88AAFF bold;stroke=#108738
+	#.VO:fill=#FFFFCC bold
+	#.VO_R:fill=#FFFFCC bold;stroke=#FF0000
+	#.VO_N:fill=#FFFFCC bold;stroke=#108738
+	#.V:fill=#FFFFCC bold
+	#.V_R:fill=#FFFFCC bold;stroke=#FF0000
+	#.V_N:fill=#FFFFCC bold;stroke=#108738
+	#.I:fill=#FFFFCC bold
+	#.I_R:fill=#FFFFCC bold;stroke=#FF0000
+	#.I_N:fill=#FFFFCC bold;stroke=#108738
+	#.DC:fill=#80b3ff bold
+	#.DC_R:fill=#80b3ff bold;stroke=#FF0000
+	#.DC_N:fill=#80b3ff bold;stroke=#108738
+	#.DE:fill=#CCFFFF bold
+	#.DE_R:fill=#CCFFFF bold;stroke=#FF0000
+	#.DE_N:fill=#CCFFFF bold;stroke=#108738
+	#.AS:
+	#.AS_R:;stroke=#FF0000
+	#.AS_N:;stroke=#108738
+	#.DS:fill=#E0E0E0 bold
+	#.R:fill=#C0C0C0 bold
+	#.R_R:fill=#C0C0C0 bold;stroke=#FF0000
+	#.R_N:fill=#C0C0C0 bold;stroke=#108738
+	#.OS:fill=#C0C0C0 bold
+	#.OS_R:fill=#C0C0C0 bold;stroke=#FF0000
+	#.OS_N:fill=#C0C0C0 bold;stroke=#108738
+	#.SK:fill=#C0C0C0 bold
+	#.SK_R:fill=#C0C0C0 bold;stroke=#FF0000
+	#.SK_N:fill=#C0C0C0 bold;stroke=#108738
+	#.QH:fill=#C0C0C0 bold
+	#.QH_R:fill=#C0C0C0 bold;stroke=#FF0000
+	#.QH_N:fill=#C0C0C0 bold;stroke=#108738
+	#.RM:fill=#FFCCE5 bold
+	#.RM_R:fill=#FFCCE5 bold;stroke=#FF0000
+	#.RM_N:fill=#FFCCE5 bold;stroke=#108738
+	#font:helvetica
+	#direction:down
+	#acycler: greedy
+	#ranker: longest-path
+	#background: transparent
+	
+	// !!! com.esentri.rezeption.core.domain.buchung.CheckeAus !!!
+	[&lt;DC&gt; CheckeAus &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.buchung.CheckeEin !!!
+	[&lt;DC&gt; CheckeEin &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.buchung.ErstelleNeueBuchung !!!
+	[&lt;DC&gt; ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.buchung.StorniereBuchung !!!
+	[&lt;DC&gt; StorniereBuchung &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.buchung.VervollstaendigeGastDaten !!!
+	[&lt;DC&gt; VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.rechnung.ErstelleRechnungFuerBuchung !!!
+	[&lt;DC&gt; ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.rechnung.ErstelleServiceRechnung !!!
+	[&lt;DC&gt; ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.rechnung.LadeRechnungPDF !!!
+	[&lt;DC&gt; LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.rechnung.MarkiereRechnungBezahlt !!!
+	[&lt;DC&gt; MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.serviceleistung.ErstelleServiceLeistung !!!
+	[&lt;DC&gt; ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.zimmer.BeantrageZimmerWartung !!!
+	[&lt;DC&gt; BeantrageZimmerWartung &lt;&lt;DomainCommand&gt;&gt; ]
+	// !!! com.esentri.rezeption.inbound.BuchungUseCasesImpl !!!
+	[&lt;AS&gt; BuchungUseCases &lt;&lt;Driver&gt;&gt; |
+	+ Buchung$BuchungsNummer handle(CheckeAus)
+	+ Buchung$BuchungsNummer handle(CheckeEin)
+	+ Buchung$BuchungsNummer handle(ErstelleNeueBuchung)
+	+ Buchung$BuchungsNummer handle(StorniereBuchung)
+	+ Buchung$BuchungsNummer handle(VervollstaendigeGastDaten)
+	+ List&lt;Buchung&gt; listAktiveBuchungenInZeitraum(Hotel$Id,LocalDate,LocalDate,ZimmerKategorie,Integer)
+	]
+	// !!! com.esentri.rezeption.inbound.RechnungUseCasesImpl !!!
+	[&lt;AS&gt; RechnungUseCases &lt;&lt;Driver&gt;&gt; |
+	+ Rechnung$Id handle(ErstelleRechnungFuerBuchung)
+	+ Rechnung$Id handle(ErstelleServiceRechnung)
+	+ byte\[\] handle(LadeRechnungPDF)
+	+ Rechnung$Id handle(MarkiereRechnungBezahlt)
+	]
+	// !!! com.esentri.rezeption.inbound.ServiceLeistungUseCasesImpl !!!
+	[&lt;AS&gt; ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt; |
+	+ ServiceLeistung$Id handle(ErstelleServiceLeistung)
+	+ void onEvent(RechnungErstellt)
+	]
+	// !!! com.esentri.rezeption.core.domain.buchung.CheckIn !!!
+	[&lt;DS&gt; CheckIn &lt;&lt;DomainService&gt;&gt; |
+	+ Buchung$BuchungsNummer handle(CheckeEin)
+	]
+	// !!! com.esentri.rezeption.core.domain.rechnung.RechnungsErstellung !!!
+	[&lt;DS&gt; RechnungsErstellung &lt;&lt;DomainService&gt;&gt; |
+	+ Rechnung$Id handle(ErstelleRechnungFuerBuchung)
+	+ Rechnung$Id handle(ErstelleServiceRechnung)
+	]
+	// !!! com.esentri.rezeption.core.domain.buchung.BuchungEingecheckt !!!
+	[&lt;DE&gt; BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.buchung.NeueBuchungErhalten !!!
+	[&lt;DE&gt; NeueBuchungErhalten &lt;&lt;DomainEvent&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.rechnung.RechnungErstellt !!!
+	[&lt;DE&gt; RechnungErstellt &lt;&lt;DomainEvent&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.domain.zimmer.ZimmerWartungEingeplant !!!
+	[&lt;DE&gt; ZimmerWartungEingeplant &lt;&lt;DomainEvent&gt;&gt; ]
+	// !!! com.esentri.rezeption.core.base.BaseInMemoryRepository !!!
+	[&lt;R&gt; BaseInMemoryRepository &lt;&lt;Repository&gt;&gt; |
+	+ Optional&lt;Object&gt; deleteById(Object)
+	+ Optional&lt;Object&gt; findById(Object)
+	+ Object insert(Object)
+	+ Object update(Object)
+	]
+	// !!! com.esentri.rezeption.outbound.RechnungsPDFErstellungImpl !!!
+	[&lt;OS&gt; RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt; ]
+	[&lt;DC&gt;CheckeAus &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;BuchungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;CheckeEin &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;BuchungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;BuchungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;StorniereBuchung &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;BuchungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;BuchungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;RechnungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;RechnungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;RechnungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;RechnungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DC&gt;ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt;]  --&gt; [&lt;AS&gt;ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;DS&gt;CheckIn &lt;&lt;DomainService&gt;&gt;]  --&gt; [&lt;DE&gt;BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt;]
+	[&lt;DS&gt;RechnungsErstellung &lt;&lt;DomainService&gt;&gt;]  --&gt; [&lt;DE&gt;RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;]
+	[&lt;DE&gt;RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;]  --&gt; [&lt;AS&gt;ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;]
+	[&lt;AS&gt;BuchungUseCases &lt;&lt;Driver&gt;&gt;]  -- [&lt;DS&gt;CheckIn &lt;&lt;DomainService&gt;&gt;]
+	[&lt;AS&gt;RechnungUseCases &lt;&lt;Driver&gt;&gt;]  -- [&lt;DS&gt;RechnungsErstellung &lt;&lt;DomainService&gt;&gt;]
+	[&lt;AS&gt;RechnungUseCases &lt;&lt;Driver&gt;&gt;]  -- [&lt;OS&gt;RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt;]</desc>
+	<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="helvetica" font-weight="bold" font-style="normal">
+		<g font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+			<g stroke="transparent" fill="transparent">
+				<rect x="0.0" y="0.0" height="660.0" width="3634.5" stroke="none"></rect>
+			</g>
+			<g transform="translate(8, 8)" fill="#33322E">
+				<g transform="translate(20, 20)" fill="#33322E" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal">
+					<g stroke-dasharray="6 6">
+						<path d="M1308.3 140.0 L1308.25 198 L1407.4057636682594 216.7606308597348 L1407.4 216.8 " fill="none"></path>
+					</g>
+					<path d="M1399.9 220.8 L1407.4 216.8 L1401.8 210.3 L1414.0 218.0 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M1636.8 140.0 L1636.75 198 L1662.5924378816576 214.42409876141244 L1662.6 214.4 " fill="none"></path>
+					</g>
+					<path d="M1654.1 215.3 L1662.6 214.4 L1659.8 206.3 L1668.2 218.0 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M2005.8 140.0 L2005.75 198 L1960.0501779921767 215.60363111073931 L1960.1 215.6 " fill="none"></path>
+					</g>
+					<path d="M1964.4 208.2 L1960.1 215.6 L1968.2 218.2 L1953.8 218.0 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M2403.3 140.0 L2403.25 198 L2205.601284658852 225.88666609436683 L2205.6 225.9 " fill="none"></path>
+					</g>
+					<path d="M2211.5 219.7 L2205.6 225.9 L2212.9 230.2 L2199.0 226.8 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M2823.3 140.0 L2823.25 198 L2205.6429886123824 250.1921418074043 L2205.6 250.2 " fill="none"></path>
+					</g>
+					<path d="M2211.8 244.3 L2205.6 250.2 L2212.7 254.9 L2199.0 250.8 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M223.5 31.0 L223.5 51 L622.3778949470585 97.35181862230641 L622.4 97.4 " fill="none"></path>
+					</g>
+					<path d="M615.1 101.9 L622.4 97.4 L616.4 91.3 L629.0 98.1 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M687.0 31.0 L687 51 L726.872881775267 68.34116455906583 L726.9 68.3 " fill="none"></path>
+					</g>
+					<path d="M718.6 70.6 L726.9 68.3 L722.9 60.8 L733.0 71.0 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M1104.5 31.0 L1104.5 51 L1043.273847419694 69.10914372093558 L1043.3 69.1 " fill="none"></path>
+					</g>
+					<path d="M1048.2 62.1 L1043.3 69.1 L1051.2 72.3 L1036.9 71.0 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M1527.0 31.0 L1527 51 L1089.6270277727892 98.90896193546943 L1089.6 98.9 " fill="none"></path>
+					</g>
+					<path d="M1095.7 92.9 L1089.6 98.9 L1096.8 103.5 L1083.0 99.6 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M242.0 441.5 L242 477 L327.20251416291705 509.61658745299167 L327.2 509.6 " fill="none"></path>
+					</g>
+					<path d="M319.1 512.2 L327.2 509.6 L322.9 502.3 L333.4 512.0 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M1776.0 457.0 L1776 477 L1776 528.3333333333334 L1776.0 528.3 " fill="none"></path>
+					</g>
+					<path d="M1770.7 521.7 L1776.0 528.3 L1781.3 521.7 L1776.0 535.0 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M626.0 325.0 L626 375 L626 403.8333333333333 L626.0 403.8 " fill="none"></path>
+					</g>
+					<path d="M620.7 397.2 L626.0 403.8 L631.3 397.2 L626.0 410.5 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M626.0 441.5 L626 477 L540.797485837083 509.61658745299167 L540.8 509.6 " fill="none"></path>
+					</g>
+					<path d="M545.1 502.3 L540.8 509.6 L548.9 512.2 L534.6 512.0 Z"></path>
+					<g stroke-dasharray="6 6">
+						<path d="M1776.0 355.0 L1776 375 L1776 395 L1776.0 395.0 " fill="none"></path>
+					</g>
+					<g stroke-dasharray="6 6">
+						<path d="M688.6 178.0 L626 198 L626 248 L626.0 248.0 " fill="none"></path>
+					</g>
+					<g stroke-dasharray="6 6">
+						<path d="M953.2 178.0 L989.5 198 L989.5 286.5 L989.5 286.5 L989.5 375 L989.5 375 L989.5 426 L989.5 426 L989.5 477 L989.5 477 L989.5 535 L989.5 535.0 " fill="none"></path>
+					</g>
+					<g data-name="CheckeAus &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="CheckeAus &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="1162.8" y="109.0" height="31.0" width="291.0" data-name="CheckeAus &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(1162.75, 109)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="CheckeAus &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="CheckeAus &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="137.5" y="13.5" stroke="none" text-anchor="middle" data-name="CheckeAus &lt;&lt;DomainCommand&gt;&gt;">CheckeAus &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="CheckeEin &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="CheckeEin &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="1493.8" y="109.0" height="31.0" width="286.0" data-name="CheckeEin &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(1493.75, 109)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="CheckeEin &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="CheckeEin &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="135.0" y="13.5" stroke="none" text-anchor="middle" data-name="CheckeEin &lt;&lt;DomainCommand&gt;&gt;">CheckeEin &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="1819.8" y="109.0" height="31.0" width="372.0" data-name="ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(1819.75, 109)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="178.0" y="13.5" stroke="none" text-anchor="middle" data-name="ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt;">ErstelleNeueBuchung &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="StorniereBuchung &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="StorniereBuchung &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="2231.8" y="109.0" height="31.0" width="343.0" data-name="StorniereBuchung &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(2231.75, 109)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="StorniereBuchung &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="StorniereBuchung &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="163.5" y="13.5" stroke="none" text-anchor="middle" data-name="StorniereBuchung &lt;&lt;DomainCommand&gt;&gt;">StorniereBuchung &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="2614.8" y="109.0" height="31.0" width="417.0" data-name="VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(2614.75, 109)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="200.5" y="13.5" stroke="none" text-anchor="middle" data-name="VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt;">VervollstaendigeGastDaten &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="0.0" y="0.0" height="31.0" width="447.0" data-name="ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(0, 0)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="215.5" y="13.5" stroke="none" text-anchor="middle" data-name="ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt;">ErstelleRechnungFuerBuchung &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="487.0" y="0.0" height="31.0" width="400.0" data-name="ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(487, 0)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="192.0" y="13.5" stroke="none" text-anchor="middle" data-name="ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt;">ErstelleServiceRechnung &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="927.0" y="0.0" height="31.0" width="355.0" data-name="LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(927, 0)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="169.5" y="13.5" stroke="none" text-anchor="middle" data-name="LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt;">LadeRechnungPDF &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="1322.0" y="0.0" height="31.0" width="410.0" data-name="MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(1322, 0)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="197.0" y="13.5" stroke="none" text-anchor="middle" data-name="MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt;">MarkiereRechnungBezahlt &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="48.5" y="410.5" height="31.0" width="387.0" data-name="ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(48.5, 410.5)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="185.5" y="13.5" stroke="none" text-anchor="middle" data-name="ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt;">ErstelleServiceLeistung &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="BeantrageZimmerWartung &lt;&lt;DomainCommand&gt;&gt;">
+						<g fill="#80b3ff" stroke="#33322E" data-name="BeantrageZimmerWartung &lt;&lt;DomainCommand&gt;&gt;">
+							<rect x="1982.5" y="535.0" height="31.0" width="408.0" data-name="BeantrageZimmerWartung &lt;&lt;DomainCommand&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(1982.5, 535)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="BeantrageZimmerWartung &lt;&lt;DomainCommand&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="BeantrageZimmerWartung &lt;&lt;DomainCommand&gt;&gt;">
+								<text x="196.0" y="13.5" stroke="none" text-anchor="middle" data-name="BeantrageZimmerWartung &lt;&lt;DomainCommand&gt;&gt;">BeantrageZimmerWartung &lt;&lt;DomainCommand&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">
+						<g fill="#eee8d5" stroke="#33322E" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">
+							<rect x="1353.0" y="218.0" height="137.0" width="846.0" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;"></rect>
+							<path d="M1353.0 249.0 L2199.0 249.0" fill="none" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;"></path>
+						</g>
+						<g transform="translate(1353, 218)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">
+								<text x="415.0" y="13.5" stroke="none" text-anchor="middle" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">BuchungUseCases &lt;&lt;Driver&gt;&gt;</text>
+								
+							</g>
+						</g>
+						<g transform="translate(1353, 249)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">
+								<text x="0.0" y="13.5" stroke="none" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">+ Buchung$BuchungsNummer handle(CheckeAus)</text>
+								<text x="0.0" y="28.5" stroke="none" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">+ Buchung$BuchungsNummer handle(CheckeEin)</text>
+								<text x="0.0" y="43.5" stroke="none" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">+ Buchung$BuchungsNummer handle(ErstelleNeueBuchung)</text>
+								<text x="0.0" y="58.5" stroke="none" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">+ Buchung$BuchungsNummer handle(StorniereBuchung)</text>
+								<text x="0.0" y="73.5" stroke="none" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">+ Buchung$BuchungsNummer handle(VervollstaendigeGastDaten)</text>
+								<text x="0.0" y="88.5" stroke="none" data-name="BuchungUseCases &lt;&lt;Driver&gt;&gt;">+ List&lt;Buchung&gt; listAktiveBuchungenInZeitraum(Hotel$Id,LocalDate,LocalDate,ZimmerKategorie,Integer)</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">
+						<g fill="#eee8d5" stroke="#33322E" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">
+							<rect x="629.0" y="71.0" height="107.0" width="454.0" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;"></rect>
+							<path d="M629.0 102.0 L1083.0 102.0" fill="none" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;"></path>
+						</g>
+						<g transform="translate(629, 71)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">
+								<text x="219.0" y="13.5" stroke="none" text-anchor="middle" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">RechnungUseCases &lt;&lt;Driver&gt;&gt;</text>
+								
+							</g>
+						</g>
+						<g transform="translate(629, 102)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">
+								<text x="0.0" y="13.5" stroke="none" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">+ Rechnung$Id handle(ErstelleRechnungFuerBuchung)</text>
+								<text x="0.0" y="28.5" stroke="none" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">+ Rechnung$Id handle(ErstelleServiceRechnung)</text>
+								<text x="0.0" y="43.5" stroke="none" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">+ byte[] handle(LadeRechnungPDF)</text>
+								<text x="0.0" y="58.5" stroke="none" data-name="RechnungUseCases &lt;&lt;Driver&gt;&gt;">+ Rechnung$Id handle(MarkiereRechnungBezahlt)</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">
+						<g fill="#eee8d5" stroke="#33322E" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">
+							<rect x="214.0" y="512.0" height="77.0" width="440.0" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;"></rect>
+							<path d="M214.0 543.0 L654.0 543.0" fill="none" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;"></path>
+						</g>
+						<g transform="translate(214, 512)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">
+								<text x="212.0" y="13.5" stroke="none" text-anchor="middle" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;</text>
+								
+							</g>
+						</g>
+						<g transform="translate(214, 543)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">
+								<text x="0.0" y="13.5" stroke="none" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">+ ServiceLeistung$Id handle(ErstelleServiceLeistung)</text>
+								<text x="0.0" y="28.5" stroke="none" data-name="ServiceLeistungUseCases &lt;&lt;Driver&gt;&gt;">+ void onEvent(RechnungErstellt)</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="CheckIn &lt;&lt;DomainService&gt;&gt;">
+						<g fill="#E0E0E0" stroke="#33322E" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;">
+							<rect x="1570.0" y="395.0" height="62.0" width="412.0" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;"></rect>
+							<path d="M1570.0 426.0 L1982.0 426.0" fill="none" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;"></path>
+						</g>
+						<g transform="translate(1570, 395)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;">
+								<text x="198.0" y="13.5" stroke="none" text-anchor="middle" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;">CheckIn &lt;&lt;DomainService&gt;&gt;</text>
+								
+							</g>
+						</g>
+						<g transform="translate(1570, 426)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;">
+								<text x="0.0" y="13.5" stroke="none" data-name="CheckIn &lt;&lt;DomainService&gt;&gt;">+ Buchung$BuchungsNummer handle(CheckeEin)</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">
+						<g fill="#E0E0E0" stroke="#33322E" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">
+							<rect x="399.0" y="248.0" height="77.0" width="454.0" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;"></rect>
+							<path d="M399.0 279.0 L853.0 279.0" fill="none" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;"></path>
+						</g>
+						<g transform="translate(399, 248)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">
+								<text x="219.0" y="13.5" stroke="none" text-anchor="middle" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">RechnungsErstellung &lt;&lt;DomainService&gt;&gt;</text>
+								
+							</g>
+						</g>
+						<g transform="translate(399, 279)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">
+								<text x="0.0" y="13.5" stroke="none" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">+ Rechnung$Id handle(ErstelleRechnungFuerBuchung)</text>
+								<text x="0.0" y="28.5" stroke="none" data-name="RechnungsErstellung &lt;&lt;DomainService&gt;&gt;">+ Rechnung$Id handle(ErstelleServiceRechnung)</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt;">
+						<g fill="#CCFFFF" stroke="#33322E" data-name="BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt;">
+							<rect x="1609.5" y="535.0" height="31.0" width="333.0" data-name="BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(1609.5, 535)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt;">
+								<text x="158.5" y="13.5" stroke="none" text-anchor="middle" data-name="BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt;">BuchungEingecheckt &lt;&lt;DomainEvent&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="NeueBuchungErhalten &lt;&lt;DomainEvent&gt;&gt;">
+						<g fill="#CCFFFF" stroke="#33322E" data-name="NeueBuchungErhalten &lt;&lt;DomainEvent&gt;&gt;">
+							<rect x="2430.5" y="535.0" height="31.0" width="344.0" data-name="NeueBuchungErhalten &lt;&lt;DomainEvent&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(2430.5, 535)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="NeueBuchungErhalten &lt;&lt;DomainEvent&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="NeueBuchungErhalten &lt;&lt;DomainEvent&gt;&gt;">
+								<text x="164.0" y="13.5" stroke="none" text-anchor="middle" data-name="NeueBuchungErhalten &lt;&lt;DomainEvent&gt;&gt;">NeueBuchungErhalten &lt;&lt;DomainEvent&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;">
+						<g fill="#CCFFFF" stroke="#33322E" data-name="RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;">
+							<rect x="475.5" y="410.5" height="31.0" width="301.0" data-name="RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(475.5, 410.5)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;">
+								<text x="142.5" y="13.5" stroke="none" text-anchor="middle" data-name="RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;">RechnungErstellt &lt;&lt;DomainEvent&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="ZimmerWartungEingeplant &lt;&lt;DomainEvent&gt;&gt;">
+						<g fill="#CCFFFF" stroke="#33322E" data-name="ZimmerWartungEingeplant &lt;&lt;DomainEvent&gt;&gt;">
+							<rect x="2814.5" y="535.0" height="31.0" width="375.0" data-name="ZimmerWartungEingeplant &lt;&lt;DomainEvent&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(2814.5, 535)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="ZimmerWartungEingeplant &lt;&lt;DomainEvent&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ZimmerWartungEingeplant &lt;&lt;DomainEvent&gt;&gt;">
+								<text x="179.5" y="13.5" stroke="none" text-anchor="middle" data-name="ZimmerWartungEingeplant &lt;&lt;DomainEvent&gt;&gt;">ZimmerWartungEingeplant &lt;&lt;DomainEvent&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">
+						<g fill="#C0C0C0" stroke="#33322E" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">
+							<rect x="3229.5" y="497.0" height="107.0" width="349.0" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;"></rect>
+							<path d="M3229.5 528.0 L3578.5 528.0" fill="none" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;"></path>
+						</g>
+						<g transform="translate(3229.5, 497)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">
+								<text x="166.5" y="13.5" stroke="none" text-anchor="middle" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;</text>
+								
+							</g>
+						</g>
+						<g transform="translate(3229.5, 528)" font-family="helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">
+								<text x="0.0" y="13.5" stroke="none" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">+ Optional&lt;Object&gt; deleteById(Object)</text>
+								<text x="0.0" y="28.5" stroke="none" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">+ Optional&lt;Object&gt; findById(Object)</text>
+								<text x="0.0" y="43.5" stroke="none" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">+ Object insert(Object)</text>
+								<text x="0.0" y="58.5" stroke="none" data-name="BaseInMemoryRepository &lt;&lt;Repository&gt;&gt;">+ Object update(Object)</text>
+								
+							</g>
+						</g>
+					</g>
+					<g data-name="RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt;">
+						<g fill="#C0C0C0" stroke="#33322E" data-name="RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt;">
+							<rect x="789.5" y="535.0" height="31.0" width="400.0" data-name="RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt;"></rect>
+						</g>
+						<g transform="translate(789.5, 535)" font-family="helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt;">
+							<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt;">
+								<text x="192.0" y="13.5" stroke="none" text-anchor="middle" data-name="RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt;">RechnungsPDFErstellung &lt;&lt;OutboundService&gt;&gt;</text>
+								
+							</g>
+						</g>
+					</g>
+				</g>
+			</g>
+		</g>
+	</g>
+</svg>

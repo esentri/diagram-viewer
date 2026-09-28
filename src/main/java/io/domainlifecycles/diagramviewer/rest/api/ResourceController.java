@@ -30,6 +30,9 @@
 package io.domainlifecycles.diagramviewer.rest.api;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOError;
@@ -39,7 +42,9 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.CacheControl;
@@ -53,6 +58,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping(ResourceController.RESOURCES_API_PATH)
@@ -65,9 +71,12 @@ public class ResourceController {
     public static final String NOTES_LAST_MODIFIED_REQUEST_PARAMETER_NAME = "notesLastModified";
 
     private final String diagramFolderLocation;
+    private final DiagramRepository diagramRepository;
 
-    public ResourceController(@Value("${diagrams.location}") String diagramFolderLocation) {
+    public ResourceController(@Value("${diagrams.location}") String diagramFolderLocation,
+                              DiagramRepository diagramRepository) {
         this.diagramFolderLocation = diagramFolderLocation;
+        this.diagramRepository = diagramRepository;
     }
 
     @GetMapping(value = "/{directoryName}/{fileName}")
@@ -107,6 +116,8 @@ public class ResourceController {
                 String.format("Requested file '%s/%s' is outside the diagrams directory.", directoryName, fileName));
         }
 
+        resolvedPath = resolveByDiagramName(resolvedPath, directoryName, fileName);
+
         InputStream inputStream;
         try {
             inputStream = new FileInputStream(resolvedPath.toFile());
@@ -127,6 +138,33 @@ public class ResourceController {
         headers.setContentLength(Files.size(resolvedPath));
         headers.setCacheControl(CacheControl.maxAge(Duration.ofDays(30)));
         return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
+    }
+
+    /**
+     * Diagram images are named after the diagram's id. Requests naming the image after the diagram - as before, and
+     * as external tools may still do - are served as long as the name is unique within the project; names are only
+     * unique within a directory of a project.
+     */
+    private Path resolveByDiagramName(Path requested, String projectDirectoryName, String fileName) {
+        if (Files.exists(requested) || !fileName.endsWith(DiagramFileUtils.SVG_FILE_SUFFIX)) {
+            return requested;
+        }
+        UUID projectId;
+        try {
+            projectId = UUID.fromString(projectDirectoryName);
+        } catch (IllegalArgumentException e) {
+            return requested;
+        }
+        String diagramName = fileName.substring(0, fileName.length() - DiagramFileUtils.SVG_FILE_SUFFIX.length());
+        List<Diagram> diagrams = diagramRepository.findByProjectIdAndName(projectId, diagramName);
+        if (diagrams.size() > 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format(
+                "The project has %d diagrams named '%s' in different folders - request the image by the diagram's id"
+                    + " instead, e.g. %s", diagrams.size(), diagramName, DiagramFileUtils.imageFileName(diagrams.get(0))));
+        }
+        return diagrams.isEmpty()
+            ? requested
+            : requested.resolveSibling(DiagramFileUtils.imageFileName(diagrams.get(0)));
     }
 
     private MediaType evaluateContentType(String fileName) {

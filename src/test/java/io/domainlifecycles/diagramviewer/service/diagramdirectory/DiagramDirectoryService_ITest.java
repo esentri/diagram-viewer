@@ -104,7 +104,7 @@ class DiagramDirectoryService_ITest extends BaseIntegrationTest {
         DiagramDirectory buchungCommands = service.findOrCreate(project, buchung, "Commands");
         DiagramDirectory zimmer = service.findOrCreate(project, null, "Zimmer");
         DiagramDirectory zimmerCommands = service.findOrCreate(project, zimmer, "Commands");
-        Diagram diagram = diagramRepository.save(Diagram.builder().name("Buchung - CheckeGastAus").project(project).build());
+        Diagram diagram = diagramRepository.save(Diagram.builder().name("CheckeGastAus").project(project).build());
         project.addDiagram(diagram);
         service.add(buchungCommands, diagram);
 

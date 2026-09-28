@@ -19,6 +19,7 @@ import io.domainlifecycles.diagramviewer.service.BoundedContext;
 import io.domainlifecycles.diagramviewer.service.BoundedContextAnalysisService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.various.filtering.DiagramFilterComponent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
@@ -243,39 +244,39 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
 
         // Buchung: its aggregates, and its three commands - but no read models, so no such folder
         DiagramDirectory buchung = directory(analyzed, null, RezeptionScenario.BUCHUNG_CONTEXT_NAME);
-        assertThat(diagramNames(buchung)).containsExactly("Buchung - Aggregates");
+        assertThat(diagramNames(buchung)).containsExactly("Aggregates");
         assertThat(analyzed.getSubDirectories(buchung)).extracting(DiagramDirectory::getName)
             .containsExactly(BoundedContextAnalysisService.COMMANDS_DIRECTORY);
         DiagramDirectory commands = directory(analyzed, buchung, BoundedContextAnalysisService.COMMANDS_DIRECTORY);
         assertThat(diagramNames(commands)).containsExactlyInAnyOrder(
-            "Buchung - AktualisiereGastdaten", "Buchung - CheckeGastAus", "Buchung - CheckeGastEin");
+            "AktualisiereGastdaten", "CheckeGastAus", "CheckeGastEin");
 
         // the check-out command: the flow it triggers, and what leads into the method processing it
-        Diagram checkOut = diagram(commands, "Buchung - CheckeGastAus");
+        Diagram checkOut = diagram(commands, "CheckeGastAus");
         assertThat(checkOut.getDomainModelVisibility().getIncludeFlowsFrom())
             .containsExactly(RezeptionScenario.CHECK_OUT_COMMAND);
         assertThat(checkOut.getDomainModelVisibility().getIncludeFlowsTo())
             .containsExactly(RezeptionScenario.CHECK_OUT_METHOD_FLOW_STARTING_POINT);
 
         // the aggregates diagram is restricted to its Bounded Context and shows aggregates only
-        Diagram buchungAggregates = diagram(buchung, "Buchung - Aggregates");
+        Diagram buchungAggregates = diagram(buchung, "Aggregates");
         assertThat(buchungAggregates.getDomainModelVisibility().getIncludedBoundedContextPackages())
             .containsExactly(RezeptionScenario.BUCHUNG_CONTEXT_PACKAGE);
         assertThat(buchungAggregates.getDiagramStylingConfiguration().isShowAggregates()).isTrue();
         assertThat(buchungAggregates.getDiagramStylingConfiguration().isShowApplicationServices()).isFalse();
-        String svg = Files.readString(Path.of(diagramsLocation, project.getId().toString(), "Buchung - Aggregates.svg"));
+        String svg = Files.readString(Path.of(diagramsLocation, project.getId().toString(), DiagramFileUtils.imageFileName(buchungAggregates)));
         assertThat(svg).contains("data-name=\"Buchung &lt;&lt;").doesNotContain("data-name=\"Zimmer &lt;&lt;");
 
         // Zimmer: its aggregates only
         DiagramDirectory zimmer = directory(analyzed, null, RezeptionScenario.ZIMMER_CONTEXT_NAME);
-        assertThat(diagramNames(zimmer)).containsExactly("Zimmer - Aggregates");
+        assertThat(diagramNames(zimmer)).containsExactly("Aggregates");
         assertThat(analyzed.getSubDirectories(zimmer)).isEmpty();
 
         // the nameless context, labelled by its package: no aggregates, one read model with a backward flow
         DiagramDirectory auslastung = directory(analyzed, null, RezeptionScenario.AUSLASTUNG_CONTEXT_PACKAGE);
         assertThat(diagramNames(auslastung)).isEmpty();
         DiagramDirectory readModels = directory(analyzed, auslastung, BoundedContextAnalysisService.READ_MODELS_DIRECTORY);
-        Diagram zimmerauslastung = diagram(readModels, RezeptionScenario.AUSLASTUNG_CONTEXT_PACKAGE + " - Zimmerauslastung");
+        Diagram zimmerauslastung = diagram(readModels, "Zimmerauslastung");
         assertThat(zimmerauslastung.getDomainModelVisibility().getIncludeFlowsTo())
             .containsExactly(RezeptionScenario.ZIMMERAUSLASTUNG_READ_MODEL);
     }
@@ -298,7 +299,7 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
         assertThat(progress).hasSize(6);
         assertThat(progress.get(0)).startsWith("1/6 ");
         assertThat(progress.get(5)).startsWith("6/6 ");
-        assertThat(progress).anyMatch(entry -> entry.endsWith(" Buchung - CheckeGastAus"));
+        assertThat(progress).anyMatch(entry -> entry.endsWith(" CheckeGastAus"));
     }
 
     @Test
@@ -333,7 +334,7 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
         assertThat(result.flowsSkipped()).isTrue();
         Project analyzed = reloadedProject();
         DiagramDirectory rezeption = directory(analyzed, null, RezeptionScenario.DOMAIN_MODEL_PACKAGE);
-        assertThat(diagramNames(rezeption)).containsExactly(RezeptionScenario.DOMAIN_MODEL_PACKAGE + " - Aggregates");
+        assertThat(diagramNames(rezeption)).containsExactly("Aggregates");
         assertThat(analyzed.getSubDirectories(rezeption)).isEmpty();
     }
 

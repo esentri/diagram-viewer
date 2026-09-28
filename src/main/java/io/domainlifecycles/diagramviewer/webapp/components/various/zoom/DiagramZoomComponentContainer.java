@@ -37,7 +37,7 @@ import java.time.Instant;
 public class DiagramZoomComponentContainer extends FlexLayout {
 
     public DiagramZoomComponentContainer(final String projectId,
-                                         final String diagramName,
+                                         final String imageFileName,
                                          final Instant diagramLastModified,
                                          final Instant stylingLastModified) {
         setMinHeight("100%");
@@ -49,7 +49,7 @@ public class DiagramZoomComponentContainer extends FlexLayout {
 
         DiagramZoomComponent zoomComponent =
             new DiagramZoomComponent(
-                diagramLastModified, stylingLastModified, projectId, diagramName + DiagramServiceImpl.SVG_FILE_SUFFIX);
+                diagramLastModified, stylingLastModified, projectId, imageFileName);
 
         setFlexGrow(1, zoomComponent);
         add(zoomComponent);

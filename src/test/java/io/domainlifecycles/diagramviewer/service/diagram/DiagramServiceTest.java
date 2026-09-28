@@ -2,6 +2,7 @@ package io.domainlifecycles.diagramviewer.service.diagram;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
@@ -97,7 +98,7 @@ class DiagramServiceTest {
 
         // given
         Diagram diagram = mock(Diagram.class);
-        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(List.of());
         when(repository.save(diagram)).thenReturn(diagram);
 
         // when
@@ -114,21 +115,15 @@ class DiagramServiceTest {
         // given
         UUID diagramId = new UUID(0, 0);
 
-        String oldDiagramName = "oldDiagramName.svg";
         String newDiagramName = "newDiagramName.svg";
 
         Diagram newDiagramState = mock(Diagram.class);
         when(newDiagramState.getId()).thenReturn(diagramId);
         when(newDiagramState.getName()).thenReturn(newDiagramName);
 
-        Diagram oldDiagramState = mock(Diagram.class);
-        when(oldDiagramState.getName()).thenReturn(oldDiagramName);
-
         Diagram existingDiagramWithSameNameAsNew = mock(Diagram.class);
-        when(existingDiagramWithSameNameAsNew.getName()).thenReturn(newDiagramName);
 
-        when(repository.findByProjectIdAndName(any(), eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
-        when(repository.findById(eq(diagramId))).thenReturn(Optional.of(oldDiagramState));
+        when(repository.findByProjectIdAndName(any(), eq(newDiagramName))).thenReturn(List.of(existingDiagramWithSameNameAsNew));
 
         // when
         assertThatThrownBy(() -> diagramService.updateModelAndImage(newDiagramState))
@@ -146,9 +141,8 @@ class DiagramServiceTest {
         when(newDiagramState.getName()).thenReturn(newDiagramName);
 
         Diagram existingDiagramWithSameNameAsNew = mock(Diagram.class);
-        when(existingDiagramWithSameNameAsNew.getName()).thenReturn(newDiagramName);
 
-        when(repository.findByProjectIdAndName(any(), eq(newDiagramName))).thenReturn(Optional.of(existingDiagramWithSameNameAsNew));
+        when(repository.findByProjectIdAndName(any(), eq(newDiagramName))).thenReturn(List.of(existingDiagramWithSameNameAsNew));
 
         // when
         assertThatThrownBy(() -> diagramService.updateModel(newDiagramState))
@@ -166,7 +160,7 @@ class DiagramServiceTest {
         Diagram newDiagram = mock(Diagram.class);
         when(newDiagram.getName()).thenReturn("Buchung - Aggregates");
         when(newDiagram.getProject()).thenReturn(project);
-        when(repository.findByProjectIdAndName(projectId, "Buchung - Aggregates")).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(projectId, "Buchung - Aggregates")).thenReturn(List.of());
         when(repository.save(newDiagram)).thenReturn(newDiagram);
 
         // when
@@ -175,6 +169,40 @@ class DiagramServiceTest {
         // then: names are only checked within the diagram's own project
         assertThat(saved).isSameAs(newDiagram);
         verify(repository).findByProjectIdAndName(projectId, "Buchung - Aggregates");
+    }
+
+    @Test
+    void Should_AcceptDiagramName_When_ItIsOnlyTakenInAnotherFolder() {
+
+        // given: an "Aggregates" diagram in each bounded context folder
+        UUID projectId = UUID.randomUUID();
+        Project project = Project.builder().id(projectId).name("p").build();
+        DiagramDirectory buchung = DiagramDirectory.builder().id(UUID.randomUUID()).name("Buchung").build();
+        DiagramDirectory zimmer = DiagramDirectory.builder().id(UUID.randomUUID()).name("Zimmer").build();
+        Diagram existing = Diagram.builder().id(UUID.randomUUID()).name("Aggregates").project(project).diagramDirectory(buchung).build();
+        Diagram newDiagram = Diagram.builder().name("Aggregates").project(project).diagramDirectory(zimmer).build();
+        when(repository.findByProjectIdAndName(projectId, "Aggregates")).thenReturn(List.of(existing));
+        when(repository.save(newDiagram)).thenReturn(newDiagram);
+
+        // when / then
+        assertThat(diagramService.updateModel(newDiagram)).isSameAs(newDiagram);
+    }
+
+    @Test
+    void Should_RejectDiagramName_When_ItIsTakenInTheSameFolder() {
+
+        // given
+        UUID projectId = UUID.randomUUID();
+        Project project = Project.builder().id(projectId).name("p").build();
+        DiagramDirectory buchung = DiagramDirectory.builder().id(UUID.randomUUID()).name("Buchung").build();
+        Diagram existing = Diagram.builder().id(UUID.randomUUID()).name("Aggregates").project(project).diagramDirectory(buchung).build();
+        Diagram newDiagram = Diagram.builder().name("Aggregates").project(project).diagramDirectory(buchung).build();
+        when(repository.findByProjectIdAndName(projectId, "Aggregates")).thenReturn(List.of(existing));
+
+        // when / then
+        assertThatThrownBy(() -> diagramService.updateModel(newDiagram))
+            .isInstanceOf(DiagramViewerException.class)
+            .hasMessageContaining("already exists");
     }
 
     @Test
@@ -188,10 +216,8 @@ class DiagramServiceTest {
         when(diagram.getName()).thenReturn(diagramFileName);
 
         Diagram existing = mock(Diagram.class);
-        when(existing.getName()).thenReturn(diagramFileName);
 
-        when(repository.findByProjectIdAndName(any(), eq(diagramFileName))).thenReturn(Optional.of(existing));
-        when(repository.findById(any())).thenReturn(Optional.of(mock(Diagram.class)));
+        when(repository.findByProjectIdAndName(any(), eq(diagramFileName))).thenReturn(List.of(existing));
 
         // when
         // then
@@ -213,7 +239,7 @@ class DiagramServiceTest {
         when(diagram.getDomainModelVisibility()).thenReturn(mock(DomainModelVisibility.class));
         when(diagram.getProject()).thenReturn(project);
 
-        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(List.of());
         when(repository.save(diagram)).thenReturn(diagram);
         ProjectModel model = projectModel(null);
         when(projectModelCache.get(any())).thenReturn(model);
@@ -297,7 +323,7 @@ class DiagramServiceTest {
         when(diagram.getDiagramStylingConfiguration()).thenReturn(mock(DiagramStylingConfiguration.class));
         when(diagram.getDomainModelVisibility()).thenReturn(visibility);
         when(diagram.getProject()).thenReturn(project);
-        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(List.of());
         when(repository.save(diagram)).thenReturn(diagram);
         ProjectModel model = projectModel(null);
         when(projectModelCache.get(any())).thenReturn(model);
@@ -316,7 +342,7 @@ class DiagramServiceTest {
         when(diagram.getProject()).thenReturn(project);
         when(diagram.getName()).thenReturn("diagramName.svg");
 
-        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(List.of());
         when(repository.save(diagram)).thenReturn(diagram);
 
         try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class);
@@ -329,7 +355,8 @@ class DiagramServiceTest {
             verify(repository, times(1)).findByProjectIdAndName(any(), any());
             verify(repository, times(1)).save(eq(diagram));
 
-            fileIOUtilsMocked.verify(() -> FileIOUtils.renameFile(any(), any()));
+            // the image is named after the diagram's id and keeps its name
+            fileIOUtilsMocked.verify(() -> FileIOUtils.renameFile(any(), any()), never());
             fileIOUtilsMocked.verify(() -> FileIOUtils.saveFile(any(), any()), never());
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any()), never());
 
@@ -347,7 +374,7 @@ class DiagramServiceTest {
         DomainModelVisibility domainModelVisibilityMock = mock(DomainModelVisibility.class);
         DiagramStylingConfiguration diagramStylingConfigurationMock = mock(DiagramStylingConfiguration.class);
 
-        when(repository.findByProjectIdAndName(any(), any())).thenReturn(Optional.empty());
+        when(repository.findByProjectIdAndName(any(), any())).thenReturn(List.of());
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         ProjectModel model = projectModel(null);
         when(projectModelCache.get(any())).thenReturn(model);

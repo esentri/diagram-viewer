@@ -35,6 +35,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
@@ -215,11 +216,10 @@ public class ProjectServiceImpl implements ProjectService {
         project.removeDiagram(diagram);
         repository.save(project);
 
-        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(),
-            diagram.getName());
+        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(), DiagramFileUtils.imageFileName(diagram));
 
         try {
-            FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString()+".svg");
+            FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString());
         } catch (IOException e) {
             throw DiagramViewerException.fail(
                 "Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
