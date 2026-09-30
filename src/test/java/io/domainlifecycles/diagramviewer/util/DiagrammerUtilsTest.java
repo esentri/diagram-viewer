@@ -8,6 +8,7 @@ import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
 import io.domainlifecycles.staticanalysis.DomainCalls;
+import io.domainlifecycles.staticanalysis.DomainMethod;
 import io.domainlifecycles.staticanalysis.serialize.jackson2.JacksonDomainCallsSerializer;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * database or Kroki needed.
  */
 class DiagrammerUtilsTest {
+
+    private static final String ZIMMER_APPLICATION_SERVICE = "com.esentri.rezeption.application.zimmer.ZimmerApplicationService";
 
     private static final String NON_DOMAIN_FIXTURE_PACKAGE = "fixtures.nondomain";
 
@@ -191,22 +194,36 @@ class DiagrammerUtilsTest {
     }
 
     @Test
-    void Should_ConnectTheApplicationServiceToTheAggregateItCallsInTheFlow_When_SwitchedOn_And_NotByDefault() {
+    void Should_ConnectAServiceToAServiceItCallsInTheFlow_When_SwitchedOn_And_NotByDefault() {
 
-        // given: in the check-out flow, the application service calls Buchung.checkeAus - holding no field of it
-        var visibility = new DomainModelVisibility().replaceIncludeFlowsFrom(Set.of(RezeptionScenario.CHECK_OUT_COMMAND));
+        // given: a hand-built call between two application services holding no field of each other
+        var caller = domainMethod(RezeptionScenario.BUCHUNG_APPLICATION_SERVICE, RezeptionScenario.CHECK_OUT_METHOD_NAME);
+        var called = domainMethod(ZIMMER_APPLICATION_SERVICE, "findeZimmerauslastung");
+        var calls = DomainCalls.builder()
+            .add(caller, List.of(new DomainCalls.CallSite(called, RezeptionScenario.BUCHUNG_APPLICATION_SERVICE, 1)))
+            .build();
+        var visibility = new DomainModelVisibility()
+            .replaceIncludeFlowsFrom(Set.of(RezeptionScenario.CHECK_OUT_METHOD_FLOW_STARTING_POINT));
 
         // when
         String switchedOn = generate(rezeptionMirror,
-            DiagramStylingConfiguration.builder().showFlowCallRelations(true).build(), visibility, rezeptionCalls);
-        String byDefault = generate(rezeptionMirror, DiagramStylingConfiguration.builder().build(), visibility, rezeptionCalls);
+            DiagramStylingConfiguration.builder().showFlowCallRelations(true).build(), visibility, calls);
+        String byDefault = generate(rezeptionMirror, DiagramStylingConfiguration.builder().build(), visibility, calls);
 
-        // then
+        // then: directed from the caller to the called service
         assertThat(switchedOn.lines())
             .anyMatch(line -> line.startsWith("[<AS>BuchungApplicationService ")
-                && line.contains("<<calls>> Buchung.checkeAus")
-                && line.endsWith("[<AF> Buchung <<Aggregate>>]"));
+                && line.contains("<<calls>> ZimmerApplicationService.findeZimmerauslastung")
+                && line.endsWith("[<AS>ZimmerApplicationService <<ApplicationService>>]"));
         assertThat(byDefault).doesNotContain("<<calls>>");
+    }
+
+    private static DomainMethod domainMethod(String typeName, String methodName) {
+        var type = rezeptionMirror.getDomainTypeMirror(typeName).orElseThrow();
+        return new DomainMethod(typeName, type.getMethods().stream()
+            .filter(method -> method.getName().equals(methodName))
+            .findFirst()
+            .orElseThrow());
     }
 
     private static String applicationServiceBox(String nomnoml) {
