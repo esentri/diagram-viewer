@@ -174,7 +174,10 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         buttonBar.getStyle().setMarginTop("2rem");
 
         buttonBar.add(getCreateDiagramButton());
-        buttonBar.add(getAnalyzeBoundedContextsButton());
+        // the read model and command diagrams are flows, known from the static analysis result only
+        if (sessionStorage.hasDomainCalls(project.getId())) {
+            buttonBar.add(getAnalyzeBoundedContextsButton());
+        }
         if(!(sqlddlGeneratorService instanceof NoOpSQLDDLGeneratorService)){
             buttonBar.add(getDatabaseButton());
         }
@@ -200,7 +203,6 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
      */
     private Button getAnalyzeBoundedContextsButton() {
         List<BoundedContext> boundedContexts = sessionStorage.getBoundedContexts(project.getId());
-        boolean flowsAvailable = sessionStorage.hasDomainCalls(project.getId());
 
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Analyze Bounded Contexts");
@@ -212,9 +214,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
             + "<li>a folder <b>Read Models</b> with a diagram per read model, showing what leads into it,</li>"
             + "<li>a folder <b>Commands</b> with a diagram per command, showing the flow it triggers and what leads"
             + " into its processing.</li></ul>"
-            + (flowsAvailable ? "" : "<p>No static analysis result was uploaded for this project, so only the"
-                + " aggregate diagrams can be created.</p>")
-            + "Existing folders are reused and diagrams that already exist are kept unchanged.</div>"));
+            + "Analyzing again only adds what is missing: existing folders are reused, and diagrams whose name already"
+            + " exists in their folder are kept unchanged.</div>"));
         confirmDialog.setCancelable(true);
         confirmDialog.setConfirmText("Analyze");
         Button analyzeButton = new Button("Analyze Bounded Contexts", new Icon(VaadinIcon.SITEMAP));
@@ -253,9 +254,6 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         String summary = String.format("%d Bounded Context(s) analyzed: %d diagram(s) created%s.",
             result.boundedContexts(), result.createdDiagrams(),
             result.skippedDiagrams() > 0 ? String.format(", %d already existed", result.skippedDiagrams()) : "");
-        if (result.flowsSkipped()) {
-            summary += " Read model and command diagrams need a static analysis result, which was not uploaded.";
-        }
         if (result.renderings().isEmpty()) {
             progress.finished(summary);
             return;

@@ -68,9 +68,9 @@ import org.springframework.stereotype.Service;
  *     <li>a sub directory "Commands" with a diagram per command, showing the flow it triggers (forward) together with
  *     what leads into the methods processing it (backward - a command itself cannot be a backward flow target).</li>
  * </ul>
- * The flow diagrams need the project's static analysis result; without it, only the aggregate diagrams are created.
- * Running the analysis again only adds what is missing: existing directories are reused and diagrams whose name
- * already exists in the project are left untouched, so changes made to them are kept.
+ * The flow diagrams need the project's static analysis result, so a project without one is not analyzed at all.
+ * Running the analysis again only adds what is missing, matched by name: existing directories are reused and diagrams
+ * whose name already exists in their directory are left untouched, so changes made to them are kept.
  */
 @Service
 public class BoundedContextAnalysisService {
@@ -138,14 +138,11 @@ public class BoundedContextAnalysisService {
      * @param boundedContexts   the number of analyzed Bounded Contexts
      * @param createdDiagrams   the number of diagrams created
      * @param skippedDiagrams   the number of diagrams not created, since a diagram of that name already existed
-     * @param flowsSkipped      {@code true} if no static analysis result was uploaded, so that no read model and
-     *                          command diagrams could be created
      * @param renderings        the background renderings of the created diagrams' images
      */
     public record Result(int boundedContexts,
                          int createdDiagrams,
                          int skippedDiagrams,
-                         boolean flowsSkipped,
                          List<CompletableFuture<DiagramRendering.Result>> renderings) {
     }
 
@@ -161,11 +158,17 @@ public class BoundedContextAnalysisService {
      * @param project  the project to analyze
      * @param listener informed about the progress
      * @return what was created
+     * @throws IllegalStateException if no static analysis result was uploaded for the project
      */
     public Result analyze(Project project, ProgressListener listener) {
         ProjectModel model = projectModelCache.get(project.getId());
+        if (!model.domainCallsAvailable()) {
+            throw new IllegalStateException("The bounded contexts of project '" + project.getName() + "' cannot be"
+                + " analyzed: the read model and command diagrams show flows, which need the result of a static"
+                + " analysis. Upload the domain model with the static analysis result (runStaticAnalysis = true in"
+                + " the DLC build plugin) and analyze again.");
+        }
         DomainMirror domainMirror = model.domainMirror();
-        boolean flowsAvailable = model.domainCallsAvailable();
 
         List<BoundedContextMirror> boundedContexts = domainMirror.getAllBoundedContextMirrors().stream()
             .sorted(Comparator.comparing(BoundedContextAnalysisService::label, String.CASE_INSENSITIVE_ORDER))
@@ -173,18 +176,16 @@ public class BoundedContextAnalysisService {
         Set<String> containedReadModels = containedReadModelTypeNames(domainMirror);
         int total = boundedContexts.stream()
             .mapToInt(boundedContext -> (boundedContext.getAggregateRoots().isEmpty() ? 0 : 1)
-                + (flowsAvailable
-                    ? topLevelReadModels(boundedContext, containedReadModels).size() + boundedContext.getDomainCommands().size()
-                    : 0))
+                + topLevelReadModels(boundedContext, containedReadModels).size()
+                + boundedContext.getDomainCommands().size())
             .sum();
         Analysis analysis = new Analysis(project, domainMirror, containedReadModels, listener, total);
         for (BoundedContextMirror boundedContext : boundedContexts) {
-            analysis.analyze(boundedContext, flowsAvailable);
+            analysis.analyze(boundedContext);
         }
         LOGGER.info("Analyzed {} bounded contexts of project '{}': {} diagrams created, {} already existing.",
             boundedContexts.size(), project.getName(), analysis.created, analysis.skipped);
-        return new Result(boundedContexts.size(), analysis.created, analysis.skipped, !flowsAvailable,
-            List.copyOf(analysis.renderings));
+        return new Result(boundedContexts.size(), analysis.created, analysis.skipped, List.copyOf(analysis.renderings));
     }
 
     /**
@@ -240,7 +241,7 @@ public class BoundedContextAnalysisService {
             this.total = total;
         }
 
-        private void analyze(BoundedContextMirror boundedContext, boolean flowsAvailable) {
+        private void analyze(BoundedContextMirror boundedContext) {
             String label = label(boundedContext);
             DiagramDirectory directory = diagramDirectoryService.findOrCreate(project, null, label);
 
@@ -249,9 +250,6 @@ public class BoundedContextAnalysisService {
                     new DomainModelVisibility()
                         .replaceIncludedBoundedContextPackages(Set.of(boundedContext.getPackageName())),
                     aggregatesOnly());
-            }
-            if (!flowsAvailable) {
-                return;
             }
 
             List<ReadModelMirror> readModels = topLevelReadModels(boundedContext, containedReadModels);

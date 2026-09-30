@@ -123,7 +123,9 @@ folder.
 
 ### Analyze Bounded Contexts
 To get started with a large model, the viewer can create a set of diagrams for you. In the project view, click
-``Analyze Bounded Contexts``. A dialog explains what will be created; after confirming, the viewer creates a folder for
+``Analyze Bounded Contexts``. The button is only shown if the static analysis result was uploaded with the domain
+model (see [Static analysis](#static-analysis)): the read model and command diagrams show flows, which are known from
+that result only. After uploading the domain model again with the static analysis result, the button appears. A dialog explains what will be created; after confirming, the viewer creates a folder for
 each Bounded Context of the project, named after the Bounded Context (or its package, if it has no name), containing
 
 - a diagram ``Aggregates`` showing only the aggregates of the Bounded Context,
@@ -140,10 +142,11 @@ each Bounded Context of the project, named after the Bounded Context (or its pac
 If two read models or commands of a Bounded Context share their simple name, their diagram names are followed by
 their package, relative to the Bounded Context, e.g. ``AktiviereCommand (core.domain.vertrag)``.
 
-The read model and command diagrams need the static analysis result (see [Static analysis](#static-analysis)); without
-it, only the aggregate diagrams are created. The diagrams are rendered in the background, a notification tells when all
-of them are ready. Running the analysis again, e.g. after new commands were added, only adds what is missing: existing
-folders are reused, and diagrams that already exist are kept unchanged, including any filters you changed in them.
+The diagrams are rendered in the background, a notification tells when all of them are ready. Running the analysis
+again, e.g. after new commands were added or a created diagram was deleted, only adds what is missing. Folders and
+diagrams are matched by name: existing folders are reused, and a diagram whose name already exists in its folder is
+kept unchanged, including any filters you changed in it. A diagram you renamed or moved to another folder is therefore
+created again under its original name.
 
 Bounded Contexts are taken from the uploaded domain model: DLC derives them from packages annotated with
 ``@BoundedContext`` (``io.domainlifecycles.domain.types.BoundedContext``, or jMolecules' equivalent), with an optional

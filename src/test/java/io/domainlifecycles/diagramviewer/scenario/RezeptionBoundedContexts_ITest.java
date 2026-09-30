@@ -3,6 +3,12 @@ package io.domainlifecycles.diagramviewer.scenario;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.RouteParameters;
+import io.domainlifecycles.diagramviewer.plugin.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
+import io.domainlifecycles.diagramviewer.service.SecurityService;
+import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
@@ -45,6 +51,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -85,6 +94,12 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
 
     @Autowired
     BoundedContextAnalysisService boundedContextAnalysisService;
+
+    @Autowired
+    DiagramDirectoryService diagramDirectoryService;
+
+    @Autowired
+    SQLDDLGeneratorService sqlddlGeneratorService;
 
     @Value("${diagrams.location}")
     private String diagramsLocation;
@@ -235,7 +250,6 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
         assertThat(result.renderings()).allSatisfy(rendering -> assertThat(rendering.get().saved()).isTrue());
         assertThat(result.boundedContexts()).isEqualTo(3);
         assertThat(result.createdDiagrams()).isEqualTo(6);
-        assertThat(result.flowsSkipped()).isFalse();
 
         Project analyzed = reloadedProject();
         assertThat(analyzed.getTopLevelDiagramDirectories()).extracting(DiagramDirectory::getName)
@@ -321,21 +335,83 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
     }
 
     @Test
-    void Should_OnlyCreateAggregateDiagrams_When_NoStaticAnalysisResultWasUploaded() throws Exception {
+    void Should_AddOnlyTheMissingDiagrams_And_KeepTheChangedOnes_When_ProjectIsAnalyzedAgain() throws Exception {
+
+        // given: an analyzed project, one diagram deleted and one changed since
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithBoundedContexts());
+        awaitRenderings(boundedContextAnalysisService.analyze(reloadedProject()));
+        Project analyzed = reloadedProject();
+        DiagramDirectory buchung = directory(analyzed, null, RezeptionScenario.BUCHUNG_CONTEXT_NAME);
+        DiagramDirectory commands = directory(analyzed, buchung, BoundedContextAnalysisService.COMMANDS_DIRECTORY);
+        projectService.deleteDiagram(analyzed, diagram(commands, "CheckeGastEin"));
+        Diagram changed = diagram(commands, "CheckeGastAus");
+        changed.getDiagramStylingConfiguration().setShowDomainEvents(false);
+        diagramService.updateModel(changed);
+
+        // when
+        BoundedContextAnalysisService.Result second = boundedContextAnalysisService.analyze(reloadedProject());
+        awaitRenderings(second);
+
+        // then: the deleted diagram is back, all others - matched by name - are left as they were
+        assertThat(second.createdDiagrams()).isEqualTo(1);
+        assertThat(second.skippedDiagrams()).isEqualTo(5);
+        Project reanalyzed = reloadedProject();
+        assertThat(reanalyzed.getDiagrams()).hasSize(6);
+        assertThat(reanalyzed.getDiagramDirectories()).hasSize(5);
+        DiagramDirectory reanalyzedCommands = directory(reanalyzed,
+            directory(reanalyzed, null, RezeptionScenario.BUCHUNG_CONTEXT_NAME), BoundedContextAnalysisService.COMMANDS_DIRECTORY);
+        assertThat(diagramNames(reanalyzedCommands)).containsExactlyInAnyOrder(
+            "AktualisiereGastdaten", "CheckeGastAus", "CheckeGastEin");
+        assertThat(diagram(reanalyzedCommands, "CheckeGastAus").getDiagramStylingConfiguration().isShowDomainEvents())
+            .isFalse();
+    }
+
+    @Test
+    void Should_RejectTheAnalysis_When_NoStaticAnalysisResultWasUploaded() throws Exception {
 
         // given
         upload(RezeptionScenario.gzippedUploadRequestBodyWithoutDomainCalls());
 
-        // when: DLC's fallback - the whole domain model package as one Bounded Context
-        BoundedContextAnalysisService.Result result = boundedContextAnalysisService.analyze(reloadedProject());
-        awaitRenderings(result);
+        // when / then
+        assertThatThrownBy(() -> boundedContextAnalysisService.analyze(reloadedProject()))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("static analysis");
+        assertThat(reloadedProject().getDiagrams()).isEmpty();
+        assertThat(reloadedProject().getDiagramDirectories()).isEmpty();
+    }
+
+    @Test
+    void Should_OfferTheAnalysisInTheProjectView_Only_When_AStaticAnalysisResultWasUploaded() throws Exception {
+
+        // given
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithoutDomainCalls());
+
+        // then: nothing to analyze without flows
+        assertThat(analyzeButton(enteredProjectView())).isEmpty();
+
+        // when
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithBoundedContexts());
 
         // then
-        assertThat(result.flowsSkipped()).isTrue();
-        Project analyzed = reloadedProject();
-        DiagramDirectory rezeption = directory(analyzed, null, RezeptionScenario.DOMAIN_MODEL_PACKAGE);
-        assertThat(diagramNames(rezeption)).containsExactly("Aggregates");
-        assertThat(analyzed.getSubDirectories(rezeption)).isEmpty();
+        assertThat(analyzeButton(enteredProjectView())).isPresent();
+    }
+
+    private ProjectView enteredProjectView() {
+        SecurityService securityService = mock(SecurityService.class);
+        when(securityService.getCurrentlySignedInUser()).thenReturn(appUser);
+        ProjectView view = new ProjectView(false, sqlddlGeneratorService, securityService, projectService,
+            diagramService, diagramDirectoryService, sessionStorage, boundedContextAnalysisService);
+        BeforeEnterEvent event = mock(BeforeEnterEvent.class);
+        when(event.getRouteParameters())
+            .thenReturn(new RouteParameters(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, PROJECT_NAME));
+        view.beforeEnter(event);
+        return view;
+    }
+
+    private static Optional<Component> analyzeButton(Component root) {
+        return descendants(root)
+            .filter(component -> component.getId().filter("analyze-bounded-contexts"::equals).isPresent())
+            .findFirst();
     }
 
     private static void awaitRenderings(BoundedContextAnalysisService.Result result) throws Exception {
