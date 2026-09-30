@@ -172,7 +172,8 @@ public class DiagrammerUtils {
                 .withShowNonDomainClassMethods(diagramStylingConfiguration.isShowNonDomainClassMethods())
                 .withMaxInlinedValueObjectFields(diagramStylingConfiguration.getMaxInlinedValueObjectFields())
                 .withShowOnlyFlowMethods(diagramStylingConfiguration.isShowOnlyFlowMethods())
-                .withShowFlowCallRelations(diagramStylingConfiguration.isShowFlowCallRelations())
+                // without an analysis there are no flows whose calls could be drawn
+                .withShowFlowCallRelations(domainCalls != null && diagramStylingConfiguration.isShowFlowCallRelations())
                 .withShowAllInheritanceStructures(diagramStylingConfiguration.isShowAllInheritanceStructures())
                 .withShowInheritanceStructuresForDomainCommands(diagramStylingConfiguration.isShowInheritanceStructuresForDomainCommands())
                 .withShowInheritanceStructuresForDomainEvents(diagramStylingConfiguration.isShowInheritanceStructuresForDomainEvents())

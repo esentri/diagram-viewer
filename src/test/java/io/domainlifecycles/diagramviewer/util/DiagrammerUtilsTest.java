@@ -159,6 +159,19 @@ class DiagrammerUtilsTest {
     }
 
     @Test
+    void Should_RenderWithoutCallRelations_When_SwitchedOnButNoStaticAnalysisResultIsAvailable() {
+
+        // given: the calls of the flows switched on, but no DomainCalls at hand
+        DiagramStylingConfiguration styling = DiagramStylingConfiguration.builder().showFlowCallRelations(true).build();
+        DomainModelVisibility visibility = new DomainModelVisibility()
+            .replaceIncludeFlowsFrom(Set.of(RezeptionScenario.CHECK_OUT_COMMAND));
+
+        // when / then: the stored switch does not break rendering
+        String nomnoml = generate(rezeptionMirror, styling, visibility, null);
+        assertThat(nomnoml).doesNotContain("<<calls>>");
+    }
+
+    @Test
     void Should_ShowValueObjectsOfTwoFieldsInline_ByDefault_And_AsClass_When_TheMaximumIsLowered() {
 
         // given: Zeitraum has two fields, start and ende
