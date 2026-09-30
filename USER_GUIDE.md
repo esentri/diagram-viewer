@@ -287,9 +287,10 @@ methods called in it - e.g. only ``checkeGastAus`` of the ``BuchungApplicationSe
 Classes shown for another reason, e.g. an entity of a shown aggregate or a read model contained in a shown read model,
 show their methods as without flow. Uncheck it to see all methods the general visibility settings allow.
 
-``Connect classes calling each other in the flows`` (unchecked by default) draws a ``<<calls>>`` relationship, labeled with
-the called methods, between two classes calling each other in a flow, if no other relationship connects them - e.g. a
-class reading a read model it got from elsewhere. Otherwise such classes would stand in the diagram without connection.
+``Connect classes calling each other in the flows`` (unchecked by default) draws a ``<<calls>>`` arrow, labeled with the
+called methods, from a service or non-domain class to a service or non-domain class it calls in a flow, if no other
+relationship connects them - e.g. a service calling another one it gets from elsewhere. Otherwise such classes would
+stand in the diagram without connection. Calls of aggregates, read models, commands or events get no such arrow.
 
 For example, with the [Demo Project](https://github.com/esentri/ddd-hotel-demo):
 - a forward flow from the command ``CheckeGastAus`` shows the whole guest check-out, including the event ``GastAusgecheckt``
