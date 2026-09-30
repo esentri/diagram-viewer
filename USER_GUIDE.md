@@ -290,7 +290,9 @@ show their methods as without flow. Uncheck it to see all methods the general vi
 ``Connect classes calling each other in the flows`` (unchecked by default) draws a ``<<calls>>`` arrow, labeled with the
 called methods, from a service or non-domain class to a service or non-domain class it calls in a flow, if no other
 relationship connects them - e.g. a service calling another one it gets from elsewhere. Otherwise such classes would
-stand in the diagram without connection. Calls of aggregates, read models, commands or events get no such arrow.
+stand in the diagram without connection. A service or non-domain class calling a read model or an aggregate gets such
+an arrow to it too, but only if no path leads there yet - e.g. over the query handler or the repository it uses, also
+via other classes. Calls of value objects, commands or events get no such arrow.
 
 For example, with the [Demo Project](https://github.com/esentri/ddd-hotel-demo):
 - a forward flow from the command ``CheckeGastAus`` shows the whole guest check-out, including the event ``GastAusgecheckt``
