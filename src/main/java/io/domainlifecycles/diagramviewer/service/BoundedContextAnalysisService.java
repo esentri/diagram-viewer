@@ -34,6 +34,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguratio
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
+import io.domainlifecycles.diagram.domain.mapper.DomainMapperUtils;
 import io.domainlifecycles.mirror.api.BoundedContextMirror;
 import io.domainlifecycles.mirror.api.DomainCommandMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
@@ -187,21 +188,27 @@ public class BoundedContextAnalysisService {
     }
 
     /**
-     * The read models of a Bounded Context contained in no other read model.
+     * The read models of a Bounded Context contained in no other read model. An anonymous class implementing a read
+     * model gets no diagram either: diagrams show the interface it implements in its place.
      */
     static List<ReadModelMirror> topLevelReadModels(BoundedContextMirror boundedContext, Set<String> containedReadModels) {
         return sortedByName(boundedContext.getReadModels()).stream()
             .filter(readModel -> !containedReadModels.contains(readModel.getTypeName()))
+            .filter(readModel -> !DomainMapperUtils.isAnonymous(readModel.getTypeName()))
             .toList();
     }
 
     /**
      * The read models contained in another read model - as field, {@code Optional} or collection. A read model
-     * containing itself, e.g. as tree, is not contained by that alone.
+     * containing itself, e.g. as tree, is not contained by that alone. Only the fields a read model declares count - a
+     * subtype inheriting a field contains nothing its super type does not - and an anonymous class contains nothing,
+     * it is never shown.
      */
     static Set<String> containedReadModelTypeNames(DomainMirror domainMirror) {
         return domainMirror.getAllReadModelMirrors().stream()
+            .filter(readModel -> !DomainMapperUtils.isAnonymous(readModel.getTypeName()))
             .flatMap(readModel -> readModel.getAllFields().stream()
+                .filter(field -> field.getDeclaredByTypeName().equals(readModel.getTypeName()))
                 .filter(field -> DomainType.READ_MODEL.equals(field.getType().getDomainType()))
                 .map(field -> field.getType().getTypeName())
                 .filter(typeName -> !typeName.equals(readModel.getTypeName())))

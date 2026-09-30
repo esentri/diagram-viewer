@@ -43,7 +43,8 @@ class BoundedContextAnalysisReadModelsTest {
         var topLevel = BoundedContextAnalysisService.topLevelReadModels(boundedContext,
             BoundedContextAnalysisService.containedReadModelTypeNames(mirror));
 
-        // then
+        // then: the anonymous implementation of CategoryTree gets no diagram either
+        assertThat(mirror.getDomainTypeMirror(PACKAGE + ".CategoryFactory$1")).isPresent();
         assertThat(topLevel).extracting(DomainTypeMirror::getTypeName)
             .containsExactly(PACKAGE + ".CategoryTree", PACKAGE + ".OrderOverview");
     }
