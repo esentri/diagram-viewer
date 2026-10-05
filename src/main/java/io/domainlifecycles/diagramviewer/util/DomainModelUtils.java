@@ -106,7 +106,7 @@ public class DomainModelUtils {
             if(!diagram.getDiagramStylingConfiguration().isShowAllInheritanceStructures()){
                 for (DomainTypeMirror mirror : domainTypeMirrors) {
                     switch (mirror.getDomainType()) {
-                        case SERVICE_KIND, OUTBOUND_SERVICE, APPLICATION_SERVICE, DOMAIN_SERVICE, REPOSITORY, QUERY_HANDLER -> {
+                        case SERVICE_KIND, OUTBOUND_SERVICE, FACTORY, APPLICATION_SERVICE, DOMAIN_SERVICE, REPOSITORY, QUERY_HANDLER -> {
                             for (String interfaceTypeName : mirror.getAllInterfaceTypeNames()) {
                                 if (!interfaceTypeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME) && !diagram.getDiagramStylingConfiguration().isShowInheritanceStructuresForServiceKinds()) {
                                     if (mirroredTypeNames.contains(interfaceTypeName)) {
@@ -186,6 +186,7 @@ public class DomainModelUtils {
             case QUERY_HANDLER -> "QueryHandler";
             case DOMAIN_COMMAND -> "DomainCommand";
             case OUTBOUND_SERVICE -> "OutboundService";
+            case FACTORY -> "Factory";
             case DOMAIN_SERVICE -> "DomainService";
             case APPLICATION_SERVICE -> "ApplicationService";
             case NON_DOMAIN -> "NonDomain";

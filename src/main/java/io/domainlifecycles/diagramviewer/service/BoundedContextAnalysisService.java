@@ -360,6 +360,7 @@ public class BoundedContextAnalysisService {
         styling.setShowReadModels(false);
         styling.setShowQueryHandlers(false);
         styling.setShowOutboundServices(false);
+        styling.setShowFactories(false);
         styling.setShowUnspecifiedServiceKinds(false);
         styling.setShowNonDomainClasses(false);
         return styling;

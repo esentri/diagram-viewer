@@ -126,6 +126,7 @@ public class StylingConfigurationDialog extends Dialog {
         accordion.add(createAndGetReadModelAccordionPanel());
         accordion.add(createAndGetQueryHandlerAccordionPanel());
         accordion.add(createAndGetOutboundServiceAccordionPanel());
+        accordion.add(createAndGetFactoryAccordionPanel());
         accordion.add(createAndGetUnspecifiedServiceKindAccordionPanel());
         accordion.add(createAndGetNonDomainClassAccordionPanel());
 
@@ -452,6 +453,31 @@ public class StylingConfigurationDialog extends Dialog {
         outboundServiceDialogFormLayout.addFormItem(outboundServiceStylingOptionsSelect, "Styling Options");
 
         accordionPanel.add(outboundServiceDialogFormLayout);
+        return accordionPanel;
+    }
+
+    private AccordionPanel createAndGetFactoryAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Factory");
+
+        FormLayout factoryDialogFormLayout = new FormLayout();
+
+        ColorPickerComponent factoryColorInput = new ColorPickerComponent();
+        binder.forField(factoryColorInput)
+            .bind(diagramStylingConfiguration -> extractColorConfiguration(diagramStylingConfiguration.getFactoryStyle()),
+                (diagramStylingConfiguration, newColorHexString) -> diagramStylingConfiguration.setFactoryStyle(buildNewColorConfiguration(diagramStylingConfiguration.getFactoryStyle(), newColorHexString)));
+        factoryDialogFormLayout.addFormItem(factoryColorInput, "Color");
+
+        MultiSelectComboBox<Styling> factoryStylingOptionsSelect = new MultiSelectComboBox<>();
+        binder.forField(factoryStylingOptionsSelect)
+            .bind(diagramStylingConfiguration -> Styling.map(extractStylingConfiguration(diagramStylingConfiguration.getFactoryStyle())),
+                (diagramStylingConfiguration, selectedStylings) -> diagramStylingConfiguration.setFactoryStyle(buildNewStylingConfiguration(
+                    diagramStylingConfiguration.getFactoryStyle(), selectedStylings)));
+        factoryStylingOptionsSelect.setItems(Styling.values());
+        factoryStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
+        factoryDialogFormLayout.addFormItem(factoryStylingOptionsSelect, "Styling Options");
+
+        accordionPanel.add(factoryDialogFormLayout);
         return accordionPanel;
     }
 

@@ -28,13 +28,20 @@ class DiagrammerUtilsTest {
 
     private static final String NON_DOMAIN_FIXTURE_PACKAGE = "fixtures.nondomain";
 
+    private static final String FACTORY_FIXTURE_PACKAGE = "fixtures.factory";
+
+    private static final String CREATES_ORDER =
+        "[<F>OrderFactory <<Factory>>]  --[<label> <<creates>> create] --> [<AF> Order <<Aggregate>>]";
+
     private static DomainMirror nonDomainMirror;
+    private static DomainMirror factoryMirror;
     private static DomainMirror rezeptionMirror;
     private static DomainCalls rezeptionCalls;
 
     @BeforeAll
     static void initMirrors() {
         nonDomainMirror = new ReflectiveDomainMirrorFactory(NON_DOMAIN_FIXTURE_PACKAGE).initializeDomainMirror();
+        factoryMirror = new ReflectiveDomainMirrorFactory(FACTORY_FIXTURE_PACKAGE).initializeDomainMirror();
         rezeptionMirror = new JacksonDomainSerializer(false).deserialize(RezeptionScenario.domainMirrorJson());
         rezeptionCalls = new JacksonDomainCallsSerializer(false)
             .deserialize(RezeptionScenario.domainCallsJson(), rezeptionMirror);
@@ -53,6 +60,46 @@ class DiagrammerUtilsTest {
         assertThat(nomnoml).doesNotContain(classBoxMarker("UnrelatedHelper"));
         assertThat(nomnoml).contains("[<AS>BookingApplicationService <<ApplicationService>>]  -> [<ND>BookingMapper <<NonDomain>>]");
         assertThat(nomnoml).contains("[<ND>BookingController <<NonDomain>>]  -> [<AS>BookingApplicationService <<ApplicationService>>]");
+    }
+
+    @Test
+    void Should_RenderAFactoryAndWhatItCreates_When_DefaultConfigurationIsUsed() {
+
+        // when
+        String nomnoml = generate(factoryMirror, DiagramStylingConfiguration.builder().build(), new DomainModelVisibility(), null);
+
+        // then
+        assertThat(nomnoml).contains("[<F> OrderFactory <<Factory>> |");
+        assertThat(nomnoml).contains("#.F:fill=#E0F0E0 bold");
+        assertThat(nomnoml).contains(CREATES_ORDER);
+    }
+
+    @Test
+    void Should_HideFactoriesAndTheirCreatesRelations_When_DisabledInTheConfiguration() {
+
+        // when
+        String withoutFactories = generate(factoryMirror,
+            DiagramStylingConfiguration.builder().showFactories(false).build(), new DomainModelVisibility(), null);
+        String withoutRelations = generate(factoryMirror,
+            DiagramStylingConfiguration.builder().showFactoryRelations(false).build(), new DomainModelVisibility(), null);
+
+        // then
+        assertThat(withoutFactories).doesNotContain(classBoxMarker("OrderFactory")).doesNotContain("<<creates>>");
+        assertThat(withoutRelations).contains(classBoxMarker("OrderFactory")).doesNotContain("<<creates>>");
+    }
+
+    @Test
+    void Should_ApplyTheFactoryStyleAndMemberSettings() {
+
+        // when
+        String nomnoml = generate(factoryMirror, DiagramStylingConfiguration.builder()
+            .factoryStyle("fill=#123456 bold")
+            .showFactoryMethods(false)
+            .build(), new DomainModelVisibility(), null);
+
+        // then
+        assertThat(nomnoml).contains("#.F:fill=#123456 bold");
+        assertThat(nomnoml).doesNotContain("Order create(OrderId)");
     }
 
     @Test

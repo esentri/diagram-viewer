@@ -376,6 +376,7 @@ public class DiagramVisibilityComponent extends Div {
             case QUERY_HANDLER -> "QueryHandler";
             case DOMAIN_COMMAND -> "DomainCommand";
             case OUTBOUND_SERVICE -> "OutboundService";
+            case FACTORY -> "Factory";
             case DOMAIN_SERVICE -> "DomainService";
             case APPLICATION_SERVICE -> "ApplicationService";
             case NON_DOMAIN -> "NonDomain";
@@ -388,6 +389,7 @@ public class DiagramVisibilityComponent extends Div {
 
         list.add(DomainType.APPLICATION_SERVICE);
         list.add(DomainType.DOMAIN_SERVICE);
+        list.add(DomainType.FACTORY);
         list.add(DomainType.DOMAIN_COMMAND);
         list.add(DomainType.DOMAIN_EVENT);
         list.add(DomainType.REPOSITORY);

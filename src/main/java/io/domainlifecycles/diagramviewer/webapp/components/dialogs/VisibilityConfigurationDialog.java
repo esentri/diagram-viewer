@@ -80,6 +80,8 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showQueryHandlerMethodsCheckbox;
     private Checkbox showOutboundServiceFieldsCheckbox;
     private Checkbox showOutboundServiceMethodsCheckbox;
+    private Checkbox showFactoryFieldsCheckbox;
+    private Checkbox showFactoryMethodsCheckbox;
     private Checkbox showUnspecifiedServiceKindFieldsCheckbox;
     private Checkbox showUnspecifiedServiceKindMethodsCheckbox;
     private Checkbox showNonDomainClassFieldsCheckbox;
@@ -149,6 +151,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         accordion.add(createAndGetReadModelAccordionPanel());
         accordion.add(createAndGetQueryHandlerAccordionPanel());
         accordion.add(createAndGetOutboundServiceAccordionPanel());
+        accordion.add(createAndGetFactoryAccordionPanel());
         accordion.add(createAndGetUnspecifiedServiceKindAccordionPanel());
         accordion.add(createAndGetNonDomainClassAccordionPanel());
 
@@ -462,6 +465,36 @@ public class VisibilityConfigurationDialog extends Dialog {
         return accordionPanel;
     }
 
+    private AccordionPanel createAndGetFactoryAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Factory");
+
+        FormLayout factoryDialogFormLayout = new FormLayout();
+
+        Checkbox showFactoriesCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showFactoriesCheckbox, DiagramStylingConfiguration::isShowFactories, DiagramStylingConfiguration::setShowFactories);
+
+        showFactoryFieldsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showFactoryFieldsCheckbox, DiagramStylingConfiguration::isShowFactoryFields, DiagramStylingConfiguration::setShowFactoryFields);
+
+        showFactoryMethodsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showFactoryMethodsCheckbox, DiagramStylingConfiguration::isShowFactoryMethods, DiagramStylingConfiguration::setShowFactoryMethods);
+
+        Checkbox showFactoryRelationsCheckbox = new Checkbox();
+        showFactoryRelationsCheckbox.setId("show-factory-relations");
+        showFactoryRelationsCheckbox.setTooltipText(
+            "Connects a class to the domain types its factory methods create by a <<creates>> relationship.");
+        diagramConfigurationBinder.bind(showFactoryRelationsCheckbox, DiagramStylingConfiguration::isShowFactoryRelations, DiagramStylingConfiguration::setShowFactoryRelations);
+
+        factoryDialogFormLayout.addFormItem(showFactoriesCheckbox,"Show");
+        factoryDialogFormLayout.addFormItem(showFactoryFieldsCheckbox,"Fields");
+        factoryDialogFormLayout.addFormItem(showFactoryMethodsCheckbox,"Methods");
+        factoryDialogFormLayout.addFormItem(showFactoryRelationsCheckbox,"Creates relations");
+
+        accordionPanel.add(factoryDialogFormLayout);
+        return accordionPanel;
+    }
+
     private AccordionPanel createAndGetUnspecifiedServiceKindAccordionPanel() {
         AccordionPanel accordionPanel = new AccordionPanel();
         accordionPanel.setSummaryText("Service Kind");
@@ -519,6 +552,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         showReadModelFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showQueryHandlerFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showOutboundServiceFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
+        showFactoryFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showUnspecifiedServiceKindFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showNonDomainClassFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
     }
@@ -533,6 +567,7 @@ public class VisibilityConfigurationDialog extends Dialog {
         showReadModelMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showQueryHandlerMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showOutboundServiceMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
+        showFactoryMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showUnspecifiedServiceKindMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showNonDomainClassMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
     }

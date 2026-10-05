@@ -150,6 +150,14 @@ public class DiagramStylingConfiguration {
     @Setter
     @Builder.Default private String outboundServiceStyle = "fill=#C0C0C0 bold";
     /**
+     * Style declaration for Factories  (see Nomnoml style options). The column default backfills configurations
+     * persisted before factories were supported.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "varchar(255) default 'fill=#E0F0E0 bold'")
+    @Builder.Default private String factoryStyle = "fill=#E0F0E0 bold";
+    /**
      * Style declaration for unspecified ServiceKinds  (see Nomnoml style options)
      */
     @Getter
@@ -410,6 +418,37 @@ public class DiagramStylingConfiguration {
     @Getter
     @Setter
     @Builder.Default private boolean showOutboundServiceMethods = true;
+
+    /**
+     * If true, Factory classes are included. The column defaults backfill configurations persisted before factories
+     * were supported.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showFactories = true;
+    /**
+     * If true, fields of Factories are included
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default false")
+    @Builder.Default private boolean showFactoryFields = false;
+    /**
+     * If true, methods of Factories are included
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showFactoryMethods = true;
+    /**
+     * If true, a class creating another domain type by its factory methods is connected to it by a
+     * {@code <<creates>>} relationship, labeled with these methods
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showFactoryRelations = true;
 
     /**
      * If true, unspecified ServiceKind classes are included

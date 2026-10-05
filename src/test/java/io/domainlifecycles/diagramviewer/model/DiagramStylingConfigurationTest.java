@@ -51,6 +51,23 @@ class DiagramStylingConfigurationTest {
     }
 
     @Test
+    void Should_ShowFactoriesWithTheirMethodsAndCreatesRelations_ByDefault() {
+
+        // when
+        var built = DiagramStylingConfiguration.builder().build();
+        var constructed = new DiagramStylingConfiguration();
+
+        // then
+        for (var configuration : java.util.List.of(built, constructed)) {
+            assertThat(configuration.isShowFactories()).isTrue();
+            assertThat(configuration.isShowFactoryFields()).isFalse();
+            assertThat(configuration.isShowFactoryMethods()).isTrue();
+            assertThat(configuration.isShowFactoryRelations()).isTrue();
+            assertThat(configuration.getFactoryStyle()).isEqualTo("fill=#E0F0E0 bold");
+        }
+    }
+
+    @Test
     void Should_ShowOnlyTheMethodsCalledInTheFlows_ByDefault() {
         assertThat(DiagramStylingConfiguration.builder().build().isShowOnlyFlowMethods()).isTrue();
         assertThat(new DiagramStylingConfiguration().isShowOnlyFlowMethods()).isTrue();

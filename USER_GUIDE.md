@@ -211,6 +211,19 @@ Additionally, you can define which stereotypes are shown.
    connected by a composition. By default value objects of up to 2 fields are shown inline; ``1`` shows only those of a
    single field inline, ``0`` none. A value object containing one that is not shown inline is not shown inline itself.
 
+### Factories
+A class implementing DLC's ``Factory`` (or annotated with jMolecules' ``@Factory``) is shown with the stereotype
+``<<Factory>>``, its methods but not its fields by default. Methods of other classes annotated with ``@FactoryMethod``,
+e.g. of an Aggregate or a DomainService, are marked with ``«factory»`` in their method list.
+
+A class creating another domain type by its factory methods is connected to it by a ``<<creates>>`` arrow, labeled with
+these methods (at most three, then ``…``) - e.g. a Factory or DomainService to the Aggregate it creates, an Aggregate root
+to the Entity it creates. A class creating instances of itself gets no arrow.
+
+The section ``Factory`` of the general visibility settings (eye icon) hides the factories (``Show``), switches their
+fields and methods and, with ``Creates relations`` (checked by default), the ``<<creates>>`` arrows. The color and
+styling of factories are set in the styling options.
+
 ### Non-domain classes
 Besides the classes implementing one of the DLC marker interfaces, the domain model also contains classes
 that are not DDD building blocks, e.g. mappers, helpers, REST controllers or message listeners. These
@@ -218,7 +231,7 @@ non-domain classes are uploaded with the domain model too (requires a DLC build 
 **by default**, with the stereotype ``<<NonDomain>>``.
 
 A non-domain class is only drawn, if it has a relationship (via a field, a method parameter or a return type) to a service kind
-(ApplicationService, DomainService, Repository, QueryHandler, OutboundService or unspecified ServiceKind), in either direction:
+(ApplicationService, DomainService, Repository, QueryHandler, OutboundService, Factory or unspecified ServiceKind), in either direction:
 - a service depending on a non-domain class, e.g. a mapper an ApplicationService holds a field for
 - a non-domain class depending on a service, e.g. a controller calling an ApplicationService
 
