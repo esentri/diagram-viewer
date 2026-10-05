@@ -10,8 +10,8 @@ buildscript {
 
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.3'
-	id 'io.spring.dependency-management' version '1.1.6'
+	id 'org.springframework.boot' version '4.0.8'
+	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.vaadin'
 	id 'jacoco'
 	id 'checkstyle'
@@ -22,7 +22,7 @@ group = 'io.domainlifecycles'
 version = '0.3'
 
 ext {
-	set('vaadinVersion', "24.8.6")
+	set('vaadinVersion', "25.0.13")
 	javaDockerVersion = "3.4.0"
 	dlcVersion = "3.5.0"
 	classGraphVersion = "4.8.163"
@@ -35,7 +35,7 @@ ext {
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -76,6 +76,10 @@ dependencies {
 	implementation "io.github.classgraph:classgraph:${classGraphVersion}"
 	implementation "com.github.ben-manes.caffeine:caffeine"
 	implementation "com.vaadin:vaadin-spring-boot-starter"
+	// Vaadin 25 no longer brings its development tools with the starter
+	developmentOnly "com.vaadin:vaadin-dev"
+	// tests starting the web server run Vaadin in development mode, like a local start
+	testRuntimeOnly "com.vaadin:vaadin-dev"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation ('org.postgresql:postgresql')
 	testImplementation "org.testcontainers:junit-jupiter:1.20.6"
@@ -83,15 +87,14 @@ dependencies {
 	implementation 'org.apache.xmlgraphics:batik-transcoder:1.17'
 	implementation 'org.apache.xmlgraphics:batik-codec:1.17'
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
-	implementation ('com.okta.spring:okta-spring-boot-starter:3.0.7')
+	implementation 'com.okta.spring:okta-spring-boot-starter:3.1.0'
 	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"
 	implementation "com.github.docker-java:docker-java-transport-httpclient5:${javaDockerVersion}"
-	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
-	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.0'
+	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.1'
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
-	implementation "io.domainlifecycles:mirror-serialization-jackson2:${dlcVersion}"
+	implementation "io.domainlifecycles:mirror-serialization-jackson3:${dlcVersion}"
 	implementation "io.domainlifecycles:static-analysis:${dlcVersion}"
-	implementation "io.domainlifecycles:static-analysis-serialization-jackson2:${dlcVersion}"
+	implementation "io.domainlifecycles:static-analysis-serialization-jackson3:${dlcVersion}"
 	implementation "io.domainlifecycles:diagram-viewer-plugin:1.2"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	if(isInternal){
@@ -102,6 +105,8 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
+	testImplementation "org.springframework.boot:spring-boot-starter-data-jpa-test"
 	testImplementation 'org.mockito:mockito-core'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

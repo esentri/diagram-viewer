@@ -29,9 +29,11 @@
 
 package io.domainlifecycles.diagramviewer;
 
+import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.server.AppShellSettings;
+import com.vaadin.flow.theme.lumo.Lumo;
 import io.domainlifecycles.diagramviewer.webapp.properties.ApplicationFeatures;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,6 +43,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @Push
+// Vaadin 25 applies no theme by default
+@StyleSheet(Lumo.STYLESHEET)
 @EnableConfigurationProperties(ApplicationFeatures.class)
 public class DiagramViewerApplication implements AppShellConfigurator {
 

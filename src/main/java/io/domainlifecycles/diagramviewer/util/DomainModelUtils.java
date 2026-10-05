@@ -40,7 +40,7 @@ import io.domainlifecycles.mirror.exception.MirrorException;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
 import io.domainlifecycles.mirror.serialize.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson3.JacksonDomainSerializer;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;

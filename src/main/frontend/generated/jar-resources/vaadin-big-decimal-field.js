@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 Vaadin Ltd.
+ * Copyright 2000-2026 Vaadin Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,34 +13,32 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+import { css } from 'lit';
 import { TextField } from '@vaadin/text-field/src/vaadin-text-field.js';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
 
-let memoizedTemplate;
-
 class BigDecimalField extends TextField {
-  static get template() {
-    if (!memoizedTemplate) {
-      memoizedTemplate = super.template.cloneNode(true);
-      memoizedTemplate.innerHTML += `<style>
-              :host {
-                width: 8em;
-              }
-
-              :host([dir="rtl"]) [part="input-field"] {
-                direction: ltr;
-              }
-
-              :host([dir="rtl"]) [part="input-field"] ::slotted(input) {
-                --_lumo-text-field-overflow-mask-image: linear-gradient(to left, transparent, #000 1.25em) !important;
-              }
-        </style>`;
-    }
-    return memoizedTemplate;
-  }
-
   static get is() {
     return 'vaadin-big-decimal-field';
+  }
+
+  static get lumoInjector() {
+    return { ...super.lumoInjector, is: 'vaadin-text-field' };
+  }
+
+  static get styles() {
+    return [
+      ...super.styles,
+      css`
+        :host([dir='rtl']) [part='input-field'] {
+          direction: ltr;
+        }
+
+        :host([dir='rtl']) [part='input-field'] ::slotted(input) {
+          --_lumo-text-field-overflow-mask-image: linear-gradient(to left, transparent, #000 1.25em) !important;
+        }
+      `
+    ];
   }
 
   static get properties() {
@@ -48,6 +46,7 @@ class BigDecimalField extends TextField {
       _decimalSeparator: {
         type: String,
         value: '.',
+        sync: true,
         observer: '__decimalSeparatorChanged'
       }
     };

@@ -12,7 +12,7 @@ import io.domainlifecycles.diagramviewer.scenario.RezeptionScenario;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.util.CompressedJson;
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson3.JacksonDomainSerializer;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;

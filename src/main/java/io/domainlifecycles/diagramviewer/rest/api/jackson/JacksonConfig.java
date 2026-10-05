@@ -30,9 +30,9 @@
 package io.domainlifecycles.diagramviewer.rest.api.jackson;
 
 import io.domainlifecycles.mirror.serialize.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson3.JacksonDomainSerializer;
 import io.domainlifecycles.staticanalysis.serialize.DomainCallsSerializer;
-import io.domainlifecycles.staticanalysis.serialize.jackson2.JacksonDomainCallsSerializer;
+import io.domainlifecycles.staticanalysis.serialize.jackson3.JacksonDomainCallsSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

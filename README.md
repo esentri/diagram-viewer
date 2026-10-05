@@ -22,7 +22,7 @@ Running the service:
 - Docker and Docker Compose
 
 For development:
-- Java 17+
+- Java 21+ (Gradle starts its daemon with Java 21 by itself, see gradle/gradle-daemon-jvm.properties)
 - Gradle (wrapper included)
 
 The diagram viewer depends on a inner plugin lib. 

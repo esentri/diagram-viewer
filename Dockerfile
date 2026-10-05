@@ -1,4 +1,4 @@
-FROM amazoncorretto:17-alpine
+FROM amazoncorretto:21-alpine
 
 RUN apk add --no-cache fontconfig freetype font-liberation ttf-dejavu
 

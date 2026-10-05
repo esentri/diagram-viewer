@@ -76,8 +76,12 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.security.PermitAll;
 
 @Layout
+// since Vaadin 25, the access to a view is also checked against its layout: the layout frames the views of signed in
+// users only
+@PermitAll
 @CssImport("./styles/diagram-viewer-styles.css")
 public class MainLayout extends AppLayout {
 

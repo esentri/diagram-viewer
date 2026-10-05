@@ -29,20 +29,23 @@
 
 package io.domainlifecycles.diagramviewer.rest.api.jackson;
 
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.util.CompressedJson;
 import io.domainlifecycles.mirror.serialize.DomainSerializer;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.List;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonEncoding;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Reads a domain mirror upload request body, in the wire format used by the DLC build plugin since
@@ -78,7 +81,12 @@ public class DomainMirrorUploadPayloadReader {
     private final DomainSerializer domainSerializer;
 
     public DomainMirrorUploadPayloadReader(DomainSerializer domainSerializer) {
-        this.objectMapper = new ObjectMapper();
+        // the generators copy into a gzip stream that is finished by the caller, and the packages are read in the
+        // middle of the request body, which goes on after them
+        this.objectMapper = JsonMapper.builder()
+            .disable(StreamWriteFeature.AUTO_CLOSE_TARGET)
+            .disable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .build();
         this.domainSerializer = domainSerializer;
     }
 
@@ -93,7 +101,7 @@ public class DomainMirrorUploadPayloadReader {
     public DomainMirrorUploadPayload read(InputStream requestBody) {
         try {
             return doRead(requestBody);
-        } catch (IOException e) {
+        } catch (IOException | JacksonException e) {
             throw DiagramViewerException.fail("Could not read the domain mirror upload request body.", e);
         }
     }
@@ -103,12 +111,12 @@ public class DomainMirrorUploadPayloadReader {
         byte[] domainCallsGz = null;
         List<String> domainModelPackages = List.of();
 
-        try (JsonParser parser = objectMapper.getFactory().createParser(requestBody)) {
+        try (JsonParser parser = objectMapper.createParser(requestBody)) {
             if (parser.nextToken() != JsonToken.START_OBJECT) {
                 throw DiagramViewerException.fail("Expected a JSON object as the domain mirror upload request body.");
             }
 
-            while (parser.nextToken() == JsonToken.FIELD_NAME) {
+            while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
                 String fieldName = parser.currentName();
                 parser.nextToken();
 
@@ -148,16 +156,13 @@ public class DomainMirrorUploadPayloadReader {
             return null;
         }
         return CompressedJson.compress(out -> {
-            try (JsonGenerator generator = objectMapper.getFactory().createGenerator(out, JsonEncoding.UTF8)) {
-                generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+            try (JsonGenerator generator = objectMapper.createGenerator(out, JsonEncoding.UTF8)) {
                 generator.copyCurrentStructure(parser);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
             }
         });
     }
 
-    private List<String> readStringList(JsonParser parser) throws IOException {
+    private List<String> readStringList(JsonParser parser) {
         return objectMapper.readValue(parser, new TypeReference<List<String>>() {
         });
     }

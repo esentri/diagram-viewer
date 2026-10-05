@@ -2,9 +2,9 @@ package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagramviewer.scenario.RezeptionScenario;
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson3.JacksonDomainSerializer;
 import io.domainlifecycles.staticanalysis.DomainCalls;
-import io.domainlifecycles.staticanalysis.serialize.jackson2.JacksonDomainCallsSerializer;
+import io.domainlifecycles.staticanalysis.serialize.jackson3.JacksonDomainCallsSerializer;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

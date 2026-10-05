@@ -1,7 +1,7 @@
 package io.domainlifecycles.diagramviewer.rest.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import io.domainlifecycles.diagramviewer.configuration.BaseIntegrationTest;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
@@ -16,10 +16,10 @@ import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.model.DomainModel;
 import io.domainlifecycles.mirror.serialize.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson3.JacksonDomainSerializer;
 import io.domainlifecycles.staticanalysis.DomainCalls;
 import io.domainlifecycles.staticanalysis.serialize.DomainCallsSerializer;
-import io.domainlifecycles.staticanalysis.serialize.jackson2.JacksonDomainCallsSerializer;
+import io.domainlifecycles.staticanalysis.serialize.jackson3.JacksonDomainCallsSerializer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -201,7 +201,7 @@ class DomainMirrorUploadController_ITest extends BaseIntegrationTest {
         result.andExpect(status().isOk());
     }
 
-    private String getDomainMirrorJson() throws JsonProcessingException {
+    private String getDomainMirrorJson() throws JacksonException {
         DomainMirror domainMirror = new DomainModel(Map.of(), "test.package");
 
         ObjectMapper mapper = new ObjectMapper();

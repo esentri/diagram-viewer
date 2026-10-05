@@ -41,7 +41,7 @@ import io.domainlifecycles.diagramviewer.service.ProjectModel;
 import io.domainlifecycles.diagramviewer.service.ProjectModelCache;
 import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson3.JacksonDomainSerializer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;

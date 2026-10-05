@@ -1,8 +1,8 @@
 package io.domainlifecycles.diagramviewer.scenario;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -110,19 +110,15 @@ public final class RezeptionScenario {
     }
 
     private static byte[] gzippedUploadRequestBody(String[][] boundedContextPackagesAndNames, String... domainModelPackages) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode mirror = (ObjectNode) objectMapper.readTree(domainMirrorJson());
-            ArrayNode boundedContexts = mirror.putArray("boundedContextMirrors");
-            for (String[] packageAndName : boundedContextPackagesAndNames) {
-                addBoundedContext(boundedContexts, packageAndName[0], packageAndName[1]);
-            }
-            return gzip("{\"domainMirror\":" + objectMapper.writeValueAsString(mirror)
-                + ",\"domainCalls\":" + domainCallsJson()
-                + ",\"domainModelPackages\":" + objectMapper.writeValueAsString(domainModelPackages) + "}");
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode mirror = (ObjectNode) objectMapper.readTree(domainMirrorJson());
+        ArrayNode boundedContexts = mirror.putArray("boundedContextMirrors");
+        for (String[] packageAndName : boundedContextPackagesAndNames) {
+            addBoundedContext(boundedContexts, packageAndName[0], packageAndName[1]);
         }
+        return gzip("{\"domainMirror\":" + objectMapper.writeValueAsString(mirror)
+            + ",\"domainCalls\":" + domainCallsJson()
+            + ",\"domainModelPackages\":" + objectMapper.writeValueAsString(domainModelPackages) + "}");
     }
 
     private static void addBoundedContext(ArrayNode boundedContexts, String packageName, String name) {

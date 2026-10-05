@@ -94,6 +94,9 @@ public class SecurityConfig {
                                 PathPatternRequestMatcher.withDefaults().matcher("/api/domain-model/**"),
                                 PathPatternRequestMatcher.withDefaults().matcher("/api/resources/view/**"),
                                 PathPatternRequestMatcher.withDefaults().matcher("/VAADIN/**"),
+                                // the stylesheets of the Vaadin 25 themes, e.g. /lumo/lumo.css
+                                PathPatternRequestMatcher.withDefaults().matcher("/lumo/**"),
+                                PathPatternRequestMatcher.withDefaults().matcher("/aura/**"),
                                 PathPatternRequestMatcher.withDefaults().matcher("/favicon.ico"),
                                 PathPatternRequestMatcher.withDefaults().matcher("/robots.txt"),
                                 PathPatternRequestMatcher.withDefaults().matcher("/manifest.webmanifest"),
