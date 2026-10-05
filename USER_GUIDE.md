@@ -284,7 +284,10 @@ as soon as an analysis result is uploaded.
      e.g. all classes involved when a command is processed.
    - ``Backward (what leads into it)``: the diagram shows all entry channels through which the selected element is reached,
      e.g. all callers of a service, or everything leading to the publishing of a domain event.
-     For an Aggregate or ReadModel, the Repository or QueryHandler providing it is included as well.
+     For an Aggregate or ReadModel, the Repository or QueryHandler providing it is included as well, and for any
+     domain type the factory methods creating it (of a Factory, or annotated with ``@FactoryMethod``).
+     Forward, a flow leads from such a factory method to the type it creates. A flow reaching an Entity shows its
+     whole Aggregate.
 3. Select a ``Class``. For services and other classes with methods you can optionally select a ``Method``
    to restrict the flow to that single method. Leave it empty to include the flows of all methods.
    Domain commands and domain events have no method selection: forward, they start the flow they trigger;
