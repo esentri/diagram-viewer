@@ -217,7 +217,7 @@ A class implementing DLC's ``Factory`` (or annotated with jMolecules' ``@Factory
 e.g. of an Aggregate or a DomainService, are marked with ``«factory»`` in their method list.
 
 A class creating another domain type by its factory methods is connected to it by a ``<<creates>>`` arrow, labeled with
-these methods (at most three, then ``…``) - e.g. a Factory or DomainService to the Aggregate it creates, or an Aggregate
+these methods, each with the class it belongs to (e.g. ``Appointment.invite``, at most three, then ``…``) - e.g. a Factory or DomainService to the Aggregate it creates, or an Aggregate
 to another Aggregate it creates. Within an Aggregate there is no such arrow, as the composition already connects its
 classes, and neither for a class creating instances of itself.
 

@@ -31,7 +31,7 @@ class DiagrammerUtilsTest {
     private static final String FACTORY_FIXTURE_PACKAGE = "fixtures.factory";
 
     private static final String CREATES_ORDER =
-        "[<F>OrderFactory <<Factory>>]  --[<label> <<creates>> create] --> [<AF> Order <<Aggregate>>]";
+        "[<F>OrderFactory <<Factory>>]  --[<label> <<creates>> OrderFactory.create] --> [<AF> Order <<Aggregate>>]";
 
     private static DomainMirror nonDomainMirror;
     private static DomainMirror factoryMirror;
