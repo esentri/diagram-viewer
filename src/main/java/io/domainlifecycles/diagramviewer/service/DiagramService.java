@@ -102,4 +102,14 @@ public interface DiagramService {
      * placeholder, since drawing dozens of large images at once makes the browser slow
      */
     long previewLimitBytes();
+
+    /**
+     * Generates the nomnoml source of a diagram, as it is rendered.
+     *
+     * @param domainMirror the domain of the diagram's project
+     * @param domainCalls  the static analysis result of the diagram's project, {@code null} if none was uploaded
+     * @param diagram      the diagram
+     * @return the nomnoml source of the diagram
+     */
+    String generateNomnoml(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram);
 }

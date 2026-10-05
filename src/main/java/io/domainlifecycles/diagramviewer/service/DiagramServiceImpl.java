@@ -281,21 +281,7 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private RenderedImage renderImage(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram) {
-
-        final String nomnoml;
-        List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
-
-        try {
-            nomnoml = DiagrammerUtils.generateNomnoml(
-                domainMirror,
-                diagram.getDiagramStylingConfiguration(),
-                diagram.getDomainModelVisibility(),
-                notes,
-                domainCalls
-            );
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            throw DiagramViewerException.fail(e.getMessage(), e);
-        }
+        String nomnoml = generateNomnoml(domainMirror, domainCalls, diagram);
 
         int classCount = DiagrammerUtils.countClasses(nomnoml);
         if (classCount > largeDiagramClasses) {
@@ -314,6 +300,22 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     private record RenderedImage(byte[] svg, int classCount) {
+    }
+
+    @Override
+    public String generateNomnoml(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram) {
+        List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
+        try {
+            return DiagrammerUtils.generateNomnoml(
+                domainMirror,
+                diagram.getDiagramStylingConfiguration(),
+                diagram.getDomainModelVisibility(),
+                notes,
+                domainCalls
+            );
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            throw DiagramViewerException.fail(e.getMessage(), e);
+        }
     }
 
     @Override

@@ -19,7 +19,7 @@ plugins {
 }
 
 group = 'io.domainlifecycles'
-version = '0.2'
+version = '0.3'
 
 ext {
 	set('vaadinVersion', "24.8.6")

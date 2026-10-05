@@ -44,6 +44,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -304,6 +305,26 @@ class DiagramServiceTest {
             // then
             verify(domainCallsLoader, times(1)).get();
             diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), eq(domainCalls)));
+        }
+    }
+
+    @Test
+    void Should_GenerateTheNomnomlSourceOfTheDiagram_WithTheStaticAnalysisResult() {
+        // given
+        Diagram diagram = Diagram.builder().name("diagram").build();
+        DomainMirror domainMirror = mock(DomainMirror.class);
+        DomainCalls domainCalls = mock(DomainCalls.class);
+
+        try(MockedStatic<DiagrammerUtils> diagrammerUtilsMocked = Mockito.mockStatic(DiagrammerUtils.class)) {
+            diagrammerUtilsMocked.when(() -> DiagrammerUtils.generateNomnoml(any(), any(), any(), any(), any())).thenReturn("testNomnoml");
+
+            // when
+            String nomnoml = diagramService.generateNomnoml(domainMirror, domainCalls, diagram);
+
+            // then: the source as rendered, without rendering an image
+            assertThat(nomnoml).isEqualTo("testNomnoml");
+            diagrammerUtilsMocked.verify(() -> DiagrammerUtils.generateNomnoml(eq(domainMirror), any(), any(), any(), eq(domainCalls)));
+            verifyNoInteractions(krokiClient);
         }
     }
 

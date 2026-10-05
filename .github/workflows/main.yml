@@ -70,8 +70,10 @@ jobs:
       - name: Package
         run: |
           zip -r ${{ github.run_id }}.zip .platform
-          zip -j ${{ github.run_id }}.zip build/libs/diagram-viewer-0.2.jar
-
+          JAR=$(ls build/libs/diagram-viewer-*.jar | grep -v -- '-plain\.jar$')
+          echo "Gefundenes JAR: $JAR"
+          test "$(echo "$JAR" | wc -l)" -eq 1 || { echo "Fehler: kein eindeutiges JAR"; ls -la build/libs/; exit 1; }
+          zip -j ${{ github.run_id }}.zip "$JAR"
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4.3.3
         with:
