@@ -72,6 +72,7 @@ class DiagrammerUtilsTest {
         assertThat(nomnoml).contains("[<F> OrderFactory <<Factory>> |");
         assertThat(nomnoml).contains("#.F:fill=#E0F0E0 bold");
         assertThat(nomnoml).contains(CREATES_ORDER);
+        assertThat(nomnoml).contains("+ «factory» Order reorder(Order)");
     }
 
     @Test
@@ -84,7 +85,7 @@ class DiagrammerUtilsTest {
             DiagramStylingConfiguration.builder().showFactoryRelations(false).build(), new DomainModelVisibility(), null);
 
         // then
-        assertThat(withoutFactories).doesNotContain(classBoxMarker("OrderFactory")).doesNotContain("<<creates>>");
+        assertThat(withoutFactories).doesNotContain("OrderFactory");
         assertThat(withoutRelations).contains(classBoxMarker("OrderFactory")).doesNotContain("<<creates>>");
     }
 
