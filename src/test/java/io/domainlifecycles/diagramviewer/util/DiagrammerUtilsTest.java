@@ -90,6 +90,21 @@ class DiagrammerUtilsTest {
     }
 
     @Test
+    void Should_DrawOnlyTheFramesOfTheAggregates_When_EnabledInTheConfiguration() {
+
+        // when
+        String withContent = generate(factoryMirror, DiagramStylingConfiguration.builder().build(),
+            new DomainModelVisibility(), null);
+        String framesOnly = generate(factoryMirror, DiagramStylingConfiguration.builder().showOnlyAggregateFrames(true).build(),
+            new DomainModelVisibility(), null);
+
+        // then: the frame stays connected, the aggregate root inside is gone
+        assertThat(withContent).contains("[<AF> Order <<Aggregate>>|").contains("[<AR> Order <<AggregateRoot>>");
+        assertThat(framesOnly.lines()).contains("[<AF> Order <<Aggregate>>]");
+        assertThat(framesOnly).doesNotContain("<<AggregateRoot>>").contains(CREATES_ORDER);
+    }
+
+    @Test
     void Should_ApplyTheFactoryStyleAndMemberSettings() {
 
         // when
@@ -319,5 +334,15 @@ class DiagrammerUtilsTest {
             "[<DS> BookingService]");
 
         assertThat(DiagrammerUtils.countClasses(nomnoml)).isEqualTo(3);
+    }
+
+    @Test
+    void Should_CountAnAggregateFrameWithoutContentAsClassBox() {
+        String nomnoml = String.join("\n",
+            "#.AF:visual=frame align=left",
+            "[<AF> Booking <<Aggregate>>]",
+            "[<DS> BookingService]");
+
+        assertThat(DiagrammerUtils.countClasses(nomnoml)).isEqualTo(2);
     }
 }

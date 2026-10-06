@@ -87,6 +87,51 @@ class DiagramVisibilityComponentTest {
         assertThat(listedTypes(factories)).containsExactly("fixtures.factory.OrderFactory");
     }
 
+    @Test
+    void Should_ShowTheEntriesOfAGroupWithTheSameHeight_SoThatALongListDoesNotJump() {
+
+        // given
+        var component = componentWithOpenedGroups();
+        Details factories = groups(component).filter(group -> group.getSummaryText().equals("Factory")).findFirst()
+            .orElseThrow();
+        VirtualList<DomainTypeMirror> list = virtualList(factories);
+        DomainTypeMirror orderFactory = MIRROR.getDomainTypeMirror("fixtures.factory.OrderFactory").orElseThrow();
+
+        // when
+        Component entry = component.createAndGetContentForDomainTypeAndMirror(orderFactory.getDomainType(), orderFactory);
+
+        // then: the entries not fetched yet are drawn like a real one, and a name takes two lines with the full name
+        // as tooltip
+        assertThat(list.getPlaceholderItem()).isNotNull();
+        Element name = descendants(entry.getElement())
+            .filter(child -> child.getElement().getClassList().contains(DiagramVisibilityComponent.TYPE_NAME_CSS_CLASS))
+            .findFirst().orElseThrow().getElement();
+        assertThat(name.getTextRecursively()).isEqualTo("OrderFactory");
+        assertThat(name.getAttribute("title")).isEqualTo("fixtures.factory.OrderFactory");
+    }
+
+    private static DiagramVisibilityComponent componentWithOpenedGroups() {
+        UUID projectId = UUID.randomUUID();
+        SessionStorage sessionStorage = mock(SessionStorage.class);
+        when(sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(projectId)).thenReturn(
+            MIRROR.getAllDomainTypeMirrors().stream()
+                .filter(type -> type.getTypeName().startsWith("fixtures.factory"))
+                .toList());
+        when(sessionStorage.isDomainTypeSettingOpen(any())).thenReturn(true);
+        var component = new DiagramVisibilityComponent(sessionStorage, mock(DiagramService.class));
+        component.setDiagram(Diagram.builder().project(Project.builder().id(projectId).build()).build());
+        return component;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static VirtualList<DomainTypeMirror> virtualList(Details group) {
+        return descendants(group.getElement())
+            .filter(VirtualList.class::isInstance)
+            .map(list -> (VirtualList<DomainTypeMirror>) list)
+            .findFirst()
+            .orElseThrow();
+    }
+
     @SuppressWarnings("unchecked")
     private static List<String> listedTypes(Details group) {
         return descendants(group.getElement())

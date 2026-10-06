@@ -43,6 +43,33 @@ img {
     -webkit-user-drag: none;
 }
 
-#vaadinLoginOverlayWrapper::part(brand) {
-    display: none;
+/* grid items grow to their content by default: a long diagram name would push its card into the next column */
+.diagram-card-link,
+.diagram-card {
+    min-width: 0;
+}
+
+/* the title of a card leaves the width of its grid column to the name inside */
+.diagram-card > [slot='title'] {
+    min-width: 0;
+}
+
+/* long names - often without any space, e.g. ZimmerApplicationService.checkeGastAus - wrap: preferably after a dot or
+   underscore or before a new word in camel case (see WrappableName), anywhere only where none of these fits; also
+   within the side nav, which does not wrap otherwise */
+.wrappable-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* the name of a type in the element level filter: always two lines high, as a virtual list needs entries of the same
+   height - otherwise a long list jumps while its entries arrive; a longer name is cut off with an ellipsis */
+.domain-type-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    line-height: 1.25;
+    height: 2.5em;
 }

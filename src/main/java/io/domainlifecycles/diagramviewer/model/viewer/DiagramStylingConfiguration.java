@@ -268,6 +268,14 @@ public class DiagramStylingConfiguration {
     @Setter
     @Builder.Default private boolean showAggregateMethods = true;
     /**
+     * If true, Aggregates are drawn as their frame only, without the classes, relationships and notes inside.
+     * The relationships from outside an Aggregate connect its frame and are still drawn.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default false")
+    @Builder.Default private boolean showOnlyAggregateFrames = false;
+    /**
      * If true, DomainEvent classes are included
      */
     @Getter

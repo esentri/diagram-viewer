@@ -27,7 +27,6 @@ export class SvgZoomViewer extends LitElement {
 
     #transform-layer {
       transform-origin: 0 0;
-      will-change: transform;
       display: inline-block;
     }
 
@@ -88,6 +87,12 @@ export class SvgZoomViewer extends LitElement {
   @state() private _scale = 1;
   @state() private _translateX = 0;
   @state() private _translateY = 0;
+  /**
+   * the scale the image is laid out with: a large diagram laid out with its natural size and only scaled down by the
+   * transform makes the browser rasterize it in full, which may exceed its graphics memory and then leaves parts of the
+   * diagram and of the surrounding page undrawn
+   */
+  @state() private _layoutScale = 0;
 
   private _isDragging = false;
   private _dragStartX = 0;
@@ -119,7 +124,13 @@ export class SvgZoomViewer extends LitElement {
   }
 
   render() {
-    const transform = `translate(${this._translateX}px, ${this._translateY}px) scale(${this._scale})`;
+    const layoutScale = this._layoutScale || 1;
+    const transform = `translate(${this._translateX}px, ${this._translateY}px) scale(${this._scale / layoutScale})`;
+    const img = this._getImage();
+    // hidden until fitted, so that it is never laid out with its natural size
+    const imageStyle = this._layoutScale && img
+      ? `width: ${img.naturalWidth * layoutScale}px; height: ${img.naturalHeight * layoutScale}px`
+      : "visibility: hidden; width: 0; height: 0";
 
     return html`
       <div
@@ -131,7 +142,7 @@ export class SvgZoomViewer extends LitElement {
         @touchend=${this._onTouchEnd}
       >
         <div id="transform-layer" style="transform: ${transform}">
-          <img id="svg-image" .src=${this.src} draggable="false" alt="Diagram" />
+          <img id="svg-image" style="${imageStyle}" .src=${this.src} draggable="false" alt="Diagram" />
         </div>
       </div>
       ${this.showControls
@@ -147,8 +158,11 @@ export class SvgZoomViewer extends LitElement {
   }
 
   firstUpdated(): void {
-    const img = this.shadowRoot!.getElementById("svg-image") as HTMLImageElement;
-    img.addEventListener("load", () => this._centerImage());
+    this._getImage()!.addEventListener("load", () => {
+      // another diagram: its layout size is set when it is fitted
+      this._layoutScale = 0;
+      this._centerImage();
+    });
     // fit again while the user has not zoomed or moved: the viewport may get its size only after the image is
     // loaded, e.g. in a dialog or a tab, and changes with the window
     this._resizeObserver = new ResizeObserver(() => {
@@ -320,7 +334,7 @@ export class SvgZoomViewer extends LitElement {
 
   private _centerImage(): void {
     const viewport = this._getViewport();
-    const img = this.shadowRoot!.getElementById("svg-image") as HTMLImageElement;
+    const img = this._getImage();
     if (!viewport || !img || !img.naturalWidth) return;
 
     const vw = viewport.clientWidth;
@@ -335,6 +349,7 @@ export class SvgZoomViewer extends LitElement {
     this._effectiveMinScale = Math.min(this.minScale, fitScale);
     this._adjustedByUser = false;
     this._scale = fitScale;
+    this._layoutScale = fitScale;
     this._translateX = (vw - iw * fitScale) / 2;
     this._translateY = (vh - ih * fitScale) / 2;
   }
@@ -351,6 +366,10 @@ export class SvgZoomViewer extends LitElement {
 
   private _getViewport(): HTMLElement | null {
     return this.shadowRoot?.getElementById("viewport") ?? null;
+  }
+
+  private _getImage(): HTMLImageElement | null {
+    return (this.shadowRoot?.getElementById("svg-image") as HTMLImageElement | null) ?? null;
   }
 
   private _getViewportRect(): DOMRect {

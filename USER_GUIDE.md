@@ -210,6 +210,11 @@ Additionally, you can define which stereotypes are shown.
    is shown inline - as field of the class referencing it, e.g. ``price:<VO> Money`` - instead of as class of its own
    connected by a composition. By default value objects of up to 2 fields are shown inline; ``1`` shows only those of a
    single field inline, ``0`` none. A value object containing one that is not shown inline is not shown inline itself.
+4. In the section ``Aggregates``, ``Frame only`` draws all aggregates of the diagram as their frame only - without the
+   classes inside (aggregate root, entities, value objects, ...), the relationships between them and their notes. The
+   arrows from outside an aggregate, e.g. from its repository, the commands it processes or the events it publishes,
+   connect its frame and are still shown. ``Fields``, ``Methods`` and ``Inline value objects up to (fields)`` of the
+   section are greyed out meanwhile (their values are kept). Handy for an overview of a larger domain model.
 
 ### Factories
 A class implementing DLC's ``Factory`` (or annotated with jMolecules' ``@Factory``) is shown with the stereotype

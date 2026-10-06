@@ -44,10 +44,14 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateFolderDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.various.WrappableName;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import java.util.Locale;
 
 public class DiagramCard extends Card implements DragSource<CardLinkWrapper>, DropTarget<CardLinkWrapper> {
+
+    /** styled to wrap long names within the card, see diagram-viewer-styles.css */
+    static final String CSS_CLASS = "diagram-card";
 
     /**
      * @param imageSize        the size of the diagram's image in bytes, {@code -1} if not rendered yet
@@ -57,7 +61,8 @@ public class DiagramCard extends Card implements DragSource<CardLinkWrapper>, Dr
      */
     public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final Diagram diagram, final long imageSize,
                        final long previewLimitBytes, final String diagramSrc) {
-        setTitle(diagram.getName());
+        addClassName(CSS_CLASS);
+        setTitle(WrappableName.create(diagram.getName()));
 
         if (imageSize > previewLimitBytes) {
             setMedia(createPlaceholder(VaadinIcon.FILE_PICTURE,
@@ -95,7 +100,8 @@ public class DiagramCard extends Card implements DragSource<CardLinkWrapper>, Dr
     }
 
     public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final DiagramDirectory diagramDirectory) {
-        setTitle(diagramDirectory.getName());
+        addClassName(CSS_CLASS);
+        setTitle(WrappableName.create(diagramDirectory.getName()));
 
         Image image = new Image("frontend/icons/folder-open-o.svg", "Directory");
         image.setHeight("200px");

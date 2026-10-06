@@ -52,6 +52,7 @@ import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import io.domainlifecycles.diagramviewer.webapp.components.various.WrappableName;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -67,7 +68,9 @@ import static java.util.stream.Collectors.groupingBy;
 @Slf4j
 public class DiagramVisibilityComponent extends Div {
 
-    private static final double ENTRY_HEIGHT_REM = 4.5;
+    private static final double ENTRY_HEIGHT_REM = 5.5;
+    /** styled to two lines, see diagram-viewer-styles.css */
+    static final String TYPE_NAME_CSS_CLASS = "domain-type-name";
     private static final double MAX_LIST_HEIGHT_REM = 30;
     private static final int SEARCH_FIELD_THRESHOLD = 10;
 
@@ -179,6 +182,9 @@ public class DiagramVisibilityComponent extends Div {
             list.setWidthFull();
             list.setHeight(Math.min(allMirrors.size() * ENTRY_HEIGHT_REM, MAX_LIST_HEIGHT_REM) + "rem");
             list.setRenderer(new ComponentRenderer<>(mirror -> createAndGetContentForDomainTypeAndMirror(type, mirror)));
+            // the entries not fetched yet are drawn like a real one, with the same height: an empty placeholder makes
+            // a long list jump while its entries arrive
+            list.setPlaceholderItem(allMirrors.get(0));
             list.setItems(allMirrors);
 
             if (allMirrors.size() > SEARCH_FIELD_THRESHOLD) {
@@ -205,14 +211,19 @@ public class DiagramVisibilityComponent extends Div {
 
     }
 
-    private Component createAndGetContentForDomainTypeAndMirror(DomainType type, DomainTypeMirror mirror) {
+    Component createAndGetContentForDomainTypeAndMirror(DomainType type, DomainTypeMirror mirror) {
         VerticalLayout typeMirrorVisibilityLayout = new VerticalLayout();
         typeMirrorVisibilityLayout.setMargin(false);
         typeMirrorVisibilityLayout.setSpacing(false);
         typeMirrorVisibilityLayout.getStyle().setPaddingBottom("0");
         typeMirrorVisibilityLayout.getStyle().setPaddingTop("0");
 
-        NativeLabel typeMirrorNameLabel = new NativeLabel(shortClassName(mirror.getTypeName()));
+        // all entries of the virtual list have the same height: a name takes two lines, wrapped where a reader expects,
+        // a longer one is cut off - the full name is the tooltip
+        NativeLabel typeMirrorNameLabel = new NativeLabel();
+        typeMirrorNameLabel.addClassName(TYPE_NAME_CSS_CLASS);
+        typeMirrorNameLabel.getElement().setAttribute("title", mirror.getTypeName());
+        typeMirrorNameLabel.add(WrappableName.create(shortClassName(mirror.getTypeName())));
         typeMirrorNameLabel.getStyle().set("font-weight", "bold");
 
         Details blendingLayout = new Details("View filter settings");

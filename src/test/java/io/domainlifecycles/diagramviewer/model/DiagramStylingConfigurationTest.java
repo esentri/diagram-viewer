@@ -68,6 +68,12 @@ class DiagramStylingConfigurationTest {
     }
 
     @Test
+    void Should_DrawTheAggregatesWithTheirContent_ByDefault() {
+        assertThat(DiagramStylingConfiguration.builder().build().isShowOnlyAggregateFrames()).isFalse();
+        assertThat(new DiagramStylingConfiguration().isShowOnlyAggregateFrames()).isFalse();
+    }
+
+    @Test
     void Should_ShowOnlyTheMethodsCalledInTheFlows_ByDefault() {
         assertThat(DiagramStylingConfiguration.builder().build().isShowOnlyFlowMethods()).isTrue();
         assertThat(new DiagramStylingConfiguration().isShowOnlyFlowMethods()).isTrue();

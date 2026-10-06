@@ -75,6 +75,7 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramRenderingStartedEv
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
+import io.domainlifecycles.diagramviewer.webapp.components.various.WrappableName;
 import jakarta.annotation.security.PermitAll;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -236,7 +237,7 @@ public class DiagramView extends FlexLayout implements BeforeEnterObserver {
             path.getStyle().set("font-size", "var(--lumo-font-size-s)").set("color", "var(--lumo-secondary-text-color)");
             titleLayout.add(path);
         }
-        H3 title = new H3(diagram.getName());
+        H3 title = new H3(WrappableName.create(diagram.getName()));
         title.setId("diagram-title");
         title.getStyle().setMargin("0");
         titleLayout.add(title);

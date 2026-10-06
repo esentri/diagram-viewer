@@ -46,7 +46,11 @@ import java.util.Map;
 
 public class CardLinkWrapper extends Div {
 
+    /** styled to keep the card within its column of the grid, see diagram-viewer-styles.css */
+    static final String CSS_CLASS = "diagram-card-link";
+
     private CardLinkWrapper() {
+        addClassName(CSS_CLASS);
         getStyle().set("cursor", "pointer");
         getStyle().setMarginBottom("calc(var(--vaadin-form-layout-column-spacing))");
     }

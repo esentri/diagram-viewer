@@ -262,6 +262,12 @@ public class VisibilityConfigurationDialog extends Dialog {
         showAggregateMethodsCheckbox = new Checkbox();
         diagramConfigurationBinder.bind(showAggregateMethodsCheckbox, DiagramStylingConfiguration::isShowAggregateMethods, DiagramStylingConfiguration::setShowAggregateMethods);
 
+        Checkbox showOnlyAggregateFramesCheckbox = new Checkbox();
+        showOnlyAggregateFramesCheckbox.setId("show-only-aggregate-frames");
+        showOnlyAggregateFramesCheckbox.setTooltipText(
+            "Draws all aggregates as their frame only, without the classes, relationships and notes inside.");
+        diagramConfigurationBinder.bind(showOnlyAggregateFramesCheckbox, DiagramStylingConfiguration::isShowOnlyAggregateFrames, DiagramStylingConfiguration::setShowOnlyAggregateFrames);
+
         IntegerField maxInlinedValueObjectFieldsField = new IntegerField();
         maxInlinedValueObjectFieldsField.setMin(0);
         maxInlinedValueObjectFieldsField.setStepButtonsVisible(true);
@@ -274,7 +280,16 @@ public class VisibilityConfigurationDialog extends Dialog {
             .bind(DiagramStylingConfiguration::getMaxInlinedValueObjectFields,
                 DiagramStylingConfiguration::setMaxInlinedValueObjectFields);
 
+        // a frame without content shows neither fields, methods nor inlined value objects; also applies when a
+        // diagram is read
+        showOnlyAggregateFramesCheckbox.addValueChangeListener(event -> {
+            showAggregateFieldsCheckbox.setEnabled(!event.getValue());
+            showAggregateMethodsCheckbox.setEnabled(!event.getValue());
+            maxInlinedValueObjectFieldsField.setEnabled(!event.getValue());
+        });
+
         aggregatesDialogFormLayout.addFormItem(showAggregatesCheckbox,"Show");
+        aggregatesDialogFormLayout.addFormItem(showOnlyAggregateFramesCheckbox,"Frame only");
         aggregatesDialogFormLayout.addFormItem(showAggregateFieldsCheckbox,"Fields");
         aggregatesDialogFormLayout.addFormItem(showAggregateMethodsCheckbox,"Methods");
         aggregatesDialogFormLayout.addFormItem(maxInlinedValueObjectFieldsField, "Inline value objects up to (fields)");

@@ -71,6 +71,18 @@ class DiagramCardTest {
         assertThat(text(card)).contains("Not rendered yet");
     }
 
+    @Test
+    void Should_ShowTheNameAsTitle_WrappableAfterDotsAndUnderscoresAndBeforeNewWords() {
+        DiagramCard card = new DiagramCard(diagramDirectoryService,
+            Diagram.builder().name("ZimmerService.checke_GastAus").build(), 300 * 1024, LIMIT, "api/resources/x.svg");
+
+        Element title = card.getTitle().getElement();
+        assertThat(title.getTextRecursively()).isEqualTo("ZimmerService.checke_GastAus");
+        assertThat(title.getChildren().filter(child -> !child.isTextNode()).map(Element::getTag))
+            .containsOnly("wbr")
+            .hasSize(4); // Zimmer|Service.|checke_|Gast|Aus
+    }
+
     /** the card's media slot is not among its component children, so the element tree is searched */
     private static Stream<Element> images(Component card) {
         return elements(card.getElement()).filter(element -> !element.isTextNode() && "img".equals(element.getTag()));
