@@ -29,7 +29,9 @@
 
 package io.domainlifecycles.diagramviewer.webapp.views;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -40,6 +42,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -51,6 +54,7 @@ import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDirectoryDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
@@ -74,6 +78,8 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
     private DiagramDirectory diagramDirectory;
     private Project project;
     private UUID diagramDirectoryId;
+    private Registration renderedRegistration;
+    private Scroller cardScroller;
 
     public DiagramDirectoryView(DiagramDirectoryService diagramDirectoryService, ProjectService projectService,
                                 DiagramService diagramService) {
@@ -99,9 +105,38 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
 
     private void addPageContents() {
         add(createAndGetNameAndDeleteButtonLayout());
-        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, diagramService, project,
-            project.getSubDirectories(diagramDirectory), diagramDirectory.getDiagrams()));
-        add(scroller);
+        cardScroller = new Scroller(createCardGrid());
+        add(cardScroller);
+    }
+
+    private DiagramCardGridContainer createCardGrid() {
+        return new DiagramCardGridContainer(diagramDirectoryService, diagramService, project,
+            project.getSubDirectories(diagramDirectory), diagramDirectory.getDiagrams());
+    }
+
+    /**
+     * Shows the images of the diagrams rendered in the meantime - only the cards, so that e.g. an open dialog stays.
+     */
+    private void refreshCards() {
+        if (cardScroller == null) {
+            return;
+        }
+        setDiagramDirectoryAndProject();
+        cardScroller.setContent(createCardGrid());
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        // diagrams may still be rendered in the background, e.g. the ones of a bounded context analysis
+        renderedRegistration = ComponentUtil.addListener(attachEvent.getUI(), DiagramReRenderedEvent.class,
+            event -> refreshCards());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        renderedRegistration.remove();
     }
 
     private void refreshPage() {

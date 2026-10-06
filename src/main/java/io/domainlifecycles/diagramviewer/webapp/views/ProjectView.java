@@ -66,6 +66,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatab
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ReuploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ShareProjectDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
@@ -99,6 +100,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private Project project;
     private String projectName;
     private Registration registration;
+    private Registration renderedRegistration;
+    private Scroller cardScroller;
 
     private final boolean jarUploadEnabled;
 
@@ -136,8 +139,24 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private void addPageContents() {
         add(createAndGetNameAndEditButtonAndReuploadButtonLayout(), createAndGetButtonBar());
-        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, diagramService, project, project.getTopLevelDiagramDirectories(), project.getDiagramsWithoutDirectory()));
-        add(scroller);
+        cardScroller = new Scroller(createCardGrid());
+        add(cardScroller);
+    }
+
+    private DiagramCardGridContainer createCardGrid() {
+        return new DiagramCardGridContainer(diagramDirectoryService, diagramService, project,
+            project.getTopLevelDiagramDirectories(), project.getDiagramsWithoutDirectory());
+    }
+
+    /**
+     * Shows the images of the diagrams rendered in the meantime - only the cards, so that e.g. an open dialog stays.
+     */
+    private void refreshCards() {
+        if (cardScroller == null) {
+            return;
+        }
+        setProject();
+        cardScroller.setContent(createCardGrid());
     }
 
     private HorizontalLayout createAndGetNameAndEditButtonAndReuploadButtonLayout() {
@@ -342,11 +361,18 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
                 DiagramsOrProjectsChangedEvent.class,
                 event -> refreshPage()
         );
+        // a diagram created here is rendered in the background: its card shows a placeholder until then
+        renderedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(),
+                DiagramReRenderedEvent.class,
+                event -> refreshCards()
+        );
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         super.onDetach(detachEvent);
         registration.remove();
+        renderedRegistration.remove();
     }
 }
