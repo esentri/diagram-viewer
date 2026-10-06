@@ -114,7 +114,8 @@ For the Maven plugin, the same options are available as ``<runStaticAnalysis>``,
 ![Create new diagram](./images/create_new_diagram.png)
 3. Fill in the Diagram Name and click ``Create``
 ![Create dialog](./images/create_dialog.png)
-4. After creating the diagram, you can see the diagram name in the menu on the left side. If you click there, you can see the diagram.
+4. After creating the diagram, it appears as a card in the project view and with its name in the menu on the left
+   side. Click either of them to open the diagram.
 ![Diagram created](./images/diagram_created.png)
 
 Diagram names have to be unique within their folder (or among the diagrams of the project without folder) - diagrams
@@ -128,6 +129,7 @@ To get started with a large model, the viewer can create a set of diagrams for y
 ``Read Models`` and ``Commands`` show flows, which are known from the static analysis result only (see
 [Static analysis](#static-analysis)): if none was uploaded with the domain model, they are greyed out and the dialog
 tells why. After uploading the domain model again with the static analysis result, they can be chosen.
+![Analyze Bounded Contexts](./images/analyze_dialog.png)
 After confirming, the viewer creates a folder for each Bounded Context of the project, named after the Bounded Context
 (or its package, if it has no name), containing what the chosen analyses create - a Bounded Context without anything
 of them gets no folder:
@@ -139,6 +141,7 @@ of them gets no folder:
   the structural connections (``Include ingoing connections to`` and ``Include outgoing connections from`` with
   ``Depth`` 2, see [Filter on connections / relations](#filter-on-connections--relations)), not on flows, and may reach
   into other Bounded Contexts. Without aggregates, there is no such folder,
+  ![Aggregate Neighborhood](./images/aggregate_neighborhood.png)
 - a sub folder ``Read Models`` with a diagram per top level read model of the Bounded Context, named after the read
   model, showing everything leading into the read model (backward flow). A read model contained in another one (as
   field, ``Optional`` or collection) gets no diagram of its own: it is shown, connected by a composition, in the
@@ -148,6 +151,10 @@ of them gets no folder:
   flow the command triggers (forward flow) together with everything leading into the methods processing it (backward
   flow - a command itself has no backward flow, since nothing in the analysis models where a command is created).
   Without commands, there is no such folder.
+
+The demo project declares no Bounded Contexts, so its domain model package ``com.esentri.rezeption`` counts as one:
+
+![Analyzed Bounded Contexts](./images/analyze_result.png)
 
 If two aggregates, read models or commands of a Bounded Context share their simple name, their diagram names are followed by
 their package, relative to the Bounded Context, e.g. ``AktiviereCommand (core.domain.vertrag)``.
@@ -182,8 +189,8 @@ moved to the project.
 2. Click on ``Add user`` in the following dialog
 3. Enter the email adress of the user you want to share the project with.
 The user must have registered with the diagram viewer before!
-4. If that user now logs in, he can see the project on the left side and all the corresponding diagrams.
-He can also edit the diagrams and create new ones, which are automatically shared amon all project users.
+4. If that user now logs in, they can see the project on the left side and all the corresponding diagrams.
+They can also edit the diagrams and create new ones, which are automatically shared among all project users.
 
 ## F) Analyzing The Model
 For a large project containing a large domain model one diagram with all details my be overwhelming.
@@ -196,10 +203,10 @@ Further changes in the meantime are fine - only the latest one is rendered. If a
 diagrams take long to render and are hard to read.
 
 ### Filter on package level
-We have structured our demo project according to Ports&Adapters, so there is a package 
-``com.esentri.rezeption.inbound``.
+Our demo project separates its application, domain and infrastructure layers into packages, e.g. the package
+``com.esentri.rezeption.application`` holds the application services.
 
-1. On the right side, add the package in tzhe field ``Excplicitly included packages``, then the diagram will only show the 
+1. On the right side, add the package in the field ``Explicitly included packages``, then the diagram will only show the
 model elements from this package and its subpackages.
 ![Explicitly included packages](./images/explicitly_included_packages.png)
 
@@ -226,20 +233,8 @@ Additionally, you can define which stereotypes are shown.
    arrows from outside an aggregate, e.g. from its repository, the commands it processes or the events it publishes,
    connect its frame and are still shown. ``Fields``, ``Methods`` and ``Inline value objects up to (fields)`` of the
    section are greyed out meanwhile (their values are kept). Handy for an overview of a larger domain model.
-
-### Factories
-A class implementing DLC's ``Factory`` (or annotated with jMolecules' ``@Factory``) is shown with the stereotype
-``<<Factory>>``, its methods but not its fields by default. Methods of other classes annotated with ``@FactoryMethod``,
-e.g. of an Aggregate or a DomainService, are marked with ``«factory»`` in their method list.
-
-A class creating another domain type by its factory methods is connected to it by a ``<<creates>>`` arrow, labeled with
-these methods, each with the class it belongs to (e.g. ``Appointment.invite``, at most three, then ``…``) - e.g. a Factory or DomainService to the Aggregate it creates, or an Aggregate
-to another Aggregate it creates. Within an Aggregate there is no such arrow, as the composition already connects its
-classes, and neither for a class creating instances of itself.
-
-The section ``Factory`` of the general visibility settings (eye icon) hides the factories (``Show``), switches their
-fields and methods and, with ``Creates relations`` (checked by default), the ``<<creates>>`` arrows. The color and
-styling of factories are set in the styling options.
+   ![Frame only setting](./images/frame_only_setting.png)
+   ![Frame only](./images/frame_only.png)
 
 ### Non-domain classes
 Besides the classes implementing one of the DLC marker interfaces, the domain model also contains classes
@@ -262,7 +257,7 @@ There you can also decide whether their fields (hidden by default) and methods (
 Sometimes it is useful to only show specific classes in the diagram and package level filtering is not a sufficient way.
 In this case you can hide concrete domain model elements. 
 
-1. On the right side open `Àdvanced view filters` 
+1. On the right side open ``Advanced view filters``
 2. Select the name of the building blocks to be hidden in ``Invisible objects``.
 
 Alternatively, the building blocks are listed per type on the right side (e.g. ``AggregateRoot``, ``NonDomain``).
@@ -282,6 +277,7 @@ Below ``Include ingoing connections to`` (what leads to the element) and ``Inclu
 the element leads to) a ``Depth`` limits up to how many steps the connections are followed: ``1`` shows only the elements
 directly connected, ``2`` also the elements connected to these, and so on. ``0`` - the default - shows the complete path.
 An interface and its implementations count as one step. The depth can be set as soon as an element is selected.
+![Connection depth](./images/connection_depth.png)
 
 An element may be selected in ``Include ingoing connections to`` and ``Include outgoing connections from`` at once, to
 show what leads to it and what it leads to - each direction with its own depth. Unlike ``Include connections to``,
@@ -291,8 +287,8 @@ cannot be included and excluded at once, nor be selected in ``Include connection
 such elements are not offered. In the ``View filter settings`` of an element, ``include ingoing and outgoing
 connections`` and ``exclude ingoing and outgoing connections`` select both directions.
 
-For example, to show the model elements, that are connected with the use cases implemented in ``ServiceLeistungenUseCases``,
-one might enter the ApplicationService class ``ServiceLeistungUseCases`` in ``Include outgoing connections from`` and see:
+For example, to show the model elements the use cases implemented in ``BuchungApplicationService`` lead to, one might
+enter the ApplicationService class ``BuchungApplicationService`` in ``Include outgoing connections from`` and see:
 ![user_case_filter](./images/use_case_filter.png)
 
 ### Filter on flows
@@ -324,6 +320,8 @@ as soon as an analysis result is uploaded.
    Domain commands cannot be selected for the backward direction, since nothing in the analyzed code leads *into* a command
    (a command can still appear in a backward flow, if a target is reached because it processes that command).
 4. Click ``Add flow``.
+
+![Flow filter](./images/flow_filter.png)
 
 The active flows are listed in ``Active flow filters`` (forward) and ``Active backward flow filters`` (backward).
 Deselect an entry there to remove that flow again.
@@ -378,6 +376,8 @@ Large flows can be narrowed down:
 
 ``Copy`` and ``Download`` take the text as shown, headed by the flows the diagram is restricted to.
 
+![Flow as text](./images/flow_text.png)
+
 ## G) Add Notes
 There is the option to add notes to the diagram and add information, for discussion or documentation purposes. 
 
@@ -403,9 +403,9 @@ This opens the general layout and fonts settings of the diagram.
 ![Layout settings](./images/layout_settings.png)
 
 The default layout is a simple top-down layout (``Down``). 
-But in some case left to right is better (``Right`)
+But in some cases left to right is better (``Right``):
 
-![LExample left right](./images/example_left_right.png)
+![Example left to right](./images/example_left_right.png)
 
 ## I) Styling Options
 Left to the current diagram, there is a button with a small paintbrush icon.
@@ -414,7 +414,7 @@ Colors and other style settings of each node type can be changed, including non-
 
 ## J) Download diagrams as images
 
-When a diagram is selected, there is a Download button right above. SVG, PBG and JPEG exports are supported.
+When a diagram is selected, there is a Download button right above. SVG, PNG and JPEG exports are supported.
 ![Diagram created](./images/diagram_created.png)
 
 

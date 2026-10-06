@@ -115,6 +115,7 @@ regenerates the diagrams of the project, so the diagrams follow the code and the
 ## Useful entry points in the repo
 - ./README.md - what it does, build, run, configuration, memory
 - ./USER_GUIDE.md - all user-facing features
+- ./CHANGELOG.md - changes per version
 - ./build.gradle
 - ./docker/run/docker-compose.yaml, ./docker/dev/docker-compose.yaml
 - ./docs/bounded-context-plan.md, ./docs/performance-plan.md, ./docs/perf/README.md
