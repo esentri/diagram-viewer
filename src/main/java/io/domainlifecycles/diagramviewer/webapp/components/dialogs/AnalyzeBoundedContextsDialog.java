@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
  * start. All of them are chosen when the dialog opens - except for the analyses showing flows if the project has no
  * static analysis result: they are disabled, and a hint tells why.
  */
-public class AnalyzeBoundedContextsDialog extends Dialog {
+public final class AnalyzeBoundedContextsDialog extends Dialog {
 
     private final Map<Kind, Checkbox> checkboxes = new EnumMap<>(Kind.class);
     private final Button analyzeButton = new Button("Analyze");

@@ -38,7 +38,7 @@ import io.domainlifecycles.diagramviewer.service.DiagramService;
 import java.util.Comparator;
 import java.util.Set;
 
-public class DiagramCardGrid extends FormLayout {
+public final class DiagramCardGrid extends FormLayout {
 
     private DiagramCardGrid() {
         setSizeFull();

@@ -40,6 +40,8 @@ import org.springframework.stereotype.Repository;
 public interface DiagramRepository extends CrudRepository<Diagram, UUID> {
 
     /**
+     * @param projectId the id of the project
+     * @param name      the name of the diagrams
      * @return the diagrams of a project with the given name - names are unique within a directory of a project (or
      * among the diagrams of a project without directory), so there may be several
      */

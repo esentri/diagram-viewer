@@ -59,7 +59,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 
-public class DownloadDiagramDialog extends Dialog {
+public final class DownloadDiagramDialog extends Dialog {
 
     private final String diagramsLocation;
     private final SessionStorage sessionStorage;

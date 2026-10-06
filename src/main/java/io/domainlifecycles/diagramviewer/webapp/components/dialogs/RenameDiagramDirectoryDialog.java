@@ -46,7 +46,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-public class RenameDiagramDirectoryDialog extends Dialog {
+public final class RenameDiagramDirectoryDialog extends Dialog {
 
     private final DiagramDirectoryService diagramDirectoryService;
     private final DiagramDirectory diagramDirectory;

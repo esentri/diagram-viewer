@@ -93,7 +93,7 @@ import java.util.Objects;
 @PageTitle("DLC | Diagram Viewer")
 @PermitAll
 @Slf4j
-public class DiagramView extends FlexLayout implements BeforeEnterObserver {
+public final class DiagramView extends FlexLayout implements BeforeEnterObserver {
 
     /**
      * The diagram's id - names are only unique within a directory. A diagram's name is still accepted for links from

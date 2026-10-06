@@ -80,6 +80,12 @@ public final class ProjectModel {
     }
 
     /**
+     * @param lastUpdated          the project's change timestamp this model reflects
+     * @param domainMirror         the project's domain mirror
+     * @param aggregateRootMirrors the aggregate roots of the domain mirror
+     * @param domainTypeMirrors    the domain types offered by the view filters
+     * @param domainCallsAvailable whether a static analysis result was uploaded for the project
+     * @param domainCallsLoader    loads the static analysis result on first access
      * @param domainModelPackages the packages the domain model was built from, to tell declared Bounded Contexts
      *                            apart from DLC's fallback (see {@link BoundedContext#areDeclared}); {@code null} if
      *                            unknown

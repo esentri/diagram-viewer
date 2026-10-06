@@ -64,7 +64,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DiagramCreateNotesContainer extends VerticalLayout {
+public final class DiagramCreateNotesContainer extends VerticalLayout {
 
     private final static double STRING_LENGTH_TO_REM_FACTOR = 0.6;
 

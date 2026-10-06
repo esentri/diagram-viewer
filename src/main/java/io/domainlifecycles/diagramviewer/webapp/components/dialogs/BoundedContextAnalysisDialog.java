@@ -39,7 +39,7 @@ import com.vaadin.flow.component.progressbar.ProgressBar;
  * Shows the progress of "Analyze Bounded Contexts": first the diagrams being created, then their images being rendered
  * in the background. Closing it does not stop anything - the analysis continues in the background.
  */
-public class BoundedContextAnalysisDialog extends Dialog {
+public final class BoundedContextAnalysisDialog extends Dialog {
 
     private final ProgressBar progressBar = new ProgressBar();
     private final Span status = new Span("Preparing ...");

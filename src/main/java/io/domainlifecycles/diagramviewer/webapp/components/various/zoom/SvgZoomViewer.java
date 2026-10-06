@@ -38,6 +38,8 @@ import com.vaadin.flow.component.dependency.JsModule;
 @JsModule("./svg-zoom-viewer/svg-zoom-viewer.ts")
 public class SvgZoomViewer extends Component implements HasSize {
 
+    // only Vaadin's getElement() is called, which no subclass overrides
+    @SuppressWarnings("this-escape")
     public SvgZoomViewer(String src) {
         getElement().setProperty("src", src);
     }

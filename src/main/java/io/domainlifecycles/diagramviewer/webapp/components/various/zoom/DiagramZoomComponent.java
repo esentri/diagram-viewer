@@ -33,7 +33,7 @@ import com.vaadin.flow.dom.Style.Display;
 import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import java.time.Instant;
 
-public class DiagramZoomComponent extends SvgZoomViewer {
+public final class DiagramZoomComponent extends SvgZoomViewer {
 
     public DiagramZoomComponent(Instant diagramLastModified, Instant stylingLastModified, String... diagramSrc) {
         super(DiagramFileUtils.assembleDiagramUrl(diagramLastModified, stylingLastModified, diagramSrc));

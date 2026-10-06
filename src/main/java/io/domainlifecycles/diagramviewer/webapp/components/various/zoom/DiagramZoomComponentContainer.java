@@ -34,7 +34,7 @@ import com.vaadin.flow.dom.Style.Overflow;
 import io.domainlifecycles.diagramviewer.service.DiagramServiceImpl;
 import java.time.Instant;
 
-public class DiagramZoomComponentContainer extends FlexLayout {
+public final class DiagramZoomComponentContainer extends FlexLayout {
 
     public DiagramZoomComponentContainer(final String projectId,
                                          final String imageFileName,

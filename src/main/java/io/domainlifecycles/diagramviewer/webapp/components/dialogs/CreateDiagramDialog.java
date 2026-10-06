@@ -57,7 +57,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-public class CreateDiagramDialog extends Dialog {
+public final class CreateDiagramDialog extends Dialog {
 
     private final DiagramService diagramService;
     private final Project project;

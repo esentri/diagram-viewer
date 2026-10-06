@@ -59,7 +59,7 @@ import java.util.List;
  * number of steps shown from a start or target, by hiding the accessors, and by a search showing only the paths to the
  * steps containing it.
  */
-public class FlowTextDialog extends Dialog {
+public final class FlowTextDialog extends Dialog {
 
     static final int ALL_STEPS = 0;
     /** up to this number of lines a flow is shown completely at first, larger ones only to {@link #DEFAULT_DEPTH} */

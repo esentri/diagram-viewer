@@ -37,7 +37,7 @@ import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import java.util.Set;
 
-public class DiagramCardGridContainer extends FlexLayout {
+public final class DiagramCardGridContainer extends FlexLayout {
 
     public DiagramCardGridContainer() {
         setSizeUndefined();

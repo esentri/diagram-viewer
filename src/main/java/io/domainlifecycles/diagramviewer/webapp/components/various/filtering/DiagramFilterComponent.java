@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DiagramFilterComponent extends Div {
+public final class DiagramFilterComponent extends Div {
 
     static final String INGOING_DEPTH_ID = "include-connected-ingoing-depth";
     static final String OUTGOING_DEPTH_ID = "include-connected-outgoing-depth";

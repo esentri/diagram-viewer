@@ -47,7 +47,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-public class EditProjectDialog extends Dialog {
+public final class EditProjectDialog extends Dialog {
 
     private final Project project;
     private final ProjectService projectService;

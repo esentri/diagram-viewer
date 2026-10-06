@@ -57,7 +57,7 @@ import java.util.regex.Pattern;
  * @author leonvoellinger
  */
 @Slf4j
-public class StylingConfigurationDialog extends Dialog {
+public final class StylingConfigurationDialog extends Dialog {
 
 
     private Diagram diagram = null;

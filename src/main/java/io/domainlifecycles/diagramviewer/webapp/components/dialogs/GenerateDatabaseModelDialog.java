@@ -50,7 +50,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.Data;
 
-public class GenerateDatabaseModelDialog extends Dialog {
+public final class GenerateDatabaseModelDialog extends Dialog {
     private static final SQLDialect[] SQL_DIALECT_SELECT_VALUES = {SQLDialect.ORACLE, SQLDialect.POSTGRES};
     private static final String SQL_DDL_SCRIPT_SUFFIX = "-ddl-script.sql";
     private static final String APPLICATION_SQL_MIME_TYPE = "application/sql";

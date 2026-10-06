@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PackageMultiSelectComboBox extends MultiSelectComboBox<String> {
+public final class PackageMultiSelectComboBox extends MultiSelectComboBox<String> {
 
     private final static double STRING_LENGTH_TO_REM_FACTOR = 0.6;
 

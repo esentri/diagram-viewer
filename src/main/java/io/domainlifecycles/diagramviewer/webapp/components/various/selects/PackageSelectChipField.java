@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class PackageSelectChipField extends CustomField<Set<String>> {
+public final class PackageSelectChipField extends CustomField<Set<String>> {
 
     private final HorizontalLayout tagsLayout = new HorizontalLayout();
     private final Set<String> tags = new LinkedHashSet<>();

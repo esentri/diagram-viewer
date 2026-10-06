@@ -267,6 +267,8 @@ class DiagramServiceTest {
     }
 
     @Test
+    // the static mock of FileIOUtils only needs to be active, it is not referenced
+    @SuppressWarnings("try")
     void Should_NotRequestDomainCalls_When_RenderingDiagramWithoutFlowFilter() {
 
         // given
@@ -286,6 +288,8 @@ class DiagramServiceTest {
     }
 
     @Test
+    // the static mock of FileIOUtils only needs to be active, it is not referenced
+    @SuppressWarnings("try")
     void Should_RequestDomainCalls_When_RenderingDiagramWithFlowFilter() {
 
         // given

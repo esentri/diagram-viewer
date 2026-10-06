@@ -84,7 +84,7 @@ import jakarta.annotation.security.PermitAll;
 // users only
 @PermitAll
 @CssImport("./styles/diagram-viewer-styles.css")
-public class MainLayout extends AppLayout {
+public final class MainLayout extends AppLayout {
 
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
 

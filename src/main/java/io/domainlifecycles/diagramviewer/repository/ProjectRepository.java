@@ -50,10 +50,10 @@ public interface ProjectRepository extends CrudRepository<Project, UUID> {
     Optional<Project> findByName(String projectName);
 
     @Query("""
-    SELECT 
-        CASE 
-            WHEN p.changedAt IS NOT NULL THEN p.changedAt 
-            ELSE p.createdAt 
+    SELECT
+        CASE
+            WHEN p.changedAt IS NOT NULL THEN p.changedAt
+            ELSE p.createdAt
         END
     FROM Project p
     WHERE p.id = :projectId
@@ -68,6 +68,9 @@ public interface ProjectRepository extends CrudRepository<Project, UUID> {
      * Reads the domain model packages of a project directly: loaded through the project entity, the collection can
      * come back incomplete, since the project's eager relations lead back to it (project, assigned users, their
      * projects).
+     *
+     * @param projectId the id of the project
+     * @return the domain model packages of the project
      */
     @Query("SELECT pkg FROM Project p JOIN p.domainModelPackages pkg WHERE p.id = :projectId")
     Set<String> findDomainModelPackages(@Param("projectId") UUID projectId);

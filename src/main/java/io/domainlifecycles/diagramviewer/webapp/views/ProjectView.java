@@ -84,7 +84,7 @@ import org.springframework.beans.factory.annotation.Value;
 @PageTitle("DLC | Project Viewer")
 @PermitAll
 @Slf4j
-public class ProjectView extends FlexLayout implements BeforeEnterObserver {
+public final class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     public static final String PROJECT_NAME_ROUTE_PARAMETER = "projectName";
 

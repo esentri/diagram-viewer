@@ -73,6 +73,10 @@ public interface ProjectDomainMirrorService {
      * Creates the domain mirror of a project from an uploaded file (JAR or JSON) and stores it,
      * replacing any previous domain model of the project.
      *
+     * @param project             the project the domain mirror belongs to
+     * @param domainModelPackages the packages the domain model is built from
+     * @param pathToFile          the uploaded file
+     * @param uploadFileType      whether the file is a JAR or a JSON domain mirror
      * @return the created domain mirror
      */
     DomainMirror createOrUpdate(final Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType);

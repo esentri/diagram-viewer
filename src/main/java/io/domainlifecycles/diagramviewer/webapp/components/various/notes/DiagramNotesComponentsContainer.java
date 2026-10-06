@@ -44,7 +44,7 @@ import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 
-public class DiagramNotesComponentsContainer extends VerticalLayout {
+public final class DiagramNotesComponentsContainer extends VerticalLayout {
 
     private final DiagramViewNotesContainer notesViewContainer;
     private final DiagramCreateNotesContainer diagramCreateNotesContainer;

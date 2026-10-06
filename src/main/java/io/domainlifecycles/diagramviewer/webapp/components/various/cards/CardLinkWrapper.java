@@ -44,7 +44,7 @@ import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
 import java.util.Map;
 
-public class CardLinkWrapper extends Div {
+public final class CardLinkWrapper extends Div {
 
     /** styled to keep the card within its column of the grid, see diagram-viewer-styles.css */
     static final String CSS_CLASS = "diagram-card-link";

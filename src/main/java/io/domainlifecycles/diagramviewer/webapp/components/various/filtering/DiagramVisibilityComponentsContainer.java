@@ -35,7 +35,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 
-public class DiagramVisibilityComponentsContainer extends VerticalLayout {
+public final class DiagramVisibilityComponentsContainer extends VerticalLayout {
 
     private DiagramFilterComponent diagramFilterComponent;
     private DiagramFlowFilterComponent diagramFlowFilterComponent;

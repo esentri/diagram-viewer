@@ -46,7 +46,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direct
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
 
-public class VariousConfigurationDialog extends Dialog {
+public final class VariousConfigurationDialog extends Dialog {
 
     private Diagram diagram;
 

@@ -76,6 +76,8 @@ public class ProjectModelCache {
     private final long maximumKilobytes;
 
     /**
+     * @param projectDomainMirrorService loads the stored domain models
+     * @param projectRepository          reads the domain model packages of a project
      * @param maximumMegabytes         the memory budget of the cache; 0 or less means half of the maximum heap
      * @param expireAfterAccessMinutes how long a project stays cached after its last use
      */

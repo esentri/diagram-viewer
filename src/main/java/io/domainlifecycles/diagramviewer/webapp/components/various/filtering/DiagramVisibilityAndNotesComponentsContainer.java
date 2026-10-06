@@ -43,7 +43,7 @@ import org.vaadin.addons.taefi.component.ToggleButtonGroup;
 import java.util.List;
 
 @Slf4j
-public class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout {
+public final class DiagramVisibilityAndNotesComponentsContainer extends VerticalLayout {
 
     private final DiagramVisibilityComponentsContainer diagramVisibilityComponentsContainer;
     private final DiagramNotesComponentsContainer diagramNotesComponentsContainer;

@@ -49,6 +49,9 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
     /**
      * Loads only the gzip-compressed domain mirror of a project, without its static analysis result.
      * Empty for projects last uploaded before the compressed storage was introduced.
+     *
+     * @param projectId the id of the project
+     * @return the gzip-compressed JSON of the domain mirror, if stored compressed
      */
     @Query(value = "SELECT domain_mirror_gz FROM project_domain_mirror WHERE project_id = :id AND domain_mirror_gz IS NOT NULL",
         nativeQuery = true)
@@ -57,6 +60,9 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
     /**
      * Loads only the gzip-compressed static analysis result ({@code DomainCalls}) of a project. Empty if
      * none was uploaded, or for projects last uploaded before the compressed storage was introduced.
+     *
+     * @param projectId the id of the project
+     * @return the gzip-compressed JSON of the static analysis result, if stored compressed
      */
     @Query(value = "SELECT domain_calls_gz FROM project_domain_mirror WHERE project_id = :id AND domain_calls_gz IS NOT NULL",
         nativeQuery = true)
@@ -65,6 +71,9 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
     /**
      * Legacy storage: loads only the uncompressed domain mirror of a project last uploaded before the
      * compressed storage was introduced.
+     *
+     * @param projectId the id of the project
+     * @return the domain mirror, if stored uncompressed
      */
     @Query("SELECT p.domainMirror FROM ProjectDomainMirror p WHERE p.projectId = :id")
     Optional<DomainMirror> findLegacyDomainMirrorByProjectId(@Param("id") UUID projectId);
@@ -72,12 +81,18 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
     /**
      * Legacy storage: loads only the uncompressed static analysis result of a project last uploaded
      * before the compressed storage was introduced.
+     *
+     * @param projectId the id of the project
+     * @return the JSON of the static analysis result, if stored uncompressed
      */
     @Query("SELECT p.domainCalls FROM ProjectDomainMirror p WHERE p.projectId = :id")
     Optional<String> findLegacyDomainCallsJsonByProjectId(@Param("id") UUID projectId);
 
     /**
      * Checks whether a static analysis result was uploaded for a project, in either storage, without loading it.
+     *
+     * @param projectId the id of the project
+     * @return {@code true} if a static analysis result is stored for the project
      */
     @Query(value = """
                 SELECT EXISTS (SELECT 1 FROM project_domain_mirror
@@ -89,6 +104,11 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
      * Replaces the domain mirror and static analysis result of a project with the given gzip-compressed
      * JSON - without loading the previous values - and clears the legacy uncompressed columns. The
      * {@code CAST}s keep a {@code null} static analysis result from being bound with the wrong type.
+     *
+     * @param projectId      the id of the project
+     * @param domainMirrorGz the gzip-compressed JSON of the domain mirror
+     * @param domainCallsGz  the gzip-compressed JSON of the static analysis result, {@code null} if none
+     * @return the number of updated rows, {@code 0} if the project has no domain model stored yet
      */
     @Modifying
     @Query(value = """
@@ -106,6 +126,11 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
 
     /**
      * Stores the domain mirror and static analysis result of a project as gzip-compressed JSON.
+     *
+     * @param id             the id of the new row
+     * @param projectId      the id of the project
+     * @param domainMirrorGz the gzip-compressed JSON of the domain mirror
+     * @param domainCallsGz  the gzip-compressed JSON of the static analysis result, {@code null} if none
      */
     @Modifying
     @Query(value = """
@@ -119,6 +144,8 @@ public interface ProjectDomainMirrorRepository extends CrudRepository<ProjectDom
 
     /**
      * Deletes the domain model of a project without loading it first.
+     *
+     * @param projectId the id of the project
      */
     @Modifying
     @Query("DELETE FROM ProjectDomainMirror p WHERE p.projectId = :id")

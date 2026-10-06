@@ -104,6 +104,7 @@ public interface ProjectService {
      * Renames the specified project with a new name.
      *
      * @param project the {@link Project} entity to be renamed, must not be null
+     * @param appUser the user renaming the project, who must be its creator
      * @param newName the new name to assign to the project, must not be null or empty
      * @return the updated {@link Project} entity with the new name
      */

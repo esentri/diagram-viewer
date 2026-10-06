@@ -47,7 +47,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 
 
-public class VisibilityConfigurationDialog extends Dialog {
+public final class VisibilityConfigurationDialog extends Dialog {
 
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
     private final Binder<DomainModelVisibility> domainModelVisibilityBinder;

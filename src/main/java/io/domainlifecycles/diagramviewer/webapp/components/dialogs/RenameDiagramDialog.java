@@ -51,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 
 @Slf4j
-public class RenameDiagramDialog extends Dialog {
+public final class RenameDiagramDialog extends Dialog {
 
     private final DiagramService diagramService;
     private final Binder<RenameDiagramOptions> binder;

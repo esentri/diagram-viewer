@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class DiagramViewNotesContainer extends VerticalLayout {
+public final class DiagramViewNotesContainer extends VerticalLayout {
 
 
     private final DiagramTypeNoteService diagramTypeNoteService;

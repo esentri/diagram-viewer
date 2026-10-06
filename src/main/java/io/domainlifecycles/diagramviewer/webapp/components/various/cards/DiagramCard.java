@@ -48,16 +48,19 @@ import io.domainlifecycles.diagramviewer.webapp.components.various.WrappableName
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import java.util.Locale;
 
-public class DiagramCard extends Card implements DragSource<CardLinkWrapper>, DropTarget<CardLinkWrapper> {
+public final class DiagramCard extends Card implements DragSource<CardLinkWrapper>, DropTarget<CardLinkWrapper> {
 
     /** styled to wrap long names within the card, see diagram-viewer-styles.css */
     static final String CSS_CLASS = "diagram-card";
 
     /**
+     * @param diagramDirectoryService adds a diagram dropped on another one to a new folder with both
+     * @param diagram                 the diagram shown by the card
      * @param imageSize        the size of the diagram's image in bytes, {@code -1} if not rendered yet
      * @param previewLimitBytes up to which size the image itself is the preview; larger diagrams show a placeholder,
      *                         since drawing dozens of large images at once (e.g. a folder of flow diagrams created by
      *                         "Analyze Bounded Contexts") makes the browser slow
+     * @param diagramSrc              the URL of the diagram's image
      */
     public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final Diagram diagram, final long imageSize,
                        final long previewLimitBytes, final String diagramSrc) {

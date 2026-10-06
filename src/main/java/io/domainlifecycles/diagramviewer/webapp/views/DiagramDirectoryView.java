@@ -63,7 +63,7 @@ import java.util.UUID;
 @Route(value = "/directory/:" + DiagramDirectoryView.DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Directory Viewer")
 @PermitAll
-public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObserver {
+public final class DiagramDirectoryView extends FlexLayout implements BeforeEnterObserver {
 
     /**
      * Directories are addressed by id: their names are only unique among the sub directories of one parent (e.g.

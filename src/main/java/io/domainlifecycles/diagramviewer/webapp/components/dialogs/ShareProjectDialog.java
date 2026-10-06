@@ -54,7 +54,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ShareProjectDialog extends Dialog {
+public final class ShareProjectDialog extends Dialog {
 
     private final ProjectService projectService;
     private final Project project;

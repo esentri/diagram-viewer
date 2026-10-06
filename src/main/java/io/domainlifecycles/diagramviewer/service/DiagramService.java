@@ -64,6 +64,12 @@ public interface DiagramService {
     /**
      * Creates a diagram like {@link #create(Project, String, DomainModelVisibility, DiagramStylingConfiguration)},
      * but renders its image in the background, see {@link #updateModelAndImageAsync(Diagram)}.
+     *
+     * @param project                     the project of the new diagram
+     * @param fileName                    the name of the new diagram
+     * @param visibility                  what the diagram shows
+     * @param diagramStylingConfiguration how the diagram is drawn
+     * @return the saved diagram and the pending rendering of its image
      */
     DiagramRendering createAsync(Project project, String fileName, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
 
@@ -71,7 +77,12 @@ public interface DiagramService {
      * Like {@link #createAsync(Project, String, DomainModelVisibility, DiagramStylingConfiguration)}, creating the
      * diagram right in the given directory - with a single save, which matters when many diagrams are created at once.
      *
-     * @param directory the directory of the new diagram, {@code null} for none
+     * @param project                     the project of the new diagram
+     * @param directory                   the directory of the new diagram, {@code null} for none
+     * @param fileName                    the name of the new diagram
+     * @param visibility                  what the diagram shows
+     * @param diagramStylingConfiguration how the diagram is drawn
+     * @return the saved diagram and the pending rendering of its image
      */
     DiagramRendering createAsync(Project project, DiagramDirectory directory, String fileName, DomainModelVisibility visibility,
                                  DiagramStylingConfiguration diagramStylingConfiguration);

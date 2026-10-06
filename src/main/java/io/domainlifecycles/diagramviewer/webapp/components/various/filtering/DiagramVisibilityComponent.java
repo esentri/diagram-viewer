@@ -66,7 +66,7 @@ import lombok.extern.slf4j.Slf4j;
 import static java.util.stream.Collectors.groupingBy;
 
 @Slf4j
-public class DiagramVisibilityComponent extends Div {
+public final class DiagramVisibilityComponent extends Div {
 
     private static final double ENTRY_HEIGHT_REM = 5.5;
     /** styled to two lines, see diagram-viewer-styles.css */

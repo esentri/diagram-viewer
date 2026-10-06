@@ -77,7 +77,7 @@ import lombok.extern.slf4j.Slf4j;
  * been uploaded alongside the domain mirror; the filter is unavailable otherwise.
  */
 @Slf4j
-public class DiagramFlowFilterComponent extends Div {
+public final class DiagramFlowFilterComponent extends Div {
 
     private static final String FLOW_METHOD_SEPARATOR = "#";
 

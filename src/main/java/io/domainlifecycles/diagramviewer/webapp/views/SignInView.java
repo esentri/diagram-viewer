@@ -54,7 +54,7 @@ import io.domainlifecycles.diagramviewer.webapp.properties.ApplicationFeatures;
 @Route(value = SignInView.VIEW_PATH, autoLayout = false)
 @PageTitle("DLC | Login")
 @AnonymousAllowed
-public class SignInView extends VerticalLayout implements BeforeEnterObserver {
+public final class SignInView extends VerticalLayout implements BeforeEnterObserver {
 
     public static final String VIEW_PATH = "/signin";
 
