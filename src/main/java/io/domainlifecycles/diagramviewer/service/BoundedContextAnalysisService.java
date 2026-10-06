@@ -46,6 +46,7 @@ import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,9 +73,11 @@ import org.springframework.stereotype.Service;
  *     <li>a sub directory "Commands" with a diagram per command, showing the flow it triggers (forward) together with
  *     what leads into the methods processing it (backward - a command itself cannot be a backward flow target).</li>
  * </ul>
- * The flow diagrams need the project's static analysis result, so a project without one is not analyzed at all.
- * Running the analysis again only adds what is missing, matched by name: existing directories are reused and diagrams
- * whose name already exists in their directory are left untouched, so changes made to them are kept.
+ * Each of these is a {@link Kind} that can be chosen on its own. The read model and command diagrams show
+ * flows and need the project's static analysis result: without one they are rejected. Running the analysis again
+ * only adds what is missing, matched by name: existing directories are reused and diagrams whose name already exists
+ * in their directory are left untouched, so changes made to them are kept. A directory is only created if a diagram
+ * goes into it.
  */
 @Service
 public class BoundedContextAnalysisService {
@@ -111,15 +115,65 @@ public class BoundedContextAnalysisService {
     }
 
     /**
-     * Runs {@link #analyze(Project, ProgressListener)} in the background, so that the user interface stays responsive
-     * - creating the diagrams of a large project takes a while.
+     * The analyses offered per Bounded Context, each creating diagrams of its own.
+     */
+    public enum Kind {
+        AGGREGATES("Aggregates", "a diagram of its aggregates", false),
+        AGGREGATE_NEIGHBORHOOD("Aggregate Neighborhood", "a folder Aggregate Neighborhood with a diagram per aggregate,"
+            + " showing what leads to it and what it leads to, " + AGGREGATE_NEIGHBORHOOD_DEPTH + " steps each", false),
+        READ_MODELS("Read Models", "a folder Read Models with a diagram per read model, showing what leads into it",
+            true),
+        COMMANDS("Commands", "a folder Commands with a diagram per command, showing the flow it triggers and what"
+            + " leads into its processing", true);
+
+        private final String label;
+        private final String description;
+        private final boolean needsStaticAnalysis;
+
+        Kind(String label, String description, boolean needsStaticAnalysis) {
+            this.label = label;
+            this.description = description;
+            this.needsStaticAnalysis = needsStaticAnalysis;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        /** @return what the analysis creates per Bounded Context */
+        public String getDescription() {
+            return description;
+        }
+
+        /** @return whether its diagrams show flows, which are known from a static analysis result only */
+        public boolean needsStaticAnalysis() {
+            return needsStaticAnalysis;
+        }
+    }
+
+    /**
+     * Runs {@link #analyze(Project, Set, ProgressListener)} for all kinds of analyses in the background.
      *
      * @param project  the project to analyze
      * @param listener informed about the progress, on the analysis thread
      * @return the outcome, once the diagrams are created (their images are rendered afterwards)
      */
     public CompletableFuture<Result> analyzeAsync(Project project, ProgressListener listener) {
-        return CompletableFuture.supplyAsync(() -> analyze(project, listener), analysisExecutor);
+        return analyzeAsync(project, EnumSet.allOf(Kind.class), listener);
+    }
+
+    /**
+     * Runs {@link #analyze(Project, Set, ProgressListener)} in the background, so that the user interface stays
+     * responsive - creating the diagrams of a large project takes a while.
+     *
+     * @param project  the project to analyze
+     * @param kinds    the analyses to run
+     * @param listener informed about the progress, on the analysis thread
+     * @return the outcome, once the diagrams are created (their images are rendered afterwards)
+     */
+    public CompletableFuture<Result> analyzeAsync(Project project, Set<Kind> kinds, ProgressListener listener) {
+        Set<Kind> chosen = EnumSet.copyOf(kinds);
+        return CompletableFuture.supplyAsync(() -> analyze(project, chosen, listener), analysisExecutor);
     }
 
     /**
@@ -153,22 +207,41 @@ public class BoundedContextAnalysisService {
     }
 
     /**
+     * Runs all kinds of analyses.
+     *
      * @param project the project to analyze
      * @return what was created
      */
     public Result analyze(Project project) {
-        return analyze(project, ProgressListener.NONE);
+        return analyze(project, EnumSet.allOf(Kind.class), ProgressListener.NONE);
+    }
+
+    /**
+     * Runs all kinds of analyses.
+     *
+     * @param project  the project to analyze
+     * @param listener informed about the progress
+     * @return what was created
+     */
+    public Result analyze(Project project, ProgressListener listener) {
+        return analyze(project, EnumSet.allOf(Kind.class), listener);
     }
 
     /**
      * @param project  the project to analyze
+     * @param kinds    the analyses to run, at least one
      * @param listener informed about the progress
      * @return what was created
-     * @throws IllegalStateException if no static analysis result was uploaded for the project
+     * @throws IllegalArgumentException if no analysis is chosen
+     * @throws IllegalStateException    if an analysis showing flows is chosen, but no static analysis result was
+     *                                  uploaded for the project
      */
-    public Result analyze(Project project, ProgressListener listener) {
+    public Result analyze(Project project, Set<Kind> kinds, ProgressListener listener) {
+        if (kinds.isEmpty()) {
+            throw new IllegalArgumentException("No analysis of the bounded contexts chosen.");
+        }
         ProjectModel model = projectModelCache.get(project.getId());
-        if (!model.domainCallsAvailable()) {
+        if (!model.domainCallsAvailable() && kinds.stream().anyMatch(Kind::needsStaticAnalysis)) {
             throw new IllegalStateException("The bounded contexts of project '" + project.getName() + "' cannot be"
                 + " analyzed: the read model and command diagrams show flows, which need the result of a static"
                 + " analysis. Upload the domain model with the static analysis result (runStaticAnalysis = true in"
@@ -181,12 +254,13 @@ public class BoundedContextAnalysisService {
             .toList();
         Set<String> containedReadModels = containedReadModelTypeNames(domainMirror);
         int total = boundedContexts.stream()
-            .mapToInt(boundedContext -> (boundedContext.getAggregateRoots().isEmpty() ? 0 : 1)
-                + boundedContext.getAggregateRoots().size()
-                + topLevelReadModels(boundedContext, containedReadModels).size()
-                + boundedContext.getDomainCommands().size())
+            .mapToInt(boundedContext ->
+                (kinds.contains(Kind.AGGREGATES) && !boundedContext.getAggregateRoots().isEmpty() ? 1 : 0)
+                + (kinds.contains(Kind.AGGREGATE_NEIGHBORHOOD) ? boundedContext.getAggregateRoots().size() : 0)
+                + (kinds.contains(Kind.READ_MODELS) ? topLevelReadModels(boundedContext, containedReadModels).size() : 0)
+                + (kinds.contains(Kind.COMMANDS) ? boundedContext.getDomainCommands().size() : 0))
             .sum();
-        Analysis analysis = new Analysis(project, domainMirror, containedReadModels, listener, total);
+        Analysis analysis = new Analysis(project, domainMirror, containedReadModels, kinds, listener, total);
         for (BoundedContextMirror boundedContext : boundedContexts) {
             analysis.analyze(boundedContext);
         }
@@ -232,6 +306,7 @@ public class BoundedContextAnalysisService {
         private final Project project;
         private final DomainMirror domainMirror;
         private final Set<String> containedReadModels;
+        private final Set<Kind> kinds;
         private final ProgressListener listener;
         private final int total;
         private final List<CompletableFuture<DiagramRendering.Result>> renderings = new ArrayList<>();
@@ -240,29 +315,31 @@ public class BoundedContextAnalysisService {
         private int skipped;
 
         private Analysis(Project project, DomainMirror domainMirror, Set<String> containedReadModels,
-                         ProgressListener listener, int total) {
+                         Set<Kind> kinds, ProgressListener listener, int total) {
             this.project = project;
             this.domainMirror = domainMirror;
             this.containedReadModels = containedReadModels;
+            this.kinds = kinds;
             this.listener = listener;
             this.total = total;
         }
 
         private void analyze(BoundedContextMirror boundedContext) {
             String label = label(boundedContext);
-            DiagramDirectory directory = diagramDirectoryService.findOrCreate(project, null, label);
+            // created on first use: a Bounded Context without anything of the chosen analyses gets no directory
+            Supplier<DiagramDirectory> directory = memoized(() -> diagramDirectoryService.findOrCreate(project, null, label));
 
-            if (!boundedContext.getAggregateRoots().isEmpty()) {
-                createDiagram(directory, AGGREGATES_DIAGRAM_NAME,
+            if (kinds.contains(Kind.AGGREGATES) && !boundedContext.getAggregateRoots().isEmpty()) {
+                createDiagram(directory.get(), AGGREGATES_DIAGRAM_NAME,
                     new DomainModelVisibility()
                         .replaceIncludedBoundedContextPackages(Set.of(boundedContext.getPackageName())),
                     aggregatesOnly());
             }
 
             List<AggregateRootMirror> aggregateRoots = sortedByName(boundedContext.getAggregateRoots());
-            if (!aggregateRoots.isEmpty()) {
+            if (kinds.contains(Kind.AGGREGATE_NEIGHBORHOOD) && !aggregateRoots.isEmpty()) {
                 DiagramDirectory neighborhoodDirectory =
-                    diagramDirectoryService.findOrCreate(project, directory, AGGREGATE_NEIGHBORHOOD_DIRECTORY);
+                    diagramDirectoryService.findOrCreate(project, directory.get(), AGGREGATE_NEIGHBORHOOD_DIRECTORY);
                 Map<String, String> names = diagramNames(aggregateRoots, boundedContext);
                 aggregateRoots.forEach(aggregateRoot -> createDiagram(neighborhoodDirectory,
                     names.get(aggregateRoot.getTypeName()),
@@ -271,8 +348,9 @@ public class BoundedContextAnalysisService {
             }
 
             List<ReadModelMirror> readModels = topLevelReadModels(boundedContext, containedReadModels);
-            if (!readModels.isEmpty()) {
-                DiagramDirectory readModelsDirectory = diagramDirectoryService.findOrCreate(project, directory, READ_MODELS_DIRECTORY);
+            if (kinds.contains(Kind.READ_MODELS) && !readModels.isEmpty()) {
+                DiagramDirectory readModelsDirectory =
+                    diagramDirectoryService.findOrCreate(project, directory.get(), READ_MODELS_DIRECTORY);
                 Map<String, String> names = diagramNames(readModels, boundedContext);
                 readModels.forEach(readModel -> createDiagram(readModelsDirectory,
                     names.get(readModel.getTypeName()),
@@ -281,8 +359,9 @@ public class BoundedContextAnalysisService {
             }
 
             List<DomainCommandMirror> commands = sortedByName(boundedContext.getDomainCommands());
-            if (!commands.isEmpty()) {
-                DiagramDirectory commandsDirectory = diagramDirectoryService.findOrCreate(project, directory, COMMANDS_DIRECTORY);
+            if (kinds.contains(Kind.COMMANDS) && !commands.isEmpty()) {
+                DiagramDirectory commandsDirectory =
+                    diagramDirectoryService.findOrCreate(project, directory.get(), COMMANDS_DIRECTORY);
                 Map<String, String> names = diagramNames(commands, boundedContext);
                 commands.forEach(command -> createDiagram(commandsDirectory,
                     names.get(command.getTypeName()),
@@ -326,6 +405,20 @@ public class BoundedContextAnalysisService {
             }
             return processingMethodsByCommand.getOrDefault(command.getTypeName(), Set.of());
         }
+    }
+
+    private static <T> Supplier<T> memoized(Supplier<T> supplier) {
+        return new Supplier<>() {
+            private T value;
+
+            @Override
+            public T get() {
+                if (value == null) {
+                    value = supplier.get();
+                }
+                return value;
+            }
+        };
     }
 
     /**

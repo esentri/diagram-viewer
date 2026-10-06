@@ -32,7 +32,6 @@ package io.domainlifecycles.diagramviewer.webapp.views;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -59,6 +58,7 @@ import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.sql.NoOpSQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.AnalyzeBoundedContextsDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.BoundedContextAnalysisDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.EditProjectDialog;
@@ -74,12 +74,11 @@ import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.util.HtmlUtils;
 
 @Route(value = "/project/:" + ProjectView.PROJECT_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Project Viewer")
@@ -193,10 +192,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         buttonBar.getStyle().setMarginTop("2rem");
 
         buttonBar.add(getCreateDiagramButton());
-        // the read model and command diagrams are flows, known from the static analysis result only
-        if (sessionStorage.hasDomainCalls(project.getId())) {
-            buttonBar.add(getAnalyzeBoundedContextsButton());
-        }
+        buttonBar.add(getAnalyzeBoundedContextsButton());
         if(!(sqlddlGeneratorService instanceof NoOpSQLDDLGeneratorService)){
             buttonBar.add(getDatabaseButton());
         }
@@ -217,45 +213,32 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     }
 
     /**
-     * Creates a directory per Bounded Context with diagrams of its aggregates, read models and commands, see
-     * {@link BoundedContextAnalysisService}.
+     * Creates a directory per Bounded Context with the diagrams of the analyses chosen in a dialog - of its aggregates,
+     * their neighborhood, its read models and commands, see {@link BoundedContextAnalysisService}.
      */
     private Button getAnalyzeBoundedContextsButton() {
         List<BoundedContext> boundedContexts = sessionStorage.getBoundedContexts(project.getId());
 
-        ConfirmDialog confirmDialog = new ConfirmDialog();
-        confirmDialog.setHeader("Analyze Bounded Contexts");
-        confirmDialog.setText(new Html("<div>"
-            + "Creates a folder for each of the " + boundedContexts.size() + " Bounded Context(s) of this project ("
-            + boundedContexts.stream().map(BoundedContext::label).map(HtmlUtils::htmlEscape).collect(Collectors.joining(", "))
-            + ") containing<ul>"
-            + "<li>a diagram of its aggregates,</li>"
-            + "<li>a folder <b>Aggregate Neighborhood</b> with a diagram per aggregate, showing what leads to it and"
-            + " what it leads to, " + BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DEPTH + " steps each,</li>"
-            + "<li>a folder <b>Read Models</b> with a diagram per read model, showing what leads into it,</li>"
-            + "<li>a folder <b>Commands</b> with a diagram per command, showing the flow it triggers and what leads"
-            + " into its processing.</li></ul>"
-            + "Analyzing again only adds what is missing: existing folders are reused, and diagrams whose name already"
-            + " exists in their folder are kept unchanged.</div>"));
-        confirmDialog.setCancelable(true);
-        confirmDialog.setConfirmText("Analyze");
         Button analyzeButton = new Button("Analyze Bounded Contexts", new Icon(VaadinIcon.SITEMAP));
-        confirmDialog.addConfirmListener(event -> analyzeBoundedContexts(analyzeButton));
+        // created on click: the dialog shows the analyses checked anew each time; the read model and command diagrams
+        // are flows, known from the static analysis result only
+        analyzeButton.addClickListener(e -> new AnalyzeBoundedContextsDialog(boundedContexts,
+            sessionStorage.hasDomainCalls(project.getId()),
+            kinds -> analyzeBoundedContexts(analyzeButton, kinds)).open());
 
         analyzeButton.setId("analyze-bounded-contexts");
         analyzeButton.getStyle().set("cursor", "pointer");
-        analyzeButton.addClickListener(e -> confirmDialog.open());
         return analyzeButton;
     }
 
-    private void analyzeBoundedContexts(Button analyzeButton) {
+    private void analyzeBoundedContexts(Button analyzeButton, Set<BoundedContextAnalysisService.Kind> kinds) {
         UI ui = UI.getCurrent();
         Consumer<Runnable> onUi = BackgroundDiagramRendering.uiUpdater(ui);
         BoundedContextAnalysisDialog progress = new BoundedContextAnalysisDialog();
         progress.open();
         analyzeButton.setEnabled(false);
 
-        boundedContextAnalysisService.analyzeAsync(project,
+        boundedContextAnalysisService.analyzeAsync(project, kinds,
                 (done, total, diagramName) -> onUi.accept(() -> progress.diagramCreated(done, total, diagramName)))
             .whenComplete((result, error) -> onUi.accept(() -> {
                 analyzeButton.setEnabled(true);

@@ -392,6 +392,60 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
     }
 
     @Test
+    void Should_RunOnlyTheChosenAnalyses_And_CompleteTheOthersLater() throws Exception {
+
+        // given
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithBoundedContexts());
+
+        // when: only the neighborhoods of the aggregates
+        BoundedContextAnalysisService.Result neighborhoods = boundedContextAnalysisService.analyze(reloadedProject(),
+            Set.of(BoundedContextAnalysisService.Kind.AGGREGATE_NEIGHBORHOOD),
+            BoundedContextAnalysisService.ProgressListener.NONE);
+        awaitRenderings(neighborhoods);
+
+        // then: a folder only for the Bounded Contexts with aggregates
+        assertThat(neighborhoods.createdDiagrams()).isEqualTo(2);
+        Project analyzed = reloadedProject();
+        assertThat(analyzed.getTopLevelDiagramDirectories()).extracting(DiagramDirectory::getName)
+            .containsExactlyInAnyOrder(RezeptionScenario.BUCHUNG_CONTEXT_NAME, RezeptionScenario.ZIMMER_CONTEXT_NAME);
+        DiagramDirectory buchung = directory(analyzed, null, RezeptionScenario.BUCHUNG_CONTEXT_NAME);
+        assertThat(diagramNames(buchung)).isEmpty();
+        assertThat(analyzed.getSubDirectories(buchung)).extracting(DiagramDirectory::getName)
+            .containsExactly(BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DIRECTORY);
+
+        // when: all analyses
+        BoundedContextAnalysisService.Result all = boundedContextAnalysisService.analyze(reloadedProject());
+        awaitRenderings(all);
+
+        // then: the rest is added
+        assertThat(all.createdDiagrams()).isEqualTo(6);
+        assertThat(all.skippedDiagrams()).isEqualTo(2);
+        assertThat(reloadedProject().getDiagrams()).hasSize(8);
+        assertThat(reloadedProject().getDiagramDirectories()).hasSize(7);
+    }
+
+    @Test
+    void Should_RunTheAnalysesWithoutFlows_When_NoStaticAnalysisResultWasUploaded() throws Exception {
+
+        // given
+        upload(RezeptionScenario.gzippedUploadRequestBodyWithoutDomainCalls());
+
+        // when
+        BoundedContextAnalysisService.Result result = boundedContextAnalysisService.analyze(reloadedProject(),
+            Set.of(BoundedContextAnalysisService.Kind.AGGREGATES, BoundedContextAnalysisService.Kind.AGGREGATE_NEIGHBORHOOD),
+            BoundedContextAnalysisService.ProgressListener.NONE);
+        awaitRenderings(result);
+
+        // then: DLC's fallback mirrors the domain model package as one Bounded Context, holding both aggregates
+        assertThat(result.createdDiagrams()).isEqualTo(3);
+        Project analyzed = reloadedProject();
+        DiagramDirectory rezeption = directory(analyzed, null, RezeptionScenario.DOMAIN_MODEL_PACKAGE);
+        assertThat(diagramNames(rezeption)).containsExactly(BoundedContextAnalysisService.AGGREGATES_DIAGRAM_NAME);
+        assertThat(diagramNames(directory(analyzed, rezeption, BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DIRECTORY)))
+            .containsExactlyInAnyOrder("Buchung", "Zimmer");
+    }
+
+    @Test
     void Should_RejectTheAnalysis_When_NoStaticAnalysisResultWasUploaded() throws Exception {
 
         // given
@@ -406,13 +460,13 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
     }
 
     @Test
-    void Should_OfferTheAnalysisInTheProjectView_Only_When_AStaticAnalysisResultWasUploaded() throws Exception {
+    void Should_OfferTheAnalysisInTheProjectView_AlsoWithoutAStaticAnalysisResult() throws Exception {
 
         // given
         upload(RezeptionScenario.gzippedUploadRequestBodyWithoutDomainCalls());
 
-        // then: nothing to analyze without flows
-        assertThat(analyzeButton(enteredProjectView())).isEmpty();
+        // then: the analyses without flows are possible anyway
+        assertThat(analyzeButton(enteredProjectView())).isPresent();
 
         // when
         upload(RezeptionScenario.gzippedUploadRequestBodyWithBoundedContexts());

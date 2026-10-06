@@ -123,10 +123,14 @@ folder.
 
 ### Analyze Bounded Contexts
 To get started with a large model, the viewer can create a set of diagrams for you. In the project view, click
-``Analyze Bounded Contexts``. The button is only shown if the static analysis result was uploaded with the domain
-model (see [Static analysis](#static-analysis)): the read model and command diagrams show flows, which are known from
-that result only. After uploading the domain model again with the static analysis result, the button appears. A dialog explains what will be created; after confirming, the viewer creates a folder for
-each Bounded Context of the project, named after the Bounded Context (or its package, if it has no name), containing
+``Analyze Bounded Contexts``. A dialog explains what will be created and offers the analyses to run as checkboxes - ``Aggregates``,
+``Aggregate Neighborhood``, ``Read Models`` and ``Commands``, all checked by default; ``Analyze`` needs at least one.
+``Read Models`` and ``Commands`` show flows, which are known from the static analysis result only (see
+[Static analysis](#static-analysis)): if none was uploaded with the domain model, they are greyed out and the dialog
+tells why. After uploading the domain model again with the static analysis result, they can be chosen.
+After confirming, the viewer creates a folder for each Bounded Context of the project, named after the Bounded Context
+(or its package, if it has no name), containing what the chosen analyses create - a Bounded Context without anything
+of them gets no folder:
 
 - a diagram ``Aggregates`` showing only the aggregates of the Bounded Context,
 - a sub folder ``Aggregate Neighborhood`` with a diagram per aggregate of the Bounded Context, named after its
@@ -149,7 +153,8 @@ If two aggregates, read models or commands of a Bounded Context share their simp
 their package, relative to the Bounded Context, e.g. ``AktiviereCommand (core.domain.vertrag)``.
 
 The diagrams are rendered in the background, a notification tells when all of them are ready. Running the analysis
-again, e.g. after new commands were added or a created diagram was deleted, only adds what is missing. Folders and
+again, e.g. after new commands were added, a created diagram was deleted or another analysis was chosen, only adds what
+is missing. Folders and
 diagrams are matched by name: existing folders are reused, and a diagram whose name already exists in its folder is
 kept unchanged, including any filters you changed in it. A diagram you renamed or moved to another folder is therefore
 created again under its original name.
