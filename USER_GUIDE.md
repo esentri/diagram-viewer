@@ -267,6 +267,19 @@ There are 4 types of connection based filters:
 - ``Exclude ingoing connections to``: Hide all elements having an ingoing connection to the specificed element
 - ``Exclude outgoing connections from``: Hide all elements having an outgoing connection from the specificed element
 
+Below ``Include ingoing connections to`` (what leads to the element) and ``Include outgoing connections from`` (what
+the element leads to) a ``Depth`` limits up to how many steps the connections are followed: ``1`` shows only the elements
+directly connected, ``2`` also the elements connected to these, and so on. ``0`` - the default - shows the complete path.
+An interface and its implementations count as one step. The depth can be set as soon as an element is selected.
+
+An element may be selected in ``Include ingoing connections to`` and ``Include outgoing connections from`` at once, to
+show what leads to it and what it leads to - each direction with its own depth. Unlike ``Include connections to``,
+which changes direction on the way and thereby also shows e.g. the other users of a repository the element uses, this
+follows each direction from the element only. Likewise an element may be selected in both exclude filters. An element
+cannot be included and excluded at once, nor be selected in ``Include connections to`` and a directed include filter:
+such elements are not offered. In the ``View filter settings`` of an element, ``include ingoing and outgoing
+connections`` and ``exclude ingoing and outgoing connections`` select both directions.
+
 For example, to show the model elements, that are connected with the use cases implemented in ``ServiceLeistungenUseCases``,
 one might enter the ApplicationService class ``ServiceLeistungUseCases`` in ``Include outgoing connections from`` and see:
 ![user_case_filter](./images/use_case_filter.png)

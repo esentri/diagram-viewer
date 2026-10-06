@@ -35,6 +35,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.textfield.IntegerField;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.BoundedContext;
@@ -57,6 +58,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DiagramFilterComponent extends Div {
 
+    static final String INGOING_DEPTH_ID = "include-connected-ingoing-depth";
+    static final String OUTGOING_DEPTH_ID = "include-connected-outgoing-depth";
+
     private final SessionStorage sessionStorage;
     private final DiagramService diagramService;
     private Diagram currentDiagram;
@@ -68,6 +72,8 @@ public class DiagramFilterComponent extends Div {
     private MultiSelectComboBox<DomainTypeMirror> comboBoxConnectedExcludeOutgoing;
     private MultiSelectComboBox<DomainTypeMirror> comboBoxInvisibleDomainObjects;
     private MultiSelectComboBox<DomainTypeMirror> comboBoxInlinedValueObjects;
+    private IntegerField connectedIngoingDepthField;
+    private IntegerField connectedOutgoingDepthField;
 
     public DiagramFilterComponent(
             SessionStorage sessionStorage,
@@ -127,12 +133,18 @@ public class DiagramFilterComponent extends Div {
                     items
             );
             advancedFilterDetails.add(comboBoxConnectedIngoing);
+            connectedIngoingDepthField = createAndConfigureDepthField(INGOING_DEPTH_ID, "what leads to them",
+                comboBoxConnectedIngoing, currentDiagram.getDomainModelVisibility().getIncludeConnectedToIngoingDepth());
+            advancedFilterDetails.add(connectedIngoingDepthField);
 
             comboBoxConnectedOutgoing = createAndConfigureComboBox(
                     ComboBoxVisibilityType.INCLUDE_CONNECTED_OUTGOING,
                     items
             );
             advancedFilterDetails.add(comboBoxConnectedOutgoing);
+            connectedOutgoingDepthField = createAndConfigureDepthField(OUTGOING_DEPTH_ID, "what they lead to",
+                comboBoxConnectedOutgoing, currentDiagram.getDomainModelVisibility().getIncludeConnectedToOutgoingDepth());
+            advancedFilterDetails.add(connectedOutgoingDepthField);
 
             comboBoxConnectedExcludeIngoing = createAndConfigureComboBox(
                     ComboBoxVisibilityType.EXCLUDE_CONNECTED_INGOING,
@@ -167,16 +179,7 @@ public class DiagramFilterComponent extends Div {
             ComboBoxVisibilityType comboBoxVisibilityType,
             List<DomainTypeMirror> items
     ) {
-        Set<String> selectedAnyWhere = new HashSet<>();
-        if(!comboBoxVisibilityType.equals(ComboBoxVisibilityType.INVISIBLE)) {
-            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getIncludeConnectedToClassNames());
-            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames());
-            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getIncludeConnectedToOutgoingClassNames());
-            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getExcludeConnectedToIngoingClassNames());
-            selectedAnyWhere.addAll(currentDiagram.getDomainModelVisibility().getExcludeConnectedToOutgoingClassNames());
-
-        }
-        Set<String> unavailable = new HashSet<>(selectedAnyWhere);
+        Set<String> unavailable = unavailableClassNames(comboBoxVisibilityType, currentDiagram.getDomainModelVisibility());
         var selectedClassNames = switch (comboBoxVisibilityType){
             case INCLUDE_CONNECTED -> currentDiagram.getDomainModelVisibility().getIncludeConnectedToClassNames();
             case INCLUDE_CONNECTED_INGOING ->  currentDiagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames();
@@ -211,6 +214,73 @@ public class DiagramFilterComponent extends Div {
         ));
 
         return multiSelectComboBox;
+    }
+
+    /**
+     * The classes not offered by a combo box, as selected in a connection filter that excludes each other with it: a
+     * class may be followed in both directions (ingoing and outgoing, included or excluded), but must not be included
+     * and excluded at once, nor be included with all its connections and in one direction. The inlined value objects
+     * leave out all classes of the connection filters, the invisible objects none.
+     */
+    static Set<String> unavailableClassNames(ComboBoxVisibilityType comboBoxVisibilityType, DomainModelVisibility visibility) {
+        Set<String> unavailable = new HashSet<>();
+        Set<String> includedAll = visibility.getIncludeConnectedToClassNames();
+        Set<String> includedDirected = new HashSet<>(visibility.getIncludeConnectedToIngoingClassNames());
+        includedDirected.addAll(visibility.getIncludeConnectedToOutgoingClassNames());
+        Set<String> excludedDirected = new HashSet<>(visibility.getExcludeConnectedToIngoingClassNames());
+        excludedDirected.addAll(visibility.getExcludeConnectedToOutgoingClassNames());
+        switch (comboBoxVisibilityType) {
+            case INCLUDE_CONNECTED -> {
+                unavailable.addAll(includedDirected);
+                unavailable.addAll(excludedDirected);
+            }
+            case INCLUDE_CONNECTED_INGOING, INCLUDE_CONNECTED_OUTGOING -> {
+                unavailable.addAll(includedAll);
+                unavailable.addAll(excludedDirected);
+            }
+            case EXCLUDE_CONNECTED_INGOING, EXCLUDE_CONNECTED_OUTGOING -> {
+                unavailable.addAll(includedAll);
+                unavailable.addAll(includedDirected);
+            }
+            case INLINED_VALUE_OBJECTS -> {
+                unavailable.addAll(includedAll);
+                unavailable.addAll(includedDirected);
+                unavailable.addAll(excludedDirected);
+            }
+            case INVISIBLE -> {
+                // any class may be hidden
+            }
+        }
+        return unavailable;
+    }
+
+    /**
+     * The depth up to which the connections of the classes selected in the combo box are followed: {@code 0} - also
+     * shown for an empty field - follows the complete path. Only enabled while classes are selected.
+     */
+    private IntegerField createAndConfigureDepthField(String id, String followedConnections,
+                                                      MultiSelectComboBox<DomainTypeMirror> comboBox, int depth) {
+        IntegerField depthField = new IntegerField("Depth");
+        depthField.setId(id);
+        depthField.setWidthFull();
+        depthField.setMin(0);
+        depthField.setStepButtonsVisible(true);
+        depthField.setHelperText("Up to how many steps " + followedConnections + " is shown, 0 shows the complete path");
+        depthField.setValue(Math.max(depth, 0));
+        depthField.setEnabled(!comboBox.getSelectedItems().isEmpty());
+        comboBox.addValueChangeListener(e -> depthField.setEnabled(!e.getValue().isEmpty()));
+        depthField.addValueChangeListener(e -> regenerateDiagramWithDepths());
+        return depthField;
+    }
+
+    private void regenerateDiagramWithDepths() {
+        currentDiagram.setDomainModelVisibility(currentDiagram.getDomainModelVisibility().replaceIncludeConnectedDepths(
+            depth(connectedIngoingDepthField), depth(connectedOutgoingDepthField)));
+        BackgroundDiagramRendering.updateModelAndImage(this, diagramService, currentDiagram);
+    }
+
+    private static int depth(IntegerField depthField) {
+        return depthField.getValue() == null ? 0 : Math.max(depthField.getValue(), 0);
     }
 
     private DomainTypeMirror[] selected(List<DomainTypeMirror> typeMirrors, Set<String> typeNames){
@@ -310,7 +380,7 @@ public class DiagramFilterComponent extends Div {
 
 
 
-    private enum ComboBoxVisibilityType {
+    enum ComboBoxVisibilityType {
         INCLUDE_CONNECTED("Include Connections to:"),
         INCLUDE_CONNECTED_INGOING ("Include ingoing connections to:"),
         INCLUDE_CONNECTED_OUTGOING("Include outgoing connections from:"),

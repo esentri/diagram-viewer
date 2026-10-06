@@ -72,6 +72,28 @@ class DomainModelVisibilityTest {
     }
 
     @Test
+    void Should_FollowTheCompletePathOfTheConnections_ByDefault() {
+        assertThat(new DomainModelVisibility().getIncludeConnectedToIngoingDepth()).isZero();
+        assertThat(new DomainModelVisibility().getIncludeConnectedToOutgoingDepth()).isZero();
+        assertThat(DomainModelVisibility.builder().build().getIncludeConnectedToIngoingDepth()).isZero();
+    }
+
+    @Test
+    void Should_KeepTheDepthsOfTheConnections_When_OtherSettingsAreReplaced() {
+        DomainModelVisibility visibility = new DomainModelVisibility()
+            .replaceIncludeConnectedToIngoingClassNames(Set.of("shop.orders.OrderService"))
+            .replaceIncludeConnectedDepths(2, 3)
+            .replaceBlacklistedClassNames(Set.of("shop.orders.Helper"))
+            .replaceIncludeFlowsFrom(Set.of("shop.orders.PlaceOrder"))
+            .replaceIncludedBoundedContextPackages(Set.of("shop.orders"));
+
+        assertThat(visibility.getIncludeConnectedToIngoingDepth()).isEqualTo(2);
+        assertThat(visibility.getIncludeConnectedToOutgoingDepth()).isEqualTo(3);
+        assertThat(visibility.getIncludeConnectedToIngoingClassNames()).containsExactly("shop.orders.OrderService");
+        assertThat(visibility.getBlacklistedClassNames()).containsExactly("shop.orders.Helper");
+    }
+
+    @Test
     void Should_KeepIncludedBoundedContexts_When_OtherSettingsAreReplaced() {
         DomainModelVisibility visibility = new DomainModelVisibility()
             .replaceIncludedBoundedContextPackages(Set.of("shop.orders"))

@@ -80,6 +80,8 @@ public class DiagrammerUtils {
                         Collections.emptyList() : domainModelVisibility.getIncludeConnectedToIngoingClassNames().stream().toList())
                 .withIncludeConnectedToOutgoing(domainModelVisibility.getIncludeConnectedToOutgoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getIncludeConnectedToOutgoingClassNames().stream().toList())
+                .withIncludeConnectedToIngoingDepth(domainModelVisibility.getIncludeConnectedToIngoingDepth())
+                .withIncludeConnectedToOutgoingDepth(domainModelVisibility.getIncludeConnectedToOutgoingDepth())
                 .withExcludeConnectedToIngoing(domainModelVisibility.getExcludeConnectedToIngoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToIngoingClassNames().stream().toList())
                 .withExcludeConnectedToOutgoing(domainModelVisibility.getExcludeConnectedToOutgoingClassNames() == null ?

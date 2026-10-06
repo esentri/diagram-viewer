@@ -35,6 +35,7 @@ class DiagrammerUtilsTest {
 
     private static DomainMirror nonDomainMirror;
     private static DomainMirror factoryMirror;
+    private static DomainMirror connectionDepthMirror;
     private static DomainMirror rezeptionMirror;
     private static DomainCalls rezeptionCalls;
 
@@ -42,6 +43,7 @@ class DiagrammerUtilsTest {
     static void initMirrors() {
         nonDomainMirror = new ReflectiveDomainMirrorFactory(NON_DOMAIN_FIXTURE_PACKAGE).initializeDomainMirror();
         factoryMirror = new ReflectiveDomainMirrorFactory(FACTORY_FIXTURE_PACKAGE).initializeDomainMirror();
+        connectionDepthMirror = new ReflectiveDomainMirrorFactory("fixtures.connectiondepth").initializeDomainMirror();
         rezeptionMirror = new JacksonDomainSerializer(false).deserialize(RezeptionScenario.domainMirrorJson());
         rezeptionCalls = new JacksonDomainCallsSerializer(false)
             .deserialize(RezeptionScenario.domainCallsJson(), rezeptionMirror);
@@ -102,6 +104,25 @@ class DiagrammerUtilsTest {
         assertThat(withContent).contains("[<AF> Order <<Aggregate>>|").contains("[<AR> Order <<AggregateRoot>>");
         assertThat(framesOnly.lines()).contains("[<AF> Order <<Aggregate>>]");
         assertThat(framesOnly).doesNotContain("<<AggregateRoot>>").contains(CREATES_ORDER);
+    }
+
+    @Test
+    void Should_FollowTheConnectionsUpToTheDepthOfTheDiagram() {
+
+        // given: EntryApplicationService -> MiddleDomainService -> LastDomainService
+        DomainModelVisibility visibility = new DomainModelVisibility()
+            .replaceIncludeConnectedToOutgoingClassNames(Set.of("fixtures.connectiondepth.EntryApplicationService"));
+
+        // when
+        String completePath = generate(connectionDepthMirror, DiagramStylingConfiguration.builder().build(),
+            visibility, null);
+        String oneStep = generate(connectionDepthMirror, DiagramStylingConfiguration.builder().build(),
+            visibility.replaceIncludeConnectedDepths(0, 1), null);
+
+        // then
+        assertThat(completePath).contains(classBoxMarker("MiddleDomainService"), classBoxMarker("LastDomainService"));
+        assertThat(oneStep).contains(classBoxMarker("MiddleDomainService"))
+            .doesNotContain(classBoxMarker("LastDomainService"));
     }
 
     @Test

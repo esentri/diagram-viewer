@@ -254,8 +254,10 @@ public class DiagramVisibilityComponent extends Div {
                         VisibilityFilterType.INCLUDE_CONNECTED,
                         VisibilityFilterType.INCLUDE_CONNECTED_INGOING,
                         VisibilityFilterType.INCLUDE_CONNECTED_OUTGOING,
+                        VisibilityFilterType.INCLUDE_CONNECTED_INGOING_AND_OUTGOING,
                         VisibilityFilterType.EXCLUDE_CONNECTED_INGOING,
-                        VisibilityFilterType.EXCLUDE_CONNECTED_OUTGOING
+                        VisibilityFilterType.EXCLUDE_CONNECTED_OUTGOING,
+                        VisibilityFilterType.EXCLUDE_CONNECTED_INGOING_AND_OUTGOING
                 );
                 radioGroup.setItemLabelGenerator((ItemLabelGenerator<VisibilityFilterType>) item -> item.label);
                 radioGroup.setValue(calculateRadioValue(mirror));
@@ -267,9 +269,19 @@ public class DiagramVisibilityComponent extends Div {
         }
     }
 
-    private VisibilityFilterType calculateRadioValue(DomainTypeMirror mirror) {
-        if(currentDiagram.getDomainModelVisibility().getIncludeConnectedToClassNames().contains(mirror.getTypeName())){
+    VisibilityFilterType calculateRadioValue(DomainTypeMirror mirror) {
+        var visibility = currentDiagram.getDomainModelVisibility();
+        String typeName = mirror.getTypeName();
+        if(visibility.getIncludeConnectedToClassNames().contains(typeName)){
             return VisibilityFilterType.INCLUDE_CONNECTED;
+        }
+        if(visibility.getIncludeConnectedToIngoingClassNames().contains(typeName)
+            && visibility.getIncludeConnectedToOutgoingClassNames().contains(typeName)){
+            return VisibilityFilterType.INCLUDE_CONNECTED_INGOING_AND_OUTGOING;
+        }
+        if(visibility.getExcludeConnectedToIngoingClassNames().contains(typeName)
+            && visibility.getExcludeConnectedToOutgoingClassNames().contains(typeName)){
+            return VisibilityFilterType.EXCLUDE_CONNECTED_INGOING_AND_OUTGOING;
         }
         if(currentDiagram.getDomainModelVisibility().getIncludeConnectedToIngoingClassNames().contains(mirror.getTypeName())){
             return VisibilityFilterType.INCLUDE_CONNECTED_INGOING;
@@ -336,7 +348,7 @@ public class DiagramVisibilityComponent extends Div {
     }
 
 
-    private DomainModelVisibility removeFromVisibilityAndAdd(String typeName, DomainModelVisibility visibility, VisibilityFilterType addType) {
+    DomainModelVisibility removeFromVisibilityAndAdd(String typeName, DomainModelVisibility visibility, VisibilityFilterType addType) {
         var newConnected = new HashSet<>(visibility.getIncludeConnectedToClassNames());
         newConnected.remove(typeName);
 
@@ -356,8 +368,16 @@ public class DiagramVisibilityComponent extends Div {
             case INCLUDE_CONNECTED -> newConnected.add(typeName);
             case INCLUDE_CONNECTED_INGOING -> newIncludeIngoing.add(typeName);
             case INCLUDE_CONNECTED_OUTGOING -> newIncludeOutgoing.add(typeName);
+            case INCLUDE_CONNECTED_INGOING_AND_OUTGOING -> {
+                newIncludeIngoing.add(typeName);
+                newIncludeOutgoing.add(typeName);
+            }
             case EXCLUDE_CONNECTED_INGOING -> newExcludeIngoing.add(typeName);
             case EXCLUDE_CONNECTED_OUTGOING -> newExcludeOutgoing.add(typeName);
+            case EXCLUDE_CONNECTED_INGOING_AND_OUTGOING -> {
+                newExcludeIngoing.add(typeName);
+                newExcludeOutgoing.add(typeName);
+            }
         }
 
         visibility = visibility.replaceIncludeConnectedToClassNames(newConnected);
@@ -454,13 +474,15 @@ public class DiagramVisibilityComponent extends Div {
             Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
     }
 
-    private enum VisibilityFilterType {
+    enum VisibilityFilterType {
         VISIBLE("visible"),
         INCLUDE_CONNECTED("include connections"),
         INCLUDE_CONNECTED_INGOING ("include ingoing connections"),
         INCLUDE_CONNECTED_OUTGOING("include outgoing connections"),
+        INCLUDE_CONNECTED_INGOING_AND_OUTGOING("include ingoing and outgoing connections"),
         EXCLUDE_CONNECTED_INGOING("exclude ingoing connections"),
         EXCLUDE_CONNECTED_OUTGOING("exclude outgoing connections"),
+        EXCLUDE_CONNECTED_INGOING_AND_OUTGOING("exclude ingoing and outgoing connections"),
         NO_TRIMMING("no advanced view filter");
 
         final String label;

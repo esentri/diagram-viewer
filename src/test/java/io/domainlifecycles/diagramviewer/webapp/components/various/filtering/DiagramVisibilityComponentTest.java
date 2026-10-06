@@ -35,6 +35,7 @@ import com.vaadin.flow.component.virtuallist.VirtualList;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.dom.Element;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
@@ -44,6 +45,7 @@ import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -110,7 +112,55 @@ class DiagramVisibilityComponentTest {
         assertThat(name.getAttribute("title")).isEqualTo("fixtures.factory.OrderFactory");
     }
 
+    @Test
+    void Should_OfferToFollowAClassInBothDirections() {
+
+        // given
+        DomainTypeMirror orderService = MIRROR.getDomainTypeMirror("fixtures.factory.OrderService").orElseThrow();
+        var component = componentWithOpenedGroups();
+
+        // when
+        var both = component.removeFromVisibilityAndAdd(orderService.getTypeName(), new DomainModelVisibility(),
+            DiagramVisibilityComponent.VisibilityFilterType.INCLUDE_CONNECTED_INGOING_AND_OUTGOING);
+        var none = component.removeFromVisibilityAndAdd(orderService.getTypeName(), both,
+            DiagramVisibilityComponent.VisibilityFilterType.NO_TRIMMING);
+
+        // then
+        assertThat(both.getIncludeConnectedToIngoingClassNames()).containsExactly(orderService.getTypeName());
+        assertThat(both.getIncludeConnectedToOutgoingClassNames()).containsExactly(orderService.getTypeName());
+        assertThat(none.getIncludeConnectedToIngoingClassNames()).isEmpty();
+        assertThat(none.getIncludeConnectedToOutgoingClassNames()).isEmpty();
+    }
+
+    @Test
+    void Should_ShowThatAClassIsFollowedInBothDirections() {
+
+        // given
+        DomainTypeMirror orderService = MIRROR.getDomainTypeMirror("fixtures.factory.OrderService").orElseThrow();
+        Set<String> typeName = Set.of(orderService.getTypeName());
+        var included = componentWithOpenedGroups(new DomainModelVisibility()
+            .replaceIncludeConnectedToIngoingClassNames(typeName)
+            .replaceIncludeConnectedToOutgoingClassNames(typeName));
+        var excluded = componentWithOpenedGroups(new DomainModelVisibility()
+            .replaceExcludeConnectedToIngoingClassNames(typeName)
+            .replaceExcludeConnectedToOutgoingClassNames(typeName));
+        var ingoingOnly = componentWithOpenedGroups(new DomainModelVisibility()
+            .replaceIncludeConnectedToIngoingClassNames(typeName));
+
+        // then
+        assertThat(included.calculateRadioValue(orderService))
+            .isEqualTo(DiagramVisibilityComponent.VisibilityFilterType.INCLUDE_CONNECTED_INGOING_AND_OUTGOING);
+        assertThat(excluded.calculateRadioValue(orderService))
+            .isEqualTo(DiagramVisibilityComponent.VisibilityFilterType.EXCLUDE_CONNECTED_INGOING_AND_OUTGOING);
+        assertThat(ingoingOnly.calculateRadioValue(orderService))
+            .isEqualTo(DiagramVisibilityComponent.VisibilityFilterType.INCLUDE_CONNECTED_INGOING);
+    }
+
     private static DiagramVisibilityComponent componentWithOpenedGroups() {
+        return componentWithOpenedGroups(new DomainModelVisibility());
+    }
+
+    private static DiagramVisibilityComponent componentWithOpenedGroups(DomainModelVisibility visibility) {
         UUID projectId = UUID.randomUUID();
         SessionStorage sessionStorage = mock(SessionStorage.class);
         when(sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(projectId)).thenReturn(
@@ -119,7 +169,8 @@ class DiagramVisibilityComponentTest {
                 .toList());
         when(sessionStorage.isDomainTypeSettingOpen(any())).thenReturn(true);
         var component = new DiagramVisibilityComponent(sessionStorage, mock(DiagramService.class));
-        component.setDiagram(Diagram.builder().project(Project.builder().id(projectId).build()).build());
+        component.setDiagram(Diagram.builder().project(Project.builder().id(projectId).build())
+            .domainModelVisibility(visibility).build());
         return component;
     }
 

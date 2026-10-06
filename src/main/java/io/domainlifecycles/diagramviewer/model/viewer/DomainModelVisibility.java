@@ -112,6 +112,22 @@ public class DomainModelVisibility {
     )
     @Column(name = "class_name")
     private Set<String> excludeConnectedToIngoingClassNames = new HashSet<>();
+    /**
+     * Up to how many steps the ingoing connections of {@link #includeConnectedToIngoingClassNames} are followed -
+     * "what leads to it". {@code 0} or negative follows the complete path.
+     */
+    @Getter
+    @Builder.Default
+    @Column(columnDefinition = "integer not null default 0")
+    private int includeConnectedToIngoingDepth = 0;
+    /**
+     * Up to how many steps the outgoing connections of {@link #includeConnectedToOutgoingClassNames} are followed -
+     * "what does it lead to". {@code 0} or negative follows the complete path.
+     */
+    @Getter
+    @Builder.Default
+    @Column(columnDefinition = "integer not null default 0")
+    private int includeConnectedToOutgoingDepth = 0;
 
     @Getter
     @Builder.Default
@@ -245,8 +261,30 @@ public class DomainModelVisibility {
             || (includeFlowsTo != null && !includeFlowsTo.isEmpty());
     }
 
+    /**
+     * @param includeConnectedToIngoingDepth  up to how many steps "what leads to it" is followed, {@code 0} or negative
+     *                                        for the complete path
+     * @param includeConnectedToOutgoingDepth up to how many steps "what does it lead to" is followed, {@code 0} or
+     *                                        negative for the complete path
+     * @return a copy with the given depths
+     */
+    public DomainModelVisibility replaceIncludeConnectedDepths(int includeConnectedToIngoingDepth,
+                                                               int includeConnectedToOutgoingDepth) {
+        DomainModelVisibility replaced = replaceBlacklistedClassNames(blacklistedClassNames);
+        replaced.includeConnectedToIngoingDepth = includeConnectedToIngoingDepth;
+        replaced.includeConnectedToOutgoingDepth = includeConnectedToOutgoingDepth;
+        return replaced;
+    }
+
+    /** the replacing copies keep the depths of the connections followed */
+    private DomainModelVisibility withConnectionDepthsOf(DomainModelVisibility replaced) {
+        replaced.includeConnectedToIngoingDepth = includeConnectedToIngoingDepth;
+        replaced.includeConnectedToOutgoingDepth = includeConnectedToOutgoingDepth;
+        return replaced;
+    }
+
     public DomainModelVisibility replaceBlacklistedClassNames(Set<String> blacklistedClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -258,11 +296,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceIncludeConnectedToClassNames(Set<String> includeConnectedToClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -274,11 +312,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceIncludeConnectedToIngoingClassNames(Set<String> includeConnectedToIngoingClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -290,11 +328,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceIncludeConnectedToOutgoingClassNames(Set<String> includeConnectedToOutgoingClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -306,11 +344,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceExcludeConnectedToIngoingClassNames(Set<String> excludeConnectedToIngoingClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -322,11 +360,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceExcludeConnectedToOutgoingClassNames(Set<String> excludeConnectedToOutgoingClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -338,11 +376,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceExplicitlyIncludedPackagesNames(Set<String> explicitlyIncludedPackagesNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -354,11 +392,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceInlinedValueObjects(Set<String> inlinedValueObjects) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -370,11 +408,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceIncludeFlowsFrom(Set<String> includeFlowsFrom) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -386,11 +424,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceIncludeFlowsTo(Set<String> includeFlowsTo) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -402,11 +440,11 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     public DomainModelVisibility replaceIncludedBoundedContextPackages(Set<String> includedBoundedContextPackages) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -418,7 +456,7 @@ public class DomainModelVisibility {
                 includeFlowsFrom,
                 includeFlowsTo,
                 includedBoundedContextPackages
-        );
+        ));
     }
 
     /**
