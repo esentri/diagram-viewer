@@ -249,18 +249,30 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
         CompletableFuture.allOf(result.renderings().toArray(CompletableFuture[]::new)).get(2, TimeUnit.MINUTES);
         assertThat(result.renderings()).allSatisfy(rendering -> assertThat(rendering.get().saved()).isTrue());
         assertThat(result.boundedContexts()).isEqualTo(3);
-        assertThat(result.createdDiagrams()).isEqualTo(6);
+        assertThat(result.createdDiagrams()).isEqualTo(8);
 
         Project analyzed = reloadedProject();
         assertThat(analyzed.getTopLevelDiagramDirectories()).extracting(DiagramDirectory::getName)
             .containsExactlyInAnyOrder(RezeptionScenario.BUCHUNG_CONTEXT_NAME, RezeptionScenario.ZIMMER_CONTEXT_NAME,
                 RezeptionScenario.AUSLASTUNG_CONTEXT_PACKAGE);
 
-        // Buchung: its aggregates, and its three commands - but no read models, so no such folder
+        // Buchung: its aggregates, the neighborhood of its aggregate, and its three commands - but no read models, so no
+        // such folder
         DiagramDirectory buchung = directory(analyzed, null, RezeptionScenario.BUCHUNG_CONTEXT_NAME);
         assertThat(diagramNames(buchung)).containsExactly("Aggregates");
         assertThat(analyzed.getSubDirectories(buchung)).extracting(DiagramDirectory::getName)
-            .containsExactly(BoundedContextAnalysisService.COMMANDS_DIRECTORY);
+            .containsExactlyInAnyOrder(BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DIRECTORY,
+                BoundedContextAnalysisService.COMMANDS_DIRECTORY);
+
+        // the neighborhood of the Buchung aggregate: what leads to it and what it leads to, two steps each
+        DiagramDirectory buchungNeighborhood = directory(analyzed, buchung,
+            BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DIRECTORY);
+        assertThat(diagramNames(buchungNeighborhood)).containsExactly("Buchung");
+        DomainModelVisibility neighborhood = diagram(buchungNeighborhood, "Buchung").getDomainModelVisibility();
+        assertThat(neighborhood.getIncludeConnectedToIngoingClassNames()).containsExactly(RezeptionScenario.BUCHUNG_AGGREGATE);
+        assertThat(neighborhood.getIncludeConnectedToOutgoingClassNames()).containsExactly(RezeptionScenario.BUCHUNG_AGGREGATE);
+        assertThat(neighborhood.getIncludeConnectedToIngoingDepth()).isEqualTo(2);
+        assertThat(neighborhood.getIncludeConnectedToOutgoingDepth()).isEqualTo(2);
         DiagramDirectory commands = directory(analyzed, buchung, BoundedContextAnalysisService.COMMANDS_DIRECTORY);
         assertThat(diagramNames(commands)).containsExactlyInAnyOrder(
             "AktualisiereGastdaten", "CheckeGastAus", "CheckeGastEin");
@@ -281,14 +293,19 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
         String svg = Files.readString(Path.of(diagramsLocation, project.getId().toString(), DiagramFileUtils.imageFileName(buchungAggregates)));
         assertThat(svg).contains("data-name=\"Buchung &lt;&lt;").doesNotContain("data-name=\"Zimmer &lt;&lt;");
 
-        // Zimmer: its aggregates only
+        // Zimmer: its aggregates and the neighborhood of its aggregate
         DiagramDirectory zimmer = directory(analyzed, null, RezeptionScenario.ZIMMER_CONTEXT_NAME);
         assertThat(diagramNames(zimmer)).containsExactly("Aggregates");
-        assertThat(analyzed.getSubDirectories(zimmer)).isEmpty();
+        assertThat(analyzed.getSubDirectories(zimmer)).extracting(DiagramDirectory::getName)
+            .containsExactly(BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DIRECTORY);
+        assertThat(diagramNames(directory(analyzed, zimmer, BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DIRECTORY)))
+            .containsExactly("Zimmer");
 
         // the nameless context, labelled by its package: no aggregates, one read model with a backward flow
         DiagramDirectory auslastung = directory(analyzed, null, RezeptionScenario.AUSLASTUNG_CONTEXT_PACKAGE);
         assertThat(diagramNames(auslastung)).isEmpty();
+        assertThat(analyzed.getSubDirectories(auslastung)).extracting(DiagramDirectory::getName)
+            .containsExactly(BoundedContextAnalysisService.READ_MODELS_DIRECTORY);
         DiagramDirectory readModels = directory(analyzed, auslastung, BoundedContextAnalysisService.READ_MODELS_DIRECTORY);
         Diagram zimmerauslastung = diagram(readModels, "Zimmerauslastung");
         assertThat(zimmerauslastung.getDomainModelVisibility().getIncludeFlowsTo())
@@ -309,10 +326,10 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
         awaitRenderings(result);
 
         // then: every diagram reported once, counting up to the total
-        assertThat(result.createdDiagrams()).isEqualTo(6);
-        assertThat(progress).hasSize(6);
-        assertThat(progress.get(0)).startsWith("1/6 ");
-        assertThat(progress.get(5)).startsWith("6/6 ");
+        assertThat(result.createdDiagrams()).isEqualTo(8);
+        assertThat(progress).hasSize(8);
+        assertThat(progress.get(0)).startsWith("1/8 ");
+        assertThat(progress.get(7)).startsWith("8/8 ");
         assertThat(progress).anyMatch(entry -> entry.endsWith(" CheckeGastAus"));
     }
 
@@ -328,22 +345,28 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
 
         // then
         assertThat(second.createdDiagrams()).isZero();
-        assertThat(second.skippedDiagrams()).isEqualTo(6);
+        assertThat(second.skippedDiagrams()).isEqualTo(8);
         Project analyzed = reloadedProject();
-        assertThat(analyzed.getDiagrams()).hasSize(6);
-        assertThat(analyzed.getDiagramDirectories()).hasSize(5);
+        assertThat(analyzed.getDiagrams()).hasSize(8);
+        assertThat(analyzed.getDiagramDirectories()).hasSize(7);
     }
 
     @Test
     void Should_AddOnlyTheMissingDiagrams_And_KeepTheChangedOnes_When_ProjectIsAnalyzedAgain() throws Exception {
 
-        // given: an analyzed project, one diagram deleted and one changed since
+        // given: an analyzed project, two diagrams deleted and one changed since
         upload(RezeptionScenario.gzippedUploadRequestBodyWithBoundedContexts());
         awaitRenderings(boundedContextAnalysisService.analyze(reloadedProject()));
         Project analyzed = reloadedProject();
         DiagramDirectory buchung = directory(analyzed, null, RezeptionScenario.BUCHUNG_CONTEXT_NAME);
         DiagramDirectory commands = directory(analyzed, buchung, BoundedContextAnalysisService.COMMANDS_DIRECTORY);
         projectService.deleteDiagram(analyzed, diagram(commands, "CheckeGastEin"));
+        // reloaded: the project loaded before still holds the deleted diagram
+        Project withoutCheckIn = reloadedProject();
+        DiagramDirectory zimmerNeighborhood = directory(withoutCheckIn,
+            directory(withoutCheckIn, null, RezeptionScenario.ZIMMER_CONTEXT_NAME),
+            BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DIRECTORY);
+        projectService.deleteDiagram(withoutCheckIn, diagram(zimmerNeighborhood, "Zimmer"));
         Diagram changed = diagram(commands, "CheckeGastAus");
         changed.getDiagramStylingConfiguration().setShowDomainEvents(false);
         diagramService.updateModel(changed);
@@ -352,18 +375,20 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
         BoundedContextAnalysisService.Result second = boundedContextAnalysisService.analyze(reloadedProject());
         awaitRenderings(second);
 
-        // then: the deleted diagram is back, all others - matched by name - are left as they were
-        assertThat(second.createdDiagrams()).isEqualTo(1);
-        assertThat(second.skippedDiagrams()).isEqualTo(5);
+        // then: the deleted diagrams are back, all others - matched by name - are left as they were
+        assertThat(second.createdDiagrams()).isEqualTo(2);
+        assertThat(second.skippedDiagrams()).isEqualTo(6);
         Project reanalyzed = reloadedProject();
-        assertThat(reanalyzed.getDiagrams()).hasSize(6);
-        assertThat(reanalyzed.getDiagramDirectories()).hasSize(5);
+        assertThat(reanalyzed.getDiagrams()).hasSize(8);
+        assertThat(reanalyzed.getDiagramDirectories()).hasSize(7);
         DiagramDirectory reanalyzedCommands = directory(reanalyzed,
             directory(reanalyzed, null, RezeptionScenario.BUCHUNG_CONTEXT_NAME), BoundedContextAnalysisService.COMMANDS_DIRECTORY);
         assertThat(diagramNames(reanalyzedCommands)).containsExactlyInAnyOrder(
             "AktualisiereGastdaten", "CheckeGastAus", "CheckeGastEin");
         assertThat(diagram(reanalyzedCommands, "CheckeGastAus").getDiagramStylingConfiguration().isShowDomainEvents())
             .isFalse();
+        assertThat(diagramNames(directory(reanalyzed, directory(reanalyzed, null, RezeptionScenario.ZIMMER_CONTEXT_NAME),
+            BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DIRECTORY))).containsExactly("Zimmer");
     }
 
     @Test

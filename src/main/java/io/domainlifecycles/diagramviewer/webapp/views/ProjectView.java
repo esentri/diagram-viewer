@@ -230,6 +230,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
             + boundedContexts.stream().map(BoundedContext::label).map(HtmlUtils::htmlEscape).collect(Collectors.joining(", "))
             + ") containing<ul>"
             + "<li>a diagram of its aggregates,</li>"
+            + "<li>a folder <b>Aggregate Neighborhood</b> with a diagram per aggregate, showing what leads to it and"
+            + " what it leads to, " + BoundedContextAnalysisService.AGGREGATE_NEIGHBORHOOD_DEPTH + " steps each,</li>"
             + "<li>a folder <b>Read Models</b> with a diagram per read model, showing what leads into it,</li>"
             + "<li>a folder <b>Commands</b> with a diagram per command, showing the flow it triggers and what leads"
             + " into its processing.</li></ul>"

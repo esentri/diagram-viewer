@@ -35,6 +35,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagram.domain.mapper.DomainMapperUtils;
+import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.BoundedContextMirror;
 import io.domainlifecycles.mirror.api.DomainCommandMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
@@ -62,6 +63,8 @@ import org.springframework.stereotype.Service;
  * Creates a starting point for exploring a project: per Bounded Context a directory with
  * <ul>
  *     <li>a diagram of the Bounded Context's aggregates only,</li>
+ *     <li>a sub directory "Aggregate Neighborhood" with a diagram per aggregate, showing what leads to it and what it
+ *     leads to, {@value #AGGREGATE_NEIGHBORHOOD_DEPTH} steps each (structural connections, no flows),</li>
  *     <li>a sub directory "Read Models" with a diagram per top level read model - one contained in no other read model
  *     -, showing what leads into it (backward flow); a contained read model is shown in the diagram of the read model
  *     containing it,</li>
@@ -78,6 +81,9 @@ public class BoundedContextAnalysisService {
     public static final String READ_MODELS_DIRECTORY = "Read Models";
     public static final String COMMANDS_DIRECTORY = "Commands";
     public static final String AGGREGATES_DIAGRAM_NAME = "Aggregates";
+    public static final String AGGREGATE_NEIGHBORHOOD_DIRECTORY = "Aggregate Neighborhood";
+    /** up to how many steps the neighborhood of an aggregate is followed, in each direction */
+    public static final int AGGREGATE_NEIGHBORHOOD_DEPTH = 2;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BoundedContextAnalysisService.class);
 
@@ -176,6 +182,7 @@ public class BoundedContextAnalysisService {
         Set<String> containedReadModels = containedReadModelTypeNames(domainMirror);
         int total = boundedContexts.stream()
             .mapToInt(boundedContext -> (boundedContext.getAggregateRoots().isEmpty() ? 0 : 1)
+                + boundedContext.getAggregateRoots().size()
                 + topLevelReadModels(boundedContext, containedReadModels).size()
                 + boundedContext.getDomainCommands().size())
             .sum();
@@ -250,6 +257,17 @@ public class BoundedContextAnalysisService {
                     new DomainModelVisibility()
                         .replaceIncludedBoundedContextPackages(Set.of(boundedContext.getPackageName())),
                     aggregatesOnly());
+            }
+
+            List<AggregateRootMirror> aggregateRoots = sortedByName(boundedContext.getAggregateRoots());
+            if (!aggregateRoots.isEmpty()) {
+                DiagramDirectory neighborhoodDirectory =
+                    diagramDirectoryService.findOrCreate(project, directory, AGGREGATE_NEIGHBORHOOD_DIRECTORY);
+                Map<String, String> names = diagramNames(aggregateRoots, boundedContext);
+                aggregateRoots.forEach(aggregateRoot -> createDiagram(neighborhoodDirectory,
+                    names.get(aggregateRoot.getTypeName()),
+                    aggregateNeighborhood(aggregateRoot),
+                    DiagramStylingConfiguration.builder().build()));
             }
 
             List<ReadModelMirror> readModels = topLevelReadModels(boundedContext, containedReadModels);
@@ -343,6 +361,18 @@ public class BoundedContextAnalysisService {
         return mirrors.stream()
             .sorted(Comparator.comparing(mirror -> shortName(mirror.getTypeName())))
             .toList();
+    }
+
+    /**
+     * What leads to an aggregate and what it leads to, {@value #AGGREGATE_NEIGHBORHOOD_DEPTH} steps each - along the
+     * structural connections of the domain model, so across Bounded Contexts as well.
+     */
+    static DomainModelVisibility aggregateNeighborhood(AggregateRootMirror aggregateRoot) {
+        Set<String> typeName = Set.of(aggregateRoot.getTypeName());
+        return new DomainModelVisibility()
+            .replaceIncludeConnectedToIngoingClassNames(typeName)
+            .replaceIncludeConnectedToOutgoingClassNames(typeName)
+            .replaceIncludeConnectedDepths(AGGREGATE_NEIGHBORHOOD_DEPTH, AGGREGATE_NEIGHBORHOOD_DEPTH);
     }
 
     /**

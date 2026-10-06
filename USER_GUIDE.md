@@ -129,6 +129,12 @@ that result only. After uploading the domain model again with the static analysi
 each Bounded Context of the project, named after the Bounded Context (or its package, if it has no name), containing
 
 - a diagram ``Aggregates`` showing only the aggregates of the Bounded Context,
+- a sub folder ``Aggregate Neighborhood`` with a diagram per aggregate of the Bounded Context, named after its
+  aggregate root, showing what leads to the aggregate and what it leads to, two steps each - e.g. its repository and
+  the services using it, the commands it processes, the events it publishes and who listens to them. It is based on
+  the structural connections (``Include ingoing connections to`` and ``Include outgoing connections from`` with
+  ``Depth`` 2, see [Filter on connections / relations](#filter-on-connections--relations)), not on flows, and may reach
+  into other Bounded Contexts. Without aggregates, there is no such folder,
 - a sub folder ``Read Models`` with a diagram per top level read model of the Bounded Context, named after the read
   model, showing everything leading into the read model (backward flow). A read model contained in another one (as
   field, ``Optional`` or collection) gets no diagram of its own: it is shown, connected by a composition, in the
@@ -139,7 +145,7 @@ each Bounded Context of the project, named after the Bounded Context (or its pac
   flow - a command itself has no backward flow, since nothing in the analysis models where a command is created).
   Without commands, there is no such folder.
 
-If two read models or commands of a Bounded Context share their simple name, their diagram names are followed by
+If two aggregates, read models or commands of a Bounded Context share their simple name, their diagram names are followed by
 their package, relative to the Bounded Context, e.g. ``AktiviereCommand (core.domain.vertrag)``.
 
 The diagrams are rendered in the background, a notification tells when all of them are ready. Running the analysis
