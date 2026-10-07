@@ -16,9 +16,8 @@ RUN printf '%s\n' \
 
 WORKDIR /app
 
-# Kopiere die JAR-Datei in den Container
-# Ersetze 'deine-app.jar' durch den echten Namen aus target/
-COPY build/libs/diagram-viewer-0.3.jar app.jar
+# Kopiere das ausführbare JAR in den Container (unabhängig von der Version, ohne das -plain.jar)
+COPY build/libs/diagram-viewer-*[0-9].jar app.jar
 
 # Port für Spring Boot / Vaadin
 EXPOSE 8090

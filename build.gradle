@@ -28,9 +28,12 @@ ext {
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
 
-	postgresImage = "postgres:16"
-	krokiImage = "yuzutech/kroki"
-	appImage = "domainlifecycles/diagram-viewer:${project.version}"
+	// the images started by docker/run/docker-compose.yaml, which is part of the container bundle
+	postgresImage = "postgres:latest"
+	krokiImage = "yuzutech/kroki:latest"
+	appImageName = "marioherb/dlc-diagram-viewer"
+	appImage = "${appImageName}:${project.version}"
+	appImageLatest = "${appImageName}:latest"
 }
 
 java {
@@ -56,6 +59,7 @@ configurations {
 
 bootBuildImage {
 	imageName = appImage
+	tags = [appImageLatest]
 	vaadin {
 		productionMode = true
 	}
@@ -95,11 +99,11 @@ dependencies {
 	implementation "io.domainlifecycles:mirror-serialization-jackson3:${dlcVersion}"
 	implementation "io.domainlifecycles:static-analysis:${dlcVersion}"
 	implementation "io.domainlifecycles:static-analysis-serialization-jackson3:${dlcVersion}"
-	implementation "io.domainlifecycles:diagram-viewer-plugin:1.2"
+	implementation "io.domainlifecycles:diagram-viewer-plugin:1.3"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	if(isInternal){
         println "INTERNAL PROFILE ACTIVE"
-		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.3")
+		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.4")
 	}
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -247,7 +251,7 @@ tasks.register("saveContainerImages", Exec) {
 	commandLine "sh", "-lc", """
     set -euo pipefail
 
-    docker save '${appImage}' '${postgresImage}' '${krokiImage}' \
+    docker save '${appImage}' '${appImageLatest}' '${postgresImage}' '${krokiImage}' \
       -o '${containerDir.get().asFile}/diagram-viewer-images.tar'
   """
 }
@@ -260,7 +264,7 @@ tasks.register("buildContainerImages", Tar) {
 	destinationDirectory = containerDir.get().asFile
 	compression = Compression.GZIP
 
-	from("docker/run/docker-compose.yml") {
+	from("docker/run/docker-compose.yaml") {
 		into(".")
 	}
 	from(containerDir.map { it.file("diagram-viewer-images.tar") }) {

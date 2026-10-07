@@ -107,6 +107,9 @@ class LargeProjectRendering_PerfTest extends BaseIntegrationTest {
     private AppUser appUser;
     private Project project;
 
+    /** held here: Vaadin keeps the current UI only weakly */
+    private UI ui;
+
     @BeforeEach
     void setUp() {
         appUser = appUserRepository.save(AppUser.builder()
@@ -115,7 +118,8 @@ class LargeProjectRendering_PerfTest extends BaseIntegrationTest {
         project = projectRepository.save(Project.builder()
             .name("perf_project").diagrams(new HashSet<>())
             .assignedUsers(new HashSet<>(Set.of(appUser))).creator(appUser).build());
-        UI.setCurrent(new UI());
+        ui = new UI();
+        UI.setCurrent(ui);
     }
 
     @AfterEach

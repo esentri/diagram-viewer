@@ -39,7 +39,7 @@ to upload your domain model to the DLC Diagram Viewer. There you may also find a
 
 ```Gradle
 plugins {
-	id 'io.domainlifecycles.dlc-gradle-plugin' version '3.4.0'
+	id 'io.domainlifecycles.dlc-gradle-plugin' version '3.5.0'
 }
 ...
 dlcGradlePlugin {

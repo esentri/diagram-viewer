@@ -107,9 +107,13 @@ class RezeptionBoundedContexts_ITest extends BaseIntegrationTest {
     private AppUser appUser;
     private Project project;
 
+    /** held here: Vaadin keeps the current UI only weakly */
+    private UI ui;
+
     @BeforeEach
     void setUp() {
-        UI.setCurrent(new UI());
+        ui = new UI();
+        UI.setCurrent(ui);
         appUser = appUserRepository.save(AppUser.builder()
             .firstName("Rezeption")
             .lastName("BoundedContextTester")

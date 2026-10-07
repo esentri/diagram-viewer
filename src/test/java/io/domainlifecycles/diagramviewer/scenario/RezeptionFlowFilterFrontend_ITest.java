@@ -92,6 +92,9 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
     private Diagram diagram;
     private DiagramFlowFilterComponent flowFilterComponent;
 
+    /** held here: Vaadin keeps the current UI only weakly */
+    private UI ui;
+
     @BeforeEach
     void setUp() throws Exception {
         appUser = appUserRepository.save(AppUser.builder()
@@ -117,7 +120,8 @@ class RezeptionFlowFilterFrontend_ITest extends BaseIntegrationTest {
 
         diagram = diagramService.create(project, "flow-filter-ui", new DomainModelVisibility(), new DiagramStylingConfiguration());
 
-        UI.setCurrent(new UI());
+        ui = new UI();
+        UI.setCurrent(ui);
         flowFilterComponent = new DiagramFlowFilterComponent(sessionStorage, diagramService);
         UI.getCurrent().add(flowFilterComponent);
         flowFilterComponent.setDiagram(diagram);
