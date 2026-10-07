@@ -54,7 +54,7 @@ import io.domainlifecycles.diagramviewer.webapp.properties.ApplicationFeatures;
 @Route(value = SignInView.VIEW_PATH, autoLayout = false)
 @PageTitle("DLC | Login")
 @AnonymousAllowed
-public class SignInView extends VerticalLayout implements BeforeEnterObserver {
+public final class SignInView extends VerticalLayout implements BeforeEnterObserver {
 
     public static final String VIEW_PATH = "/signin";
 
@@ -126,6 +126,8 @@ public class SignInView extends VerticalLayout implements BeforeEnterObserver {
     private LoginOverlay getLoginOverlay() {
         loginOverlay = new LoginOverlay();
         loginOverlay.setAction("login");
+        loginOverlay.setTitle("DLC Diagram Viewer");
+        loginOverlay.setDescription("Explore the domain model of your DomainLifecycles projects as interactive diagrams.");
         loginOverlay.setForgotPasswordButtonVisible(false);
         loginOverlay.getFooter().add(getBackButton());
         return loginOverlay;

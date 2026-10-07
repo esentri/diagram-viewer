@@ -39,6 +39,21 @@ public interface RegenerateDiagramsJobService {
 
     List<RegenerateDiagramsJob> getAll();
 
+    /**
+     * @param maxAttempts how often regenerating a diagram may fail before its job is no longer retried
+     * @return the jobs that have failed fewer than {@code maxAttempts} times
+     */
+    List<RegenerateDiagramsJob> getDue(int maxAttempts);
+
+    /**
+     * Records a failed regeneration at the job, so that it is only retried up to a limit.
+     *
+     * @param job   the job whose regeneration failed
+     * @param error the cause of the failure
+     * @return the updated job
+     */
+    RegenerateDiagramsJob recordFailure(RegenerateDiagramsJob job, Throwable error);
+
     @Transactional
     void create(Project project);
 

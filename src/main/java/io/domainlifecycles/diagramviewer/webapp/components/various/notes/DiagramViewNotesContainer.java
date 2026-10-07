@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class DiagramViewNotesContainer extends VerticalLayout {
+public final class DiagramViewNotesContainer extends VerticalLayout {
 
 
     private final DiagramTypeNoteService diagramTypeNoteService;
@@ -62,10 +62,10 @@ public class DiagramViewNotesContainer extends VerticalLayout {
         Map<String, String> allDiagramTypeNotesByDomainTypeMirrorNameFilteredByIncludedPackages =
             allDiagramTypeNotesByDomainTypeMirrorName.entrySet().stream()
                 .filter(typeMirrorNoteEntry -> {
-                    if (diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames() == null ||
-                        diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().isEmpty()) return true;
+                    if (diagram.getDomainModelVisibility().getEffectiveIncludedPackages() == null ||
+                        diagram.getDomainModelVisibility().getEffectiveIncludedPackages().isEmpty()) return true;
 
-                    return diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames().stream().anyMatch(
+                    return diagram.getDomainModelVisibility().getEffectiveIncludedPackages().stream().anyMatch(
                         includedPackageName -> typeMirrorNoteEntry.getKey().startsWith(includedPackageName));
                 })
                 .collect(Collectors.toMap(

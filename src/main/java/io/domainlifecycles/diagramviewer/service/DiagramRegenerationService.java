@@ -30,32 +30,67 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
-import io.domainlifecycles.mirror.api.DomainMirror;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+/**
+ * Regenerates diagrams outside of any user interaction, e.g. from the scheduled regeneration after a
+ * project's domain model was uploaded again.
+ * <p>
+ * It runs without an HTTP request or session bound, so it must not use the session scoped
+ * {@code SessionStorage}. It takes the project's model data from the {@link ProjectModelCache} shared with the
+ * sessions instead - loaded once per project, and the static analysis result only if a diagram needs it.
+ */
 @Service
 public class DiagramRegenerationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DiagramRegenerationService.class);
 
-    private final ProjectDomainMirrorService projectDomainMirrorService;
+    private final ProjectModelCache projectModelCache;
 
     private final DiagramService diagramService;
 
     public DiagramRegenerationService(
-            ProjectDomainMirrorService projectDomainMirrorService,
+            ProjectModelCache projectModelCache,
             DiagramService diagramService
     ) {
-        this.projectDomainMirrorService = projectDomainMirrorService;
+        this.projectModelCache = projectModelCache;
         this.diagramService = diagramService;
     }
 
-    public void regenerate(Diagram diagram) {
+    /**
+     * Returns the current model data of a project, shared with the sessions via the {@link ProjectModelCache}.
+     *
+     * @param projectId the project to load
+     * @return the project's model data
+     */
+    public ProjectModel loadProjectModel(UUID projectId) {
+        return projectModelCache.get(projectId);
+    }
+
+    /**
+     * Regenerates a diagram from already loaded model data of its project.
+     *
+     * @param diagram      the diagram to regenerate
+     * @param projectModel the model data of the diagram's project, see {@link #loadProjectModel(UUID)}
+     */
+    public void regenerate(Diagram diagram, ProjectModel projectModel) {
         LOGGER.info(String.format("Regenerating diagram '%s'.", diagram.getName()));
-        var projectDomainMirror = projectDomainMirrorService.getByProjectId(diagram.getProject().getId());
-        DomainMirror domainMirror = projectDomainMirror.getDomainMirror();
-        diagramService.createAndSaveDiagramToFilesystem(domainMirror, diagram);
+        var domainCalls = diagram.getDomainModelVisibility() != null && diagram.getDomainModelVisibility().hasFlowSettings()
+            ? projectModel.domainCalls().orElse(null)
+            : null;
+        diagramService.createAndSaveDiagramToFilesystem(projectModel.domainMirror(), domainCalls, diagram);
+    }
+
+    /**
+     * Regenerates a single diagram, loading its project's model data first. To regenerate several
+     * diagrams of the same project, load the model once and use {@link #regenerate(Diagram, ProjectModel)}.
+     *
+     * @param diagram the diagram to regenerate
+     */
+    public void regenerate(Diagram diagram) {
+        regenerate(diagram, loadProjectModel(diagram.getProject().getId()));
     }
 }

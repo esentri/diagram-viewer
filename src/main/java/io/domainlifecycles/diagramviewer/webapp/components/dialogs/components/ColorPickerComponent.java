@@ -31,7 +31,7 @@ package io.domainlifecycles.diagramviewer.webapp.components.dialogs.components;
 
 import com.vaadin.flow.component.html.Input;
 
-public class ColorPickerComponent extends Input {
+public final class ColorPickerComponent extends Input {
 
     private static final String HTML_COLOR_INPUT_TYPE = "color";
 

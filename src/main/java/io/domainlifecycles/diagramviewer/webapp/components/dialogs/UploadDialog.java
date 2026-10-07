@@ -50,7 +50,7 @@ import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
 
-public class UploadDialog extends Dialog {
+public final class UploadDialog extends Dialog {
 
     private final ProjectService projectService;
     private final SecurityService securityService;

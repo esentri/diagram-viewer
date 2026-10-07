@@ -29,6 +29,8 @@
 
 package io.domainlifecycles.diagramviewer.model.viewer;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -56,61 +58,148 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Builder(toBuilder = true)
 public class DomainModelVisibility {
 
+    /**
+     * A package no type name starts with: the restriction to it leaves nothing - unlike an empty set of packages,
+     * which restricts nothing.
+     */
+    public static final String NO_PACKAGE = "#none";
+
     @Id
     @GeneratedValue
     private UUID id;
 
     @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> explicitlyIncludedPackagesNames;
+    private Set<String> explicitlyIncludedPackagesNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> includeConnectedToClassNames;
+    private Set<String> includeConnectedToClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_incl_ing", // short, unique table name
         joinColumns = @JoinColumn(name = "dmv_id")
     )
     @Column(name = "class_name")
-    private Set<String> includeConnectedToIngoingClassNames;
+    private Set<String> includeConnectedToIngoingClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_incl_out",
         joinColumns = @JoinColumn(name = "dmv_id")
     )
     @Column(name = "class_name")
-    private Set<String> includeConnectedToOutgoingClassNames;
+    private Set<String> includeConnectedToOutgoingClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_excl_ing",
         joinColumns = @JoinColumn(name = "dmv_id")
     )
     @Column(name = "class_name")
-    private Set<String> excludeConnectedToIngoingClassNames;
+    private Set<String> excludeConnectedToIngoingClassNames = new HashSet<>();
+    /**
+     * Up to how many steps the ingoing connections of {@link #includeConnectedToIngoingClassNames} are followed -
+     * "what leads to it". {@code 0} or negative follows the complete path.
+     */
+    @Getter
+    @Builder.Default
+    @Column(columnDefinition = "integer not null default 0")
+    private int includeConnectedToIngoingDepth = 0;
+    /**
+     * Up to how many steps the outgoing connections of {@link #includeConnectedToOutgoingClassNames} are followed -
+     * "what does it lead to". {@code 0} or negative follows the complete path.
+     */
+    @Getter
+    @Builder.Default
+    @Column(columnDefinition = "integer not null default 0")
+    private int includeConnectedToOutgoingDepth = 0;
 
     @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "dmv_excl_out",
         joinColumns = @JoinColumn(name = "dmv_id")
     )
     @Column(name = "class_name")
-    private Set<String> excludeConnectedToOutgoingClassNames;
+    private Set<String> excludeConnectedToOutgoingClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> blacklistedClassNames;
+    private Set<String> blacklistedClassNames = new HashSet<>();
 
     @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> inlinedValueObjects;
+    private Set<String> inlinedValueObjects = new HashSet<>();
+
+    /**
+     * The flow starting points the diagram is restricted to, a full qualified type name each,
+     * optionally followed by {@code #} and a method name. Empty means the diagram is not restricted
+     * to any flow.
+     */
+    @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_flows",
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "flow_starting_point")
+    private Set<String> includeFlowsFrom = new HashSet<>();
+
+    /**
+     * The flow target points the diagram is restricted to - the backward counterpart of
+     * {@link #includeFlowsFrom}: instead of "what does this lead to", the diagram shows "what leads
+     * into this". Same syntax (a full qualified type name each, optionally followed by {@code #} and
+     * a method name), except that a domain command can never be a target. Empty means the diagram is
+     * not restricted to any backward flow.
+     */
+    @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_flows_to",
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "flow_target_point")
+    private Set<String> includeFlowsTo = new HashSet<>();
+
+    /**
+     * The root packages of the Bounded Contexts the diagram is restricted to. Empty means no restriction. Combined
+     * with {@link #explicitlyIncludedPackagesNames}, see {@link #getEffectiveIncludedPackages()}.
+     */
+    @Getter
+    @Builder.Default
+    @Fetch(FetchMode.SUBSELECT)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "dmv_bounded_contexts",
+        joinColumns = @JoinColumn(name = "dmv_id")
+    )
+    @Column(name = "package_name")
+    private Set<String> includedBoundedContextPackages = new HashSet<>();
 
     @Getter
     @CreationTimestamp
@@ -128,7 +217,27 @@ public class DomainModelVisibility {
             Set<String> excludeConnectedToIngoingClassNames,
             Set<String> excludeConnectedToOutgoingClassNames,
             Set<String> blacklistedClassNames,
-            Set<String> inlinedValueObjects
+            Set<String> inlinedValueObjects,
+            Set<String> includeFlowsFrom,
+            Set<String> includeFlowsTo
+    ) {
+        this(explicitlyIncludedPackagesNames, includeConnectedToClassNames, includeConnectedToIngoingClassNames,
+            includeConnectedToOutgoingClassNames, excludeConnectedToIngoingClassNames, excludeConnectedToOutgoingClassNames,
+            blacklistedClassNames, inlinedValueObjects, includeFlowsFrom, includeFlowsTo, null);
+    }
+
+    public DomainModelVisibility(
+            Set<String> explicitlyIncludedPackagesNames,
+            Set<String> includeConnectedToClassNames,
+            Set<String> includeConnectedToIngoingClassNames,
+            Set<String> includeConnectedToOutgoingClassNames,
+            Set<String> excludeConnectedToIngoingClassNames,
+            Set<String> excludeConnectedToOutgoingClassNames,
+            Set<String> blacklistedClassNames,
+            Set<String> inlinedValueObjects,
+            Set<String> includeFlowsFrom,
+            Set<String> includeFlowsTo,
+            Set<String> includedBoundedContextPackages
     ) {
         this.explicitlyIncludedPackagesNames = explicitlyIncludedPackagesNames == null ? new HashSet<>() : explicitlyIncludedPackagesNames;
         this.includeConnectedToIngoingClassNames = includeConnectedToIngoingClassNames == null ? new HashSet<>() : includeConnectedToIngoingClassNames;
@@ -138,10 +247,44 @@ public class DomainModelVisibility {
         this.includeConnectedToClassNames = includeConnectedToClassNames == null ? new HashSet<>() : includeConnectedToClassNames;
         this.blacklistedClassNames = blacklistedClassNames == null ? new HashSet<>() : blacklistedClassNames;
         this.inlinedValueObjects = inlinedValueObjects == null ? new HashSet<>() : inlinedValueObjects;
+        this.includeFlowsFrom = includeFlowsFrom == null ? new HashSet<>() : includeFlowsFrom;
+        this.includeFlowsTo = includeFlowsTo == null ? new HashSet<>() : includeFlowsTo;
+        this.includedBoundedContextPackages = includedBoundedContextPackages == null ? new HashSet<>() : includedBoundedContextPackages;
+    }
+
+    /**
+     * @return {@code true} if the diagram is restricted to at least one flow, forward or backward - only
+     * then does rendering it need the project's static analysis result
+     */
+    public boolean hasFlowSettings() {
+        return (includeFlowsFrom != null && !includeFlowsFrom.isEmpty())
+            || (includeFlowsTo != null && !includeFlowsTo.isEmpty());
+    }
+
+    /**
+     * @param includeConnectedToIngoingDepth  up to how many steps "what leads to it" is followed, {@code 0} or negative
+     *                                        for the complete path
+     * @param includeConnectedToOutgoingDepth up to how many steps "what does it lead to" is followed, {@code 0} or
+     *                                        negative for the complete path
+     * @return a copy with the given depths
+     */
+    public DomainModelVisibility replaceIncludeConnectedDepths(int includeConnectedToIngoingDepth,
+                                                               int includeConnectedToOutgoingDepth) {
+        DomainModelVisibility replaced = replaceBlacklistedClassNames(blacklistedClassNames);
+        replaced.includeConnectedToIngoingDepth = includeConnectedToIngoingDepth;
+        replaced.includeConnectedToOutgoingDepth = includeConnectedToOutgoingDepth;
+        return replaced;
+    }
+
+    /** the replacing copies keep the depths of the connections followed */
+    private DomainModelVisibility withConnectionDepthsOf(DomainModelVisibility replaced) {
+        replaced.includeConnectedToIngoingDepth = includeConnectedToIngoingDepth;
+        replaced.includeConnectedToOutgoingDepth = includeConnectedToOutgoingDepth;
+        return replaced;
     }
 
     public DomainModelVisibility replaceBlacklistedClassNames(Set<String> blacklistedClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -149,12 +292,15 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
-        );
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
     }
 
     public DomainModelVisibility replaceIncludeConnectedToClassNames(Set<String> includeConnectedToClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -162,12 +308,15 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
-        );
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
     }
 
     public DomainModelVisibility replaceIncludeConnectedToIngoingClassNames(Set<String> includeConnectedToIngoingClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -175,12 +324,15 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
-        );
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
     }
 
     public DomainModelVisibility replaceIncludeConnectedToOutgoingClassNames(Set<String> includeConnectedToOutgoingClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -188,12 +340,15 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
-        );
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
     }
 
     public DomainModelVisibility replaceExcludeConnectedToIngoingClassNames(Set<String> excludeConnectedToIngoingClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -201,12 +356,15 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
-        );
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
     }
 
     public DomainModelVisibility replaceExcludeConnectedToOutgoingClassNames(Set<String> excludeConnectedToOutgoingClassNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -214,12 +372,15 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
-        );
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
     }
 
     public DomainModelVisibility replaceExplicitlyIncludedPackagesNames(Set<String> explicitlyIncludedPackagesNames) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -227,12 +388,15 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
-        );
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
     }
 
     public DomainModelVisibility replaceInlinedValueObjects(Set<String> inlinedValueObjects) {
-        return new DomainModelVisibility(
+        return withConnectionDepthsOf(new DomainModelVisibility(
                 explicitlyIncludedPackagesNames,
                 includeConnectedToClassNames,
                 includeConnectedToIngoingClassNames,
@@ -240,7 +404,88 @@ public class DomainModelVisibility {
                 excludeConnectedToIngoingClassNames,
                 excludeConnectedToOutgoingClassNames,
                 blacklistedClassNames,
-                inlinedValueObjects
-        );
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
+    }
+
+    public DomainModelVisibility replaceIncludeFlowsFrom(Set<String> includeFlowsFrom) {
+        return withConnectionDepthsOf(new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames,
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
+    }
+
+    public DomainModelVisibility replaceIncludeFlowsTo(Set<String> includeFlowsTo) {
+        return withConnectionDepthsOf(new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames,
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
+    }
+
+    public DomainModelVisibility replaceIncludedBoundedContextPackages(Set<String> includedBoundedContextPackages) {
+        return withConnectionDepthsOf(new DomainModelVisibility(
+                explicitlyIncludedPackagesNames,
+                includeConnectedToClassNames,
+                includeConnectedToIngoingClassNames,
+                includeConnectedToOutgoingClassNames,
+                excludeConnectedToIngoingClassNames,
+                excludeConnectedToOutgoingClassNames,
+                blacklistedClassNames,
+                inlinedValueObjects,
+                includeFlowsFrom,
+                includeFlowsTo,
+                includedBoundedContextPackages
+        ));
+    }
+
+    /**
+     * The packages the diagram is effectively restricted to, combining the explicitly included packages with the
+     * included Bounded Contexts. If only one of them is set, it applies alone. If both are set, only what lies in
+     * both remains: for each package and Bounded Context of which one lies in the other, the narrower one.
+     *
+     * @return the package prefixes the diagram's types must start with, empty for no restriction; {@link #NO_PACKAGE}
+     * alone if package and Bounded Context filter exclude each other
+     */
+    public Set<String> getEffectiveIncludedPackages() {
+        Set<String> packages = explicitlyIncludedPackagesNames == null ? Set.of() : explicitlyIncludedPackagesNames;
+        Set<String> boundedContexts = includedBoundedContextPackages == null ? Set.of() : includedBoundedContextPackages;
+        if (boundedContexts.isEmpty()) {
+            return packages;
+        }
+        if (packages.isEmpty()) {
+            return boundedContexts;
+        }
+        Set<String> effective = new HashSet<>();
+        for (String packageName : packages) {
+            for (String boundedContext : boundedContexts) {
+                if (packageName.startsWith(boundedContext)) {
+                    effective.add(packageName);
+                } else if (boundedContext.startsWith(packageName)) {
+                    effective.add(boundedContext);
+                }
+            }
+        }
+        return effective.isEmpty() ? Set.of(NO_PACKAGE) : effective;
     }
 }

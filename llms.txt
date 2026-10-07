@@ -1,0 +1,129 @@
+# DLC Diagram Viewer — llms.txt
+
+## What this project is
+The DLC Diagram Viewer is a web application to create, explore and share Domain-Driven Design (DDD) specific UML class
+diagrams of Java domain models built with DomainLifeCycles (DLC, https://github.com/esentri/domainlifecycles).
+
+The domain model is not drawn by hand: a DLC build plugin (Gradle or Maven) derives it from the code - the DLC marker
+interfaces of the tactical DDD building blocks (AggregateRoot, Entity, ValueObject, DomainEvent, DomainCommand,
+DomainService, ApplicationService, Repository, ReadModel, QueryHandler, OutboundService, Factory) - and uploads it,
+optionally together with the result of a static (bytecode) analysis of which methods call which. Every new upload
+regenerates the diagrams of the project, so the diagrams follow the code and the model-code gap stays small.
+
+## Main features
+1. Projects, folders and diagrams
+   - A project per uploaded domain model, shared with other users ("Share Project")
+   - Diagrams organized in folders; cards with previews in the project and folder views
+   - Diagrams created from scratch or from another diagram as template
+   - Notes per class, shown in the diagram
+   - Download as image (SVG, PNG or JPEG)
+
+2. Filters restricting what a diagram shows
+   - Packages and Bounded Contexts
+   - Stereotype level: which kinds of building blocks are shown, with their fields and methods; aggregates can be
+     drawn as their frame only
+   - Element level: hide single classes, inline value objects
+   - Structural connections ("Advanced view filters"): include what leads to a class (ingoing), what it leads to
+     (outgoing), both, or exclude them; ingoing and outgoing can each be limited in depth (0 = complete path), and a
+     class may be followed in both directions at once
+   - Flows (needs the static analysis result): forward ("what it leads to") and backward ("what leads into it") from a
+     class, method, domain command or domain event, following the analyzed method calls; a flow can also be shown as
+     text
+
+3. Analyze Bounded Contexts
+   - Creates a folder per Bounded Context with the diagrams of the chosen analyses: Aggregates, Aggregate Neighborhood
+     (per aggregate, what leads to it and what it leads to, 2 steps each), Read Models (backward flows) and Commands
+     (forward and backward flows)
+   - Read Models and Commands show flows and need the static analysis result; without one they are disabled in the
+     dialog
+   - Running it again only adds what is missing, matched by folder and diagram name; existing diagrams are kept
+
+4. Rendering
+   - Diagrams are generated as nomnoml text by DLC's domain-diagrammer and converted to SVG by Kroki
+   - Rendering runs in the background; large projects are supported (project models cached within a memory budget)
+
+## Architecture / tech stack
+- Java 21, Spring Boot 4, Vaadin 25 (Flow, server-side Java UI), Gradle
+- PostgreSQL (JPA/Hibernate, schema updated by `ddl-auto=update`, new columns need a column default)
+- Kroki for the nomnoml-to-SVG conversion (separate container)
+- DLC libraries: `mirror`, `mirror-serialization-jackson3`, `static-analysis`, `static-analysis-serialization-jackson3`,
+  `domain-diagrammer` (version in `build.gradle`, `dlcVersion`)
+- Authentication: local users (self registration) and optionally Okta (OAuth2); the upload API authenticates with the
+  user's API key in the `X-API-KEY` header
+
+## Package structure (src/main/java/io/domainlifecycles/diagramviewer)
+- `model.viewer`: JPA entities - `Project`, `ProjectDomainMirror`, `Diagram`, `DiagramDirectory`,
+  `DomainModelVisibility` (the filters of a diagram), `DiagramStylingConfiguration` (visual settings and styles),
+  `DiagramTypeNote`, `AppUser`
+- `repository`: Spring Data repositories
+- `service`: application logic - `ProjectService`, `DiagramService` (create, render in the background),
+  `ProjectModelCache` (deserialized domain models in memory), `BoundedContextAnalysisService`,
+  `DiagramRegenerationService`
+- `util`: `DiagrammerUtils` maps a diagram's `DomainModelVisibility`/`DiagramStylingConfiguration` to the
+  domain-diagrammer's `DomainDiagramConfig` and generates the nomnoml text
+- `rest.api`: `DomainMirrorUploadController` (`PUT /api/upload/domain-mirror/{projectName}`, gzip-compressed JSON with
+  `domainMirror`, optional `domainCalls` and `domainModelPackages`), `ResourceController` (diagram images)
+- `rest.kroki`: `KrokiClient`
+- `scheduled`: `DiagramRegenerationTask` - regenerates diagrams after a new upload
+- `security`: Spring Security configuration, API key filter, navigation access checks
+- `webapp`: Vaadin UI - `views` (routes: `/project/:projectName`, `/directory/:id`, `/diagram/:projectName/:diagram`,
+  sign-in, register), `layout.MainLayout` (side navigation), `components` (dialogs, filters, cards, zoomable SVG
+  viewer), `rendering.BackgroundDiagramRendering`, `session.SessionStorage`
+- Frontend: `src/main/frontend` - `styles/diagram-viewer-styles.css`, `svg-zoom-viewer/svg-zoom-viewer.ts` (Lit web
+  component); `src/main/frontend/generated` is generated by Vaadin and not edited
+
+## Getting started
+- Run with Docker (Kroki, PostgreSQL, viewer): `docker compose -f docker/run/docker-compose.yaml up -d`, then
+  http://localhost:8090
+- Development: `docker compose -f docker/dev/docker-compose.yaml up -d` (Kroki on 8000, PostgreSQL on 5432), then
+  `./gradlew bootRun`
+- Upload a domain model with the DLC build plugin (`domainModelUpload` with `projectName`, `apiKey`,
+  `diagramViewerBaseUrl`, `domainModelPackages`, `runStaticAnalysis`), see USER_GUIDE.md
+- Configuration via environment variables (ports, Kroki URL, database, Okta, rendering threads, cache budget), see
+  README.md
+
+## Build and tests
+- `./gradlew build` - compile, unit tests, checkstyle (report only)
+- `./gradlew test` - unit tests (excludes `*_ITest`)
+- `./gradlew integrationTest` - `*_ITest` classes with Testcontainers (PostgreSQL, Kroki); needs Docker or Podman
+- `./gradlew perfTest -Dperf.upload=<captured upload>` - performance measurements of large projects, see `docs/perf`
+- Test fixtures (small DLC domain models) live in `src/test/java/fixtures`; the `rezeption` scenario
+  (`src/test/resources/rezeption`, `RezeptionScenario`) is an uploaded model with static analysis result
+- A locally built DLC snapshot is consumed via `mavenLocal()` (`./gradlew publishToMavenLocal` in the DLC repository)
+
+## What an LLM should know when working on this project
+- Diagram generation itself belongs to DLC's `domain-diagrammer`; a new diagram feature usually starts there, then
+  the DLC plugin options, and only then the viewer (`DiagramStylingConfiguration`/`DomainModelVisibility`,
+  `DiagrammerUtils`, the UI).
+- `DomainModelVisibility` is replaced, not mutated, by its `replace...` methods: a new field must be carried over in
+  all of them, and new persisted fields need a column default for existing databases.
+- Structural connection filters follow the domain model; flow filters need the uploaded static analysis result
+  (`DomainCalls`) - check `ProjectModel.domainCallsAvailable()` / `SessionStorage.hasDomainCalls` before offering
+  flow features.
+- UI components are plain Vaadin Flow Java classes; UI logic is unit tested without a browser by instantiating the
+  components (see the tests in `webapp/components`).
+- Rendering is asynchronous (`DiagramService.updateModelAndImageAsync`, `BackgroundDiagramRendering`); do not block
+  the UI thread with diagram generation.
+- Code style: checkstyle (`checkstyle/checkstyle.xml`) requires complete Javadoc tags on documented public methods;
+  Vaadin component classes without subclasses are `final`.
+
+## What this project is NOT
+- Not a general purpose UML editor: diagrams are derived from the code, not drawn.
+- Not a replacement for the DLC libraries or build plugins - it consumes their output.
+- Not tied to a specific domain model: any project built with the DLC marker interfaces can be uploaded.
+
+## Useful entry points in the repo
+- ./README.md - what it does, build, run, configuration, memory
+- ./USER_GUIDE.md - all user-facing features
+- ./CHANGELOG.md - changes per version
+- ./build.gradle
+- ./docker/run/docker-compose.yaml, ./docker/dev/docker-compose.yaml
+- ./docs/bounded-context-plan.md, ./docs/performance-plan.md, ./docs/perf/README.md
+- ./src/main/java/io/domainlifecycles/diagramviewer/util/DiagrammerUtils.java
+- ./src/main/java/io/domainlifecycles/diagramviewer/service/BoundedContextAnalysisService.java
+- ./src/main/java/io/domainlifecycles/diagramviewer/rest/api/DomainMirrorUploadController.java
+
+## Related projects
+- DomainLifeCycles (libraries, domain-diagrammer, static analysis, build plugins):
+  https://github.com/esentri/domainlifecycles (see its llms.txt)
+- Demo project to upload: https://github.com/esentri/ddd-hotel-demo

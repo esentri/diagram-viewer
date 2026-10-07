@@ -30,7 +30,7 @@
 package io.domainlifecycles.diagramviewer.repository;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.repository.CrudRepository;
@@ -39,7 +39,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DiagramRepository extends CrudRepository<Diagram, UUID> {
 
-    Optional<Diagram> findByName(String name);
+    /**
+     * @param projectId the id of the project
+     * @param name      the name of the diagrams
+     * @return the diagrams of a project with the given name - names are unique within a directory of a project (or
+     * among the diagrams of a project without directory), so there may be several
+     */
+    List<Diagram> findByProjectIdAndName(UUID projectId, String name);
 
     Set<Diagram> findByProjectId(UUID projectId);
 }

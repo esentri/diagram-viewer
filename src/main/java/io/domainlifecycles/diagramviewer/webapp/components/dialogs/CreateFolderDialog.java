@@ -45,7 +45,7 @@ import java.util.Set;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-public class CreateFolderDialog extends Dialog {
+public final class CreateFolderDialog extends Dialog {
 
     private final Project project;
     private final Diagram dragDiagram;

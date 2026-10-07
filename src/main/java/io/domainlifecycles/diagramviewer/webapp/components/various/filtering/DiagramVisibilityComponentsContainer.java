@@ -35,9 +35,10 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 
-public class DiagramVisibilityComponentsContainer extends VerticalLayout {
+public final class DiagramVisibilityComponentsContainer extends VerticalLayout {
 
     private DiagramFilterComponent diagramFilterComponent;
+    private DiagramFlowFilterComponent diagramFlowFilterComponent;
     private DiagramVisibilityComponent diagramVisibilityComponent;
 
     public DiagramVisibilityComponentsContainer(
@@ -47,8 +48,10 @@ public class DiagramVisibilityComponentsContainer extends VerticalLayout {
 
         setWidthFull();
         this.diagramFilterComponent = new DiagramFilterComponent(sessionStorage, diagramService);
+        this.diagramFlowFilterComponent = new DiagramFlowFilterComponent(sessionStorage, diagramService);
         this.diagramVisibilityComponent = new DiagramVisibilityComponent(sessionStorage, diagramService);
         add(this.diagramFilterComponent,
+            this.diagramFlowFilterComponent,
             new Hr(),
             this.diagramVisibilityComponent);
     }
@@ -56,5 +59,6 @@ public class DiagramVisibilityComponentsContainer extends VerticalLayout {
     public void setDiagram(Diagram diagram) {
         this.diagramVisibilityComponent.setDiagram(diagram);
         this.diagramFilterComponent.setDiagram(diagram);
+        this.diagramFlowFilterComponent.setDiagram(diagram);
     }
 }

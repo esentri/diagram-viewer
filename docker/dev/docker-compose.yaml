@@ -1,6 +1,9 @@
 services:
   kroki:
     image: yuzutech/kroki:latest
+    environment:
+      # nomnoml conversions of large diagrams take longer than Kroki's default of 5s
+      KROKI_COMMAND_TIMEOUT: ${KROKI_COMMAND_TIMEOUT:-60s}
     ports:
       - "8000:8000"
     networks:

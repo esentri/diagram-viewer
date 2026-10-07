@@ -75,7 +75,7 @@ class DiagramService_ITest extends BaseIntegrationTest {
             new DiagramStylingConfiguration());
 
         // then
-        assertThat(diagramRepository.findByName(diagramName)).isNotNull();
+        assertThat(diagramRepository.findByProjectIdAndName(project.getId(), diagramName)).hasSize(1);
     }
 
     @AfterEach

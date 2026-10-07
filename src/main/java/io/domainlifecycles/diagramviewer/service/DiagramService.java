@@ -30,10 +30,12 @@
 package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.staticanalysis.DomainCalls;
 import java.util.Set;
 import java.util.UUID;
 
@@ -49,7 +51,76 @@ public interface DiagramService {
 
     Diagram create(Project project, String fileName, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
 
-    void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram);
+    /**
+     * Saves the diagram's model right away and renders its image in the background, so that the user interface is
+     * not blocked while large diagrams are generated and converted by Kroki. A rendering that is superseded by a
+     * newer one of the same diagram is dropped - before it starts, or at the latest before its image is saved.
+     *
+     * @param diagram the diagram to save and render
+     * @return the saved diagram and the pending rendering of its image
+     */
+    DiagramRendering updateModelAndImageAsync(Diagram diagram);
+
+    /**
+     * Creates a diagram like {@link #create(Project, String, DomainModelVisibility, DiagramStylingConfiguration)},
+     * but renders its image in the background, see {@link #updateModelAndImageAsync(Diagram)}.
+     *
+     * @param project                     the project of the new diagram
+     * @param fileName                    the name of the new diagram
+     * @param visibility                  what the diagram shows
+     * @param diagramStylingConfiguration how the diagram is drawn
+     * @return the saved diagram and the pending rendering of its image
+     */
+    DiagramRendering createAsync(Project project, String fileName, DomainModelVisibility visibility, DiagramStylingConfiguration diagramStylingConfiguration);
+
+    /**
+     * Like {@link #createAsync(Project, String, DomainModelVisibility, DiagramStylingConfiguration)}, creating the
+     * diagram right in the given directory - with a single save, which matters when many diagrams are created at once.
+     *
+     * @param project                     the project of the new diagram
+     * @param directory                   the directory of the new diagram, {@code null} for none
+     * @param fileName                    the name of the new diagram
+     * @param visibility                  what the diagram shows
+     * @param diagramStylingConfiguration how the diagram is drawn
+     * @return the saved diagram and the pending rendering of its image
+     */
+    DiagramRendering createAsync(Project project, DiagramDirectory directory, String fileName, DomainModelVisibility visibility,
+                                 DiagramStylingConfiguration diagramStylingConfiguration);
+
+    /**
+     * Renders the given diagram and saves it to the filesystem.
+     * <p>
+     * All model data is passed in explicitly, so this can be called without an HTTP request or session
+     * bound - e.g. from the scheduled diagram regeneration.
+     *
+     * @param domainMirror the domain mirror of the diagram's project
+     * @param domainCalls  the static analysis result of the diagram's project, {@code null} if none was
+     *                     uploaded (flow filters are then ignored)
+     * @param diagram      the diagram to render
+     */
+    void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram);
 
     void deleteFilesFromFilesystem(String projectId);
+
+    /**
+     * @param diagram a diagram
+     * @return the size of the diagram's rendered image in bytes, {@code -1} if it has not been rendered (yet)
+     */
+    long imageSize(Diagram diagram);
+
+    /**
+     * @return the image size up to which diagram cards show the diagram itself as preview; larger diagrams show a
+     * placeholder, since drawing dozens of large images at once makes the browser slow
+     */
+    long previewLimitBytes();
+
+    /**
+     * Generates the nomnoml source of a diagram, as it is rendered.
+     *
+     * @param domainMirror the domain of the diagram's project
+     * @param domainCalls  the static analysis result of the diagram's project, {@code null} if none was uploaded
+     * @param diagram      the diagram
+     * @return the nomnoml source of the diagram
+     */
+    String generateNomnoml(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram);
 }

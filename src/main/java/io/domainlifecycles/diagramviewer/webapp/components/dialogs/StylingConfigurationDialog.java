@@ -39,12 +39,12 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.components.ColorPickerComponent;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Styling;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
@@ -57,7 +57,7 @@ import java.util.regex.Pattern;
  * @author leonvoellinger
  */
 @Slf4j
-public class StylingConfigurationDialog extends Dialog {
+public final class StylingConfigurationDialog extends Dialog {
 
 
     private Diagram diagram = null;
@@ -97,8 +97,7 @@ public class StylingConfigurationDialog extends Dialog {
 
         saveButton.addClickListener(e -> {
             binder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
-            diagram = diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+            diagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
             close();
         });
 
@@ -127,7 +126,9 @@ public class StylingConfigurationDialog extends Dialog {
         accordion.add(createAndGetReadModelAccordionPanel());
         accordion.add(createAndGetQueryHandlerAccordionPanel());
         accordion.add(createAndGetOutboundServiceAccordionPanel());
+        accordion.add(createAndGetFactoryAccordionPanel());
         accordion.add(createAndGetUnspecifiedServiceKindAccordionPanel());
+        accordion.add(createAndGetNonDomainClassAccordionPanel());
 
         return accordion;
     }
@@ -455,6 +456,31 @@ public class StylingConfigurationDialog extends Dialog {
         return accordionPanel;
     }
 
+    private AccordionPanel createAndGetFactoryAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Factory");
+
+        FormLayout factoryDialogFormLayout = new FormLayout();
+
+        ColorPickerComponent factoryColorInput = new ColorPickerComponent();
+        binder.forField(factoryColorInput)
+            .bind(diagramStylingConfiguration -> extractColorConfiguration(diagramStylingConfiguration.getFactoryStyle()),
+                (diagramStylingConfiguration, newColorHexString) -> diagramStylingConfiguration.setFactoryStyle(buildNewColorConfiguration(diagramStylingConfiguration.getFactoryStyle(), newColorHexString)));
+        factoryDialogFormLayout.addFormItem(factoryColorInput, "Color");
+
+        MultiSelectComboBox<Styling> factoryStylingOptionsSelect = new MultiSelectComboBox<>();
+        binder.forField(factoryStylingOptionsSelect)
+            .bind(diagramStylingConfiguration -> Styling.map(extractStylingConfiguration(diagramStylingConfiguration.getFactoryStyle())),
+                (diagramStylingConfiguration, selectedStylings) -> diagramStylingConfiguration.setFactoryStyle(buildNewStylingConfiguration(
+                    diagramStylingConfiguration.getFactoryStyle(), selectedStylings)));
+        factoryStylingOptionsSelect.setItems(Styling.values());
+        factoryStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
+        factoryDialogFormLayout.addFormItem(factoryStylingOptionsSelect, "Styling Options");
+
+        accordionPanel.add(factoryDialogFormLayout);
+        return accordionPanel;
+    }
+
     private AccordionPanel createAndGetUnspecifiedServiceKindAccordionPanel() {
         AccordionPanel accordionPanel = new AccordionPanel();
         accordionPanel.setSummaryText("Service Kind");
@@ -480,6 +506,31 @@ public class StylingConfigurationDialog extends Dialog {
         return accordionPanel;
     }
 
+    private AccordionPanel createAndGetNonDomainClassAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Non-Domain Class");
+
+        FormLayout nonDomainClassDialogFormLayout = new FormLayout();
+
+        ColorPickerComponent nonDomainClassColorInput = new ColorPickerComponent();
+        binder.forField(nonDomainClassColorInput)
+            .bind(diagramStylingConfiguration -> extractColorConfiguration(diagramStylingConfiguration.getNonDomainClassStyle()),
+                (diagramStylingConfiguration, newColorHexString) -> diagramStylingConfiguration.setNonDomainClassStyle(buildNewColorConfiguration(diagramStylingConfiguration.getNonDomainClassStyle(), newColorHexString)));
+        nonDomainClassDialogFormLayout.addFormItem(nonDomainClassColorInput, "Color");
+
+        MultiSelectComboBox<Styling> nonDomainClassStylingOptionsSelect = new MultiSelectComboBox<>();
+        binder.forField(nonDomainClassStylingOptionsSelect)
+            .bind(diagramStylingConfiguration -> Styling.map(extractStylingConfiguration(diagramStylingConfiguration.getNonDomainClassStyle())),
+                (diagramStylingConfiguration, selectedStylings) -> diagramStylingConfiguration.setNonDomainClassStyle(buildNewStylingConfiguration(
+                    diagramStylingConfiguration.getNonDomainClassStyle(), selectedStylings)));
+        nonDomainClassStylingOptionsSelect.setItems(Styling.values());
+        nonDomainClassStylingOptionsSelect.setItemLabelGenerator(Styling::getDisplayValue);
+        nonDomainClassDialogFormLayout.addFormItem(nonDomainClassStylingOptionsSelect, "Styling Options");
+
+        accordionPanel.add(nonDomainClassDialogFormLayout);
+        return accordionPanel;
+    }
+
     /**
      * Extracts the styling part of the configuration.
      * @param configuration the current configuration, i.e. "fill=#FFFFCC bold italic"
@@ -491,7 +542,8 @@ public class StylingConfigurationDialog extends Dialog {
         Matcher matcher = stylePattern.matcher(configuration);
         if (matcher.find()) {
             String styles = matcher.group().trim();
-            return styles.split("\\s+");
+            // a color-only configuration (e.g. "fill=#EAEAEA") has no styling part at all
+            return styles.isEmpty() ? new String[0] : styles.split("\\s+");
         } else {
             return new String[0];
         }

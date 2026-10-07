@@ -1,29 +1,23 @@
 package io.domainlifecycles.diagramviewer.rest.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.domainlifecycles.diagramviewer.rest.api.jackson.DomainMirrorDeserializer;
+import io.domainlifecycles.diagramviewer.rest.api.jackson.DomainMirrorUploadPayload;
+import io.domainlifecycles.diagramviewer.rest.api.jackson.DomainMirrorUploadPayloadReader;
 import io.domainlifecycles.diagramviewer.security.ApiKeyAuthFilter;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.model.DomainModel;
-import io.domainlifecycles.mirror.serialize.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
-import java.util.Map;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,35 +35,49 @@ class DomainMirrorUploadControllerTest {
     @MockitoBean
     ApiKeyAuthFilter apiKeyAuthFilter;
 
+    @MockitoBean
+    DomainMirrorUploadPayloadReader payloadReader;
+
     @Test
     void Should_CreateOrUpdateDomainModel() throws Exception {
 
         // given
         String projectName = "testProjectName";
-        DomainMirror domainMirror = new DomainModel(Map.of(), "test.package");
+        byte[] domainMirrorGz = new byte[] {1, 2, 3};
+        DomainMirrorUploadPayload payload = new DomainMirrorUploadPayload(domainMirrorGz, null, List.of());
 
-        DomainSerializer serializer = new JacksonDomainSerializer(false);
-        String jsonBody = serializer.serialize(domainMirror);
-        jsonBody = "{\"domainMirror\": " + jsonBody + "}";
-        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirror);
+        when(payloadReader.read(any())).thenReturn(payload);
+        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, null, List.of());
 
         // when
         ResultActions result = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", projectName)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(jsonBody));
+            .content("{\"domainMirror\": {}}"));
 
         // then
         result.andExpect(status().isOk());
-        verify(projectService).createOrUpdateDomainModel(projectName, domainMirror);
+        verify(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, null, List.of());
     }
 
-    @Configuration
-    public static class JacksonConfig {
-        @Bean
-        public SimpleModule domainMirrorModule() {
-            SimpleModule module = new SimpleModule();
-            module.addDeserializer(DomainMirror.class, new DomainMirrorDeserializer());
-            return module;
-        }
+    @Test
+    void Should_CreateOrUpdateDomainModel_When_DomainCallsArePresent() throws Exception {
+
+        // given
+        String projectName = "testProjectName";
+        byte[] domainMirrorGz = new byte[] {1, 2, 3};
+        byte[] domainCallsGz = new byte[] {4, 5, 6};
+        DomainMirrorUploadPayload payload = new DomainMirrorUploadPayload(domainMirrorGz, domainCallsGz, List.of("test.package"));
+
+        when(payloadReader.read(any())).thenReturn(payload);
+        doNothing().when(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz, List.of("test.package"));
+
+        // when
+        ResultActions result = mockMvc.perform(put("/api/upload/domain-mirror/{projectName}", projectName)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"domainMirror\": {}, \"domainCalls\": {}, \"domainModelPackages\": [\"test.package\"]}"));
+
+        // then
+        result.andExpect(status().isOk());
+        verify(projectService).createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz, List.of("test.package"));
     }
 }

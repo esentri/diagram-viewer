@@ -30,6 +30,7 @@
 package io.domainlifecycles.diagramviewer.model.task;
 
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -44,6 +45,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -63,6 +65,19 @@ public class RegenerateDiagramsJob {
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="diagram_id", nullable=false)
     private Diagram diagram;
+
+    /**
+     * How often regenerating the diagram has failed since the job was created or its project was last
+     * uploaded. Jobs are only retried up to a configured limit, so a diagram
+     * that cannot be rendered does not load its project's model on every scheduler run.
+     */
+    @Builder.Default
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private int failedAttempts = 0;
+
+    @Column(length = 2000)
+    private String lastError;
 
     @CreationTimestamp
     private Instant createdAt;

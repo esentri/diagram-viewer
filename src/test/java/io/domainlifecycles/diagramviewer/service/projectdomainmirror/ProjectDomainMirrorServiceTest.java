@@ -4,17 +4,21 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.repository.ProjectDomainMirrorRepository;
+import io.domainlifecycles.diagramviewer.scenario.RezeptionScenario;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorServiceImpl;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
+import io.domainlifecycles.diagramviewer.util.CompressedJson;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
-import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson3.JacksonDomainSerializer;
+import io.domainlifecycles.staticanalysis.DomainCalls;
+import io.domainlifecycles.staticanalysis.serialize.jackson3.JacksonDomainCallsSerializer;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -22,27 +26,27 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectDomainMirrorServiceTest {
 
-    @Captor
-    ArgumentCaptor<ProjectDomainMirror> projectDomainMirrorArgumentCaptor;
+    private static final JacksonDomainSerializer DOMAIN_SERIALIZER = new JacksonDomainSerializer(false);
 
     @Mock
     RegenerateDiagramsJobService regenerateDiagramsJobService;
@@ -54,7 +58,8 @@ class ProjectDomainMirrorServiceTest {
 
     @BeforeEach
     void setUp() {
-        projectDomainMirrorService = new ProjectDomainMirrorServiceImpl(regenerateDiagramsJobService, repository, new JacksonDomainSerializer(false));
+        projectDomainMirrorService = new ProjectDomainMirrorServiceImpl(regenerateDiagramsJobService, repository,
+            DOMAIN_SERIALIZER, new JacksonDomainCallsSerializer(false));
     }
 
     @Test
@@ -90,174 +95,189 @@ class ProjectDomainMirrorServiceTest {
     }
 
     @Test
-    void Should_GetAllDomainTypeMirrorsWithoutEnumsAndIds() {
+    void Should_ReadDomainMirrorFromCompressedStorage() {
+
         // given
-        JacksonDomainSerializer domainSerializerMock = mock(JacksonDomainSerializer.class);
-        projectDomainMirrorService = new ProjectDomainMirrorServiceImpl(regenerateDiagramsJobService, repository, domainSerializerMock);
-
-        String firstDomainTypeMirrorStringMock = "firstDomainTypeMirrorMock";
-        String secondDomainTypeMirrorStringMock = "secondDomainTypeMirrorMock";
-
-        when(repository.findProjectDomainTypesWithoutEnumsAndIds(any())).thenReturn(
-            List.of(firstDomainTypeMirrorStringMock,
-                secondDomainTypeMirrorStringMock));
-
-        DomainTypeMirror firstDomainTypeMirrorMock = mock(DomainTypeMirror.class);
-        DomainTypeMirror secondDomainTypeMirrorMock = mock(DomainTypeMirror.class);
-
-        when(domainSerializerMock.deserializeTypeMirror(eq(firstDomainTypeMirrorStringMock))).thenReturn(
-            firstDomainTypeMirrorMock);
-        when(domainSerializerMock.deserializeTypeMirror(eq(secondDomainTypeMirrorStringMock))).thenReturn(
-            secondDomainTypeMirrorMock);
+        UUID projectId = UUID.randomUUID();
+        when(repository.findDomainMirrorGzByProjectId(projectId)).thenReturn(Optional.of(compress(RezeptionScenario.domainMirrorJson())));
 
         // when
-        List<DomainTypeMirror> result = projectDomainMirrorService.getAllDomainTypeMirrorsWithoutEnumsAndIds(
-            new UUID(0, 0));
+        DomainMirror result = projectDomainMirrorService.getDomainMirror(projectId);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0)).isEqualTo(firstDomainTypeMirrorMock);
-        assertThat(result.get(1)).isEqualTo(secondDomainTypeMirrorMock);
-
-        verify(repository, times(1)).findProjectDomainTypesWithoutEnumsAndIds(any());
-        verify(domainSerializerMock, times(1)).deserializeTypeMirror(firstDomainTypeMirrorStringMock);
-        verify(domainSerializerMock, times(1)).deserializeTypeMirror(secondDomainTypeMirrorStringMock);
+        assertThat(result.getDomainTypeMirror(RezeptionScenario.BUCHUNG_AGGREGATE)).isPresent();
+        verify(repository, never()).findLegacyDomainMirrorByProjectId(any());
     }
 
     @Test
-    void Should_GetAllAggregateRootMirrors() {
+    void Should_ReadDomainMirrorFromLegacyStorage_When_ProjectWasUploadedBeforeCompression() {
 
         // given
-        JacksonDomainSerializer domainSerializerMock = mock(JacksonDomainSerializer.class);
-        ReflectionTestUtils.setField(projectDomainMirrorService, "serializer", domainSerializerMock);
-
-        String firstDomainTypeMirrorStringMock = "firstDomainTypeMirrorMock";
-        String secondDomainTypeMirrorStringMock = "secondDomainTypeMirrorMock";
-
-        when(repository.findProjectAggregateTypes(any())).thenReturn(
-            List.of(firstDomainTypeMirrorStringMock,
-                secondDomainTypeMirrorStringMock));
-
-        AggregateRootMirror firstAggregateRootMirrorMock = mock(AggregateRootMirror.class);
-        AggregateRootMirror secondAggregateRootMirrorMock = mock(AggregateRootMirror.class);
-
-        when(domainSerializerMock.deserializeTypeMirror(eq(firstDomainTypeMirrorStringMock))).thenReturn(
-            firstAggregateRootMirrorMock);
-        when(domainSerializerMock.deserializeTypeMirror(eq(secondDomainTypeMirrorStringMock))).thenReturn(
-            secondAggregateRootMirrorMock);
+        UUID projectId = UUID.randomUUID();
+        DomainMirror legacyMirror = mock(DomainMirror.class);
+        when(repository.findDomainMirrorGzByProjectId(projectId)).thenReturn(Optional.empty());
+        when(repository.findLegacyDomainMirrorByProjectId(projectId)).thenReturn(Optional.of(legacyMirror));
 
         // when
-        List<AggregateRootMirror> result = projectDomainMirrorService.getAllAggregateRootMirrors(
-            new UUID(0, 0));
+        DomainMirror result = projectDomainMirrorService.getDomainMirror(projectId);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0)).isEqualTo(firstAggregateRootMirrorMock);
-        assertThat(result.get(1)).isEqualTo(secondAggregateRootMirrorMock);
-
-        verify(repository, times(1)).findProjectAggregateTypes(any());
-        verify(domainSerializerMock, times(1)).deserializeTypeMirror(firstDomainTypeMirrorStringMock);
-        verify(domainSerializerMock, times(1)).deserializeTypeMirror(secondDomainTypeMirrorStringMock);
+        assertThat(result).isSameAs(legacyMirror);
     }
 
     @Test
-    void Should_CreateOrUpdateWithoutDomainMirror() {
+    void Should_ThrowDiagramViewerException_When_ProjectHasNoDomainMirror() {
 
         // given
-        UUID projectId = new UUID(0, 0);
-        Project projectMock = mock(Project.class);
-        when(projectMock.getId()).thenReturn(projectId);
+        UUID projectId = UUID.randomUUID();
+        when(repository.findDomainMirrorGzByProjectId(projectId)).thenReturn(Optional.empty());
+        when(repository.findLegacyDomainMirrorByProjectId(projectId)).thenReturn(Optional.empty());
 
+        // when / then
+        assertThatThrownBy(() -> projectDomainMirrorService.getDomainMirror(projectId))
+            .isInstanceOf(DiagramViewerException.class)
+            .hasMessageContaining("No DomainMirror found");
+    }
+
+    @Test
+    void Should_LoadDomainCallsFromCompressedStorage() {
+
+        // given
+        UUID projectId = UUID.randomUUID();
+        DomainMirror mirror = DOMAIN_SERIALIZER.deserialize(RezeptionScenario.domainMirrorJson());
+        when(repository.findDomainCallsGzByProjectId(projectId)).thenReturn(Optional.of(compress(RezeptionScenario.domainCallsJson())));
+
+        // when
+        Optional<DomainCalls> result = projectDomainMirrorService.loadDomainCalls(projectId, mirror);
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get().callers()).isNotEmpty();
+        verify(repository, never()).findLegacyDomainCallsJsonByProjectId(any());
+    }
+
+    @Test
+    void Should_LoadDomainCallsFromLegacyStorage_When_ProjectWasUploadedBeforeCompression() {
+
+        // given
+        UUID projectId = UUID.randomUUID();
+        DomainMirror mirror = DOMAIN_SERIALIZER.deserialize(RezeptionScenario.domainMirrorJson());
+        when(repository.findDomainCallsGzByProjectId(projectId)).thenReturn(Optional.empty());
+        when(repository.findLegacyDomainCallsJsonByProjectId(projectId)).thenReturn(Optional.of(RezeptionScenario.domainCallsJson()));
+
+        // when
+        Optional<DomainCalls> result = projectDomainMirrorService.loadDomainCalls(projectId, mirror);
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get().callers()).isNotEmpty();
+    }
+
+    @Test
+    void Should_ReturnNoDomainCalls_When_NoneWereUploaded() {
+
+        // given
+        UUID projectId = UUID.randomUUID();
+        when(repository.findDomainCallsGzByProjectId(projectId)).thenReturn(Optional.empty());
+        when(repository.findLegacyDomainCallsJsonByProjectId(projectId)).thenReturn(Optional.empty());
+
+        // when / then
+        assertThat(projectDomainMirrorService.loadDomainCalls(projectId, mock(DomainMirror.class))).isEmpty();
+    }
+
+    @Test
+    void Should_StoreFileUploadCompressed_And_ReturnCreatedMirror() throws IOException {
+
+        // given
+        UUID projectId = UUID.randomUUID();
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(projectId);
+        when(repository.existsByProjectId(projectId)).thenReturn(true);
+
+        DomainMirror createdMirror = DOMAIN_SERIALIZER.deserialize(RezeptionScenario.domainMirrorJson());
         Set<String> domainModelPackages = Set.of("testPackage");
-        Path pathMock = mock(Path.class);
-        UploadFileType uploadFileTypeMock = mock(UploadFileType.class);
+        Path path = mock(Path.class);
+        UploadFileType uploadFileType = UploadFileType.JSON;
 
-        ProjectDomainMirror projectDomainMirrorMock = mock(ProjectDomainMirror.class);
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
-
-        when(repository.findByProjectId(eq(projectId))).thenReturn(Optional.of(projectDomainMirrorMock));
-        when(repository.save(projectDomainMirrorMock)).thenReturn(projectDomainMirrorMock);
-        doNothing().when(regenerateDiagramsJobService).create(eq(projectMock));
-
-        try(MockedStatic<DomainModelUtils> domainModelUtilsMockedStatic = Mockito.mockStatic(DomainModelUtils.class)) {
-            domainModelUtilsMockedStatic.when(() -> DomainModelUtils.initializeDomainMirrorFromFile(any(), any(), any())).thenReturn(domainMirrorMock);
+        try (MockedStatic<DomainModelUtils> domainModelUtils = Mockito.mockStatic(DomainModelUtils.class)) {
+            domainModelUtils.when(() -> DomainModelUtils.initializeDomainMirrorFromFile(any(), any(), any())).thenReturn(createdMirror);
 
             // when
-            ProjectDomainMirror result = projectDomainMirrorService.createOrUpdate(projectMock, domainModelPackages, pathMock, uploadFileTypeMock);
+            DomainMirror result = projectDomainMirrorService.createOrUpdate(project, domainModelPackages, path, uploadFileType);
 
-            // then
-            assertThat(result).isEqualTo(projectDomainMirrorMock);
-            verify(repository, times(1)).findByProjectId(eq(projectId));
-            verify(regenerateDiagramsJobService, times(1)).create(eq(projectMock));
-            verify(repository, times(1)).save(projectDomainMirrorMock);
-            domainModelUtilsMockedStatic.verify(() -> DomainModelUtils.initializeDomainMirrorFromFile(eq(pathMock), eq(domainModelPackages), eq(uploadFileTypeMock)));
+            // then: the created mirror is returned and stored compressed, readable back
+            assertThat(result).isSameAs(createdMirror);
+            ArgumentCaptor<byte[]> stored = ArgumentCaptor.forClass(byte[].class);
+            verify(repository).updateCompressed(eq(projectId), stored.capture(), isNull());
+            verify(regenerateDiagramsJobService).create(project);
+            try (InputStream json = CompressedJson.decompress(stored.getValue())) {
+                assertThat(DOMAIN_SERIALIZER.deserialize(json).getDomainTypeMirror(RezeptionScenario.BUCHUNG_AGGREGATE)).isPresent();
+            }
         }
     }
 
     @Test
-    void Should_CreateOrUpdate_When_ProjectDomainMirrorIsPresent() {
+    void Should_InsertCompressed_When_ProjectHasNoDomainModelYet() {
 
         // given
-        UUID projectId = new UUID(0, 0);
-        Project projectMock = mock(Project.class);
-        when(projectMock.getId()).thenReturn(projectId);
-
-        ProjectDomainMirror projectDomainMirrorMock = mock(ProjectDomainMirror.class);
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
-
-        when(repository.findByProjectId(eq(projectId))).thenReturn(Optional.of(projectDomainMirrorMock));
-        when(repository.save(projectDomainMirrorMock)).thenReturn(projectDomainMirrorMock);
-        doNothing().when(regenerateDiagramsJobService).create(eq(projectMock));
+        UUID projectId = UUID.randomUUID();
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(projectId);
+        when(repository.existsByProjectId(projectId)).thenReturn(false);
+        byte[] mirrorGz = compress("{}");
 
         // when
-        ProjectDomainMirror result = projectDomainMirrorService.createOrUpdate(projectMock, domainMirrorMock);
+        projectDomainMirrorService.createOrUpdateCompressed(project, mirrorGz, null);
 
-        // then
-        assertThat(result).isEqualTo(projectDomainMirrorMock);
-        verify(repository, times(1)).findByProjectId(eq(projectId));
-        verify(regenerateDiagramsJobService, times(1)).create(eq(projectMock));
-        verify(repository, times(1)).save(projectDomainMirrorMock);
+        // then: stored as given, nothing previous is loaded, no regeneration needed
+        verify(repository).insertCompressed(any(UUID.class), eq(projectId), eq(mirrorGz), isNull());
+        verify(repository, never()).findByProjectId(any());
+        verify(repository, never()).updateCompressed(any(), any(), any());
+        verifyNoInteractions(regenerateDiagramsJobService);
     }
 
     @Test
-    void Should_CreateOrUpdate_When_ProjectDomainMirrorIsNotPresent() {
+    void Should_UpdateCompressedWithoutLoadingPreviousModel_And_ScheduleRegeneration_When_ProjectHasDomainModel() {
 
         // given
-        UUID projectId = new UUID(0, 0);
-        Project projectMock = mock(Project.class);
-        when(projectMock.getId()).thenReturn(projectId);
-
-        ProjectDomainMirror projectDomainMirrorMock = mock(ProjectDomainMirror.class);
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
-
-        when(repository.findByProjectId(eq(projectId))).thenReturn(Optional.empty());
-        when(repository.save(any(ProjectDomainMirror.class))).thenReturn(projectDomainMirrorMock);
+        UUID projectId = UUID.randomUUID();
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(projectId);
+        when(repository.existsByProjectId(projectId)).thenReturn(true);
+        byte[] mirrorGz = compress("{}");
+        byte[] callsGz = compress("{\"callsByCaller\":[]}");
 
         // when
-        ProjectDomainMirror result = projectDomainMirrorService.createOrUpdate(projectMock, domainMirrorMock);
+        projectDomainMirrorService.createOrUpdateCompressed(project, mirrorGz, callsGz);
 
         // then
-        assertThat(result).isEqualTo(projectDomainMirrorMock);
-        verify(repository, times(1)).findByProjectId(eq(projectId));
-        verify(repository, times(1)).save(projectDomainMirrorArgumentCaptor.capture());
-        assertThat(projectDomainMirrorArgumentCaptor.getValue().getDomainMirror()).isEqualTo(domainMirrorMock);
+        verify(repository).updateCompressed(projectId, mirrorGz, callsGz);
+        verify(repository, never()).findByProjectId(any());
+        verify(repository, never()).insertCompressed(any(), any(), any(), any());
+        verify(regenerateDiagramsJobService).create(project);
     }
 
     @Test
-    void Should_Delete_When_ProjectDomainMirrorIsPresent() {
+    void Should_DeleteWithoutLoadingTheModel() {
 
         // given
-        UUID projectId = new UUID(0, 0);
-        ProjectDomainMirror projectDomainMirrorMock = mock(ProjectDomainMirror.class);
-
-        when(repository.findByProjectId(eq(projectId))).thenReturn(Optional.of(projectDomainMirrorMock));
-        doNothing().when(repository).delete(projectDomainMirrorMock);
+        UUID projectId = UUID.randomUUID();
 
         // when
         projectDomainMirrorService.delete(projectId);
 
         // then
-        verify(repository, times(1)).findByProjectId(eq(projectId));
-        verify(repository, times(1)).delete(eq(projectDomainMirrorMock));
+        verify(repository).deleteByProjectIdWithoutLoading(projectId);
+        verify(repository, never()).findByProjectId(any());
+    }
+
+    private static byte[] compress(String json) {
+        return CompressedJson.compress(out -> {
+            try {
+                out.write(json.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw new java.io.UncheckedIOException(e);
+            }
+        });
     }
 }

@@ -29,10 +29,41 @@
 
 package io.domainlifecycles.diagramviewer.util;
 
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.rest.api.ResourceController;
+import java.nio.file.Path;
 import java.time.Instant;
 
 public class DiagramFileUtils {
+
+    public static final String SVG_FILE_SUFFIX = ".svg";
+
+    /**
+     * @param diagram a diagram
+     * @return the file name of the diagram's image: named after the diagram's id, since names are only unique within
+     * a directory of a project
+     */
+    public static String imageFileName(Diagram diagram) {
+        return diagram.getId() + SVG_FILE_SUFFIX;
+    }
+
+    /**
+     * @param diagramsLocation the directory holding the images of all projects
+     * @param diagram          a diagram
+     * @return where the diagram's image is stored
+     */
+    public static Path imagePath(String diagramsLocation, Diagram diagram) {
+        return Path.of(diagramsLocation, diagram.getProject().getId().toString(), imageFileName(diagram));
+    }
+
+    /**
+     * @param diagramsLocation the directory holding the images of all projects
+     * @param diagram          a diagram
+     * @return where the diagram's image was stored before images were named after the diagram's id
+     */
+    public static Path legacyImagePath(String diagramsLocation, Diagram diagram) {
+        return Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
+    }
 
     public static String assembleDiagramUrl(Instant diagramLastModified, Instant stylingLastModified, String... diagramSrc) {
         return assembleRequestUrl(diagramSrc) + getLastModifiedRequestParameters(diagramLastModified, stylingLastModified);

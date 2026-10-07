@@ -39,6 +39,8 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -49,22 +51,32 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.plugin.SQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.service.BoundedContext;
+import io.domainlifecycles.diagramviewer.service.BoundedContextAnalysisService;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.sql.NoOpSQLDDLGeneratorService;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.AnalyzeBoundedContextsDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.dialogs.BoundedContextAnalysisDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateDiagramDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.EditProjectDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.GenerateDatabaseModelDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ReuploadDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.ShareProjectDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import jakarta.annotation.security.PermitAll;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -72,7 +84,7 @@ import org.springframework.beans.factory.annotation.Value;
 @PageTitle("DLC | Project Viewer")
 @PermitAll
 @Slf4j
-public class ProjectView extends FlexLayout implements BeforeEnterObserver {
+public final class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     public static final String PROJECT_NAME_ROUTE_PARAMETER = "projectName";
 
@@ -82,10 +94,13 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
     private final DiagramService diagramService;
     private final DiagramDirectoryService diagramDirectoryService;
     private final SessionStorage sessionStorage;
+    private final BoundedContextAnalysisService boundedContextAnalysisService;
 
     private Project project;
     private String projectName;
     private Registration registration;
+    private Registration renderedRegistration;
+    private Scroller cardScroller;
 
     private final boolean jarUploadEnabled;
 
@@ -94,7 +109,8 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
                        SecurityService securityService,
                        ProjectService projectService,
                        DiagramService diagramService,
-                       DiagramDirectoryService diagramDirectoryService, SessionStorage sessionStorage) {
+                       DiagramDirectoryService diagramDirectoryService, SessionStorage sessionStorage,
+                       BoundedContextAnalysisService boundedContextAnalysisService) {
         this.jarUploadEnabled = jarUploadEnabled;
         this.sqlddlGeneratorService = sqlddlGeneratorService;
         this.securityService = securityService;
@@ -102,6 +118,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         this.diagramService = diagramService;
         this.diagramDirectoryService = diagramDirectoryService;
         this.sessionStorage = sessionStorage;
+        this.boundedContextAnalysisService = boundedContextAnalysisService;
 
         setSizeFull();
         setFlexDirection(FlexDirection.COLUMN);
@@ -121,8 +138,24 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
     private void addPageContents() {
         add(createAndGetNameAndEditButtonAndReuploadButtonLayout(), createAndGetButtonBar());
-        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, project, project.getDiagramDirectories(), project.getDiagramsWithoutDirectory()));
-        add(scroller);
+        cardScroller = new Scroller(createCardGrid());
+        add(cardScroller);
+    }
+
+    private DiagramCardGridContainer createCardGrid() {
+        return new DiagramCardGridContainer(diagramDirectoryService, diagramService, project,
+            project.getTopLevelDiagramDirectories(), project.getDiagramsWithoutDirectory());
+    }
+
+    /**
+     * Shows the images of the diagrams rendered in the meantime - only the cards, so that e.g. an open dialog stays.
+     */
+    private void refreshCards() {
+        if (cardScroller == null) {
+            return;
+        }
+        setProject();
+        cardScroller.setContent(createCardGrid());
     }
 
     private HorizontalLayout createAndGetNameAndEditButtonAndReuploadButtonLayout() {
@@ -159,6 +192,7 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
         buttonBar.getStyle().setMarginTop("2rem");
 
         buttonBar.add(getCreateDiagramButton());
+        buttonBar.add(getAnalyzeBoundedContextsButton());
         if(!(sqlddlGeneratorService instanceof NoOpSQLDDLGeneratorService)){
             buttonBar.add(getDatabaseButton());
         }
@@ -176,6 +210,79 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
 
         createDiagramButton.addClickListener(e -> createDiagramDialog.open());
         return createDiagramButton;
+    }
+
+    /**
+     * Creates a directory per Bounded Context with the diagrams of the analyses chosen in a dialog - of its aggregates,
+     * their neighborhood, its read models and commands, see {@link BoundedContextAnalysisService}.
+     */
+    private Button getAnalyzeBoundedContextsButton() {
+        List<BoundedContext> boundedContexts = sessionStorage.getBoundedContexts(project.getId());
+
+        Button analyzeButton = new Button("Analyze Bounded Contexts", new Icon(VaadinIcon.SITEMAP));
+        // created on click: the dialog shows the analyses checked anew each time; the read model and command diagrams
+        // are flows, known from the static analysis result only
+        analyzeButton.addClickListener(e -> new AnalyzeBoundedContextsDialog(boundedContexts,
+            sessionStorage.hasDomainCalls(project.getId()),
+            kinds -> analyzeBoundedContexts(analyzeButton, kinds)).open());
+
+        analyzeButton.setId("analyze-bounded-contexts");
+        analyzeButton.getStyle().set("cursor", "pointer");
+        return analyzeButton;
+    }
+
+    private void analyzeBoundedContexts(Button analyzeButton, Set<BoundedContextAnalysisService.Kind> kinds) {
+        UI ui = UI.getCurrent();
+        Consumer<Runnable> onUi = BackgroundDiagramRendering.uiUpdater(ui);
+        BoundedContextAnalysisDialog progress = new BoundedContextAnalysisDialog();
+        progress.open();
+        analyzeButton.setEnabled(false);
+
+        boundedContextAnalysisService.analyzeAsync(project, kinds,
+                (done, total, diagramName) -> onUi.accept(() -> progress.diagramCreated(done, total, diagramName)))
+            .whenComplete((result, error) -> onUi.accept(() -> {
+                analyzeButton.setEnabled(true);
+                if (error != null) {
+                    Throwable cause = error.getCause() != null ? error.getCause() : error;
+                    log.error("Analyzing the bounded contexts of project '{}' failed.", project.getName(), cause);
+                    progress.failed(String.valueOf(cause.getMessage()));
+                    return;
+                }
+                ComponentUtil.fireEvent(ui, new DiagramsOrProjectsChangedEvent(this, false));
+                followRendering(ui, onUi, progress, result);
+            }));
+    }
+
+    private void followRendering(UI ui, Consumer<Runnable> onUi, BoundedContextAnalysisDialog progress,
+                                 BoundedContextAnalysisService.Result result) {
+        String summary = String.format("%d Bounded Context(s) analyzed: %d diagram(s) created%s.",
+            result.boundedContexts(), result.createdDiagrams(),
+            result.skippedDiagrams() > 0 ? String.format(", %d already existed", result.skippedDiagrams()) : "");
+        if (result.renderings().isEmpty()) {
+            progress.finished(summary);
+            return;
+        }
+
+        int total = result.renderings().size();
+        AtomicInteger rendered = new AtomicInteger();
+        progress.diagramRendered(0, total);
+        result.renderings().forEach(rendering -> rendering.whenComplete((image, error) -> {
+            int done = rendered.incrementAndGet();
+            onUi.accept(() -> progress.diagramRendered(done, total));
+        }));
+        String createdSummary = summary;
+        BackgroundDiagramRendering.whenAllRendered(ui, result.renderings(), failed -> {
+            // the cards show the images, which are complete only now
+            ComponentUtil.fireEvent(ui, new DiagramsOrProjectsChangedEvent(this, false));
+            String outcome = createdSummary + (failed == 0
+                ? String.format(" All %d diagram(s) rendered.", total)
+                : String.format(" %d of %d diagram(s) could not be rendered.", failed, total));
+            progress.finished(outcome);
+            if (!progress.isOpened()) {
+                Notification notification = Notification.show(outcome, 8000, Notification.Position.BOTTOM_END);
+                notification.addThemeVariants(failed == 0 ? NotificationVariant.LUMO_SUCCESS : NotificationVariant.LUMO_ERROR);
+            }
+        });
     }
 
     private Button getDatabaseButton() {
@@ -239,11 +346,18 @@ public class ProjectView extends FlexLayout implements BeforeEnterObserver {
                 DiagramsOrProjectsChangedEvent.class,
                 event -> refreshPage()
         );
+        // a diagram created here is rendered in the background: its card shows a placeholder until then
+        renderedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(),
+                DiagramReRenderedEvent.class,
+                event -> refreshCards()
+        );
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         super.onDetach(detachEvent);
         registration.remove();
+        renderedRegistration.remove();
     }
 }

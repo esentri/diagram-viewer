@@ -10,8 +10,8 @@ buildscript {
 
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.3'
-	id 'io.spring.dependency-management' version '1.1.6'
+	id 'org.springframework.boot' version '4.0.8'
+	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.vaadin'
 	id 'jacoco'
 	id 'checkstyle'
@@ -19,23 +19,26 @@ plugins {
 }
 
 group = 'io.domainlifecycles'
-version = '0.2'
+version = '0.3'
 
 ext {
-	set('vaadinVersion', "24.8.6")
+	set('vaadinVersion', "25.0.13")
 	javaDockerVersion = "3.4.0"
-	dlcVersion = "3.1.1"
+	dlcVersion = "3.5.0"
 	classGraphVersion = "4.8.163"
 	isInternal = System.getenv('IS_BUILD_PROFILE_INTERNAL')
 
-	postgresImage = "postgres:16"
-	krokiImage = "yuzutech/kroki"
-	appImage = "domainlifecycles/diagram-viewer:${project.version}"
+	// the images started by docker/run/docker-compose.yaml, which is part of the container bundle
+	postgresImage = "postgres:latest"
+	krokiImage = "yuzutech/kroki:latest"
+	appImageName = "marioherb/dlc-diagram-viewer"
+	appImage = "${appImageName}:${project.version}"
+	appImageLatest = "${appImageName}:latest"
 }
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -56,9 +59,16 @@ configurations {
 
 bootBuildImage {
 	imageName = appImage
+	tags = [appImageLatest]
 	vaadin {
 		productionMode = true
 	}
+}
+
+tasks.named('bootRun') {
+	// same heap as the provided docker setup; override e.g. with -PviewerHeap=8g (a -Xmx in JAVA_TOOL_OPTIONS
+	// would be overruled by this command line option)
+	jvmArgs "-Xmx${findProperty('viewerHeap') ?: '2g'}", '-XX:+UseG1GC', '-XX:+UseStringDeduplication'
 }
 
 tasks.named('bootJar') {
@@ -68,7 +78,12 @@ tasks.named('bootJar') {
 
 dependencies {
 	implementation "io.github.classgraph:classgraph:${classGraphVersion}"
+	implementation "com.github.ben-manes.caffeine:caffeine"
 	implementation "com.vaadin:vaadin-spring-boot-starter"
+	// Vaadin 25 no longer brings its development tools with the starter
+	developmentOnly "com.vaadin:vaadin-dev"
+	// tests starting the web server run Vaadin in development mode, like a local start
+	testRuntimeOnly "com.vaadin:vaadin-dev"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation ('org.postgresql:postgresql')
 	testImplementation "org.testcontainers:junit-jupiter:1.20.6"
@@ -76,23 +91,26 @@ dependencies {
 	implementation 'org.apache.xmlgraphics:batik-transcoder:1.17'
 	implementation 'org.apache.xmlgraphics:batik-codec:1.17'
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
-	implementation ('com.okta.spring:okta-spring-boot-starter:3.0.7')
+	implementation 'com.okta.spring:okta-spring-boot-starter:3.1.0'
 	implementation "com.github.docker-java:docker-java-core:${javaDockerVersion}"
 	implementation "com.github.docker-java:docker-java-transport-httpclient5:${javaDockerVersion}"
-	implementation 'com.flowingcode.vaadin.addons:zoomist-addon:1.0.1'
-	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.0'
+	implementation 'org.vaadin.addons.taefi:toggle-button-group:2.2.1'
 	implementation "io.domainlifecycles:mirror:${dlcVersion}"
-	implementation "io.domainlifecycles:mirror-serialization-jackson2:${dlcVersion}"
-	implementation "io.domainlifecycles:diagram-viewer-plugin:1.2"
+	implementation "io.domainlifecycles:mirror-serialization-jackson3:${dlcVersion}"
+	implementation "io.domainlifecycles:static-analysis:${dlcVersion}"
+	implementation "io.domainlifecycles:static-analysis-serialization-jackson3:${dlcVersion}"
+	implementation "io.domainlifecycles:diagram-viewer-plugin:1.3"
 	implementation "io.domainlifecycles:domain-diagrammer:${dlcVersion}"
 	if(isInternal){
         println "INTERNAL PROFILE ACTIVE"
-		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.3")
+		implementation("io.domainlifecycles:diagram-viewer-generator-plugin:1.4")
 	}
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
+	testImplementation "org.springframework.boot:spring-boot-starter-data-jpa-test"
 	testImplementation 'org.mockito:mockito-core'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -111,6 +129,9 @@ test {
 	useJUnitPlatform()
 	finalizedBy jacocoTestReport
 	exclude '**/*_ITest.class'
+	exclude '**/*_PerfTest.class'
+	// keep the images of test diagrams away from the diagrams of a locally running viewer
+	systemProperty 'diagrams.location', "${layout.buildDirectory.get().asFile}/test-diagrams"
 }
 
 plugins.withId('checkstyle') {
@@ -148,6 +169,8 @@ tasks.register('integrationTest', Test) {
 	classpath = sourceSets.test.runtimeClasspath
 
 	include '**/*_ITest.class'
+	// keep the images of test diagrams away from the diagrams of a locally running viewer
+	systemProperty 'diagrams.location', "${layout.buildDirectory.get().asFile}/test-diagrams"
 
 	useJUnitPlatform()
 
@@ -156,6 +179,35 @@ tasks.register('integrationTest', Test) {
 	jvmArgs '-Xmx1536m'
 
 	shouldRunAfter test
+}
+
+// Performance measurements for large projects, not part of "check".
+// Usage: ./gradlew perfTest -Dperf.upload=<captured gzip upload body> (see LargeProjectRendering_PerfTest)
+tasks.register('perfTest', Test) {
+	group = 'verification'
+	description = 'Runs performance measurements (requires -Dperf.upload)'
+
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+
+	include '**/*_PerfTest.class'
+	// keep the images of test diagrams away from the diagrams of a locally running viewer
+	systemProperty 'diagrams.location', "${layout.buildDirectory.get().asFile}/test-diagrams"
+
+	useJUnitPlatform()
+	maxHeapSize = findProperty('perfHeap') ?: '2g'
+	jvmArgs '-XX:+UseG1GC', '-XX:+UseStringDeduplication', '-XX:+HeapDumpOnOutOfMemoryError',
+		"-XX:HeapDumpPath=${layout.buildDirectory.get().asFile}/perf"
+	if (findProperty('perfJfr')) {
+		jvmArgs "-XX:StartFlightRecording=filename=${findProperty('perfJfr')},settings=profile"
+	}
+	outputs.upToDateWhen { false }
+	testLogging { showStandardStreams = true }
+	['perf.upload', 'perf.package', 'perf.flowEntry', 'perf.skipRendering'].each { key ->
+		if (System.getProperty(key) != null) {
+			systemProperty key, System.getProperty(key)
+		}
+	}
 }
 
 tasks.named("check") {
@@ -199,7 +251,7 @@ tasks.register("saveContainerImages", Exec) {
 	commandLine "sh", "-lc", """
     set -euo pipefail
 
-    docker save '${appImage}' '${postgresImage}' '${krokiImage}' \
+    docker save '${appImage}' '${appImageLatest}' '${postgresImage}' '${krokiImage}' \
       -o '${containerDir.get().asFile}/diagram-viewer-images.tar'
   """
 }
@@ -212,7 +264,7 @@ tasks.register("buildContainerImages", Tar) {
 	destinationDirectory = containerDir.get().asFile
 	compression = Compression.GZIP
 
-	from("docker/run/docker-compose.yml") {
+	from("docker/run/docker-compose.yaml") {
 		into(".")
 	}
 	from(containerDir.map { it.file("diagram-viewer-images.tar") }) {

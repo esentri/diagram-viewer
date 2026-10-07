@@ -1,6 +1,9 @@
 services:
   kroki:
     image: yuzutech/kroki:latest
+    environment:
+      # nomnoml conversions of large diagrams take longer than Kroki's default of 5s
+      KROKI_COMMAND_TIMEOUT: ${KROKI_COMMAND_TIMEOUT:-60s}
     ports:
       - "8000:8000"
     networks:
@@ -26,7 +29,7 @@ services:
     dns:
       - 1.1.1.1
       - 8.8.8.8
-    image: domainlifecycles/diagram-viewer:0.0.1-SNAPSHOT
+    image: marioherb/dlc-diagram-viewer:latest
     ports:
       - "8090:8090"
     environment:
@@ -34,12 +37,12 @@ services:
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
       KROKI_CONTAINER_URL: http://kroki:8000
+      # heap for esprit_2-sized projects with several users, see README "Memory"
+      JAVA_TOOL_OPTIONS: ${DIAGRAM_VIEWER_JAVA_OPTS:--Xmx2g -XX:+UseG1GC -XX:+UseStringDeduplication}
       OKTA_LOGIN_ENABLED: true
       OKTA_OAUTH2_ISSUER: https://esentri.okta.com
       OKTA_OAUTH2_CLIENT_ID: 0oa1vgjp7du46YjS21d8
       OKTA_OAUTH2_REDIRECT_URI: /authorization-code/callback
-      IS_BUILD_PROFILE_INTERNAL: "true"
-
     depends_on:
       database:
         condition: service_healthy

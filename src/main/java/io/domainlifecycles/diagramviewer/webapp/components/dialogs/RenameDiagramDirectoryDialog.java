@@ -46,7 +46,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-public class RenameDiagramDirectoryDialog extends Dialog {
+public final class RenameDiagramDirectoryDialog extends Dialog {
 
     private final DiagramDirectoryService diagramDirectoryService;
     private final DiagramDirectory diagramDirectory;
@@ -84,7 +84,7 @@ public class RenameDiagramDirectoryDialog extends Dialog {
             diagramDirectoryService.update(diagramDirectory, renameDiagramDirectoryOptions.getName());
             close();
             UI.getCurrent().navigate(DiagramDirectoryView.class, new RouteParameters(
-                    Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER, diagramDirectory.getName())));
+                    Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER, diagramDirectory.getId().toString())));
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramsOrProjectsChangedEvent(this, false));
         });
 

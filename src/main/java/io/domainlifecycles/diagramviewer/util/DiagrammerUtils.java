@@ -41,6 +41,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.ValueMirror;
+import io.domainlifecycles.staticanalysis.DomainCalls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,11 +49,14 @@ import java.util.List;
 
 public class DiagrammerUtils {
 
+    private static final String AGGREGATE_FRAME_PREFIX = "[<AF";
+
     public static String generateNomnoml(
             DomainMirror domainMirror,
             DiagramStylingConfiguration diagramStylingConfiguration,
             DomainModelVisibility domainModelVisibility,
-            List<DiagramTypeNote> notes
+            List<DiagramTypeNote> notes,
+            DomainCalls domainCalls
     ) {
 
         var classNotes = notes
@@ -69,19 +73,26 @@ public class DiagrammerUtils {
         }
 
         DiagramTrimSettings trimSettings = DiagramTrimSettings.builder()
-                .withExplicitlyIncludedPackageNames(domainModelVisibility.getExplicitlyIncludedPackagesNames() == null ?
-                        Collections.emptyList() : domainModelVisibility.getExplicitlyIncludedPackagesNames().stream().toList())
+                .withExplicitlyIncludedPackageNames(domainModelVisibility.getEffectiveIncludedPackages().stream().toList())
                 .withIncludeConnectedTo(domainModelVisibility.getIncludeConnectedToClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getIncludeConnectedToClassNames().stream().toList())
                 .withIncludeConnectedToIngoing(domainModelVisibility.getIncludeConnectedToIngoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getIncludeConnectedToIngoingClassNames().stream().toList())
                 .withIncludeConnectedToOutgoing(domainModelVisibility.getIncludeConnectedToOutgoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getIncludeConnectedToOutgoingClassNames().stream().toList())
+                .withIncludeConnectedToIngoingDepth(domainModelVisibility.getIncludeConnectedToIngoingDepth())
+                .withIncludeConnectedToOutgoingDepth(domainModelVisibility.getIncludeConnectedToOutgoingDepth())
                 .withExcludeConnectedToIngoing(domainModelVisibility.getExcludeConnectedToIngoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToIngoingClassNames().stream().toList())
                 .withExcludeConnectedToOutgoing(domainModelVisibility.getExcludeConnectedToOutgoingClassNames() == null ?
                         Collections.emptyList() : domainModelVisibility.getExcludeConnectedToOutgoingClassNames().stream().toList())
                 .withClassesBlacklist(blackListedClasses)
+                // flow filtering needs the result of a static analysis: without one, configured flows
+                // are ignored (but kept, so they apply again once an analysis result is uploaded)
+                .withIncludeFlowsFrom(domainCalls == null || domainModelVisibility.getIncludeFlowsFrom() == null ?
+                        Collections.emptyList() : domainModelVisibility.getIncludeFlowsFrom().stream().toList())
+                .withIncludeFlowsTo(domainCalls == null || domainModelVisibility.getIncludeFlowsTo() == null ?
+                        Collections.emptyList() : domainModelVisibility.getIncludeFlowsTo().stream().toList())
                 .build();
 
         StyleSettings styleSettings = StyleSettings.builder()
@@ -94,6 +105,7 @@ public class DiagrammerUtils {
                 .withDomainServiceStyle(diagramStylingConfiguration.getDomainServiceStyle())
                 .withIdentityStyle(diagramStylingConfiguration.getIdentityStyle())
                 .withOutboundServiceStyle(diagramStylingConfiguration.getOutboundServiceStyle())
+                .withFactoryStyle(diagramStylingConfiguration.getFactoryStyle())
                 .withBackgroundColor(diagramStylingConfiguration.getBackgroundColor())
                 .withFont(diagramStylingConfiguration.getFont().getNomnomlValue())
                 .withQueryHandlerStyle(diagramStylingConfiguration.getQueryHandlerStyle())
@@ -101,6 +113,7 @@ public class DiagrammerUtils {
                 .withRepositoryStyle(diagramStylingConfiguration.getRepositoryStyle())
                 .withEnumStyle(diagramStylingConfiguration.getEnumStyle())
                 .withUnspecifiedServiceKindStyle(diagramStylingConfiguration.getUnspecifiedServiceKindStyle())
+                .withNonDomainClassStyle(diagramStylingConfiguration.getNonDomainClassStyle())
                 .withValueObjectStyle(diagramStylingConfiguration.getValueObjectStyle())
                 .build();
 
@@ -122,6 +135,7 @@ public class DiagrammerUtils {
                 .withShowAggregates(diagramStylingConfiguration.isShowAggregates())
                 .withShowAggregateFields(diagramStylingConfiguration.isShowAggregateFields())
                 .withShowAggregateMethods(diagramStylingConfiguration.isShowAggregateMethods())
+                .withShowOnlyAggregateFrames(diagramStylingConfiguration.isShowOnlyAggregateFrames())
                 .withMultiplicityInLabel(diagramStylingConfiguration.isMultiplicityInLabel())
                 .withCallApplicationServiceDriver(false)
                 .withShowAssertions(diagramStylingConfiguration.isShowAssertions())
@@ -145,6 +159,10 @@ public class DiagrammerUtils {
                 .withShowOutboundServices(diagramStylingConfiguration.isShowOutboundServices())
                 .withShowOutboundServiceFields(diagramStylingConfiguration.isShowOutboundServiceFields())
                 .withShowOutboundServiceMethods(diagramStylingConfiguration.isShowOutboundServiceMethods())
+                .withShowFactories(diagramStylingConfiguration.isShowFactories())
+                .withShowFactoryFields(diagramStylingConfiguration.isShowFactoryFields())
+                .withShowFactoryMethods(diagramStylingConfiguration.isShowFactoryMethods())
+                .withShowFactoryRelations(diagramStylingConfiguration.isShowFactoryRelations())
                 .withShowQueryHandlers(diagramStylingConfiguration.isShowQueryHandlers())
                 .withShowQueryHandlerFields(diagramStylingConfiguration.isShowQueryHandlerFields())
                 .withShowQueryHandlerMethods(diagramStylingConfiguration.isShowQueryHandlerMethods())
@@ -157,6 +175,13 @@ public class DiagrammerUtils {
                 .withShowUnspecifiedServiceKinds(diagramStylingConfiguration.isShowUnspecifiedServiceKinds())
                 .withShowUnspecifiedServiceKindFields(diagramStylingConfiguration.isShowUnspecifiedServiceKindFields())
                 .withShowUnspecifiedServiceKindMethods(diagramStylingConfiguration.isShowUnspecifiedServiceKindMethods())
+                .withShowNonDomainClasses(diagramStylingConfiguration.isShowNonDomainClasses())
+                .withShowNonDomainClassFields(diagramStylingConfiguration.isShowNonDomainClassFields())
+                .withShowNonDomainClassMethods(diagramStylingConfiguration.isShowNonDomainClassMethods())
+                .withMaxInlinedValueObjectFields(diagramStylingConfiguration.getMaxInlinedValueObjectFields())
+                .withShowOnlyFlowMethods(diagramStylingConfiguration.isShowOnlyFlowMethods())
+                // without an analysis there are no flows whose calls could be drawn
+                .withShowFlowCallRelations(domainCalls != null && diagramStylingConfiguration.isShowFlowCallRelations())
                 .withShowAllInheritanceStructures(diagramStylingConfiguration.isShowAllInheritanceStructures())
                 .withShowInheritanceStructuresForDomainCommands(diagramStylingConfiguration.isShowInheritanceStructuresForDomainCommands())
                 .withShowInheritanceStructuresForDomainEvents(diagramStylingConfiguration.isShowInheritanceStructuresForDomainEvents())
@@ -175,8 +200,23 @@ public class DiagrammerUtils {
         DomainDiagramGenerator generator = new DomainDiagramGenerator(
                 diagramConfig,
                 domainMirror,
-                classNotes
+                classNotes,
+                domainCalls
         );
         return generator.generateDiagramText();
+    }
+
+    /**
+     * Counts the classes of a generated nomnoml diagram: its class boxes, without the frames enclosing aggregates. A
+     * frame drawn without its content - an aggregate shown as frame only - counts as a class box itself.
+     *
+     * @param nomnoml the diagram text as generated by {@link #generateNomnoml}
+     * @return the number of classes
+     */
+    public static int countClasses(String nomnoml) {
+        return (int) nomnoml.lines()
+            .map(String::stripLeading)
+            .filter(line -> line.startsWith("[<") && !(line.startsWith(AGGREGATE_FRAME_PREFIX) && line.endsWith("|")))
+            .count();
     }
 }

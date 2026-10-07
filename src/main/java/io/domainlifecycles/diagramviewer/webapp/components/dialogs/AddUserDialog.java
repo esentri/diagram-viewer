@@ -40,7 +40,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.events.ProjectUsersChangedEvent;
 
-public class AddUserDialog extends Dialog {
+public final class AddUserDialog extends Dialog {
 
     private final Project project;
     private final ProjectService projectService;

@@ -43,7 +43,7 @@ import io.domainlifecycles.diagramviewer.webapp.components.dialogs.VisibilityCon
 
 import java.util.List;
 
-public class DiagramConfigurationButtonBarComponent extends FlexLayout {
+public final class DiagramConfigurationButtonBarComponent extends FlexLayout {
 
     private final StylingConfigurationDialog stylingConfigurationDialog;
     private final VisibilityConfigurationDialog visibilityConfigurationDialog;

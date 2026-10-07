@@ -31,6 +31,7 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
+import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
@@ -38,20 +39,30 @@ import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramRepository;
 import io.domainlifecycles.diagramviewer.repository.DiagramTypeNoteRepository;
 import io.domainlifecycles.diagramviewer.rest.kroki.KrokiClient;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.util.DiagrammerUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
-import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainMirror;
+import io.domainlifecycles.staticanalysis.DomainCalls;
+import jakarta.annotation.PreDestroy;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import java.util.List;
+import java.util.Map;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,26 +72,47 @@ import org.springframework.stereotype.Service;
 public class DiagramServiceImpl implements DiagramService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DiagramServiceImpl.class);
-    public static final String SVG_FILE_SUFFIX = ".svg";
+    public static final String SVG_FILE_SUFFIX = DiagramFileUtils.SVG_FILE_SUFFIX;
 
     private final String diagramsLocation;
-    private final SessionStorage sessionStorage;
+    private final ProjectModelCache projectModelCache;
     private final DiagramRepository repository;
     private final DiagramTypeNoteRepository noteRepository;
     private final KrokiClient krokiClient;
+    private final int largeDiagramClasses;
+    private final long previewLimitBytes;
+    private final ExecutorService renderingExecutor;
+    /** per diagram the number of the latest background rendering requested, see {@link #renderInBackground} */
+    private final Map<UUID, AtomicLong> latestRenderings = new ConcurrentHashMap<>();
 
     public DiagramServiceImpl(
         @Value("${diagrams.location}") String diagramsLocation,
-        SessionStorage sessionStorage,
+        ProjectModelCache projectModelCache,
         DiagramRepository repository,
         DiagramTypeNoteRepository noteRepository,
-        KrokiClient krokiClient
+        KrokiClient krokiClient,
+        @Value("${diagrams.rendering.threads:2}") int renderingThreads,
+        @Value("${diagrams.largeDiagramClasses:1000}") int largeDiagramClasses,
+        @Value("${diagrams.cardPreviewMaxKilobytes:1024}") long cardPreviewMaxKilobytes
     ) {
         this.diagramsLocation = diagramsLocation;
-        this.sessionStorage = sessionStorage;
+        this.projectModelCache = projectModelCache;
         this.repository = repository;
         this.noteRepository = noteRepository;
         this.krokiClient = krokiClient;
+        this.largeDiagramClasses = largeDiagramClasses;
+        this.previewLimitBytes = cardPreviewMaxKilobytes * 1024;
+        AtomicInteger threadNumber = new AtomicInteger();
+        this.renderingExecutor = Executors.newFixedThreadPool(renderingThreads, runnable -> {
+            Thread thread = new Thread(runnable, "diagram-rendering-" + threadNumber.incrementAndGet());
+            thread.setDaemon(true);
+            return thread;
+        });
+    }
+
+    @PreDestroy
+    public void shutdownRenderingExecutor() {
+        renderingExecutor.shutdownNow();
     }
 
     @Override
@@ -97,16 +129,17 @@ public class DiagramServiceImpl implements DiagramService {
     public Diagram updateModelAndImage(Diagram diagram) {
         diagram.setChangedAt(Instant.now());
         final Diagram updatedDiagram = save(diagram);
-        DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
-        createAndSaveDiagramToFilesystem(domainMirror, updatedDiagram);
+        UUID projectId = diagram.getProject().getId();
+        createAndSaveDiagramToFilesystem(
+            projectModelCache.get(projectId).domainMirror(),
+            domainCallsIfNeeded(updatedDiagram),
+            updatedDiagram);
         return updatedDiagram;
     }
 
     @Override
     public Diagram rename(Diagram diagram, String newName) {
-        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
-        FileIOUtils.renameFile(diagramPath, newName + SVG_FILE_SUFFIX);
-
+        // the image is named after the diagram's id, see DiagramFileUtils#imagePath
         diagram.setName(newName);
         return updateModel(diagram);
     }
@@ -125,17 +158,104 @@ public class DiagramServiceImpl implements DiagramService {
             .build();
 
         save(diagram);
-        DomainMirror domainMirror = sessionStorage.getDomainMirror(diagram.getProject().getId());
-        createAndSaveDiagramToFilesystem(domainMirror, diagram);
+        UUID projectId = diagram.getProject().getId();
+        createAndSaveDiagramToFilesystem(
+            projectModelCache.get(projectId).domainMirror(),
+            domainCallsIfNeeded(diagram),
+            diagram);
         project.addDiagram(diagram);
 
         return diagram;
     }
 
+    @Override
+    public DiagramRendering updateModelAndImageAsync(Diagram diagram) {
+        diagram.setChangedAt(Instant.now());
+        final Diagram updatedDiagram = save(diagram);
+        return new DiagramRendering(updatedDiagram, renderInBackground(updatedDiagram));
+    }
+
+    @Override
+    public DiagramRendering createAsync(Project project,
+                                        String name,
+                                        DomainModelVisibility visibility,
+                                        DiagramStylingConfiguration diagramStylingConfiguration) {
+        return createAsync(project, null, name, visibility, diagramStylingConfiguration);
+    }
+
+    @Override
+    public DiagramRendering createAsync(Project project,
+                                        DiagramDirectory directory,
+                                        String name,
+                                        DomainModelVisibility visibility,
+                                        DiagramStylingConfiguration diagramStylingConfiguration) {
+        Diagram diagram = Diagram.builder()
+            .name(name)
+            .domainModelVisibility(visibility)
+            .diagramStylingConfiguration(diagramStylingConfiguration)
+            .project(project)
+            .diagramDirectory(directory)
+            .build();
+
+        save(diagram);
+        project.addDiagram(diagram);
+        if (directory != null) {
+            directory.getDiagrams().add(diagram);
+        }
+        return new DiagramRendering(diagram, renderInBackground(diagram));
+    }
+
+    /**
+     * Renders the diagram's image on the rendering executor. Each request gets a number per diagram; a request
+     * that is no longer the latest one when it starts is skipped, and one that got superseded while rendering
+     * drops its result instead of overwriting the newer image. Saving is serialized per diagram for the same
+     * reason. Failures of superseded requests are not reported either.
+     */
+    private CompletableFuture<DiagramRendering.Result> renderInBackground(Diagram diagram) {
+        // the user interface may change the entity for the next request while this one is rendered
+        final Diagram snapshot = diagram.toBuilder().build();
+        final AtomicLong latest = latestRenderings.computeIfAbsent(diagram.getId(), id -> new AtomicLong());
+        final long request = latest.incrementAndGet();
+        return CompletableFuture.supplyAsync(() -> {
+            if (latest.get() != request) {
+                return DiagramRendering.Result.SUPERSEDED;
+            }
+            try {
+                RenderedImage image = renderImage(
+                    projectModelCache.get(snapshot.getProject().getId()).domainMirror(),
+                    domainCallsIfNeeded(snapshot),
+                    snapshot);
+                synchronized (latest) {
+                    if (latest.get() != request) {
+                        return DiagramRendering.Result.SUPERSEDED;
+                    }
+                    saveImage(snapshot, image.svg());
+                }
+                return new DiagramRendering.Result(true, image.classCount(), image.classCount() > largeDiagramClasses);
+            } catch (RuntimeException e) {
+                if (latest.get() != request) {
+                    return DiagramRendering.Result.SUPERSEDED;
+                }
+                throw e;
+            }
+        }, renderingExecutor);
+    }
+
+    /**
+     * The static analysis result is only needed to render a diagram restricted to a flow - requesting it
+     * only then keeps it from being loaded at all for projects whose diagrams use no flow filter.
+     */
+    private DomainCalls domainCallsIfNeeded(Diagram diagram) {
+        if (diagram.getDomainModelVisibility() == null || !diagram.getDomainModelVisibility().hasFlowSettings()) {
+            return null;
+        }
+        return projectModelCache.get(diagram.getProject().getId()).domainCalls().orElse(null);
+    }
+
     private Diagram save(Diagram diagram) {
         final String fileName = diagram.getName();
 
-        if(diagramWithNameExists(diagram) && diagramNameHasChanged(diagram)) {
+        if (nameTakenInDirectory(diagram)) {
             throw DiagramViewerException.fail(String.format("Diagram with name '%s' already exists. Please choose a different name.",
                 fileName));
         }
@@ -156,25 +276,22 @@ public class DiagramServiceImpl implements DiagramService {
     }
 
     @Override
-    public void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, Diagram diagram) {
+    public void createAndSaveDiagramToFilesystem(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram) {
+        saveImage(diagram, renderImage(domainMirror, domainCalls, diagram).svg());
+    }
 
-        final String nomnoml;
-        List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
+    private RenderedImage renderImage(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram) {
+        String nomnoml = generateNomnoml(domainMirror, domainCalls, diagram);
 
-        try {
-            nomnoml = DiagrammerUtils.generateNomnoml(
-                domainMirror,
-                diagram.getDiagramStylingConfiguration(),
-                diagram.getDomainModelVisibility(),
-                notes
-            );
-        } catch (IllegalStateException e) {
-            throw DiagramViewerException.fail(e.getMessage(), e);
+        int classCount = DiagrammerUtils.countClasses(nomnoml);
+        if (classCount > largeDiagramClasses) {
+            LOGGER.warn("Diagram '{}' contains {} classes, converting it may take long.", diagram.getName(), classCount);
         }
+        return new RenderedImage(krokiClient.convert(nomnoml), classCount);
+    }
 
-        byte[] diagramFileContents = krokiClient.convert(nomnoml);
-
-        Path diagramPath = Path.of(diagramsLocation, diagram.getProject().getId().toString(), diagram.getName() + SVG_FILE_SUFFIX);
+    private void saveImage(Diagram diagram, byte[] diagramFileContents) {
+        Path diagramPath = DiagramFileUtils.imagePath(diagramsLocation, diagram);
         try {
             FileIOUtils.saveFile(diagramPath.toAbsolutePath(), new ByteArrayInputStream(diagramFileContents));
         } catch (IOException e) {
@@ -182,14 +299,53 @@ public class DiagramServiceImpl implements DiagramService {
         }
     }
 
-    private boolean diagramWithNameExists(Diagram diagram) {
-        Optional<Diagram> diagramWithName = repository.findByName(diagram.getName());
-        return diagramWithName.isPresent() && Objects.equals(diagram.getName(), diagramWithName.get().getName());
+    private record RenderedImage(byte[] svg, int classCount) {
     }
 
-    private boolean diagramNameHasChanged(Diagram diagram) {
-        if(diagram.getId() == null) return true;
-        Optional<Diagram> oldDiagram = repository.findById(diagram.getId());
-        return oldDiagram.isPresent() && !Objects.equals(oldDiagram.get().getName(), diagram.getName());
+    @Override
+    public String generateNomnoml(DomainMirror domainMirror, DomainCalls domainCalls, Diagram diagram) {
+        List<DiagramTypeNote> notes = noteRepository.findByDiagramId(diagram.getId());
+        try {
+            return DiagrammerUtils.generateNomnoml(
+                domainMirror,
+                diagram.getDiagramStylingConfiguration(),
+                diagram.getDomainModelVisibility(),
+                notes,
+                domainCalls
+            );
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            throw DiagramViewerException.fail(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public long imageSize(Diagram diagram) {
+        Path diagramPath = DiagramFileUtils.imagePath(diagramsLocation, diagram);
+        try {
+            return Files.size(diagramPath);
+        } catch (IOException e) {
+            return -1;
+        }
+    }
+
+    @Override
+    public long previewLimitBytes() {
+        return previewLimitBytes;
+    }
+
+    /**
+     * Names are unique within a directory of a project, or among the diagrams of a project without directory - the
+     * diagram view and the stored image are addressed by the diagram's id.
+     */
+    private boolean nameTakenInDirectory(Diagram diagram) {
+        UUID projectId = diagram.getProject() == null ? null : diagram.getProject().getId();
+        UUID directoryId = directoryIdOf(diagram);
+        return repository.findByProjectIdAndName(projectId, diagram.getName()).stream()
+            .filter(other -> diagram.getId() == null || !diagram.getId().equals(other.getId()))
+            .anyMatch(other -> Objects.equals(directoryIdOf(other), directoryId));
+    }
+
+    private static UUID directoryIdOf(Diagram diagram) {
+        return diagram.getDiagramDirectory() == null ? null : diagram.getDiagramDirectory().getId();
     }
 }

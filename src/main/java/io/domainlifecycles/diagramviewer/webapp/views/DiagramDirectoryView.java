@@ -29,7 +29,9 @@
 
 package io.domainlifecycles.diagramviewer.webapp.views;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -40,6 +42,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -47,29 +50,41 @@ import com.vaadin.flow.router.Route;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.RenameDiagramDirectoryDialog;
 import io.domainlifecycles.diagramviewer.webapp.components.various.cards.DiagramCardGridContainer;
+import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.layout.MainLayout;
 import jakarta.annotation.security.PermitAll;
+import java.util.UUID;
 
-@Route(value = "/directory/:" + DiagramDirectoryView.DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER, layout = MainLayout.class)
+@Route(value = "/directory/:" + DiagramDirectoryView.DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER, layout = MainLayout.class)
 @PageTitle("DLC | Directory Viewer")
 @PermitAll
-public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObserver {
+public final class DiagramDirectoryView extends FlexLayout implements BeforeEnterObserver {
 
-    public static final String DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER = "diagramDirectoryName";
+    /**
+     * Directories are addressed by id: their names are only unique among the sub directories of one parent (e.g.
+     * every Bounded Context folder has its own "Commands" folder).
+     */
+    public static final String DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER = "diagramDirectoryId";
 
     private final DiagramDirectoryService diagramDirectoryService;
     private final ProjectService projectService;
+    private final DiagramService diagramService;
 
     private DiagramDirectory diagramDirectory;
     private Project project;
-    private String diagramDirectoryName;
+    private UUID diagramDirectoryId;
+    private Registration renderedRegistration;
+    private Scroller cardScroller;
 
-    public DiagramDirectoryView(DiagramDirectoryService diagramDirectoryService, ProjectService projectService) {
+    public DiagramDirectoryView(DiagramDirectoryService diagramDirectoryService, ProjectService projectService,
+                                DiagramService diagramService) {
         this.diagramDirectoryService = diagramDirectoryService;
+        this.diagramService = diagramService;
         this.projectService = projectService;
 
         setSizeFull();
@@ -79,19 +94,49 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        diagramDirectoryName = event.getRouteParameters().get(DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER).orElseThrow();
+        diagramDirectoryId = UUID.fromString(event.getRouteParameters().get(DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER).orElseThrow());
         refreshPage();
     }
 
     private void setDiagramDirectoryAndProject() {
-        diagramDirectory = diagramDirectoryService.getByName(diagramDirectoryName);
+        diagramDirectory = diagramDirectoryService.getById(diagramDirectoryId);
         project = diagramDirectory.getProject();
     }
 
     private void addPageContents() {
         add(createAndGetNameAndDeleteButtonLayout());
-        Scroller scroller = new Scroller(new DiagramCardGridContainer(diagramDirectoryService, project, diagramDirectory.getDiagrams()));
-        add(scroller);
+        cardScroller = new Scroller(createCardGrid());
+        add(cardScroller);
+    }
+
+    private DiagramCardGridContainer createCardGrid() {
+        return new DiagramCardGridContainer(diagramDirectoryService, diagramService, project,
+            project.getSubDirectories(diagramDirectory), diagramDirectory.getDiagrams());
+    }
+
+    /**
+     * Shows the images of the diagrams rendered in the meantime - only the cards, so that e.g. an open dialog stays.
+     */
+    private void refreshCards() {
+        if (cardScroller == null) {
+            return;
+        }
+        setDiagramDirectoryAndProject();
+        cardScroller.setContent(createCardGrid());
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        // diagrams may still be rendered in the background, e.g. the ones of a bounded context analysis
+        renderedRegistration = ComponentUtil.addListener(attachEvent.getUI(), DiagramReRenderedEvent.class,
+            event -> refreshCards());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        renderedRegistration.remove();
     }
 
     private void refreshPage() {
@@ -102,8 +147,16 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
 
     private HorizontalLayout createAndGetNameAndDeleteButtonLayout() {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.add(new H2(diagramDirectory.getName()), getRenameDirectoryButton(), getDeleteDirectoryButton());
+        horizontalLayout.add(new H2(directoryPath()), getRenameDirectoryButton(), getDeleteDirectoryButton());
         return horizontalLayout;
+    }
+
+    private String directoryPath() {
+        StringBuilder path = new StringBuilder(diagramDirectory.getName());
+        for (DiagramDirectory parent = diagramDirectory.getParent(); parent != null; parent = parent.getParent()) {
+            path.insert(0, parent.getName() + " / ");
+        }
+        return path.toString();
     }
 
     private Button getRenameDirectoryButton() {
@@ -120,7 +173,8 @@ public class DiagramDirectoryView extends FlexLayout implements BeforeEnterObser
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Delete Directory");
         confirmDialog.setText(String.format(
-            "Are you sure you want to delete directory '%s'?", diagramDirectory.getName()));
+            "Are you sure you want to delete directory '%s' and its sub directories? Their diagrams are kept"
+                + " and moved to the project.", diagramDirectory.getName()));
 
         confirmDialog.setCancelable(true);
 

@@ -45,12 +45,12 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramTypeNote;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramTypeNotesChangedEvent;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
@@ -64,7 +64,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DiagramCreateNotesContainer extends VerticalLayout {
+public final class DiagramCreateNotesContainer extends VerticalLayout {
 
     private final static double STRING_LENGTH_TO_REM_FACTOR = 0.6;
 
@@ -101,7 +101,7 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
         this.diagram = diagram;
         Set<DomainTypeMirror> allDomainTypeMirrorsInIncludedPackages = getAllDomainTypeMirrorsInIncludedPackages(
                 sessionStorage.getAllDomainTypeMirrorsWithoutEnumsAndIds(diagram.getProject().getId()),
-                diagram.getDomainModelVisibility().getExplicitlyIncludedPackagesNames()
+                diagram.getDomainModelVisibility().getEffectiveIncludedPackages()
         );
         int longestDomainTypeMirrorNameLength = allDomainTypeMirrorsInIncludedPackages.stream()
                 .map(DomainModelUtils::nameWithStereoType)
@@ -171,8 +171,7 @@ public class DiagramCreateNotesContainer extends VerticalLayout {
                 typeNotes.getNotes(),
                 typeNotes.getSelectedTypeMirror(),
                 diagram);
-            diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+            BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
             ComponentUtil.fireEvent(UI.getCurrent(), new DiagramTypeNotesChangedEvent(this, false, null));
         });
         saveButton.getStyle().setMargin("0");

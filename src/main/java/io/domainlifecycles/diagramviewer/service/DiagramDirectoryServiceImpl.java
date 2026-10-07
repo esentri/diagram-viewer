@@ -35,7 +35,9 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.repository.DiagramDirectoryRepository;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -50,9 +52,26 @@ public class DiagramDirectoryServiceImpl implements DiagramDirectoryService {
     }
 
     @Override
-    public DiagramDirectory getByName(String name) {
-        return repository.findByName(name).orElseThrow(() ->
-            DiagramViewerException.fail(String.format("No Diagram Directory found with name '%s'.", name)));
+    public DiagramDirectory getById(UUID id) {
+        return repository.findById(id).orElseThrow(() ->
+            DiagramViewerException.fail(String.format("No Diagram Directory found with id '%s'.", id)));
+    }
+
+    @Override
+    public DiagramDirectory findOrCreate(Project project, DiagramDirectory parent, String name) {
+        return project.getSubDirectories(parent).stream()
+            .filter(directory -> Objects.equals(directory.getName(), name))
+            .findFirst()
+            .orElseGet(() -> {
+                DiagramDirectory directory = repository.save(DiagramDirectory.builder()
+                    .name(name)
+                    .parent(parent)
+                    .diagrams(new HashSet<>())
+                    .project(project)
+                    .build());
+                project.addDiagramDirectory(directory);
+                return directory;
+            });
     }
 
     @Override
@@ -74,6 +93,13 @@ public class DiagramDirectoryServiceImpl implements DiagramDirectoryService {
 
     @Override
     public void add(DiagramDirectory diagramDirectory, Diagram diagram) {
+        boolean nameTaken = diagramDirectory.getDiagrams().stream()
+            .anyMatch(other -> !other.equals(diagram) && Objects.equals(other.getName(), diagram.getName()));
+        if (nameTaken) {
+            throw DiagramViewerException.fail(String.format(
+                "Folder '%s' already contains a diagram named '%s'. Please rename one of them first.",
+                diagramDirectory.getName(), diagram.getName()));
+        }
         diagramDirectory.addDiagram(diagram);
         repository.save(diagramDirectory);
         diagramService.updateModel(diagram);

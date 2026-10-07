@@ -54,7 +54,7 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-public class ReuploadDialog extends Dialog {
+public final class ReuploadDialog extends Dialog {
 
     private final ProjectService projectService;
     private final SecurityService securityService;

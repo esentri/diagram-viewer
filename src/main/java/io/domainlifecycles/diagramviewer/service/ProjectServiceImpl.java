@@ -35,13 +35,15 @@ import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
+import io.domainlifecycles.diagramviewer.util.DiagramFileUtils;
 import io.domainlifecycles.diagramviewer.util.FileIOUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.diagramviewer.webapp.session.SessionStorage;
-import io.domainlifecycles.mirror.api.DomainMirror;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -67,6 +69,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final AppUserService appUserService;
     private final SessionStorage sessionStorage;
+    private final ProjectDomainMirrorService projectDomainMirrorService;
     private final ProjectRepository repository;
 
     public ProjectServiceImpl(
@@ -75,6 +78,7 @@ public class ProjectServiceImpl implements ProjectService {
         DiagramTypeNoteService diagramTypeNoteService, RegenerateDiagramsJobService regenerateDiagramsJobService,
         AppUserService appUserService,
         SessionStorage sessionStorage,
+        ProjectDomainMirrorService projectDomainMirrorService,
         ProjectRepository repository) {
 
         this.diagramsLocation = diagramsLocation;
@@ -83,6 +87,7 @@ public class ProjectServiceImpl implements ProjectService {
         this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.appUserService = appUserService;
         this.sessionStorage = sessionStorage;
+        this.projectDomainMirrorService = projectDomainMirrorService;
         this.repository = repository;
     }
 
@@ -106,19 +111,24 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public Project updateDomainMirror(Project project, Set<String> domainModelPackages, AppUser appUser, Path pathToFile, UploadFileType uploadFileType) {
         checkIsProjectCreator(project, appUser);
+        project.setDomainModelPackages(packagesOf(domainModelPackages));
+        repository.save(project);
         sessionStorage.createOrUpdate(project, domainModelPackages, pathToFile, uploadFileType);
         return project;
     }
 
     @Override
     public Project create(String projectName, Set<String> domainModelPackages, AppUser appUser, Path pathToFile, UploadFileType uploadFileType) {
-        final Project mappedProject = saveWithNameExistsCheck(mapProject(projectName, appUser));
+        Project project = mapProject(projectName, appUser);
+        project.setDomainModelPackages(packagesOf(domainModelPackages));
+        final Project mappedProject = saveWithNameExistsCheck(project);
         sessionStorage.createOrUpdate(mappedProject, domainModelPackages, pathToFile, uploadFileType);
         return mappedProject;
     }
 
     @Override
-    public void createOrUpdateDomainModel(String projectName, DomainMirror domainMirror) {
+    public void createOrUpdateDomainModel(String projectName, byte[] domainMirrorGz, byte[] domainCallsGz,
+                                          Collection<String> domainModelPackages) {
 
         Optional<Project> foundProject = repository.findByName(buildCleanProjectName(projectName));
 
@@ -130,15 +140,17 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             project.setChangedAt(Instant.now());
+            project.setDomainModelPackages(packagesOf(domainModelPackages));
             repository.save(project);
-            sessionStorage.createOrUpdate(project, domainMirror);
+            projectDomainMirrorService.createOrUpdateCompressed(project, domainMirrorGz, domainCallsGz);
             return;
         }
 
         Project project = mapProject(projectName,
             (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        project.setDomainModelPackages(packagesOf(domainModelPackages));
         Project persistedProject = repository.save(project);
-        sessionStorage.createOrUpdate(persistedProject, domainMirror);
+        projectDomainMirrorService.createOrUpdateCompressed(persistedProject, domainMirrorGz, domainCallsGz);
     }
 
     @Override
@@ -204,11 +216,10 @@ public class ProjectServiceImpl implements ProjectService {
         project.removeDiagram(diagram);
         repository.save(project);
 
-        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(),
-            diagram.getName());
+        Path diagramPath = Path.of(diagramsLocation, project.getId().toString(), DiagramFileUtils.imageFileName(diagram));
 
         try {
-            FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString()+".svg");
+            FileIOUtils.deleteFileByAbsolutePath(diagramPath.toAbsolutePath().toString());
         } catch (IOException e) {
             throw DiagramViewerException.fail(
                 "Couldn't finalize deleting diagram because some files couldn't be deleted from the filesystem.", e);
@@ -217,9 +228,24 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void deleteDiagramDirectory(Project project, DiagramDirectory diagramDirectory) {
-        project.removeDiagramDirectory(diagramDirectory);
-        diagramDirectory.removeAllDiagrams();
+        // nested directories go with their parent; the diagrams of all of them move to the project itself
+        List<DiagramDirectory> directories = new ArrayList<>();
+        collectWithSubDirectories(project, diagramDirectory, directories);
+        directories.forEach(directory -> {
+            directory.removeAllDiagrams();
+            directory.setParent(null);
+            project.removeDiagramDirectory(directory);
+        });
         repository.save(project);
+    }
+
+    private static void collectWithSubDirectories(Project project, DiagramDirectory directory, List<DiagramDirectory> collected) {
+        collected.add(directory);
+        project.getSubDirectories(directory).forEach(subDirectory -> collectWithSubDirectories(project, subDirectory, collected));
+    }
+
+    private static Set<String> packagesOf(Collection<String> domainModelPackages) {
+        return domainModelPackages == null ? new HashSet<>() : new HashSet<>(domainModelPackages);
     }
 
     private Project mapProject(String projectName, AppUser appUser) {

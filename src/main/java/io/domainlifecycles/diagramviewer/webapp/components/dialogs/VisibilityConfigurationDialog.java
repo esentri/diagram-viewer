@@ -38,15 +38,16 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.data.binder.Binder;
+import io.domainlifecycles.diagramviewer.webapp.rendering.BackgroundDiagramRendering;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramStylingConfiguration;
 import io.domainlifecycles.diagramviewer.model.viewer.DomainModelVisibility;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
-import io.domainlifecycles.diagramviewer.webapp.events.DiagramReRenderedEvent;
 
 
-public class VisibilityConfigurationDialog extends Dialog {
+public final class VisibilityConfigurationDialog extends Dialog {
 
     private final Binder<DiagramStylingConfiguration> diagramConfigurationBinder;
     private final Binder<DomainModelVisibility> domainModelVisibilityBinder;
@@ -79,8 +80,12 @@ public class VisibilityConfigurationDialog extends Dialog {
     private Checkbox showQueryHandlerMethodsCheckbox;
     private Checkbox showOutboundServiceFieldsCheckbox;
     private Checkbox showOutboundServiceMethodsCheckbox;
+    private Checkbox showFactoryFieldsCheckbox;
+    private Checkbox showFactoryMethodsCheckbox;
     private Checkbox showUnspecifiedServiceKindFieldsCheckbox;
     private Checkbox showUnspecifiedServiceKindMethodsCheckbox;
+    private Checkbox showNonDomainClassFieldsCheckbox;
+    private Checkbox showNonDomainClassMethodsCheckbox;
     private Checkbox showAggregateFieldsCheckbox;
     private Checkbox showAggregateMethodsCheckbox;
 
@@ -113,8 +118,7 @@ public class VisibilityConfigurationDialog extends Dialog {
             diagramConfigurationBinder.writeBeanIfValid(diagram.getDiagramStylingConfiguration());
             domainModelVisibilityBinder.writeBeanIfValid(diagram.getDomainModelVisibility());
 
-            diagram = diagramService.updateModelAndImage(diagram);
-            ComponentUtil.fireEvent(UI.getCurrent(), new DiagramReRenderedEvent(this, false));
+            diagram = BackgroundDiagramRendering.updateModelAndImage(this, diagramService, diagram);
             close();
         });
 
@@ -147,7 +151,9 @@ public class VisibilityConfigurationDialog extends Dialog {
         accordion.add(createAndGetReadModelAccordionPanel());
         accordion.add(createAndGetQueryHandlerAccordionPanel());
         accordion.add(createAndGetOutboundServiceAccordionPanel());
+        accordion.add(createAndGetFactoryAccordionPanel());
         accordion.add(createAndGetUnspecifiedServiceKindAccordionPanel());
+        accordion.add(createAndGetNonDomainClassAccordionPanel());
 
         return accordion;
     }
@@ -256,9 +262,37 @@ public class VisibilityConfigurationDialog extends Dialog {
         showAggregateMethodsCheckbox = new Checkbox();
         diagramConfigurationBinder.bind(showAggregateMethodsCheckbox, DiagramStylingConfiguration::isShowAggregateMethods, DiagramStylingConfiguration::setShowAggregateMethods);
 
+        Checkbox showOnlyAggregateFramesCheckbox = new Checkbox();
+        showOnlyAggregateFramesCheckbox.setId("show-only-aggregate-frames");
+        showOnlyAggregateFramesCheckbox.setTooltipText(
+            "Draws all aggregates as their frame only, without the classes, relationships and notes inside.");
+        diagramConfigurationBinder.bind(showOnlyAggregateFramesCheckbox, DiagramStylingConfiguration::isShowOnlyAggregateFrames, DiagramStylingConfiguration::setShowOnlyAggregateFrames);
+
+        IntegerField maxInlinedValueObjectFieldsField = new IntegerField();
+        maxInlinedValueObjectFieldsField.setMin(0);
+        maxInlinedValueObjectFieldsField.setStepButtonsVisible(true);
+        maxInlinedValueObjectFieldsField.setHelperText(
+            "Value objects with at most this many fields are shown as field of the class referencing them, "
+                + "0 shows none that way");
+        diagramConfigurationBinder.forField(maxInlinedValueObjectFieldsField)
+            .asRequired("Required")
+            .withValidator(fields -> fields >= 0, "Must not be negative")
+            .bind(DiagramStylingConfiguration::getMaxInlinedValueObjectFields,
+                DiagramStylingConfiguration::setMaxInlinedValueObjectFields);
+
+        // a frame without content shows neither fields, methods nor inlined value objects; also applies when a
+        // diagram is read
+        showOnlyAggregateFramesCheckbox.addValueChangeListener(event -> {
+            showAggregateFieldsCheckbox.setEnabled(!event.getValue());
+            showAggregateMethodsCheckbox.setEnabled(!event.getValue());
+            maxInlinedValueObjectFieldsField.setEnabled(!event.getValue());
+        });
+
         aggregatesDialogFormLayout.addFormItem(showAggregatesCheckbox,"Show");
+        aggregatesDialogFormLayout.addFormItem(showOnlyAggregateFramesCheckbox,"Frame only");
         aggregatesDialogFormLayout.addFormItem(showAggregateFieldsCheckbox,"Fields");
         aggregatesDialogFormLayout.addFormItem(showAggregateMethodsCheckbox,"Methods");
+        aggregatesDialogFormLayout.addFormItem(maxInlinedValueObjectFieldsField, "Inline value objects up to (fields)");
 
         accordionPanel.add(aggregatesDialogFormLayout);
         return accordionPanel;
@@ -446,6 +480,36 @@ public class VisibilityConfigurationDialog extends Dialog {
         return accordionPanel;
     }
 
+    private AccordionPanel createAndGetFactoryAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Factory");
+
+        FormLayout factoryDialogFormLayout = new FormLayout();
+
+        Checkbox showFactoriesCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showFactoriesCheckbox, DiagramStylingConfiguration::isShowFactories, DiagramStylingConfiguration::setShowFactories);
+
+        showFactoryFieldsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showFactoryFieldsCheckbox, DiagramStylingConfiguration::isShowFactoryFields, DiagramStylingConfiguration::setShowFactoryFields);
+
+        showFactoryMethodsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showFactoryMethodsCheckbox, DiagramStylingConfiguration::isShowFactoryMethods, DiagramStylingConfiguration::setShowFactoryMethods);
+
+        Checkbox showFactoryRelationsCheckbox = new Checkbox();
+        showFactoryRelationsCheckbox.setId("show-factory-relations");
+        showFactoryRelationsCheckbox.setTooltipText(
+            "Connects a class to the domain types its factory methods create by a <<creates>> relationship.");
+        diagramConfigurationBinder.bind(showFactoryRelationsCheckbox, DiagramStylingConfiguration::isShowFactoryRelations, DiagramStylingConfiguration::setShowFactoryRelations);
+
+        factoryDialogFormLayout.addFormItem(showFactoriesCheckbox,"Show");
+        factoryDialogFormLayout.addFormItem(showFactoryFieldsCheckbox,"Fields");
+        factoryDialogFormLayout.addFormItem(showFactoryMethodsCheckbox,"Methods");
+        factoryDialogFormLayout.addFormItem(showFactoryRelationsCheckbox,"Creates relations");
+
+        accordionPanel.add(factoryDialogFormLayout);
+        return accordionPanel;
+    }
+
     private AccordionPanel createAndGetUnspecifiedServiceKindAccordionPanel() {
         AccordionPanel accordionPanel = new AccordionPanel();
         accordionPanel.setSummaryText("Service Kind");
@@ -469,6 +533,30 @@ public class VisibilityConfigurationDialog extends Dialog {
         return accordionPanel;
     }
 
+    private AccordionPanel createAndGetNonDomainClassAccordionPanel() {
+        AccordionPanel accordionPanel = new AccordionPanel();
+        accordionPanel.setSummaryText("Non-Domain Class");
+
+        FormLayout nonDomainClassDialogFormLayout = new FormLayout();
+
+        Checkbox showNonDomainClassesCheckbox = new Checkbox();
+        showNonDomainClassesCheckbox.setTooltipText("Classes without any domain marker interface, shown only if they are referenced by a service kind or reference one themselves (e.g. a mapper used by a service, or a controller calling an application service).");
+        diagramConfigurationBinder.bind(showNonDomainClassesCheckbox, DiagramStylingConfiguration::isShowNonDomainClasses, DiagramStylingConfiguration::setShowNonDomainClasses);
+
+        showNonDomainClassFieldsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showNonDomainClassFieldsCheckbox, DiagramStylingConfiguration::isShowNonDomainClassFields, DiagramStylingConfiguration::setShowNonDomainClassFields);
+
+        showNonDomainClassMethodsCheckbox = new Checkbox();
+        diagramConfigurationBinder.bind(showNonDomainClassMethodsCheckbox, DiagramStylingConfiguration::isShowNonDomainClassMethods, DiagramStylingConfiguration::setShowNonDomainClassMethods);
+
+        nonDomainClassDialogFormLayout.addFormItem(showNonDomainClassesCheckbox,"Show");
+        nonDomainClassDialogFormLayout.addFormItem(showNonDomainClassFieldsCheckbox,"Fields");
+        nonDomainClassDialogFormLayout.addFormItem(showNonDomainClassMethodsCheckbox,"Methods");
+
+        accordionPanel.add(nonDomainClassDialogFormLayout);
+        return accordionPanel;
+    }
+
     private void invertShowFieldsCheckboxes() {
         Boolean showAllFieldsCheckboxValue = showAllFieldsCheckbox.getValue();
         showDomainEventFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
@@ -479,7 +567,9 @@ public class VisibilityConfigurationDialog extends Dialog {
         showReadModelFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showQueryHandlerFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showOutboundServiceFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
+        showFactoryFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
         showUnspecifiedServiceKindFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
+        showNonDomainClassFieldsCheckbox.setEnabled(showAllFieldsCheckboxValue);
     }
 
     private void invertShowMethodsCheckboxes() {
@@ -492,6 +582,8 @@ public class VisibilityConfigurationDialog extends Dialog {
         showReadModelMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showQueryHandlerMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showOutboundServiceMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
+        showFactoryMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
         showUnspecifiedServiceKindMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
+        showNonDomainClassMethodsCheckbox.setEnabled(showAllMethodsCheckboxValue);
     }
 }

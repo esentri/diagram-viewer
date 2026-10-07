@@ -34,10 +34,11 @@ import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
+import io.domainlifecycles.diagramviewer.service.DiagramService;
 import java.util.Comparator;
 import java.util.Set;
 
-public class DiagramCardGrid extends FormLayout {
+public final class DiagramCardGrid extends FormLayout {
 
     private DiagramCardGrid() {
         setSizeFull();
@@ -52,24 +53,26 @@ public class DiagramCardGrid extends FormLayout {
 
     public DiagramCardGrid(
         DiagramDirectoryService diagramDirectoryService,
+        DiagramService diagramService,
         Project project,
         Set<DiagramDirectory> diagramDirectories,
         Set<Diagram> diagrams) {
 
         this();
-        buildGrid(diagramDirectoryService, project, diagramDirectories, diagrams);
+        buildGrid(diagramDirectoryService, diagramService, project, diagramDirectories, diagrams);
     }
 
     public DiagramCardGrid(
         DiagramDirectoryService diagramDirectoryService,
+        DiagramService diagramService,
         Project project,
         Set<Diagram> diagrams) {
 
         this();
-        buildGrid(diagramDirectoryService, project, diagrams);
+        buildGrid(diagramDirectoryService, diagramService, project, diagrams);
     }
 
-    private void buildGrid(DiagramDirectoryService diagramDirectoryService, Project project, Set<DiagramDirectory> diagramDirectories, Set<Diagram> diagrams) {
+    private void buildGrid(DiagramDirectoryService diagramDirectoryService, DiagramService diagramService, Project project, Set<DiagramDirectory> diagramDirectories, Set<Diagram> diagrams) {
 
         diagramDirectories
             .stream()
@@ -83,17 +86,17 @@ public class DiagramCardGrid extends FormLayout {
             .stream()
             .sorted(Comparator.comparing(Diagram::getCreatedAt))
             .forEach(diagram -> {
-                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, project, diagram);
+                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, diagramService, project, diagram);
                 add(cardLinkWrapper);
             });
     }
 
-    private void buildGrid(DiagramDirectoryService diagramDirectoryService, Project project, Set<Diagram> diagrams) {
+    private void buildGrid(DiagramDirectoryService diagramDirectoryService, DiagramService diagramService, Project project, Set<Diagram> diagrams) {
         diagrams
             .stream()
             .sorted(Comparator.comparing(Diagram::getCreatedAt))
             .forEach(diagram -> {
-                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, project, diagram);
+                CardLinkWrapper cardLinkWrapper = new CardLinkWrapper(diagramDirectoryService, diagramService, project, diagram);
                 add(cardLinkWrapper);
             });
     }

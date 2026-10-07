@@ -42,7 +42,9 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -60,9 +62,45 @@ public class ProjectDomainMirror {
 
     private UUID projectId;
 
+    /**
+     * Legacy storage: the domain mirror as uncompressed JSON text. Only still set for projects last
+     * uploaded before the compressed storage ({@link #domainMirrorGz}) was introduced; read as fallback.
+     */
     @Column(columnDefinition = "TEXT")
     @Convert(converter = DomainModelConverter.class)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private DomainMirror domainMirror;
+
+    /**
+     * The raw JSON representation of the static analysis result ({@code DomainCalls}) uploaded
+     * alongside the domain mirror, or {@code null} if none was uploaded. Kept as raw JSON rather than
+     * deserialized, since a {@code DomainCalls} is only meaningful resolved against the exact
+     * {@link DomainMirror} instance it was analyzed against.
+     */
+    @Column(columnDefinition = "TEXT")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private String domainCalls;
+
+    /**
+     * The domain mirror as gzip-compressed JSON. PostgreSQL limits a single field value to 1 GB, which
+     * the uncompressed JSON of a large domain model exceeds; compressed, it is a fraction of that.
+     * Excluded from {@code toString}/{@code equals}, as it can be hundreds of megabytes.
+     */
+    @Column(name = "domain_mirror_gz")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private byte[] domainMirrorGz;
+
+    /**
+     * The static analysis result ({@code DomainCalls}) as gzip-compressed JSON, or {@code null} if none
+     * was uploaded. See {@link #domainMirrorGz}.
+     */
+    @Column(name = "domain_calls_gz")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private byte[] domainCallsGz;
 
     @CreationTimestamp
     private Instant createdAt;

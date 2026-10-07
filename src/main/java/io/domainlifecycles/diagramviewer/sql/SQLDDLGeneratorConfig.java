@@ -62,7 +62,8 @@ public class SQLDDLGeneratorConfig {
                     .filter(c ->
                             !SQLDDLGeneratorService.class.getName().equals(c.getName()) && !NoOpSQLDDLGeneratorService.class.getName().equals(c.getName())
                     )
-                    .map(r -> (Class<? extends SQLDDLGeneratorService>) loadClass(r))
+                    .map(this::loadGeneratorClass)
+                    .filter(Objects::nonNull)
                     .toList();
             if(generatorClasses.size()>1) {
                 log.error("Multiple SQLDDLGeneratorService implementations found! Falling back to NoOpSQLDDLGeneratorService!");
@@ -77,9 +78,9 @@ public class SQLDDLGeneratorConfig {
         return null;
     }
 
-    private Class<?> loadClass(ClassInfo classInfo) {
+    private Class<? extends SQLDDLGeneratorService> loadGeneratorClass(ClassInfo classInfo) {
         try {
-            return classInfo.loadClass();
+            return classInfo.loadClass(SQLDDLGeneratorService.class);
         }catch (Throwable t) {
             log.error("Loading class '{}' failed!", classInfo.getName(), t);
         }

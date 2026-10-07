@@ -72,14 +72,19 @@ import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChanged
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramDirectoryView;
 import io.domainlifecycles.diagramviewer.webapp.views.DiagramView;
 import io.domainlifecycles.diagramviewer.webapp.views.ProjectView;
+import io.domainlifecycles.diagramviewer.webapp.components.various.WrappableName;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.security.PermitAll;
 
 @Layout
+// since Vaadin 25, the access to a view is also checked against its layout: the layout frames the views of signed in
+// users only
+@PermitAll
 @CssImport("./styles/diagram-viewer-styles.css")
-public class MainLayout extends AppLayout {
+public final class MainLayout extends AppLayout {
 
     private static final String DLC_LOGO_LOCATION = "frontend/dlc-logo.png";
 
@@ -121,7 +126,7 @@ public class MainLayout extends AppLayout {
     private Popover createAndGetUserInfoPopover(Button popOverButton) {
         Popover popover = new Popover();
         popover.setModal(true);
-        popover.setOverlayRole("menu");
+        popover.setRole("menu");
         popover.setAriaLabel("User menu");
         popover.setTarget(popOverButton);
         popover.setPosition(PopoverPosition.BOTTOM_END);
@@ -239,26 +244,29 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem createAndGetProjectSideNavItem(Project project) {
-        SideNavItem projectSideNavItem = new SideNavItem(
+        SideNavItem projectSideNavItem = createAndGetWrappingSideNavItem(
             project.getName(), ProjectView.class, new RouteParameters(Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName())));
-        projectSideNavItem.getStyle().setHeight(LineHeight.MEDIUM);
+        // a minimum only: a long project name wraps to further lines
+        projectSideNavItem.getStyle().setMinHeight(LineHeight.MEDIUM);
 
-        project.getDiagramDirectories()
-            .stream().sorted(Comparator.comparing(DiagramDirectory::getCreatedAt))
-                .forEach(diagramDirectory -> {
-                    SideNavItem directorySideNavItem = createAndGetDiagramDirectorySideNavItem(project, diagramDirectory);
-                    projectSideNavItem.addItem(directorySideNavItem);
-                });
+        addDirectorySideNavItems(project, projectSideNavItem, project.getTopLevelDiagramDirectories());
 
         createAndAddChildDiagramSideNavItems(project, projectSideNavItem, project.getDiagramsWithoutDirectory());
 
         return projectSideNavItem;
     }
 
-    private SideNavItem createAndGetDiagramDirectorySideNavItem(Project project, DiagramDirectory diagramDirectory) {
-        SideNavItem directorySideNavItem = new SideNavItem(diagramDirectory.getName(), DiagramDirectoryView.class,
-            new RouteParameters(Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_NAME_ROUTE_PARAMETER, diagramDirectory.getName())));
+    private void addDirectorySideNavItems(Project project, SideNavItem parentSideNavItem, Set<DiagramDirectory> diagramDirectories) {
+        diagramDirectories
+            .stream().sorted(Comparator.comparing(DiagramDirectory::getCreatedAt))
+            .forEach(diagramDirectory -> parentSideNavItem.addItem(createAndGetDiagramDirectorySideNavItem(project, diagramDirectory)));
+    }
 
+    private SideNavItem createAndGetDiagramDirectorySideNavItem(Project project, DiagramDirectory diagramDirectory) {
+        SideNavItem directorySideNavItem = createAndGetWrappingSideNavItem(diagramDirectory.getName(), DiagramDirectoryView.class,
+            new RouteParameters(Map.of(DiagramDirectoryView.DIAGRAM_DIRECTORY_ID_ROUTE_PARAMETER, diagramDirectory.getId().toString())));
+
+        addDirectorySideNavItems(project, directorySideNavItem, project.getSubDirectories(diagramDirectory));
         createAndAddChildDiagramSideNavItems(project, directorySideNavItem, diagramDirectory.getDiagrams());
 
         directorySideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
@@ -269,14 +277,21 @@ public class MainLayout extends AppLayout {
         diagrams
             .stream().sorted(Comparator.comparing(Diagram::getCreatedAt))
             .forEach(diagram -> {
-                SideNavItem sideNavItem = new SideNavItem(diagram.getName(), DiagramView.class,
-                    new RouteParameters(
-                        Map.of(ProjectView.PROJECT_NAME_ROUTE_PARAMETER, project.getName(), "diagramName",
-                        diagram.getName())));
+                SideNavItem sideNavItem = createAndGetWrappingSideNavItem(diagram.getName(), DiagramView.class, DiagramView.routeParameters(project, diagram));
 
                 sideNavItem.getStyle().setLineHeight(LineHeight.SMALL);
                 parentSideNavItem.addItem(sideNavItem);
             });
+    }
+
+    /**
+     * A side nav item whose name wraps at the places a reader expects instead of being cut off.
+     */
+    private static SideNavItem createAndGetWrappingSideNavItem(String name, Class<? extends Component> view,
+                                                               RouteParameters routeParameters) {
+        SideNavItem sideNavItem = new SideNavItem(null, view, routeParameters);
+        sideNavItem.getElement().appendChild(WrappableName.create(name).getElement());
+        return sideNavItem;
     }
 
     private void refreshSideNavLinks() {

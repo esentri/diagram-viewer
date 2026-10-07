@@ -9,17 +9,27 @@ on:
 env:
   APPLICATION_NAME: 'diagram-viewer'
   ENVIRONMENT_NAME: 'diagram-viewer-environment'
-  VERSION: 1.0.0-${{ github.run_number }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout Diagram Viewer Repo
         uses: actions/checkout@v4
+
+      - name: Determine Version
+        id: version
+        # project version from build.gradle plus the run number, e.g. 0.3-42
+        run: |
+          PROJECT_VERSION=$(sed -nE "s/^version = '(.+)'$/\1/p" build.gradle)
+          test -n "$PROJECT_VERSION" || { echo "Fehler: keine Version in build.gradle gefunden"; exit 1; }
+          echo "version=${PROJECT_VERSION}-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "Version: ${PROJECT_VERSION}-${{ github.run_number }}"
 
       - name: Clone GitHub Diagram Viewer Plugin
         uses: actions/checkout@v4
@@ -29,10 +39,10 @@ jobs:
           ref: main
           token: ${{ secrets.GH_READ_VIEWER_PLUGIN_REPO }}
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Install Bitbucket SSH Key
@@ -65,13 +75,15 @@ jobs:
         run: | 
           export TESTCONTAINERS_RYUK_DISABLED=true
           export IS_BUILD_PROFILE_INTERNAL=true
-          gradle clean build -Pvaadin.productionMode
+          ./gradlew clean build -Pvaadin.productionMode
 
       - name: Package
         run: |
           zip -r ${{ github.run_id }}.zip .platform
-          zip -j ${{ github.run_id }}.zip build/libs/diagram-viewer-0.2.jar
-
+          JAR=$(ls build/libs/diagram-viewer-*.jar | grep -v -- '-plain\.jar$')
+          echo "Gefundenes JAR: $JAR"
+          test "$(echo "$JAR" | wc -l)" -eq 1 || { echo "Fehler: kein eindeutiges JAR"; ls -la build/libs/; exit 1; }
+          zip -j ${{ github.run_id }}.zip "$JAR"
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4.3.3
         with:
@@ -81,6 +93,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
 
     steps:
       - uses: actions/download-artifact@v4.1.7

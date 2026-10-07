@@ -39,4 +39,6 @@ import org.springframework.stereotype.Repository;
 public interface RegenerateDiagramsJobRepository extends CrudRepository<RegenerateDiagramsJob, UUID> {
 
     List<RegenerateDiagramsJob> findByDiagramId(UUID diagramId);
+
+    List<RegenerateDiagramsJob> findByFailedAttemptsLessThan(int failedAttempts);
 }

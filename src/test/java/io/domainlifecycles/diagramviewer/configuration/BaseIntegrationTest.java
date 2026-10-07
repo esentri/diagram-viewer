@@ -1,6 +1,6 @@
 package io.domainlifecycles.diagramviewer.configuration;
 
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -21,6 +21,7 @@ public abstract class BaseIntegrationTest {
     @Container
     static GenericContainer<?> kroki =
         new GenericContainer<>("yuzutech/kroki")
+          .withEnv("KROKI_COMMAND_TIMEOUT", "60s")
           .withExposedPorts(8000);
 
     @DynamicPropertySource

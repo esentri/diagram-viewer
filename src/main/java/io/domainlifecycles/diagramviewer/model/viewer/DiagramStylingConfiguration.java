@@ -29,10 +29,13 @@
 
 package io.domainlifecycles.diagramviewer.model.viewer;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Acycler;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Direction;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Font;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.Ranker;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -147,11 +150,27 @@ public class DiagramStylingConfiguration {
     @Setter
     @Builder.Default private String outboundServiceStyle = "fill=#C0C0C0 bold";
     /**
+     * Style declaration for Factories  (see Nomnoml style options). The column default backfills configurations
+     * persisted before factories were supported.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "varchar(255) default 'fill=#E0F0E0 bold'")
+    @Builder.Default private String factoryStyle = "fill=#E0F0E0 bold";
+    /**
      * Style declaration for unspecified ServiceKinds  (see Nomnoml style options)
      */
     @Getter
     @Setter
     @Builder.Default private String unspecifiedServiceKindStyle = "fill=#C0C0C0 bold";
+    /**
+     * Style declaration for non-domain classes (see Nomnoml style options). The column default
+     * backfills configurations persisted before non-domain classes were supported.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "varchar(255) default 'fill=#EAEAEA'")
+    @Builder.Default private String nonDomainClassStyle = "fill=#EAEAEA";
     /**
      * General font style declaration  (see Nomnoml style options)
      */
@@ -248,6 +267,14 @@ public class DiagramStylingConfiguration {
     @Getter
     @Setter
     @Builder.Default private boolean showAggregateMethods = true;
+    /**
+     * If true, Aggregates are drawn as their frame only, without the classes, relationships and notes inside.
+     * The relationships from outside an Aggregate connect its frame and are still drawn.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default false")
+    @Builder.Default private boolean showOnlyAggregateFrames = false;
     /**
      * If true, DomainEvent classes are included
      */
@@ -398,7 +425,38 @@ public class DiagramStylingConfiguration {
      */
     @Getter
     @Setter
-    @Builder.Default private boolean showOutboundServiceMethods = false;
+    @Builder.Default private boolean showOutboundServiceMethods = true;
+
+    /**
+     * If true, Factory classes are included. The column defaults backfill configurations persisted before factories
+     * were supported.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showFactories = true;
+    /**
+     * If true, fields of Factories are included
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default false")
+    @Builder.Default private boolean showFactoryFields = false;
+    /**
+     * If true, methods of Factories are included
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showFactoryMethods = true;
+    /**
+     * If true, a class creating another domain type by its factory methods is connected to it by a
+     * {@code <<creates>>} relationship, labeled with these methods
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showFactoryRelations = true;
 
     /**
      * If true, unspecified ServiceKind classes are included
@@ -420,6 +478,54 @@ public class DiagramStylingConfiguration {
     @Builder.Default private boolean showUnspecifiedServiceKindMethods = false;
 
     /**
+     * If true, non-domain classes (classes without any DLC marker interface) are included, as long as
+     * they are referenced by, or reference themselves, a service kind (e.g. a mapper used by a
+     * service, or a controller calling an application service). The column defaults backfill
+     * configurations persisted before non-domain classes were supported.
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showNonDomainClasses = true;
+    /**
+     * If true, fields of non-domain classes are included
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default false")
+    @Builder.Default private boolean showNonDomainClassFields = false;
+    /**
+     * If true, methods of non-domain classes are included
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showNonDomainClassMethods = true;
+    /**
+     * Value objects with at most this many fields are shown inline, as field of the class referencing them, instead of
+     * as class of their own connected by a composition; 0 shows no value object inline
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "integer not null default 2")
+    @Builder.Default private int maxInlinedValueObjectFields = 2;
+    /**
+     * If true, in a diagram restricted to flows the classes taking part in a flow show only the methods called in it
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default true")
+    @Builder.Default private boolean showOnlyFlowMethods = true;
+    /**
+     * If true, in a diagram restricted to flows two classes calling each other in a flow are connected by a
+     * {@code <<calls>>} relationship, if no other relationship connects them
+     */
+    @Getter
+    @Setter
+    @Column(columnDefinition = "boolean not null default false")
+    @Builder.Default private boolean showFlowCallRelations = false;
+
+    /**
      * If true, the stereotype {@code <Driver>} is used instead of {@code <ApplicationService>}
      */
     @Getter
@@ -431,6 +537,7 @@ public class DiagramStylingConfiguration {
      */
     @Getter
     @Setter
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> fieldBlacklist = List.of("concurrencyVersion");
 
@@ -439,6 +546,7 @@ public class DiagramStylingConfiguration {
      */
     @Getter
     @Setter
+    @Fetch(FetchMode.SUBSELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default private List<String> methodBlacklist = List.of(
         "builder",

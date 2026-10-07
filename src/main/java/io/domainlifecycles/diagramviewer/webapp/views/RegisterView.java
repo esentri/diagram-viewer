@@ -52,7 +52,7 @@ import lombok.Setter;
 @Route(value = RegisterView.VIEW_PATH, autoLayout = false)
 @PageTitle("DLC | Register")
 @AnonymousAllowed
-public class RegisterView extends VerticalLayout {
+public final class RegisterView extends VerticalLayout {
 
     public static final String VIEW_PATH = "/register";
     private static final String FORM_WIDTH = "22rem";

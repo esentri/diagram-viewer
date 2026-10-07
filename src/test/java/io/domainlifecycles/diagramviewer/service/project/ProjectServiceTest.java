@@ -8,6 +8,7 @@ import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.DiagramService;
 import io.domainlifecycles.diagramviewer.service.DiagramTypeNoteService;
+import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.ProjectServiceImpl;
 import io.domainlifecycles.diagramviewer.service.RegenerateDiagramsJobService;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -63,6 +65,9 @@ class ProjectServiceTest {
     SessionStorage sessionStorage;
 
     @Mock
+    ProjectDomainMirrorService projectDomainMirrorService;
+
+    @Mock
     ProjectRepository repository;
 
     ProjectService projectService;
@@ -70,7 +75,7 @@ class ProjectServiceTest {
     @BeforeEach
     void setUp() {
         projectService = new ProjectServiceImpl("/tmp/diagrams", diagramService, diagramTypeNoteService,
-            regenerateDiagramsJobService, appUserService, sessionStorage, repository);
+            regenerateDiagramsJobService, appUserService, sessionStorage, projectDomainMirrorService, repository);
     }
 
     @Test
@@ -261,18 +266,19 @@ class ProjectServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getAssignedUsers()).thenReturn(Set.of(appUserMock));
 
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
+        byte[] domainMirrorGz = new byte[] {1, 2, 3};
 
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
         // when
-        projectService.createOrUpdateDomainModel(projectName, domainMirrorMock);
+        projectService.createOrUpdateDomainModel(projectName, domainMirrorGz, null, List.of());
 
-        // then
+        // then: persisted directly, the (API request's) session is not touched
         verify(repository, times(1)).findByName(eq(projectName));
         verify(projectMock, times(1)).setChangedAt(any());
         verify(repository, times(1)).save(projectMock);
-        verify(sessionStorage, times(1)).createOrUpdate(projectMock, domainMirrorMock);
+        verify(projectDomainMirrorService, times(1)).createOrUpdateCompressed(projectMock, domainMirrorGz, null);
+        verifyNoInteractions(sessionStorage);
     }
 
     @Test
@@ -287,12 +293,10 @@ class ProjectServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getName()).thenReturn(projectName);
 
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
-
         when(repository.findByName(eq(projectName))).thenReturn(Optional.of(projectMock));
 
         // when
-        assertThatThrownBy(() -> projectService.createOrUpdateDomainModel(projectName, domainMirrorMock))
+        assertThatThrownBy(() -> projectService.createOrUpdateDomainModel(projectName, new byte[0], null, List.of()))
             .isInstanceOf(DiagramViewerException.class)
             .hasMessage("User has no access to project '" + projectName + "'");
 
@@ -309,18 +313,21 @@ class ProjectServiceTest {
             new UsernamePasswordAuthenticationToken(appUserMock, null));
 
         String projectName = "projectName";
-        DomainMirror domainMirrorMock = mock(DomainMirror.class);
+        byte[] domainMirrorGz = new byte[] {1, 2, 3};
+        byte[] domainCallsGz = new byte[] {4, 5, 6};
+        Project persistedProject = mock(Project.class);
 
         when(repository.findByName(eq(projectName))).thenReturn(Optional.empty());
-        when(repository.save(any())).thenReturn(mock(Project.class));
+        when(repository.save(any())).thenReturn(persistedProject);
 
         // when
-        projectService.createOrUpdateDomainModel(projectName, domainMirrorMock);
+        projectService.createOrUpdateDomainModel(projectName, domainMirrorGz, domainCallsGz, List.of());
 
-        // then
+        // then: persisted directly, the (API request's) session is not touched
         verify(repository, times(1)).findByName(eq(projectName));
         verify(repository, times(1)).save(any(Project.class));
-        verify(sessionStorage, times(1)).createOrUpdate(any(Project.class), eq(domainMirrorMock));
+        verify(projectDomainMirrorService, times(1)).createOrUpdateCompressed(persistedProject, domainMirrorGz, domainCallsGz);
+        verifyNoInteractions(sessionStorage);
     }
 
     @Test
@@ -542,7 +549,7 @@ class ProjectServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getId()).thenReturn(new UUID(0, 0));
         Diagram diagramMock = mock(Diagram.class);
-        when(diagramMock.getName()).thenReturn("diagramName.svg");
+        when(diagramMock.getId()).thenReturn(new UUID(0, 1));
 
         doNothing().when(diagramTypeNoteService).delete(eq(diagramMock));
         doNothing().when(regenerateDiagramsJobService).delete(eq(diagramMock));
@@ -570,7 +577,7 @@ class ProjectServiceTest {
         Project projectMock = mock(Project.class);
         when(projectMock.getId()).thenReturn(new UUID(0, 0));
         Diagram diagramMock = mock(Diagram.class);
-        when(diagramMock.getName()).thenReturn("diagramName.svg");
+        when(diagramMock.getId()).thenReturn(new UUID(0, 1));
 
         doNothing().when(diagramTypeNoteService).delete(eq(diagramMock));
         doNothing().when(regenerateDiagramsJobService).delete(eq(diagramMock));
@@ -613,5 +620,34 @@ class ProjectServiceTest {
         verify(projectMock, times(1)).removeDiagramDirectory(eq(diagramDirectoryMock));
         verify(repository, times(1)).save(eq(projectMock));
         verify(diagramDirectoryMock, times(1)).removeAllDiagrams();
+    }
+
+    @Test
+    void Should_DeleteSubDirectoriesAlong_And_KeepTheirDiagrams_When_DirectoryIsDeleted() {
+
+        // given: a context folder with a nested "Commands" folder holding a diagram
+        Project project = Project.builder().id(UUID.randomUUID()).name("p")
+            .diagrams(new HashSet<>()).diagramDirectories(new HashSet<>()).build();
+        DiagramDirectory context = DiagramDirectory.builder().id(UUID.randomUUID()).name("Buchung")
+            .diagrams(new HashSet<>()).build();
+        DiagramDirectory commands = DiagramDirectory.builder().id(UUID.randomUUID()).name("Commands").parent(context)
+            .diagrams(new HashSet<>()).build();
+        DiagramDirectory other = DiagramDirectory.builder().id(UUID.randomUUID()).name("Zimmer")
+            .diagrams(new HashSet<>()).build();
+        project.addDiagramDirectory(context);
+        project.addDiagramDirectory(commands);
+        project.addDiagramDirectory(other);
+        Diagram diagram = Diagram.builder().id(UUID.randomUUID()).name("Buchung - CheckeGastAus").project(project).build();
+        project.addDiagram(diagram);
+        commands.addDiagram(diagram);
+        when(repository.save(project)).thenReturn(project);
+
+        // when
+        projectService.deleteDiagramDirectory(project, context);
+
+        // then
+        org.assertj.core.api.Assertions.assertThat(project.getDiagramDirectories()).containsExactly(other);
+        assertThat(diagram.getDiagramDirectory()).isNull();
+        org.assertj.core.api.Assertions.assertThat(project.getDiagrams()).contains(diagram);
     }
 }

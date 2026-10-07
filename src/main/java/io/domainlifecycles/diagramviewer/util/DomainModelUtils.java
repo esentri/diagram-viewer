@@ -30,24 +30,29 @@
 package io.domainlifecycles.diagramviewer.util;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
+import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
+import io.domainlifecycles.mirror.api.NonDomainTypeMirror;
 import io.domainlifecycles.mirror.exception.MirrorException;
 import io.domainlifecycles.mirror.reflect.ReflectiveDomainMirrorFactory;
 import io.domainlifecycles.mirror.resolver.TypeMetaResolver;
 import io.domainlifecycles.mirror.serialize.DomainSerializer;
-import io.domainlifecycles.mirror.serialize.jackson2.JacksonDomainSerializer;
+import io.domainlifecycles.mirror.serialize.jackson3.JacksonDomainSerializer;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +65,111 @@ public class DomainModelUtils {
     public static String nameWithStereoType(DomainTypeMirror mirror) {
         return mirror.getTypeName().substring(mirror.getTypeName().lastIndexOf('.') + 1)
                 + " <" + translateDomainType(mirror.getDomainType())+">";
+    }
+
+    /**
+     * Restricts the given domain type mirrors to the concrete, non-technical types eligible for the
+     * connection based ("Include Connections to:" etc.) and flow based view filters: enums,
+     * identities, entities and value objects are excluded (entities and value objects are shown
+     * inline on their owning aggregate instead), as are DLC's own framework types, and - unless the
+     * diagram is configured to show all inheritance structures - a service kind interface already
+     * mirrored by one of its own implementations.
+     *
+     * @param diagram           the diagram the filter is applied for
+     * @param domainTypeMirrors the candidate domain type mirrors
+     * @return the eligible domain type mirrors, sorted by type name
+     */
+    public static List<DomainTypeMirror> filterConcreteMirrorsInterfaceAvailable(Diagram diagram, List<DomainTypeMirror> domainTypeMirrors) {
+        List<DomainTypeMirror> domainTypeMirrorsFiltered = new ArrayList<>();
+
+        if (domainTypeMirrors != null && !domainTypeMirrors.isEmpty()) {
+            List<String> mirroredTypeNames = domainTypeMirrors.stream()
+                .map(DomainTypeMirror::getTypeName)
+                .filter(typeName -> !typeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME)).toList();
+            domainTypeMirrorsFiltered.addAll(
+                domainTypeMirrors
+                    .stream()
+                    .filter(type ->
+                        diagram.getDomainModelVisibility().getEffectiveIncludedPackages().isEmpty()
+                            || diagram.getDomainModelVisibility().getEffectiveIncludedPackages().stream()
+                            .anyMatch(p -> type.getTypeName().startsWith(p)))
+                    .filter(m -> !m.getTypeName().startsWith(DOMAINLIFECYCLES_PACKAGE_NAME))
+                    .filter(m ->
+                        !m.getDomainType().equals(DomainType.ENUM)
+                                && !m.getDomainType().equals(DomainType.IDENTITY)
+                        && !m.getDomainType().equals(DomainType.VALUE_OBJECT)
+                                && !m.getDomainType().equals(DomainType.ENTITY)
+                    )
+                    .toList()
+            );
+
+            if(!diagram.getDiagramStylingConfiguration().isShowAllInheritanceStructures()){
+                for (DomainTypeMirror mirror : domainTypeMirrors) {
+                    switch (mirror.getDomainType()) {
+                        case SERVICE_KIND, OUTBOUND_SERVICE, FACTORY, APPLICATION_SERVICE, DOMAIN_SERVICE, REPOSITORY, QUERY_HANDLER -> {
+                            for (String interfaceTypeName : mirror.getAllInterfaceTypeNames()) {
+                                if (!interfaceTypeName.startsWith(DOMAINLIFECYCLES_PACKAGE_NAME) && !diagram.getDiagramStylingConfiguration().isShowInheritanceStructuresForServiceKinds()) {
+                                    if (mirroredTypeNames.contains(interfaceTypeName)) {
+                                        domainTypeMirrorsFiltered.remove(mirror);
+                                    }
+                                }
+                            }
+                        }
+                        default -> { }
+                    }
+                }
+            }
+
+        }
+
+        return domainTypeMirrorsFiltered.stream().sorted(
+                Comparator.comparing(DomainTypeMirror::getTypeName)).collect(Collectors.toList());
+    }
+
+    /**
+     * @param domainTypeMirrors the domain type mirrors to filter
+     * @return the given domain type mirrors without enums and identities, which the view filters never offer
+     */
+    public static List<DomainTypeMirror> withoutEnumsAndIdentities(List<DomainTypeMirror> domainTypeMirrors) {
+        return domainTypeMirrors.stream()
+            .filter(mirror -> !DomainType.ENUM.equals(mirror.getDomainType())
+                && !DomainType.IDENTITY.equals(mirror.getDomainType()))
+            .toList();
+    }
+
+    /**
+     * Drops the non-domain classes (classes without any DLC marker interface) a diagram can never
+     * show from the given domain type mirrors: the diagrammer only draws a non-domain class that is
+     * referenced by a service kind, or references one itself. Keeping the others would only flood
+     * the class pickers of the view filters with classes that have no effect on any diagram.
+     * <p>
+     * The relationships are resolved against the given, fully initialized {@link DomainMirror}, since
+     * the passed mirrors may have been deserialized one by one, without access to the other types.
+     *
+     * @param domainTypeMirrors the candidate domain type mirrors
+     * @param domainMirror      the domain mirror the candidates belong to
+     * @return the domain type mirrors without non-domain classes lacking a service kind relationship
+     */
+    public static List<DomainTypeMirror> withoutUnrelatedNonDomainTypes(List<DomainTypeMirror> domainTypeMirrors, DomainMirror domainMirror) {
+        if (domainTypeMirrors == null || domainMirror == null) {
+            return domainTypeMirrors;
+        }
+        Set<String> referencedByServiceKinds = domainMirror.getAllServiceKindMirrors().stream()
+            .flatMap(serviceKind -> serviceKind.getReferencedNonDomainTypes().stream())
+            .map(DomainTypeMirror::getTypeName)
+            .collect(Collectors.toSet());
+        return domainTypeMirrors.stream()
+            .filter(mirror -> !DomainType.NON_DOMAIN.equals(mirror.getDomainType())
+                || referencedByServiceKinds.contains(mirror.getTypeName())
+                || referencesServiceKind(domainMirror, mirror.getTypeName()))
+            .toList();
+    }
+
+    private static boolean referencesServiceKind(DomainMirror domainMirror, String typeName) {
+        return domainMirror.getDomainTypeMirror(typeName)
+            .filter(NonDomainTypeMirror.class::isInstance)
+            .map(mirror -> !((NonDomainTypeMirror) mirror).getReferencedServiceKinds().isEmpty())
+            .orElse(false);
     }
 
     public static String translateDomainType(DomainType domainType) {
@@ -76,8 +186,10 @@ public class DomainModelUtils {
             case QUERY_HANDLER -> "QueryHandler";
             case DOMAIN_COMMAND -> "DomainCommand";
             case OUTBOUND_SERVICE -> "OutboundService";
+            case FACTORY -> "Factory";
             case DOMAIN_SERVICE -> "DomainService";
             case APPLICATION_SERVICE -> "ApplicationService";
+            case NON_DOMAIN -> "NonDomain";
             default -> "Object";
         };
     }

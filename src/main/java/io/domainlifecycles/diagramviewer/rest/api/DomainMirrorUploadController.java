@@ -29,12 +29,14 @@
 
 package io.domainlifecycles.diagramviewer.rest.api;
 
+import io.domainlifecycles.diagramviewer.rest.api.jackson.DomainMirrorUploadPayload;
+import io.domainlifecycles.diagramviewer.rest.api.jackson.DomainMirrorUploadPayloadReader;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
-import io.domainlifecycles.mirror.api.DomainMirror;
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -45,16 +47,32 @@ public class DomainMirrorUploadController {
     public static final String UPLOAD_DOMAIN_MIRROR_API_PATH = "/api/upload/";
 
     private final ProjectService projectService;
+    private final DomainMirrorUploadPayloadReader payloadReader;
 
-    public DomainMirrorUploadController(ProjectService projectService) {
+    public DomainMirrorUploadController(ProjectService projectService, DomainMirrorUploadPayloadReader payloadReader) {
         this.projectService = projectService;
+        this.payloadReader = payloadReader;
     }
 
+    /**
+     * Accepts a domain mirror upload, optionally including the result of a static analysis of the
+     * domain classes ({@code DomainCalls}). Supports both the plain and the streaming (chunked
+     * transfer encoded) upload sent by the DLC build plugin, as well as an optional
+     * {@code Content-Encoding: gzip} compressed request body - both are handled transparently by
+     * reading the request body as a plain stream rather than binding it via a fixed-size
+     * {@code @RequestBody}.
+     *
+     * @param projectName the name of the project the upload belongs to
+     * @param request the incoming upload request, whose body is read directly
+     * @return an empty 200 OK response on success
+     */
     @PutMapping("/domain-mirror/{projectName}")
     public ResponseEntity<String> createOrUpdateDomainModel(
-        @PathVariable String projectName, @RequestBody DomainMirror domainMirror) {
+        @PathVariable String projectName, HttpServletRequest request) throws IOException {
 
-        projectService.createOrUpdateDomainModel(projectName, domainMirror);
+        DomainMirrorUploadPayload payload = payloadReader.read(request.getInputStream());
+        projectService.createOrUpdateDomainModel(projectName, payload.domainMirrorGz(), payload.domainCallsGz(),
+            payload.domainModelPackages());
         return ResponseEntity.ok().build();
     }
 }

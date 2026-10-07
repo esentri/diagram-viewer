@@ -5,10 +5,12 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
 import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
+import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.service.ProjectService;
 import io.domainlifecycles.diagramviewer.service.AppUserService;
 import io.domainlifecycles.diagramviewer.service.SecurityService;
 import io.domainlifecycles.diagramviewer.service.SecurityServiceImpl;
+import java.util.UUID;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,11 +43,14 @@ class SecurityServiceTest {
     @Mock
     ProjectService projectService;
 
+    @Mock
+    ProjectRepository projectRepository;
+
     SecurityService securityService;
 
     @BeforeEach
     void setUp() {
-        securityService = new SecurityServiceImpl(appUserService, new BCryptPasswordEncoder());
+        securityService = new SecurityServiceImpl(appUserService, new BCryptPasswordEncoder(), projectRepository);
     }
 
     @Test
@@ -255,47 +260,15 @@ class SecurityServiceTest {
     }
 
     @Test
-    void Should_HaveNoAccess_When_UserHasNoAssignedProjects() {
-
-        // given
-        AppUser appUserMock = mock(AppUser.class);
-        when(appUserMock.getAssignedProjects()).thenReturn(Set.of());
-
-        // when
-        boolean result = securityService.checkAccess("testProjectName", appUserMock);
-
-        // then
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void Should_HaveNoAccess_When_UserHasNullAssignedProjects() {
-
-        // given
-        AppUser appUserMock = mock(AppUser.class);
-        when(appUserMock.getAssignedProjects()).thenReturn(null);
-
-        // when
-        boolean result = securityService.checkAccess("testProjectName", appUserMock);
-
-        // then
-        assertThat(result).isFalse();
-    }
-
-    @Test
     void Should_HaveNoAccess_When_UserIsNotAssignedToProject() {
 
         // given
-        String anotherProjectName = "anotherProject";
-
-        Project projectMock = mock(Project.class);
-        when(projectMock.getName()).thenReturn("project");
-
-        AppUser appUserMock = mock(AppUser.class);
-        when(appUserMock.getAssignedProjects()).thenReturn(Set.of(projectMock));
+        UUID userId = UUID.randomUUID();
+        AppUser appUser = AppUser.builder().id(userId).build();
+        when(projectRepository.existsByNameAndAssignedUsersId("anotherProject", userId)).thenReturn(false);
 
         // when
-        boolean result = securityService.checkAccess(anotherProjectName, appUserMock);
+        boolean result = securityService.checkAccess("anotherProject", appUser);
 
         // then
         assertThat(result).isFalse();
@@ -304,16 +277,14 @@ class SecurityServiceTest {
     @Test
     void Should_HaveAccess_When_UserIsAssignedToProject() {
 
-        // given
-        String projectName = "Project";
-        Project projectMock = mock(Project.class);
-        when(projectMock.getName()).thenReturn(projectName);
-
-        AppUser appUserMock = mock(AppUser.class);
-        when(appUserMock.getAssignedProjects()).thenReturn(Set.of(projectMock));
+        // given: queried, not taken from the user - the signed in user is loaded at login and does not know
+        // projects assigned since
+        UUID userId = UUID.randomUUID();
+        AppUser appUser = AppUser.builder().id(userId).build();
+        when(projectRepository.existsByNameAndAssignedUsersId("project", userId)).thenReturn(true);
 
         // when
-        boolean result = securityService.checkAccess(projectName, appUserMock);
+        boolean result = securityService.checkAccess("project", appUser);
 
         // then
         assertThat(result).isTrue();

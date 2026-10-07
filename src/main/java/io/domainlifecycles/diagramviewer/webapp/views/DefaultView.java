@@ -40,7 +40,7 @@ import jakarta.annotation.security.PermitAll;
 @Route(value = "/", layout = MainLayout.class)
 @PageTitle("DLC | Home")
 @PermitAll
-public class DefaultView extends FlexLayout {
+public final class DefaultView extends FlexLayout {
 
     public DefaultView() {
         setSizeFull();

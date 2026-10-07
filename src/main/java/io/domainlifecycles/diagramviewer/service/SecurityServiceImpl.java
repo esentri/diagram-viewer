@@ -31,8 +31,8 @@ package io.domainlifecycles.diagramviewer.service;
 
 import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.AppUser;
+import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
 import io.domainlifecycles.diagramviewer.model.viewer.UserStatus;
-import java.util.Objects;
 import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,11 +45,14 @@ public class SecurityServiceImpl implements SecurityService {
 
     private final AppUserService appUserService;
     private final PasswordEncoder passwordEncoder;
+    private final ProjectRepository projectRepository;
 
     public SecurityServiceImpl(AppUserService appUserService,
-                               PasswordEncoder passwordEncoder) {
+                               PasswordEncoder passwordEncoder,
+                               ProjectRepository projectRepository) {
         this.appUserService = appUserService;
         this.passwordEncoder = passwordEncoder;
+        this.projectRepository = projectRepository;
     }
 
     @Override
@@ -93,10 +96,10 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     public boolean checkAccess(String projectName, AppUser appUser) {
-        if (appUser == null || appUser.getAssignedProjects() == null) return false;
-
-        return appUser.getAssignedProjects().stream()
-            .anyMatch(project -> Objects.equals(project.getName(), projectName));
+        // queried: the signed in user is the principal of the session, loaded at login - without its projects, and
+        // it would not know projects assigned since
+        return appUser != null && appUser.getId() != null
+            && projectRepository.existsByNameAndAssignedUsersId(projectName, appUser.getId());
     }
 
     private String getEmailOfOAuth2User(OAuth2User oAuth2User) {

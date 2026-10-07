@@ -33,33 +33,50 @@ import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
 import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
 import io.domainlifecycles.diagramviewer.repository.ProjectDomainMirrorRepository;
+import io.domainlifecycles.diagramviewer.util.CompressedJson;
 import io.domainlifecycles.diagramviewer.util.DomainModelUtils;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
-import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
-import io.domainlifecycles.mirror.api.DomainTypeMirror;
 import io.domainlifecycles.mirror.serialize.DomainSerializer;
+import io.domainlifecycles.staticanalysis.DomainCalls;
+import io.domainlifecycles.staticanalysis.serialize.DomainCallsSerializer;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Stores and loads the domain model of a project: its domain mirror and, optionally, the static analysis
+ * result ({@code DomainCalls}).
+ * <p>
+ * Both are stored as gzip-compressed JSON ({@link CompressedJson}) and deserialized directly from the
+ * decompressing stream, so the uncompressed JSON - several gigabytes for a large domain model - is never
+ * held in memory as a whole. Projects last uploaded before the compressed storage was introduced are
+ * still read from the legacy uncompressed columns, and switch to the compressed storage with their next
+ * upload.
+ */
 @Service
 public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorService {
 
     private final RegenerateDiagramsJobService regenerateDiagramsJobService;
     private final ProjectDomainMirrorRepository repository;
     private final DomainSerializer serializer;
+    private final DomainCallsSerializer domainCallsSerializer;
 
     public ProjectDomainMirrorServiceImpl(
             RegenerateDiagramsJobService regenerateDiagramsJobService,
             ProjectDomainMirrorRepository repository,
-            DomainSerializer serializer) {
+            DomainSerializer serializer,
+            DomainCallsSerializer domainCallsSerializer) {
         this.regenerateDiagramsJobService = regenerateDiagramsJobService;
         this.repository = repository;
         this.serializer = serializer;
+        this.domainCallsSerializer = domainCallsSerializer;
     }
 
     @Override
@@ -69,51 +86,67 @@ public class ProjectDomainMirrorServiceImpl implements ProjectDomainMirrorServic
     }
 
     @Override
-    public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
-        return repository.findProjectDomainTypesWithoutEnumsAndIds(projectId)
-                .stream()
-                .map(m -> (DomainTypeMirror)serializer.deserializeTypeMirror(m))
-                .toList();
+    public DomainMirror getDomainMirror(UUID projectId) {
+        Optional<byte[]> compressed = repository.findDomainMirrorGzByProjectId(projectId);
+        if (compressed.isPresent()) {
+            return deserializeMirror(compressed.get());
+        }
+        return repository.findLegacyDomainMirrorByProjectId(projectId)
+            .orElseThrow(() -> DiagramViewerException.fail(String.format("No DomainMirror found for project with id '%s'.", projectId)));
     }
 
     @Override
-    public List<AggregateRootMirror> getAllAggregateRootMirrors(UUID projectId) {
-        return repository.findProjectAggregateTypes(projectId)
-                .stream()
-                .map(m -> (AggregateRootMirror)serializer.deserializeTypeMirror(m))
-                .toList();
+    public Optional<DomainCalls> loadDomainCalls(UUID projectId, DomainMirror domainMirror) {
+        Optional<byte[]> compressed = repository.findDomainCallsGzByProjectId(projectId);
+        if (compressed.isPresent()) {
+            try (InputStream json = CompressedJson.decompress(compressed.get())) {
+                return Optional.of(domainCallsSerializer.deserialize(json, domainMirror));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return repository.findLegacyDomainCallsJsonByProjectId(projectId)
+            .map(json -> domainCallsSerializer.deserialize(json, domainMirror));
     }
 
     @Override
-    public ProjectDomainMirror createOrUpdate(Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType) {
+    public boolean hasDomainCalls(UUID projectId) {
+        return repository.existsDomainCallsByProjectId(projectId);
+    }
+
+    @Override
+    @Transactional
+    public DomainMirror createOrUpdate(Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType) {
         DomainMirror domainMirror = generateDomainMirror(pathToFile, domainModelPackages, uploadFileType);
-        return createOrUpdate(project, domainMirror);
+        byte[] domainMirrorGz = CompressedJson.compress(out -> serializer.serialize(domainMirror, out));
+        CompressedJson.checkStorable(domainMirrorGz, "domain mirror");
+        createOrUpdateCompressed(project, domainMirrorGz, null);
+        return domainMirror;
     }
 
     @Override
-    public ProjectDomainMirror createOrUpdate(Project project, DomainMirror domainMirror) {
-        Optional<ProjectDomainMirror> foundProjectDomainMirror = repository.findByProjectId(project.getId());
-        ProjectDomainMirror projectDomainMirror;
-
-        if(foundProjectDomainMirror.isPresent()) {
-            projectDomainMirror = foundProjectDomainMirror.get();
-            projectDomainMirror.setDomainMirror(domainMirror);
+    @Transactional
+    public void createOrUpdateCompressed(Project project, byte[] domainMirrorGz, byte[] domainCallsGz) {
+        if (repository.existsByProjectId(project.getId())) {
+            repository.updateCompressed(project.getId(), domainMirrorGz, domainCallsGz);
             regenerateDiagramsJobService.create(project);
+        } else {
+            repository.insertCompressed(UUID.randomUUID(), project.getId(), domainMirrorGz, domainCallsGz);
         }
-        else {
-            projectDomainMirror = ProjectDomainMirror.builder()
-                .projectId(project.getId())
-                .domainMirror(domainMirror)
-                .build();
-        }
-
-        return repository.save(projectDomainMirror);
     }
 
     @Override
+    @Transactional
     public void delete(UUID projectId) {
-        ProjectDomainMirror projectDomainMirror = getByProjectId(projectId);
-        repository.delete(projectDomainMirror);
+        repository.deleteByProjectIdWithoutLoading(projectId);
+    }
+
+    private DomainMirror deserializeMirror(byte[] compressed) {
+        try (InputStream json = CompressedJson.decompress(compressed)) {
+            return serializer.deserialize(json);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private DomainMirror generateDomainMirror(Path pathToJarFile, Set<String> domainModelPackages, UploadFileType uploadFileType) {

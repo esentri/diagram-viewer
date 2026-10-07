@@ -29,18 +29,17 @@
 
 package io.domainlifecycles.diagramviewer.webapp.session;
 
-import io.domainlifecycles.diagramviewer.exception.DiagramViewerException;
 import io.domainlifecycles.diagramviewer.model.viewer.Project;
-import io.domainlifecycles.diagramviewer.model.viewer.ProjectDomainMirror;
-import io.domainlifecycles.diagramviewer.repository.ProjectRepository;
+import io.domainlifecycles.diagramviewer.service.BoundedContext;
 import io.domainlifecycles.diagramviewer.service.ProjectDomainMirrorService;
+import io.domainlifecycles.diagramviewer.service.ProjectModel;
+import io.domainlifecycles.diagramviewer.service.ProjectModelCache;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.values.UploadFileType;
 import io.domainlifecycles.mirror.api.AggregateRootMirror;
 import io.domainlifecycles.mirror.api.DomainMirror;
 import io.domainlifecycles.mirror.api.DomainType;
 import io.domainlifecycles.mirror.api.DomainTypeMirror;
-import lombok.Builder;
-import lombok.Data;
+import io.domainlifecycles.staticanalysis.DomainCalls;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -48,21 +47,27 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.SessionScope;
 
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Session scoped state of the user interface - which filter sections are open and the like.
+ * <p>
+ * The model data of the projects (domain mirror, type lists, static analysis result) is no longer held here
+ * per session, but in the {@link ProjectModelCache} shared by all sessions; the
+ * model accessors below only delegate to it, so the views keep working unchanged.
+ */
 @Component
 @SessionScope
 @Slf4j
 public class SessionStorage {
 
     private final ProjectDomainMirrorService projectDomainMirrorService;
-    private final ProjectRepository projectRepository;
-    private final Map<UUID, DomainMirrorContainer> domainMirrorContainers;
+    private final ProjectModelCache projectModelCache;
     @Setter
     @Getter
     private boolean packageFilterOpen;
@@ -70,96 +75,76 @@ public class SessionStorage {
     @Setter
     @Getter
     private boolean advancedTrimmingOpen = false;
+    @Setter
+    @Getter
+    private boolean flowFilterOpen = false;
 
     public SessionStorage(
             ProjectDomainMirrorService projectDomainMirrorService,
-            ProjectRepository projectRepository
+            ProjectModelCache projectModelCache
     ) {
         this.projectDomainMirrorService = projectDomainMirrorService;
-        this.projectRepository = projectRepository;
-        this.domainMirrorContainers = new HashMap<>();
+        this.projectModelCache = projectModelCache;
         this.domainTypeDiagramSettingsOpen = new HashMap<>();
         this.packageFilterOpen = true;
     }
 
     public DomainMirror getDomainMirror(UUID projectId) {
-        return getDomainMirrorContainer(projectId).getDomainMirror();
+        return projectModelCache.get(projectId).domainMirror();
+    }
+
+    /**
+     * Returns the static analysis result of a project, loading and deserializing it on first access (see
+     * {@link ProjectModel#domainCalls()}). Use {@link #hasDomainCalls(UUID)} to only check for its presence.
+     *
+     * @param projectId the project to get the uploaded static analysis result for
+     * @return the deserialized {@code DomainCalls} of the given project, empty if none was uploaded
+     * alongside its domain mirror
+     */
+    public Optional<DomainCalls> getDomainCalls(UUID projectId) {
+        return projectModelCache.get(projectId).domainCalls();
+    }
+
+    /**
+     * @param projectId the project to check
+     * @return {@code true} if a static analysis result was uploaded for the given project; does not load it
+     */
+    public boolean hasDomainCalls(UUID projectId) {
+        return projectModelCache.get(projectId).domainCallsAvailable();
     }
 
     public List<DomainTypeMirror> getAllDomainTypeMirrorsWithoutEnumsAndIds(UUID projectId) {
-        log.debug("getAllDomainTypeMirrorsWithoutEnumsAndIds for {}", projectId);
-        return getDomainMirrorContainer(projectId).getDomainTypeMirrors();
+        return projectModelCache.get(projectId).domainTypeMirrors();
+    }
+
+    /**
+     * @param projectId the project
+     * @return the Bounded Contexts of the project's domain model, sorted by label
+     */
+    public List<BoundedContext> getBoundedContexts(UUID projectId) {
+        return projectModelCache.get(projectId).boundedContexts();
+    }
+
+    /**
+     * @param projectId the project
+     * @return {@code true} if the project's domain model declares Bounded Contexts (more than DLC's fallback)
+     */
+    public boolean hasDeclaredBoundedContexts(UUID projectId) {
+        return projectModelCache.get(projectId).boundedContextsDeclared();
     }
 
     public List<AggregateRootMirror> getAllAggregateRootMirrors(UUID projectId) {
-        log.debug("getAllAggregateRootMirrors for {}", projectId);
-        return getDomainMirrorContainer(projectId).getAggregateRootMirrors();
-    }
-
-    private DomainMirrorContainer getDomainMirrorContainer(UUID projectId) {
-        var ts = projectRepository.findLatestChange(projectId);
-        if(ts != null) {
-            if(domainMirrorContainers.containsKey(projectId)) {
-                DomainMirrorContainer container = domainMirrorContainers.get(projectId);
-
-                Instant containerLastUpdated = container.getLastUpdated();
-                if(containerLastUpdated != null && ts.isAfter(containerLastUpdated)){
-                    add(projectId, ts);
-                }
-                log.debug("Returning container for {}", projectId);
-                return domainMirrorContainers.get(projectId);
-            }
-            add(projectId, ts);
-            return domainMirrorContainers.get(projectId);
-        }
-        throw DiagramViewerException.fail("project not found");
-    }
-
-    private void add(UUID projectId, Instant latestChange) {
-        log.debug("add project {}", projectId);
-        var projectDomainMirror = projectDomainMirrorService.getByProjectId(projectId);
-        DomainMirror domainMirror = projectDomainMirror.getDomainMirror();
-        List<AggregateRootMirror> aggregateRootMirrors = projectDomainMirrorService.getAllAggregateRootMirrors(
-                projectId);
-        List<DomainTypeMirror> domainTypeMirrors = projectDomainMirrorService.getAllDomainTypeMirrorsWithoutEnumsAndIds(
-                projectId);
-
-        DomainMirrorContainer domainMirrorContainer = DomainMirrorContainer.builder()
-            .lastUpdated(latestChange)
-            .domainMirror(domainMirror)
-            .aggregateRootMirrors(aggregateRootMirrors)
-            .domainTypeMirrors(domainTypeMirrors)
-            .build();
-
-        domainMirrorContainers.put(projectId, domainMirrorContainer);
-        log.debug("adding project {} finished", projectId);
+        return projectModelCache.get(projectId).aggregateRootMirrors();
     }
 
     public void createOrUpdate(Project project, Set<String> domainModelPackages, Path pathToFile, UploadFileType uploadFileType) {
-        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, domainModelPackages, pathToFile, uploadFileType);
-        createAndAddDomainMirrorContainer(project, projectDomainMirror);
-    }
-
-    public void createOrUpdate(Project project, DomainMirror domainMirror) {
-        ProjectDomainMirror projectDomainMirror = projectDomainMirrorService.createOrUpdate(project, domainMirror);
-        createAndAddDomainMirrorContainer(project, projectDomainMirror);
+        DomainMirror domainMirror = projectDomainMirrorService.createOrUpdate(project, domainModelPackages, pathToFile, uploadFileType);
+        projectModelCache.putFromFileUpload(project, domainMirror);
     }
 
     public void delete(UUID projectId) {
         projectDomainMirrorService.delete(projectId);
-        domainMirrorContainers.remove(projectId);
-    }
-
-    private void createAndAddDomainMirrorContainer(Project project, ProjectDomainMirror projectDomainMirror) {
-        DomainMirrorContainer domainMirrorContainer = DomainMirrorContainer.builder()
-            .lastUpdated(project.getLatestChangeInstant())
-            .domainMirror(projectDomainMirror.getDomainMirror())
-            .aggregateRootMirrors(projectDomainMirror.getDomainMirror().getAllAggregateRootMirrors())
-            .domainTypeMirrors(projectDomainMirror.getDomainMirror().getAllDomainTypeMirrors())
-            .build();
-
-        domainMirrorContainers.remove(project.getId());
-        domainMirrorContainers.put(project.getId(), domainMirrorContainer);
+        projectModelCache.invalidate(projectId);
     }
 
     public boolean isDomainTypeSettingOpen(DomainType domainType) {
@@ -168,14 +153,5 @@ public class SessionStorage {
 
     public void setDomainTypeSettingOpen(DomainType domainType, boolean open) {
         domainTypeDiagramSettingsOpen.put(domainType, open);
-    }
-
-    @Data
-    @Builder
-    private static class DomainMirrorContainer {
-        private Instant lastUpdated;
-        private DomainMirror domainMirror;
-        private List<AggregateRootMirror> aggregateRootMirrors;
-        private List<DomainTypeMirror> domainTypeMirrors;
     }
 }

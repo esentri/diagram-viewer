@@ -22,7 +22,7 @@ Running the service:
 - Docker and Docker Compose
 
 For development:
-- Java 17+
+- Java 21+ (Gradle starts its daemon with Java 21 by itself, see gradle/gradle-daemon-jvm.properties)
 - Gradle (wrapper included)
 
 The diagram viewer depends on a inner plugin lib. 
@@ -72,6 +72,18 @@ Override via environment variables:
 - `SERVER_PORT`: HTTP port (default 8090)
 - `DIAGRAMS_LOCATION`: path to diagram sources on server (default `diagrams`)
 - `KROKI_CONTAINER_URL`: Kroki endpoint (default `http://localhost:8000`)
+- `KROKI_REQUEST_TIMEOUT_SECONDS`: how long the viewer waits for Kroki to convert a diagram (default 90). Kroki
+  itself aborts conversions after `KROKI_COMMAND_TIMEOUT` (Kroki default 5s, set to 60s in the provided docker
+  compose files); large diagrams need more than Kroki's default, and this value must exceed Kroki's
+- `DIAGRAMS_RENDERING_THREADS`: number of diagrams rendered in the background at the same time (default 2)
+- `DIAGRAMS_LARGE_DIAGRAM_CLASSES`: above this number of classes users are advised to restrict a diagram with
+  filters (default 1000)
+- `DIAGRAMS_CARD_PREVIEW_MAX_KILOBYTES`: diagram cards in project and folder views show diagrams up to this image size
+  as preview, larger ones as a placeholder (default 1024) - drawing dozens of large diagrams at once makes the browser slow
+- `PROJECT_MODEL_CACHE_MAXIMUM_MEGABYTES` / `PROJECT_MODEL_CACHE_EXPIRE_AFTER_ACCESS_MINUTES`: memory budget of the
+  project models kept in memory, shared by all users (default 0 = half of the maximum heap), and how long a project
+  stays cached after its last access (default 60 minutes)
+- `DIAGRAM_VIEWER_JAVA_OPTS` (docker compose only): JVM options of the viewer, see [Memory](#memory)
 - Database: 
   - `DB_HOSTNAME` (localhost)
   - `DB_PORT` (5432)
@@ -87,6 +99,22 @@ Override via environment variables:
   - `OKTA_OAUTH2_REDIRECT_URI`
 - `REGENERATE_DIAGRAMS_TASK_RATE`: Digrams are regenerated, if a new Domain Model was pushed to the Diagram Viewer 
    (default: check for new domain model version every 30 sec)
+- `REGENERATE_DIAGRAMS_TASK_MAX_ATTEMPTS`: how often regenerating a diagram may fail before it is no longer retried
+  until its project is uploaded again (default 3)
+
+#### Memory
+The viewer runs with `-Xmx2g -XX:+UseG1GC -XX:+UseStringDeduplication` (Dockerfile, docker compose and `./gradlew
+bootRun`). This comfortably covers very large projects: a model of about 4,800 types with a static analysis result
+of about one million call sites (uploaded, opened, flow filtered and rendered as a whole) needs less than 1 GB of
+heap and also runs with 1 GB. String deduplication shrinks such a model by about a third, since type and method
+names recur throughout it.
+
+Project models are cached for all users within a memory budget, by default half of the heap. Each project is
+weighed by its estimated size, the static analysis result included once a flow filter loaded it; least recently
+used projects are evicted beyond the budget and loaded again when needed. For many large projects used at the same
+time raise the heap, e.g. `DIAGRAM_VIEWER_JAVA_OPTS="-Xmx4g -XX:+UseG1GC -XX:+UseStringDeduplication"` with docker
+compose or `./gradlew bootRun -PviewerHeap=4g`. When running in a container with a memory limit, leave about
+500 MB above `-Xmx` for the JVM itself.
 
 #### Ports
 - 8090 — Diagram Viewer (UI/API)

@@ -35,28 +35,76 @@ import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.dnd.DragSource;
 import com.vaadin.flow.component.dnd.DropEffect;
 import com.vaadin.flow.component.dnd.DropTarget;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import io.domainlifecycles.diagramviewer.model.viewer.Diagram;
 import io.domainlifecycles.diagramviewer.model.viewer.DiagramDirectory;
 import io.domainlifecycles.diagramviewer.service.DiagramDirectoryService;
 import io.domainlifecycles.diagramviewer.webapp.components.dialogs.CreateFolderDialog;
+import io.domainlifecycles.diagramviewer.webapp.components.various.WrappableName;
 import io.domainlifecycles.diagramviewer.webapp.events.DiagramsOrProjectsChangedEvent;
+import java.util.Locale;
 
-public class DiagramCard extends Card implements DragSource<CardLinkWrapper>, DropTarget<CardLinkWrapper> {
+public final class DiagramCard extends Card implements DragSource<CardLinkWrapper>, DropTarget<CardLinkWrapper> {
 
-    public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final Diagram diagram, final String diagramSrc) {
-        setTitle(diagram.getName());
+    /** styled to wrap long names within the card, see diagram-viewer-styles.css */
+    static final String CSS_CLASS = "diagram-card";
 
-        Image image = new Image(diagramSrc, diagram.getName());
-        image.setHeight("200px");
-        image.setWidth("95%");
-        setMedia(image);
+    /**
+     * @param diagramDirectoryService adds a diagram dropped on another one to a new folder with both
+     * @param diagram                 the diagram shown by the card
+     * @param imageSize        the size of the diagram's image in bytes, {@code -1} if not rendered yet
+     * @param previewLimitBytes up to which size the image itself is the preview; larger diagrams show a placeholder,
+     *                         since drawing dozens of large images at once (e.g. a folder of flow diagrams created by
+     *                         "Analyze Bounded Contexts") makes the browser slow
+     * @param diagramSrc              the URL of the diagram's image
+     */
+    public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final Diagram diagram, final long imageSize,
+                       final long previewLimitBytes, final String diagramSrc) {
+        addClassName(CSS_CLASS);
+        setTitle(WrappableName.create(diagram.getName()));
+
+        if (imageSize > previewLimitBytes) {
+            setMedia(createPlaceholder(VaadinIcon.FILE_PICTURE,
+                String.format(Locale.ROOT, "Large diagram (%.1f MB)", imageSize / 1024.0 / 1024.0), "Open it to view"));
+        } else if (imageSize < 0) {
+            setMedia(createPlaceholder(VaadinIcon.HOURGLASS, "Not rendered yet", ""));
+        } else {
+            Image image = new Image(diagramSrc, diagram.getName());
+            image.setHeight("200px");
+            image.setWidth("95%");
+            // only the cards in view load their images
+            image.getElement().setAttribute("loading", "lazy");
+            setMedia(image);
+        }
 
         configureDragAndDrop(diagram, diagramDirectoryService);
     }
 
+    private static Div createPlaceholder(VaadinIcon icon, String text, String hint) {
+        Icon placeholderIcon = icon.create();
+        placeholderIcon.setSize("3rem");
+        placeholderIcon.getStyle().set("color", "var(--lumo-contrast-40pct)");
+        Span textSpan = new Span(text);
+        Span hintSpan = new Span(hint);
+        hintSpan.getStyle().set("font-size", "var(--lumo-font-size-s)").set("color", "var(--lumo-secondary-text-color)");
+        Div placeholder = new Div(placeholderIcon, textSpan, hintSpan);
+        placeholder.addClassName("diagram-card-placeholder");
+        placeholder.setHeight("200px");
+        placeholder.setWidth("95%");
+        placeholder.getStyle()
+            .set("display", "flex").set("flex-direction", "column").set("align-items", "center")
+            .set("justify-content", "center").set("gap", "var(--lumo-space-xs)")
+            .set("background", "var(--lumo-contrast-5pct)").set("border-radius", "var(--lumo-border-radius-m)");
+        return placeholder;
+    }
+
     public DiagramCard(final DiagramDirectoryService diagramDirectoryService, final DiagramDirectory diagramDirectory) {
-        setTitle(diagramDirectory.getName());
+        addClassName(CSS_CLASS);
+        setTitle(WrappableName.create(diagramDirectory.getName()));
 
         Image image = new Image("frontend/icons/folder-open-o.svg", "Directory");
         image.setHeight("200px");
